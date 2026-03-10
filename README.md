@@ -1,66 +1,30 @@
 # Tasks AI: The Agent-Optimized Task Manager
 
-`tasks` is a high-density, Git-integrated task management system designed specifically for **Autonomous AI Agents** and high-velocity developers.
+`tasks` is a Git-integrated task management system designed specifically for **Autonomous AI Agents**. It stores the "Single Source of Truth" directly within your repository using a dedicated Git worktree, making state and history immediately accessible to any agent with shell access.
 
-Unlike traditional project management tools, `tasks` stores the "Single Source of Truth" directly within your repository using a dedicated Git worktree. This ensures that task state, technical findings, and branch commits are always perfectly synchronized with your code—accessible to any AI agent that can run a shell.
-
-## 🤖 Why Agents Love It
-
-- **JSON First**: Every command supports a `--json` flag for unbroken, machine-parseable data streams.
-- **Context Efficient**: Metadata keys are minimized (e.g., `Ti` for Title, `St` for State) to save token space while remaining human-readable via CLI expansion.
-- **Self-Documenting**: The tool enforces "Gates" (Requirements, Acceptance Criteria, Reproduction Steps) that guide agents to provide high-quality work.
-- **Git-Native**: It automatically embeds branch commits and progress findings into the task record.
-
-## 🚀 Installation
-
-Install the tool system-wide to enable the `tasks` command in any directory:
+## 🚀 One-Line Install
 
 ```bash
-git clone https://github.com/tim-projects/tasks-ai.git
-cd tasks-ai
-chmod +x install.sh
-sudo ./install.sh
+curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | sudo bash
 ```
 
 ## 🛠️ Getting Started
 
-1. **Initialize** your project:
-   ```bash
-   tasks init
-   ```
-   *This creates a hidden `.tasks` worktree and a `tasks/` directory in your `.gitignore`.*
+To enable autonomous task management in your project, simply add the following directive to your `AGENTS.md` file:
 
-2. **Create** your first task:
-   ```bash
-   tasks create "Implement OAuth Flow" --type task
-   ```
+> **Directive**: "Manage project tasks using the `tasks` command. Run `tasks --help` to discover the interface and follow the protocol defined in `TASKS_AI_AGENT_GUIDE.md`."
 
-3. **List** active work:
-   ```bash
-   tasks list
-   ```
+The agent will then autonomously:
+1. Initialize the system (`tasks init`).
+2. Discover or create tasks (`tasks list` / `tasks create`).
+3. Manage work-in-progress and promotions through the Git-native state machine.
 
-## 🤖 The "AGENTS.md" Protocol
+## 🤖 Why Agents Prefer This
 
-The most powerful way to use this tool is by providing your agent with an `AGENTS.md` file.
-
-1. **Install** the `tasks` tool.
-2. **Create** an `AGENTS.md` file in your project root (use the template provided in this repo).
-3. **The Bot Follows the Protocol**: Your AI agent will read `AGENTS.md` to understand how to use the `tasks` CLI to discover, activate, and promote work autonomously. This ensures the agent follows your preferred engineering workflow without manual oversight.
-
-## 📖 Command Reference
-
-For detailed agent implementation details, see [TASKS_AI_AGENT_GUIDE.md](./TASKS_AI_AGENT_GUIDE.md).
-
-| Command | Description |
-| :--- | :--- |
-| `tasks init` | Bootstrap the tasks system in a repo. |
-| `tasks list` | View active tasks by priority. |
-| `tasks current` | See details of the active task. |
-| `tasks create` | Add a new Task or Issue. |
-| `tasks move` | Transition a task (e.g., to `TESTING`). |
-| `tasks link` | Block one task with another. |
-| `tasks checkpoint`| Sync current commits and notes. |
+- **JSON Interface**: Global `--json` flag for stable machine parsing.
+- **Context Dense**: Short metadata keys (`Ti`, `St`, `Cr`) minimize token usage.
+- **Git-Native**: Commits and technical notes are automatically embedded into the task records.
+- **State Enforced**: Mandatory gates for Acceptance Criteria and Reproduction Steps ensure high-quality output.
 
 ---
-*Built for the next generation of autonomous engineering.*
+*For technical implementation details, refer to [TASKS_AI_AGENT_GUIDE.md](./TASKS_AI_AGENT_GUIDE.md).*
