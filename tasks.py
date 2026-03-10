@@ -166,7 +166,7 @@ class TasksCLI:
             if not file.endswith(".md"): continue
             log_path = os.path.join(self.logs_path, file)
             if os.path.exists(log_path):
-                with open(log_path, 'r') as f: lines = f.readlines()
+                with open(log_path, 'r', encoding='utf-8') as f: lines = f.readlines()
                 live_date = None
                 for line in reversed(lines):
                     if "->LIVE" in line:
@@ -209,7 +209,7 @@ class TasksCLI:
     def _append_log(self, filename, entry):
         log_file = os.path.join(self.logs_path, filename)
         timestamp = datetime.now().strftime('%y%m%d %H:%M')
-        with open(log_file, 'a') as f: f.write(f"- {timestamp}: {entry}\n")
+        with open(log_file, 'a', encoding='utf-8') as f: f.write(f"- {timestamp}: {entry}\n")
         self._run_git(['add', os.path.join(LOGS_DIR, filename)], cwd=self.tasks_path)
 
     def create(self, title, task_type="task", priority=None):
@@ -347,8 +347,9 @@ class TasksCLI:
         new_filepath = os.path.join(self.tasks_path, STATE_FOLDERS[new_status], os.path.basename(filepath))
         try:
             self._atomic_write(new_filepath, post)
-            self._run_git(['rm', os.path.relpath(filepath, self.tasks_path)], cwd=self.tasks_path)
-            self._run_git(['add', os.path.relpath(new_filepath, self.tasks_path), os.path.join(LOGS_DIR, os.path.basename(filepath))], cwd=self.tasks_path)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            self._run_git(['add', '--all'], cwd=self.tasks_path)
             self._run_git(['commit', '-m', f"Mv {os.path.basename(filepath)}: {current_state}->{new_status}"], cwd=self.tasks_path)
             self.log(f"Moved: {current_state}->{new_status}")
             dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
@@ -397,7 +398,7 @@ class TasksCLI:
             tasks = []
             for file in sorted(files):
                 try:
-                    with open(os.path.join(fp, file), 'r') as f: lines = f.readlines()
+                    with open(os.path.join(fp, file), 'r', encoding='utf-8') as f: lines = f.readlines()
                     cs = False; summary = "No content"
                     for l in lines:
                         if l.strip() == "---":
