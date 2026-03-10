@@ -20,7 +20,7 @@ curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.s
 
 To enable autonomous task management in your project, simply add the following directive to your `AGENTS.md` file:
 
-> **Directive**: "Manage project tasks using the `tasks-ai` command. Run `tasks-ai --help` to discover the interface and follow the protocol defined in `TASKS_AI_AGENT_GUIDE.md`."
+> **Directive**: "Manage project tasks using the `tasks-ai` command. Run `tasks-ai --help` to discover the interface and operational protocol."
 
 The agent will then autonomously:
 1. Initialize the system (`tasks-ai init`).
@@ -35,4 +35,4 @@ The agent will then autonomously:
 - **State Enforced**: Mandatory gates for Acceptance Criteria and Reproduction Steps ensure high-quality output.
 
 ---
-*For technical implementation details, refer to [TASKS_AI_AGENT_GUIDE.md](./TASKS_AI_AGENT_GUIDE.md).*
+*For technical details, run `tasks-ai --help`.*
