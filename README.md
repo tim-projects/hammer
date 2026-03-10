@@ -10,17 +10,17 @@ Installs to `~/.local/bin/tasks-ai`.
 curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | bash
 ```
 
-### System-Wide
+### System-Wide (Global)
 Installs to `/usr/local/bin/tasks-ai`.
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | sudo bash -s -- -g
 ```
 
 ## 🛠️ Getting Started
 
 To enable autonomous task management in your project, simply add the following directive to your `AGENTS.md` file:
 
-> **Directive**: "Manage project tasks using the `tasks-ai` command. Run `tasks-ai --help` to discover the interface and operational protocol."
+> **Directive**: "Manage project tasks using the `tasks-ai` command. Run `tasks-ai -h` to discover the interface and operational protocol."
 
 The agent will then autonomously:
 1. Initialize the system (`tasks-ai init`).
@@ -36,4 +36,4 @@ The agent will then autonomously:
 - **State Enforced**: Mandatory gates for Acceptance Criteria and Reproduction Steps ensure high-quality output.
 
 ---
-*For technical details, run `tasks-ai --help`.*
+*For technical details, run `tasks-ai -h`.*

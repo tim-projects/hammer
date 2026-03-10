@@ -5,28 +5,27 @@ set -e
 
 # Default values
 MODE="local"
-# If running as root, default to system install
-if [ "$EUID" -eq 0 ]; then
-    MODE="system"
-    DEST_DIR="/usr/local/bin"
-else
-    MODE="local"
-    DEST_DIR="$HOME/.local/bin"
-fi
+DEST_DIR="$HOME/.local/bin"
 
-# Parse arguments to allow override
+# Parse arguments
 for arg in "$@"; do
   case $arg in
-    --system)
+    -g|--system)
       MODE="system"
       DEST_DIR="/usr/local/bin"
       ;;
-    --local)
+    -l|--local)
       MODE="local"
       DEST_DIR="$HOME/.local/bin"
       ;;
   esac
 done
+
+# If system mode, check for root
+if [ "$MODE" == "system" ] && [ "$EUID" -ne 0 ]; then
+    echo "Error: Global installation (-g) requires root privileges. Please run with sudo."
+    exit 1
+fi
 
 # Check for python3
 if ! command -v python3 &> /dev/null; then
@@ -47,22 +46,13 @@ fi
 # Ensure destination directory exists
 if [ ! -d "$DEST_DIR" ]; then
     echo "Creating directory $DEST_DIR..."
-    if [ "$MODE" == "system" ] && [ "$EUID" -ne 0 ]; then
-        sudo mkdir -p "$DEST_DIR"
-    else
-        mkdir -p "$DEST_DIR"
-    fi
+    mkdir -p "$DEST_DIR"
 fi
 
 # Copy and make executable
 echo "Installing Tasks AI to $DEST_PATH..."
-if [ "$EUID" -ne 0 ] && [ "$MODE" == "system" ]; then
-    sudo cp "$SOURCE_FILE" "$DEST_PATH"
-    sudo chmod +x "$DEST_PATH"
-else
-    cp "$SOURCE_FILE" "$DEST_PATH"
-    chmod +x "$DEST_PATH"
-fi
+cp "$SOURCE_FILE" "$DEST_PATH"
+chmod +x "$DEST_PATH"
 
 echo "--------------------------------------------------"
 echo "Installation complete!"
@@ -74,5 +64,5 @@ if [ "$MODE" == "local" ]; then
         echo "  export PATH=\$PATH:\$HOME/.local/bin"
     fi
 fi
-echo "You can now run: tasks-ai --help"
+echo "You can now run: tasks-ai -h"
 echo "--------------------------------------------------"
