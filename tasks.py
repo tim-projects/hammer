@@ -8,7 +8,6 @@ import re
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-import frontmatter
 
 # Constants
 TASKS_DIR = "tasks"
@@ -41,6 +40,51 @@ KEY_MAP = {
 TASK_SCOPE = "## Scope\n- Requirements: \n- Success/Acceptance Criteria: \n"
 ISSUE_SCOPE = "## Scope\n- Symptom: \n- Reproduction Steps: \n- Root Cause (if known): \n- Fix/Test Plan: \n"
 DUMP_TEMPLATE = "---\nTask: {task_file}\n---\n## Notes\n- Progress: \n- Findings: \n- Mitigations: \n"
+
+class Post:
+    """Internal replacement for frontmatter.Post"""
+    def __init__(self, content, **metadata):
+        self.content = content
+        self.metadata = metadata
+    def __getitem__(self, key): return self.metadata.get(key)
+    def __setitem__(self, key, value): self.metadata[key] = value
+    def get(self, key, default=None): return self.metadata.get(key, default)
+
+class FM:
+    """Minimal YAML-like frontmatter parser for basic keys and lists."""
+    @staticmethod
+    def load(filepath):
+        if not os.path.exists(filepath): return Post("", **{})
+        with open(filepath, 'r', encoding='utf-8') as f:
+            try: lines = f.readlines()
+            except Exception: return Post("", **{})
+        if not lines or lines[0].strip() != '---': return Post("".join(lines), **{})
+        meta, content_start = {}, -1
+        for i in range(1, len(lines)):
+            line = lines[i].strip()
+            if line == '---':
+                content_start = i + 1
+                break
+            if ':' in line:
+                k, v = [s.strip() for s in line.split(':', 1)]
+                if v.startswith('[') and v.endswith(']'):
+                    inner = v[1:-1].strip()
+                    meta[k] = [item.strip().strip("'").strip('"') for item in inner.split(',')] if inner else []
+                elif v.isdigit(): meta[k] = int(v)
+                else: meta[k] = v.strip("'").strip('"')
+        return Post("".join(lines[content_start:]) if content_start != -1 else "", **meta)
+
+    @staticmethod
+    def dump(post, f):
+        f.write(b"---\n")
+        for k, v in post.metadata.items():
+            if isinstance(v, list): val = "[" + ", ".join(f'"{item}"' for item in v) + "]"
+            else: val = v
+            f.write(f"{k}: {val}\n".encode('utf-8'))
+        f.write(b"---\n")
+        content = post.content
+        if content and not content.startswith('\n'): f.write(b"\n")
+        f.write(content.encode('utf-8'))
 
 class TasksCLI:
     def __init__(self, as_json=False):
@@ -75,10 +119,8 @@ class TasksCLI:
         fd, temp_path = tempfile.mkstemp(dir=dir_name, text=False)
         try:
             with os.fdopen(fd, 'wb') as f:
-                if isinstance(post_or_content, frontmatter.Post):
-                    content = post_or_content.content
-                    if content.startswith('\n'): post_or_content.content = content.lstrip('\n')
-                    frontmatter.dump(post_or_content, f)
+                if hasattr(post_or_content, 'metadata'):
+                    FM.dump(post_or_content, f)
                 else:
                     if isinstance(post_or_content, str): f.write(post_or_content.encode('utf-8'))
                     else: f.write(post_or_content)
@@ -165,7 +207,7 @@ class TasksCLI:
         if any(os.path.exists(os.path.join(self.tasks_path, f, filename)) for f in STATE_FOLDERS.values()):
             self.error(f"Task {filename} exists.")
         if priority is None: priority = 1 if task_type == "issue" else 2
-        post = frontmatter.Post(f"{title}\n\n## Desc\n{title}\n\n{TASK_SCOPE if task_type == 'task' else ISSUE_SCOPE}", 
+        post = Post(f"{title}\n\n## Desc\n{title}\n\n{TASK_SCOPE if task_type == 'task' else ISSUE_SCOPE}", 
             Ti=title, St="BACKLOG", Cr=datetime.now().strftime("%y%m%d %H:%M"), Bl=[], Pr=priority
         )
         try:
@@ -187,18 +229,18 @@ class TasksCLI:
     def get_active_task(self, filename=None):
         if filename:
             filepath, _ = self.find_task(filename)
-            if filepath: return filepath, frontmatter.load(filepath)
+            if filepath: return filepath, FM.load(filepath)
             return None, None
         prog_dir = os.path.join(self.tasks_path, STATE_FOLDERS["PROGRESSING"])
         if os.path.exists(prog_dir):
             files = [f for f in os.listdir(prog_dir) if f.endswith(".md")]
             if files:
                 filepath = os.path.join(prog_dir, files[0])
-                return filepath, frontmatter.load(filepath)
+                return filepath, FM.load(filepath)
         dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
         if os.path.exists(dump_path):
             try:
-                dump = frontmatter.load(dump_path)
+                dump = FM.load(dump_path)
                 if dump.get('Task'): return self.get_active_task(dump.get('Task'))
             except Exception: pass
         return None, None
@@ -236,7 +278,7 @@ class TasksCLI:
         dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
         if os.path.exists(dump_path):
             try:
-                dump = frontmatter.load(dump_path)
+                dump = FM.load(dump_path)
                 if dump.get('Task') == os.path.basename(filepath):
                     dump_content = dump.content.strip()
                     if dump_content and "Progress:" in dump_content:
@@ -257,7 +299,7 @@ class TasksCLI:
     def link(self, filename, blocked_by_filename):
         f1, _ = self.find_task(filename); f2, _ = self.find_task(blocked_by_filename)
         if not f1 or not f2: self.error("Task or blocker not found.")
-        post = frontmatter.load(f1); bl = post.get('Bl', []); b_name = os.path.basename(f2)
+        post = FM.load(f1); bl = post.get('Bl', []); b_name = os.path.basename(f2)
         if b_name not in bl:
             bl.append(b_name); post['Bl'] = bl; self._atomic_write(f1, post)
             self._run_git(['add', os.path.relpath(f1, self.tasks_path)], cwd=self.tasks_path)
@@ -276,7 +318,7 @@ class TasksCLI:
         if current_state == new_status: return
         if new_status not in ALLOWED_TRANSITIONS.get(current_state, []):
             self.error(f"Forbidden: {current_state}->{new_status}.")
-        post = frontmatter.load(filepath)
+        post = FM.load(filepath)
         if new_status == "PROGRESSING":
             for b in post.get('Bl', []):
                 _, bs = self.find_task(b)
@@ -302,7 +344,7 @@ class TasksCLI:
                 self._atomic_write(dump_path, DUMP_TEMPLATE.format(task_file=os.path.basename(new_filepath)))
             if new_status == "ARCHIVED" and os.path.exists(dump_path):
                 try:
-                    d = frontmatter.load(dp)
+                    d = FM.load(dump_path)
                     if d.get('Task') == os.path.basename(new_filepath): os.remove(dump_path)
                 except Exception: pass
         except Exception as e: self.error(str(e))
@@ -319,7 +361,7 @@ class TasksCLI:
         dp = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
         if os.path.exists(dp):
             try:
-                d = frontmatter.load(dp)
+                d = FM.load(dp)
                 if d.get('Task') == tn: data["dump"] = {"file": os.path.relpath(dp, self.root), "content": d.content.strip()}
             except Exception: pass
         
@@ -351,7 +393,7 @@ class TasksCLI:
                             else: cs = "CONTENT"
                         elif cs == "CONTENT" and l.strip():
                             summary = l.strip(); break
-                    post = frontmatter.load(os.path.join(fp, file))
+                    post = FM.load(os.path.join(fp, file))
                     tt, tb = self._parse_filename(file)
                     tasks.append({"p": post.get('Pr', 9), "file": file, "type": tt, "branch": tb, "summary": summary[:60], "blocked_by": post.get('Bl', [])})
                 except Exception: pass
@@ -375,38 +417,23 @@ if __name__ == "__main__":
     )
     parser.add_argument("--json", action="store_true", help="Enable unbroken JSON output for AI agent integration.")
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # Command: init
     subparsers.add_parser("init", help="Initialize the .tasks worktree and orphan branch. Required first step.")
-
-    # Command: list
     list_p = subparsers.add_parser("list", help="List active tasks sorted by priority. ARCHIVED is hidden by default.")
     list_p.add_argument("--all", action="store_true", help="Include ARCHIVED tasks in the output.")
-
-    # Command: current
     cur_p = subparsers.add_parser("current", help="Show full metadata, file paths, and active progress for a task.")
     cur_p.add_argument("filename", nargs="?", help="Specific task filename (e.g. task_branch.md). Defaults to the task in PROGRESSING.")
-
-    # Command: checkpoint
     cp_p = subparsers.add_parser("checkpoint", help="Force-sync branch commits and current-task.md notes into the task file.")
     cp_p.add_argument("filename", nargs="?", help="Task to checkpoint. Defaults to the one in PROGRESSING.")
-
-    # Command: link
     lk_p = subparsers.add_parser("link", help="Establish a blocking dependency between tasks.")
     lk_p.add_argument("filename", help="The task being blocked.")
     lk_p.add_argument("blocked_by", help="The task causing the blockage.")
-
-    # Command: create
     cr_p = subparsers.add_parser("create", help="Create a new task or issue in BACKLOG with mandatory requirement sections.")
     cr_p.add_argument("title", help="Human-readable title of the task.")
     cr_p.add_argument("--type", default="task", choices=["task", "issue"], help="Item category. Issues default to Priority 1.")
     cr_p.add_argument("--priority", "-p", type=int, help="Override default priority (lower = higher priority).")
-
-    # Command: move
     mv_p = subparsers.add_parser("move", help="Transition a task to a new state. Enforces state machine and auto-syncs progress.")
     mv_p.add_argument("filename", help="Task filename to move.")
     mv_p.add_argument("status", help="Target status: BACKLOG, READY, PROGRESSING, TESTING, REVIEW, STAGING, LIVE, BLOCKED, ARCHIVED.")
-
     args = parser.parse_args()
     cli = TasksCLI(as_json=args.json)
     if args.command == "init": cli.init()
