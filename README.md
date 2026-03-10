@@ -40,19 +40,13 @@ sudo ./install.sh
    tasks list
    ```
 
-## 🤖 The "AGENTS.md" Workflow
+## 🤖 The "AGENTS.md" Protocol
 
-The most powerful way to use this tool is by combining it with a task-handoff file like `AGENTS.md`.
+The most powerful way to use this tool is by providing your agent with an `AGENTS.md` file.
 
 1. **Install** the `tasks` tool.
-2. **Create** an `AGENTS.md` file in your project root.
-3. **Add** high-level directives to `AGENTS.md` (e.g., "Fix the login bug", "Implement the new dashboard").
-4. **The Bot Does the Rest**: Your AI agent (like Gemini CLI) will:
-   - Detect the `AGENTS.md` file.
-   - Use `tasks create` to formalize the request.
-   - Use `tasks move ... PROGRESSING` to start work.
-   - Perform the code changes and `tasks checkpoint` to sync progress.
-   - Move the task through `TESTING`, `REVIEW`, and `LIVE`.
+2. **Create** an `AGENTS.md` file in your project root (use the template provided in this repo).
+3. **The Bot Follows the Protocol**: Your AI agent will read `AGENTS.md` to understand how to use the `tasks` CLI to discover, activate, and promote work autonomously. This ensures the agent follows your preferred engineering workflow without manual oversight.
 
 ## 📖 Command Reference
 
