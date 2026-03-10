@@ -28,8 +28,8 @@ if [ ! -f "$SOURCE_FILE" ]; then
 fi
 
 # Copy and make executable
-echo "Installing tasks-cli to $DEST_PATH..."
+echo "Installing tasks-ai to $DEST_PATH..."
 sudo cp "$SOURCE_FILE" "$DEST_PATH"
 sudo chmod +x "$DEST_PATH"
 
-echo "Installation complete! You can now use 'tasks-cli' from anywhere."
+echo "Installation complete! You can now use 'tasks' from anywhere."

@@ -1,4 +1,4 @@
-# Tasks: The Agent-Optimized Task Manager
+# Tasks AI: The Agent-Optimized Task Manager
 
 `tasks` is a high-density, Git-integrated task management system designed specifically for **Autonomous AI Agents** and high-velocity developers.
 
@@ -16,8 +16,8 @@ Unlike traditional project management tools, `tasks` stores the "Single Source o
 Install the tool system-wide to enable the `tasks` command in any directory:
 
 ```bash
-git clone https://github.com/tim-projects/tasks-cli.git
-cd tasks-cli
+git clone https://github.com/tim-projects/tasks-ai.git
+cd tasks-ai
 chmod +x install.sh
 sudo ./install.sh
 ```
@@ -50,7 +50,7 @@ The most powerful way to use this tool is by providing your agent with an `AGENT
 
 ## 📖 Command Reference
 
-For detailed agent implementation details, see [TASKS_CLI_AGENT_GUIDE.md](./TASKS_CLI_AGENT_GUIDE.md).
+For detailed agent implementation details, see [TASKS_AI_AGENT_GUIDE.md](./TASKS_AI_AGENT_GUIDE.md).
 
 | Command | Description |
 | :--- | :--- |
