@@ -41,8 +41,21 @@ TASK_SCOPE = "## Scope\n- Requirements: \n- Success/Acceptance Criteria: \n"
 ISSUE_SCOPE = "## Scope\n- Symptom: \n- Reproduction Steps: \n- Root Cause (if known): \n- Fix/Test Plan: \n"
 DUMP_TEMPLATE = "---\nTask: {task_file}\n---\n## Notes\n- Progress: \n- Findings: \n- Mitigations: \n"
 
+AGENT_GUIDANCE = """
+AGENT OPERATIONAL PROTOCOL:
+1. Always use --json flag for machine-parseable streams.
+2. JSON SCHEMA:
+   Success: {"success": true, "messages": [], "data": {}}
+   Error:   {"success": false, "error": "...", "messages": []}
+3. RULES:
+   - Only ONE task/issue in PROGRESSING at a time.
+   - Task MUST be in PROGRESSING before modifying code.
+   - Blockers (Bl) MUST be ARCHIVED before a task moves to PROGRESSING.
+   - Use 'checkpoint' frequently to sync current-task.md and branch commits.
+   - Filenames are {type}_{branch}.md (e.g. task_ui-fix.md).
+"""
+
 class Post:
-    """Internal replacement for frontmatter.Post"""
     def __init__(self, content, **metadata):
         self.content = content
         self.metadata = metadata
@@ -51,7 +64,6 @@ class Post:
     def get(self, key, default=None): return self.metadata.get(key, default)
 
 class FM:
-    """Minimal YAML-like frontmatter parser for basic keys and lists."""
     @staticmethod
     def load(filepath):
         if not os.path.exists(filepath): return Post("", **{})
@@ -413,7 +425,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="tasks-ai",
         description="Tasks AI: An agent-optimized task manager for Git repositories.",
-        epilog="Agent Guidance: Use the global --json flag for all operations to receive structured, parseable data."
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=AGENT_GUIDANCE
     )
     parser.add_argument("--json", action="store_true", help="Enable unbroken JSON output for AI agent integration.")
     subparsers = parser.add_subparsers(dest="command", required=True)
