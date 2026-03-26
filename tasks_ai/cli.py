@@ -707,8 +707,19 @@ class TasksCLI:
                 path = os.path.join(fp, item)
                 task = FM.load(path)
                 tt, tb = self._parse_filename(item)
+                task_id = task.metadata.get("Id")
+                if not task_id:
+                    task_id = self._get_next_id()
+                    task.metadata["Id"] = task_id
+                    self._atomic_write(path, task)
+                    self._run_git(["add", "--all"], cwd=self.tasks_path)
+                    self._run_git(
+                        ["commit", "-m", f"Assign Id {task_id} to {item}"],
+                        cwd=self.tasks_path,
+                    )
                 tasks.append(
                     {
+                        "id": task_id,
                         "p": task.get("Pr", 9),
                         "file": item,
                         "type": tt,
