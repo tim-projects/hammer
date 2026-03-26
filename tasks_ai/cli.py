@@ -339,10 +339,14 @@ class TasksCLI:
                 "Pr": priority or (1 if task_type == "issue" else 2),
             },
             parts={
-                "story": story,
-                "tech": tech,
-                "criteria": "\n".join(f"- [ ] {c}" for c in criteria),
-                "plan": "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1)),
+                "story": story or "",
+                "tech": tech or "",
+                "criteria": "\n".join(f"- [ ] {c}" for c in criteria)
+                if criteria
+                else "",
+                "plan": "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
+                if plan
+                else "",
                 "repro": "\n".join(f"{i}. {r}" for i, r in enumerate(repro, 1))
                 if repro
                 else None,
