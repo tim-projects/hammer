@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from tasks_ai.cli import TasksCLI
+from tasks_ai.help_text import get_help_text
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -8,6 +9,7 @@ if __name__ == "__main__":
         description="Tasks AI: Agent-optimized, Git-backed task lifecycle manager.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=True,
+        epilog=get_help_text(),
     )
     parser.add_argument("-j", "--json", action="store_true", help="JSON output.")
     subparsers = parser.add_subparsers(dest="command", required=True)
