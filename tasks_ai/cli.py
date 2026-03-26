@@ -890,11 +890,18 @@ class TasksCLI:
                 f"Task '{filename}' not found.",
                 hint="Use 'tasks-ai list' to see available task Ids and filenames. You can also use 'tasks-ai reconcile all' to check all tasks for orphaned branches.",
             )
-        _, branch = self._parse_filename(os.path.basename(filepath))
+        task = FM.load(filepath)
+        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
+        title = task.metadata.get("Ti", "")
+        branch = task_id
         if self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
             return
-        if input(f"Archive {filename}? [y/N]: ").strip().lower() == "y":
+        print(f"Task: [{task.metadata.get('Id', '')}] {title}")
+        print(f"Branch: {branch} (no longer exists in remote)")
+        print(f"State: {task.metadata.get('St', 'unknown')}")
+        if input(f"Archive this task? [y/N]: ").strip().lower() == "y":
             self._move_logic(os.path.basename(filepath), "ARCHIVED", force=True)
+            print(f"Archived: [{task.metadata.get('Id', '')}] {title}")
 
     def _reconcile_all(self):
         orphans = []
