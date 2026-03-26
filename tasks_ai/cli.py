@@ -579,21 +579,76 @@ class TasksCLI:
                 f"Task '{filename}' not found.",
                 hint="Use 'tasks-ai list' to see all available task filenames/IDs.",
             )
-        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
         task = FM.load(filepath)
+        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
         title = task.metadata.get("Ti", "")
         task_id_num = task.metadata.get("Id", "")
         tt, _ = self._parse_filename(os.path.basename(filepath))
-        self._move_logic(filename, new_status)
-        self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
-        self.finish(
-            {
-                "id": task_id_num,
-                "task_id": task_id,
-                "title": title,
-                "status": new_status,
-            }
+
+        if "," in new_status:
+            statuses = [s.strip().upper() for s in new_status.split(",")]
+            current_state = task.get("St")
+            for i, target in enumerate(statuses):
+                if (
+                    target not in ALLOWED_TRANSITIONS.get(current_state, [])
+                    and current_state != target
+                ):
+                    self.error(
+                        f"Forbidden transition: {current_state} -> {target}",
+                        hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}",
+                    )
+                if target == "PROGRESSING":
+                    for b in task.get("Bl", []):
+                        _, bs = self.find_task(b)
+                        if bs != "ARCHIVED":
+                            self.error(
+                                f"Blocked by {b}. Blocker must be ARCHIVED first."
+                            )
+                task = self._perform_move(task, current_state, target, filepath)
+                current_state = target
+                if i == len(statuses) - 1:
+                    filepath = os.path.join(
+                        self.tasks_path,
+                        STATE_FOLDERS[target],
+                        os.path.basename(filepath),
+                    )
+            final_status = statuses[-1]
+            self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {final_status}")
+            self.finish(
+                {
+                    "id": task_id_num,
+                    "task_id": task_id,
+                    "title": title,
+                    "status": final_status,
+                }
+            )
+        else:
+            self._move_logic(filename, new_status)
+            self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
+            self.finish(
+                {
+                    "id": task_id_num,
+                    "task_id": task_id,
+                    "title": title,
+                    "status": new_status,
+                }
+            )
+
+    def _perform_move(self, task, current_state, new_status, filepath):
+        self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
+        task["St"] = new_status
+        new_filepath = os.path.join(
+            self.tasks_path, STATE_FOLDERS[new_status], os.path.basename(filepath)
         )
+        if os.path.isdir(filepath):
+            shutil.move(filepath, new_filepath)
+        else:
+            self._atomic_write(new_filepath, task)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        self._atomic_write(new_filepath, task)
+        self._append_log(new_filepath, f"{current_state}->{new_status}")
+        return task
 
     def _move_logic(self, filename, new_status, force=False):
         new_status = new_status.upper()
