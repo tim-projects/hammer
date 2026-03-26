@@ -810,12 +810,16 @@ class TasksCLI:
             self.finish(all_data)
         else:
             for state, tasks in all_data.items():
-                print(f"\n### {state}")
-                print("| # | P | Summary | Type | Branch | Blocked By |")
-                print("|---|---|---------|------|--------|------------|")
+                print(f"\n{state}")
+                print("-" * 80)
+                print(f"{'#':>3} {'P':>2} {'Summary':<40} {'Type':<8} {'Branch':<20}")
+                print("-" * 80)
                 for t in tasks:
+                    summary = (
+                        t["summary"][:40] if len(t["summary"]) > 40 else t["summary"]
+                    )
                     print(
-                        f"| {t.get('id', '')} | {t['p']} | {t['summary']} | {t['type']} | `{t['branch']}` | {', '.join(t['blocked_by']) if t['blocked_by'] else '-'} |"
+                        f"{t.get('id', ''):>3} {t['p']:>2} {summary:<40} {t['type']:<8} {t['branch']:<20}"
                     )
             self.finish()
 
