@@ -16,9 +16,9 @@ Run `tasks-ai --help` to discover the interface, JSON schemas, and operational r
    ```
 4. **Implementation**: 
    - Perform work on the branch specified in the task metadata.
-   - Log all technical findings, debt, or blockers in `.tasks/current-task.md`.   - Use `tasks-ai -j checkpoint` frequently to sync your `current-task.md` notes and git commits into the main task record.
-5. **Verification**: Once work is complete and tests pass, move to testing:
-   ```bash
+   - Log all technical findings, debt, or blockers in `.tasks/progressing/<task_id>/current-task.md`.
+   - Use `tasks-ai -j checkpoint` frequently to sync your `current-task.md` notes and git commits into the main task record.
+   5. **Verification**: Once work is complete and tests pass, move to testing:   ```bash
    tasks-ai -j move <filename> TESTING
    ```
 6. **Promotion**: Follow the state machine (`TESTING` -> `REVIEW` -> `STAGING` -> `LIVE`) as criteria are met.

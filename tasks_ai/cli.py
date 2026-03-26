@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from .constants import (
-    TASKS_DIR, LOGS_DIR, TASKS_BRANCH, CURRENT_TASK_FILENAME,
+    TASKS_DIR, TASKS_BRANCH, CURRENT_TASK_FILENAME,
     STATE_FOLDERS, ALLOWED_TRANSITIONS, KEY_MAP
 )
 from .models import Task
@@ -25,7 +25,6 @@ class TasksCLI:
         self.output_messages = []
         self.root = self._get_git_root()
         self.tasks_path = os.path.join(self.root, TASKS_DIR)
-        self.logs_path = os.path.join(self.tasks_path, LOGS_DIR)
         if os.path.exists(self.tasks_path):
             self._auto_archive()
             if command and command != "delete":
@@ -151,7 +150,7 @@ class TasksCLI:
             self._run_git(["checkout", "-"])
         if not os.path.exists(self.tasks_path):
             self._run_git(["worktree", "add", TASKS_DIR, TASKS_BRANCH])
-        for folder in list(STATE_FOLDERS.values()) + [LOGS_DIR]:
+        for folder in list(STATE_FOLDERS.values()):
             p = os.path.join(self.tasks_path, folder)
             if not os.path.exists(p):
                 os.makedirs(p)
@@ -171,12 +170,12 @@ class TasksCLI:
         self.log("Tasks initialized.")
         self.finish()
 
-    def _append_log(self, name, entry):
-        log_file = os.path.join(self.logs_path, name)
+    def _append_log(self, task_path, entry):
+        log_file = os.path.join(task_path, "activity.log")
         timestamp = datetime.now().strftime("%y%m%d %H:%M")
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(f"- {timestamp}: {entry}\n")
-        self._run_git(["add", os.path.join(LOGS_DIR, name)], cwd=self.tasks_path)
+        self._run_git(["add", os.path.join(os.path.relpath(task_path, self.tasks_path), "activity.log")], cwd=self.tasks_path)
 
     def find_task(self, name):
         if not name: return None, None
@@ -214,8 +213,8 @@ class TasksCLI:
         )
         try:
             self._atomic_write(task_dir, task)
-            self._append_log(task_id, "Cr")
-            self._run_git(["add", os.path.relpath(task_dir, self.tasks_path), os.path.join(LOGS_DIR, task_id)], cwd=self.tasks_path)
+            self._append_log(task_dir, "Cr")
+            self._run_git(["add", os.path.relpath(task_dir, self.tasks_path)], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Add {task_type}: {title}"], cwd=self.tasks_path)
             self.log(f"Created: {task_id}")
             self.finish({"file": task_id, "path": os.path.relpath(task_dir, self.root)})
@@ -252,7 +251,7 @@ class TasksCLI:
                 dump = FM.load(dump_path)
                 dump.parts["content"] = task.parts.get("notes", "")
                 self._atomic_write(dump_path, dump)
-            self._append_log(os.path.basename(filepath), "Mod")
+            self._append_log(filepath, "Mod")
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Mod {os.path.basename(filepath)}"], cwd=self.tasks_path)
             self.log(f"Modified: {os.path.basename(filepath)}")
@@ -279,11 +278,9 @@ class TasksCLI:
         if task.metadata.get("DeleteCode") != confirm:
             self.error("Invalid or missing confirmation code.", hint=f"Run 'tasks-ai delete {task_id}' again to get a new code.")
         
-        log_file = os.path.join(self.logs_path, task_id)
         try:
             if os.path.isdir(filepath): shutil.rmtree(filepath)
             else: os.remove(filepath)
-            if os.path.exists(log_file): os.remove(log_file)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Del {task_id}"], cwd=self.tasks_path)
             self.log(f"Deleted: {task_id}")
@@ -366,13 +363,16 @@ class TasksCLI:
                 if bs != "ARCHIVED": self.error(f"Blocked by {b}. Blocker must be ARCHIVED first.")
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
         task["St"] = new_status
-        self._append_log(os.path.basename(filepath), f"{current_state}->{new_status}")
         new_filepath = os.path.join(self.tasks_path, STATE_FOLDERS[new_status], os.path.basename(filepath))
         try:
+            if os.path.isdir(filepath):
+                shutil.move(filepath, new_filepath)
+            else:
+                self._atomic_write(new_filepath, task)
+                if os.path.exists(filepath): os.remove(filepath)
+            
             self._atomic_write(new_filepath, task)
-            if os.path.exists(filepath):
-                if os.path.isdir(filepath): shutil.rmtree(filepath)
-                else: os.remove(filepath)
+            self._append_log(new_filepath, f"{current_state}->{new_status}")
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Mv {os.path.basename(filepath)}: {current_state}->{new_status}"], cwd=self.tasks_path)
             if new_status == "PROGRESSING":
@@ -385,7 +385,7 @@ class TasksCLI:
         filepath, task = self.get_active_task(filename)
         if not filepath: self.error("No active task.")
         tn = os.path.basename(filepath); tt, br = self._parse_filename(tn)
-        data = {"file": os.path.relpath(filepath, self.root), "name": tn, "type": tt, "branch": br, "metadata": {KEY_MAP.get(k, k): v for k, v in task.metadata.items()}, "log_file": os.path.relpath(os.path.join(self.logs_path, tn), self.root)}
+        data = {"file": os.path.relpath(filepath, self.root), "name": tn, "type": tt, "branch": br, "metadata": {KEY_MAP.get(k, k): v for k, v in task.metadata.items()}, "log_file": os.path.relpath(os.path.join(filepath, "activity.log"), self.root)}
         dp = os.path.join(filepath, CURRENT_TASK_FILENAME)
         if os.path.exists(dp):
             d = FM.load(dp)

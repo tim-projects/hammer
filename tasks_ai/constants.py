@@ -1,7 +1,6 @@
 # tasks_ai/constants.py
 
 TASKS_DIR = ".tasks"
-LOGS_DIR = "logs"
 TASKS_BRANCH = "tasks"
 CURRENT_TASK_FILENAME = "current-task.md"
 
