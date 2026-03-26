@@ -750,7 +750,7 @@ class TasksCLI:
             if missing:
                 self.error(
                     f"Task lacks sufficient detail to move to PROGRESSING. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'tasks-ai show <id>\' to see current content, then \'tasks-ai modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro with reproduction steps.',
+                    hint='Use \'tasks-ai show <id>\' to see current content, then \'tasks-ai modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'tasks-ai modify --help\' for syntax help.',
                 )
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
         task["St"] = new_status
