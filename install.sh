@@ -82,14 +82,8 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # Define source and destination
-SOURCE_FILE="tasks.py"
-DEST_PATH="$DEST_DIR/tasks-ai"
-
-# Check if script exists
-if [ ! -f "$SOURCE_FILE" ]; then
-    echo "Error: $SOURCE_FILE not found in current directory."
-    exit 1
-fi
+SOURCE_FILES=("tasks.py" "tasks_ai")
+DEST_DIR="$DEST_DIR"
 
 # Ensure destination directory exists
 if [ ! -d "$DEST_DIR" ]; then
@@ -97,10 +91,24 @@ if [ ! -d "$DEST_DIR" ]; then
     mkdir -p "$DEST_DIR"
 fi
 
-# Copy and make executable
-echo "Installing Tasks AI to $DEST_PATH..."
-cp "$SOURCE_FILE" "$DEST_PATH"
-chmod +x "$DEST_PATH"
+# Copy files
+echo "Installing Tasks AI..."
+for src in "${SOURCE_FILES[@]}"; do
+    if [ -d "$src" ]; then
+        cp -r "$src" "$DEST_DIR/"
+    else
+        cp "$src" "$DEST_DIR/"
+    fi
+done
+
+# Set executable for the entry point
+chmod +x "$DEST_DIR/tasks.py"
+
+# Create a symlink for easy access
+if [ -L "$DEST_DIR/tasks-ai" ]; then
+    rm "$DEST_DIR/tasks-ai"
+fi
+ln -s "$DEST_DIR/tasks.py" "$DEST_DIR/tasks-ai"
 
 echo "--------------------------------------------------"
 echo "Installation complete!"
