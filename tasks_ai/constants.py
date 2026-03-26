@@ -1,6 +1,6 @@
 # tasks_ai/constants.py
 
-TASKS_DIR = "tasks"
+TASKS_DIR = ".tasks"
 LOGS_DIR = "logs"
 TASKS_BRANCH = "tasks"
 CURRENT_TASK_FILENAME = "current-task.md"
@@ -45,10 +45,10 @@ AGENT OPERATIONAL PROTOCOL:
    --repro is mandatory for --type issue. Titles must be >= 10 chars.
 3. LIFECYCLE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> LIVE -> ARCHIVED.
    - Task MUST be in PROGRESSING before modifying project code.
-   - 'move' to PROGRESSING creates/syncs 'tasks/current-task.md'.
+   - 'move' to PROGRESSING creates/syncs '.tasks/progressing/<task_id>/current-task.md'.
 4. PROGRESS: Use 'modify' to update --progress, --findings, or --mitigations.
-   - Updates to the active task automatically sync to 'tasks/current-task.md'.
-   - Use 'tasks/current-task.md' as your primary scratchpad while working.
+   - Updates to the active task automatically sync to its 'current-task.md'.
+   - Use '.tasks/progressing/<task_id>/current-task.md' as your primary scratchpad while working.
 5. SYNC: Use 'checkpoint' to pull git commits and current-task.md notes into the task file.
 6. RULES: 
    - All blockers (Bl) in metadata MUST be ARCHIVED before moving to PROGRESSING.

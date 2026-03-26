@@ -247,12 +247,11 @@ class TasksCLI:
 
         if updated:
             self._atomic_write(filepath, task)
-            dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
+            dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
             if os.path.exists(dump_path):
                 dump = FM.load(dump_path)
-                if dump.get("Task") == os.path.basename(filepath):
-                    dump.parts["content"] = task.parts.get("notes", "")
-                    self._atomic_write(dump_path, dump)
+                dump.parts["content"] = task.parts.get("notes", "")
+                self._atomic_write(dump_path, dump)
             self._append_log(os.path.basename(filepath), "Mod")
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Mod {os.path.basename(filepath)}"], cwd=self.tasks_path)
@@ -285,10 +284,6 @@ class TasksCLI:
             if os.path.isdir(filepath): shutil.rmtree(filepath)
             else: os.remove(filepath)
             if os.path.exists(log_file): os.remove(log_file)
-            dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
-            if os.path.exists(dump_path):
-                dump = FM.load(dump_path)
-                if dump.get("Task") == task_id: os.remove(dump_path)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Del {task_id}"], cwd=self.tasks_path)
             self.log(f"Deleted: {task_id}")
@@ -306,10 +301,6 @@ class TasksCLI:
             if dirs:
                 filepath = os.path.join(prog_dir, dirs[0])
                 return filepath, FM.load(filepath)
-        dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
-        if os.path.exists(dump_path):
-            dump = FM.load(dump_path)
-            if dump.get("Task"): return self.get_active_task(dump.get("Task"))
         return None, None
 
     def checkpoint(self, filename=None):
@@ -332,13 +323,12 @@ class TasksCLI:
         if commits:
             task.parts["commits"] = commits
             updated = True
-        dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
+        dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
         if os.path.exists(dump_path):
             dump = FM.load(dump_path)
-            if dump.get("Task") == os.path.basename(filepath):
-                if dump.parts.get("content"):
-                    task.parts["notes"] = dump.parts["content"]
-                    updated = True
+            if dump.parts.get("content"):
+                task.parts["notes"] = dump.parts["content"]
+                updated = True
         return updated
 
     def _get_default_branch(self):
@@ -385,13 +375,10 @@ class TasksCLI:
                 else: os.remove(filepath)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", f"Mv {os.path.basename(filepath)}: {current_state}->{new_status}"], cwd=self.tasks_path)
-            dump_path = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
             if new_status == "PROGRESSING":
+                dump_path = os.path.join(new_filepath, CURRENT_TASK_FILENAME)
                 d = Task(metadata={"Task": os.path.basename(new_filepath)}, parts={"content": task.parts.get("notes", "- Progress: \n- Findings: \n- Mitigations: \n")})
                 self._atomic_write(dump_path, d)
-            elif new_status == "ARCHIVED" and os.path.exists(dump_path):
-                d = FM.load(dump_path)
-                if d.get("Task") == os.path.basename(new_filepath): os.remove(dump_path)
         except Exception as e: self.error(str(e))
 
     def current(self, filename=None):
@@ -399,17 +386,19 @@ class TasksCLI:
         if not filepath: self.error("No active task.")
         tn = os.path.basename(filepath); tt, br = self._parse_filename(tn)
         data = {"file": os.path.relpath(filepath, self.root), "name": tn, "type": tt, "branch": br, "metadata": {KEY_MAP.get(k, k): v for k, v in task.metadata.items()}, "log_file": os.path.relpath(os.path.join(self.logs_path, tn), self.root)}
-        dp = os.path.join(self.tasks_path, CURRENT_TASK_FILENAME)
+        dp = os.path.join(filepath, CURRENT_TASK_FILENAME)
         if os.path.exists(dp):
             d = FM.load(dp)
-            if d.get("Task") == tn: data["dump"] = {"file": os.path.relpath(dp, self.root), "content": d.parts.get("content", "").strip()}
+            data["dump"] = {"file": os.path.relpath(dp, self.root), "content": d.parts.get("content", "").strip()}
+        
         if not self.as_json:
             print(f"# TASK: {data['metadata'].get('Title', data['name'])}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`")
             for k, v in data["metadata"].items():
                 if k != "Title": print(f"- **{k}**: {v}")
             if "dump" in data: print(f"\n## Active Progress\n{data['dump']['content']}")
             else: print(f"\n## Content\n{task.content}")
-        else: self.finish(data)
+        
+        self.finish(data)
 
     def list(self, show_all=False):
         if not os.path.exists(self.tasks_path): self.error("Init required.")
