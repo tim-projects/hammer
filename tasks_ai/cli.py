@@ -821,7 +821,7 @@ class TasksCLI:
                     max_lines = max(len(summary_lines), len(branch_lines))
                     for i in range(max_lines):
                         id_str = str(t.get("id", "")) if i == 0 else ""
-                        p_str = str(t["p"]) if i == 0 else ""
+                        p_str = str(t["p"]) if i == 0 else " "
                         s_line = summary_lines[i] if i < len(summary_lines) else ""
                         type_str = t["type"] if i == 0 else ""
                         b_line = branch_lines[i] if i < len(branch_lines) else ""
