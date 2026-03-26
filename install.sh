@@ -6,6 +6,7 @@ set -e
 # Default values
 MODE="local"
 DEST_DIR="$HOME/.local/bin"
+UNINSTALL=false
 
 # Parse arguments
 for arg in "$@"; do
@@ -14,17 +15,64 @@ for arg in "$@"; do
       MODE="system"
       DEST_DIR="/usr/local/bin"
       ;;
-    -l|--local)
+    -u|--user)
       MODE="local"
       DEST_DIR="$HOME/.local/bin"
+      ;;
+    --uninstall)
+      UNINSTALL=true
+      ;;
+    -h|--help)
+      echo "Usage: install.sh [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  -u, --user      Install locally to ~/.local/bin (default)"
+      echo "  -g, --system    Install system-wide to /usr/local/bin (requires sudo)"
+      echo "  --uninstall     Remove existing installation"
+      echo "  -h, --help      Show this help message"
+      exit 0
       ;;
   esac
 done
 
-# If system mode, check for root
+# If no mode specified and no uninstall, ask user
+if [ "$MODE" == "local" ] && [ -z "$1" ]; then
+  echo "Select installation mode:"
+  echo "  1) User (installs to ~/.local/bin)"
+  echo "  2) System-wide (installs to /usr/local/bin - requires sudo)"
+  read -p "Enter choice [1]: " choice
+  choice=${choice:-1}
+  if [ "$choice" == "2" ]; then
+    MODE="system"
+    DEST_DIR="/usr/local/bin"
+  fi
+fi
+
+# If system mode, check for sudo
 if [ "$MODE" == "system" ] && [ "$EUID" -ne 0 ]; then
-    echo "Error: Global installation (-g) requires root privileges. Please run with sudo."
-    exit 1
+  echo "Error: System-wide installation requires root privileges."
+  echo "Please run with sudo: sudo $0 $@"
+  exit 1
+fi
+
+# Check for existing installations and remove them
+remove_existing() {
+  local path="$1"
+  if [ -f "$path" ]; then
+    echo "Removing existing installation at $path..."
+    rm -f "$path"
+  fi
+}
+
+echo "Checking for existing installations..."
+remove_existing "$HOME/.local/bin/tasks-ai"
+remove_existing "/usr/local/bin/tasks-ai"
+echo "Done."
+
+# Handle uninstall
+if [ "$UNINSTALL" == "true" ]; then
+  echo "Uninstallation complete!"
+  exit 0
 fi
 
 # Check for python3
