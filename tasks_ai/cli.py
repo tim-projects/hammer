@@ -857,8 +857,10 @@ class TasksCLI:
 
     def reconcile(self, target=None):
         if not target:
-            print("Usage: tasks-ai reconcile <task-id>|all")
-            return
+            self.error(
+                "Missing target. Use 'tasks-ai reconcile all' to archive orphaned tasks (tasks whose branches no longer exist in remote), or provide a specific task Id/filename.",
+                hint="Run 'tasks-ai list' to see available task Ids and filenames.",
+            )
         if target == "all":
             self._reconcile_all()
         else:
@@ -867,7 +869,10 @@ class TasksCLI:
     def _reconcile_single(self, filename):
         filepath, _ = self.find_task(filename)
         if not filepath:
-            self.error("Not found.")
+            self.error(
+                f"Task '{filename}' not found.",
+                hint="Use 'tasks-ai list' to see available task Ids and filenames. You can also use 'tasks-ai reconcile all' to check all tasks for orphaned branches.",
+            )
         _, branch = self._parse_filename(os.path.basename(filepath))
         if self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
             return
