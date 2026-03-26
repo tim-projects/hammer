@@ -20,6 +20,9 @@ if __name__ == "__main__":
     cur_p = subparsers.add_parser("current", help="Show active task.")
     cur_p.add_argument("filename", nargs="?")
 
+    show_p = subparsers.add_parser("show", help="Show task details.")
+    show_p.add_argument("filename", help="Task Id or filename to show.")
+
     cp_p = subparsers.add_parser("checkpoint", help="Sync commits/notes.")
     cp_p.add_argument("filename", nargs="?")
 
@@ -114,6 +117,8 @@ if __name__ == "__main__":
         cli.list(show_all=args.all)
     elif args.command == "current":
         cli.current(args.filename)
+    elif args.command == "show":
+        cli.show(args.filename)
     elif args.command == "checkpoint":
         cli.checkpoint(args.filename)
     elif args.command == "link":

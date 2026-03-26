@@ -788,6 +788,49 @@ class TasksCLI:
 
         self.finish(data)
 
+    def show(self, filename):
+        filepath, _ = self.find_task(filename)
+        if not filepath:
+            self.error(
+                f"Task '{filename}' not found.",
+                hint="Use 'tasks-ai list' to see available task Ids.",
+            )
+        task = FM.load(filepath)
+        tn = os.path.basename(filepath)
+        tt, br = self._parse_filename(tn)
+        data = {
+            "file": os.path.relpath(filepath, self.root),
+            "name": tn,
+            "type": tt,
+            "branch": br,
+            "metadata": {KEY_MAP.get(k, k): v for k, v in task.metadata.items()},
+            "log_file": os.path.relpath(
+                os.path.join(filepath, "activity.log"), self.root
+            ),
+        }
+        dp = os.path.join(filepath, CURRENT_TASK_FILENAME)
+        if os.path.exists(dp):
+            d = FM.load(dp)
+            data["dump"] = {
+                "file": os.path.relpath(dp, self.root),
+                "content": d.parts.get("content", "").strip(),
+            }
+
+        if not self.as_json:
+            print(
+                f"# TASK: {data['metadata'].get('Title', data['name'])}\n- **Id**: {data['metadata'].get('Id', '')} | **State**: {data['metadata'].get('State', '')} | **Priority**: {data['metadata'].get('Priority', '')}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`"
+            )
+            print(f"\n## Story\n{task.parts.get('story', 'No story')}")
+            print(f"\n## Technical\n{task.parts.get('tech', 'No technical details')}")
+            print(f"\n## Criteria\n{task.parts.get('criteria', 'No criteria')}")
+            print(f"\n## Plan\n{task.parts.get('plan', 'No plan')}")
+            if task.parts.get("repro"):
+                print(f"\n## Reproduction\n{task.parts.get('repro')}")
+            if data.get("dump"):
+                print(f"\n## Active Progress\n{data['dump']['content']}")
+
+        self.finish(data)
+
     def list(self, show_all=False):
         if not os.path.exists(self.tasks_path):
             self.error("Init required.")
