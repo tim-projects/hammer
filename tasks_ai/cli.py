@@ -788,7 +788,7 @@ class TasksCLI:
 
         self.finish(data)
 
-    def show(self, filename):
+    def show(self, filename, section=None):
         filepath, _ = self.find_task(filename)
         if not filepath:
             self.error(
@@ -816,18 +816,42 @@ class TasksCLI:
                 "content": d.parts.get("content", "").strip(),
             }
 
+        section_map = {
+            "story": ("Story", task.parts.get("story", "No story")),
+            "tech": ("Technical", task.parts.get("tech", "No technical details")),
+            "criteria": ("Criteria", task.parts.get("criteria", "No criteria")),
+            "plan": ("Plan", task.parts.get("plan", "No plan")),
+            "repro": ("Reproduction", task.parts.get("repro", "No reproduction steps")),
+            "notes": ("Notes", task.parts.get("notes", "No notes")),
+            "progress": (
+                "Active Progress",
+                data.get("dump", {}).get("content", "No active progress"),
+            ),
+        }
+
         if not self.as_json:
-            print(
-                f"# TASK: {data['metadata'].get('Title', data['name'])}\n- **Id**: {data['metadata'].get('Id', '')} | **State**: {data['metadata'].get('State', '')} | **Priority**: {data['metadata'].get('Priority', '')}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`"
-            )
-            print(f"\n## Story\n{task.parts.get('story', 'No story')}")
-            print(f"\n## Technical\n{task.parts.get('tech', 'No technical details')}")
-            print(f"\n## Criteria\n{task.parts.get('criteria', 'No criteria')}")
-            print(f"\n## Plan\n{task.parts.get('plan', 'No plan')}")
-            if task.parts.get("repro"):
-                print(f"\n## Reproduction\n{task.parts.get('repro')}")
-            if data.get("dump"):
-                print(f"\n## Active Progress\n{data['dump']['content']}")
+            if section:
+                if section in section_map:
+                    title, content = section_map[section]
+                    print(f"## {title}\n{content}")
+                else:
+                    self.error(
+                        f"Unknown section '{section}'. Valid sections: {', '.join(section_map.keys())}"
+                    )
+            else:
+                print(
+                    f"# TASK: {data['metadata'].get('Title', data['name'])}\n- **Id**: {data['metadata'].get('Id', '')} | **State**: {data['metadata'].get('State', '')} | **Priority**: {data['metadata'].get('Priority', '')}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`"
+                )
+                print(f"\n## Story\n{task.parts.get('story', 'No story')}")
+                print(
+                    f"\n## Technical\n{task.parts.get('tech', 'No technical details')}"
+                )
+                print(f"\n## Criteria\n{task.parts.get('criteria', 'No criteria')}")
+                print(f"\n## Plan\n{task.parts.get('plan', 'No plan')}")
+                if task.parts.get("repro"):
+                    print(f"\n## Reproduction\n{task.parts.get('repro')}")
+                if data.get("dump"):
+                    print(f"\n## Active Progress\n{data['dump']['content']}")
 
         self.finish(data)
 

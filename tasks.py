@@ -22,6 +22,12 @@ if __name__ == "__main__":
 
     show_p = subparsers.add_parser("show", help="Show task details.")
     show_p.add_argument("filename", help="Task Id or filename to show.")
+    show_p.add_argument(
+        "section",
+        nargs="?",
+        choices=["story", "tech", "criteria", "plan", "repro", "notes", "progress"],
+        help="Specific section to show: story, tech, criteria, plan, repro, notes, progress",
+    )
 
     cp_p = subparsers.add_parser("checkpoint", help="Sync commits/notes.")
     cp_p.add_argument("filename", nargs="?")
@@ -118,7 +124,7 @@ if __name__ == "__main__":
     elif args.command == "current":
         cli.current(args.filename)
     elif args.command == "show":
-        cli.show(args.filename)
+        cli.show(args.filename, args.section)
     elif args.command == "checkpoint":
         cli.checkpoint(args.filename)
     elif args.command == "link":
