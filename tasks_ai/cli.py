@@ -844,15 +844,16 @@ class TasksCLI:
 
             self._atomic_write(new_filepath, task)
             self._append_log(new_filepath, f"{current_state}->{new_status}")
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                [
-                    "commit",
-                    "-m",
-                    f"Mv {os.path.basename(filepath)}: {current_state}->{new_status}",
-                ],
-                cwd=self.tasks_path,
-            )
+            if new_status == "ARCHIVED":
+                self._run_git(["add", "--all"], cwd=self.tasks_path)
+                self._run_git(
+                    [
+                        "commit",
+                        "-m",
+                        f"Mv {os.path.basename(filepath)}: {current_state}->{new_status}",
+                    ],
+                    cwd=self.tasks_path,
+                )
             if new_status == "PROGRESSING":
                 dump_path = os.path.join(new_filepath, CURRENT_TASK_FILENAME)
                 d = Task(
