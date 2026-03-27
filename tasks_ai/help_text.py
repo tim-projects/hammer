@@ -1,6 +1,9 @@
 # Agent Guidance embedded in CLI
 
 AGENT_GUIDANCE = """
+IMPORTANT: Always use -j for JSON output (machine-parseable for agents).
+For help on any command, use tasks-ai <command> -h
+
 TASK REFERENCES: Use the numeric Id (e.g., "17") instead of the filename for all operations. 
 Run 'tasks-ai list' to see task Ids alongside titles.
 
