@@ -748,6 +748,64 @@ class TasksCLI:
                 hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}",
             )
         task = FM.load(filepath)
+        tt, branch = self._parse_filename(os.path.basename(filepath))
+
+        def _has_complete_content(t, fn):
+            if not t.parts.get("story") or len(t.parts.get("story", "").strip()) < 10:
+                return False
+            if not t.parts.get("tech") or len(t.parts.get("tech", "").strip()) < 10:
+                return False
+            if (
+                not t.parts.get("criteria")
+                or len(t.parts.get("criteria", "").strip()) < 10
+            ):
+                return False
+            if not t.parts.get("plan") or len(t.parts.get("plan", "").strip()) < 10:
+                return False
+            type_part, _ = fn.rsplit(".", 1)[0].split("-", 1)
+            if type_part == "issue":
+                if (
+                    not t.parts.get("repro")
+                    or len(t.parts.get("repro", "").strip()) < 10
+                ):
+                    return False
+            return True
+
+        if current_state == "BACKLOG" and new_status != "BACKLOG":
+            if not _has_complete_content(task, os.path.basename(filepath)):
+                missing = []
+                if (
+                    not task.parts.get("story")
+                    or len(task.parts.get("story", "").strip()) < 10
+                ):
+                    missing.append("story")
+                if (
+                    not task.parts.get("tech")
+                    or len(task.parts.get("tech", "").strip()) < 10
+                ):
+                    missing.append("tech")
+                if (
+                    not task.parts.get("criteria")
+                    or len(task.parts.get("criteria", "").strip()) < 10
+                ):
+                    missing.append("criteria")
+                if (
+                    not task.parts.get("plan")
+                    or len(task.parts.get("plan", "").strip()) < 10
+                ):
+                    missing.append("plan")
+                tt, _ = self._parse_filename(os.path.basename(filepath))
+                if tt == "issue":
+                    if (
+                        not task.parts.get("repro")
+                        or len(task.parts.get("repro", "").strip()) < 10
+                    ):
+                        missing.append("repro")
+                self.error(
+                    f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
+                    hint='Use \'tasks-ai modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro.',
+                )
+
         if new_status == "PROGRESSING":
             for b in task.get("Bl", []):
                 _, bs = self.find_task(b)
