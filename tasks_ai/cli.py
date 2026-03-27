@@ -83,6 +83,10 @@ class TasksCLI:
 
     def _parse_filename(self, name):
         name_part = name.rsplit(".", 1)[0]
+        if "-" in name_part:
+            parts = name_part.split("-", 2)
+            if len(parts) >= 3:
+                return parts[1], parts[2] if len(parts) > 2 else parts[1]
         if "_" in name_part:
             return name_part.split("_", 1)
         return "task", name_part
@@ -338,8 +342,8 @@ class TasksCLI:
         clean_title = "".join(c if c.isalnum() else "-" for c in title.lower()).strip(
             "-"
         )
-        task_id = f"{task_type}_{clean_title[:30]}"
         numeric_id = self._get_next_id()
+        task_id = f"{numeric_id}-{task_type}-{clean_title[:30]}"
         task_dir = os.path.join(self.tasks_path, STATE_FOLDERS["BACKLOG"], task_id)
         if self.find_task(task_id)[0]:
             self.error(f"Task {task_id} exists.")
@@ -390,6 +394,7 @@ class TasksCLI:
             self._run_git(
                 ["commit", "-m", f"Add {task_type}: {title}"], cwd=self.tasks_path
             )
+            self._run_git(["checkout", "-b", task_id], cwd=self.root)
             self.log(f"Created: [{numeric_id}] {task_type} | {title}")
             self.finish(
                 {
@@ -477,6 +482,9 @@ class TasksCLI:
             self.log(
                 f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
             )
+            tt, branch = self._parse_filename(os.path.basename(filepath))
+            if not self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
+                self._run_git(["checkout", "-b", branch], cwd=self.root)
             if not task.parts.get("story"):
                 self.log("Tip: Consider adding --story to document the user context.")
             elif not task.parts.get("tech"):
@@ -803,16 +811,15 @@ class TasksCLI:
                 )
 
         if new_status == "ARCHIVED":
-            merge_base = self._run_git(["merge-base", branch, "main"]).stdout.strip()
-            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-            if merge_base != main_sha:
+            merge_base = self._run_git(["merge-base", branch, "testing"]).stdout.strip()
+            testing_sha = (
+                self._run_git(["rev-parse", "testing"]).stdout.strip()
+                if self._run_git(["rev-parse", "--verify", "testing"]).returncode == 0
+                else None
+            )
+            if not testing_sha or merge_base != testing_sha:
                 self.error(
-                    f"Branch '{branch}' not merged to main. Merge to main first."
-                )
-            local_branches = self._run_git(["branch", "--list", branch]).stdout.strip()
-            if local_branches:
-                self.error(
-                    f"Local branch '{branch}' still exists. Delete it after merging to main: git branch -d {branch}"
+                    f"Branch '{branch}' not merged to testing. Merge to testing first."
                 )
 
         if new_status == "ARCHIVED" and self._has_incomplete_checkboxes(filepath):
