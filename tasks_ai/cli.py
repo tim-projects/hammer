@@ -845,12 +845,14 @@ class TasksCLI:
             self._atomic_write(new_filepath, task)
             self._append_log(new_filepath, f"{current_state}->{new_status}")
             if new_status == "ARCHIVED":
+                task_id = task.metadata.get("Id", "")
+                title = task.metadata.get("Ti", "")
                 self._run_git(["add", "--all"], cwd=self.tasks_path)
                 self._run_git(
                     [
                         "commit",
                         "-m",
-                        f"Mv {os.path.basename(filepath)}: {current_state}->{new_status}",
+                        f"Archive [{task_id}] {title}",
                     ],
                     cwd=self.tasks_path,
                 )
