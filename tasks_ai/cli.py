@@ -39,6 +39,7 @@ class TasksCLI:
         self.output_messages = []
         self.root = self._get_git_root()
         self.tasks_path = os.path.join(self.root, TASKS_DIR)
+        self.logs_path = os.path.join(self.tasks_path, "logs")
         if os.path.exists(self.tasks_path):
             self._auto_archive()
             if command and command != "delete":
@@ -312,12 +313,8 @@ class TasksCLI:
         if task_type == "issue" and not repro:
             missing.append("--repro")
         if missing:
-            self.log(
-                f"Note: Missing optional parameters: {', '.join(missing)}. Task created but consider adding these later."
-            )
-        else:
-            self.log(
-                "Tip: Use --priority for high-priority tasks, --type issue for bugs."
+            self.error(
+                f"Missing required fields: {', '.join(missing)}. Task not created. These are required to move to PROGRESSING anyway."
             )
 
         clean_title = "".join(c if c.isalnum() else "-" for c in title.lower()).strip(
