@@ -291,30 +291,40 @@ class TasksCLI:
             return None, None
         task_id = name.rsplit(".", 1)[0]
 
-        # First try direct lookup by filename
+        matches = []
         for state, folder in STATE_FOLDERS.items():
             dir_path = os.path.join(self.tasks_path, folder, task_id)
             if os.path.isdir(dir_path):
-                return dir_path, state
-            file_path = dir_path + ".md"
-            if os.path.isfile(file_path):
-                return file_path, state
+                task = FM.load(dir_path)
+                task_state = task.metadata.get("St", state)
+                matches.append((dir_path, task_state))
 
-        # If not found and looks like a numeric ID, search by metadata Id
-        if task_id.isdigit():
+        if not matches and task_id.isdigit():
             for state, folder in STATE_FOLDERS.items():
                 fp = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(fp):
                     continue
                 for item in os.listdir(fp):
-                    if item == ".gitkeep":
-                        continue
                     path = os.path.join(fp, item)
-                    task = FM.load(path)
-                    if str(task.metadata.get("Id")) == task_id:
-                        return path, state
+                    if os.path.isdir(path):
+                        task = FM.load(path)
+                        if str(task.metadata.get("Id")) == task_id:
+                            task_state = task.metadata.get("St", state)
+                            matches.append((path, task_state))
 
-        return None, None
+        if not matches:
+            return None, None
+
+        if len(matches) == 1:
+            return matches[0]
+
+        for path, state in matches:
+            if state == "ARCHIVED":
+                return path, "ARCHIVED"
+        for path, state in matches:
+            if state != "BACKLOG":
+                return path, state
+        return matches[0]
 
     def _get_next_id(self):
         counter_file = os.path.join(self.tasks_path, ".task_counter")
@@ -1119,8 +1129,10 @@ class TasksCLI:
                 path = os.path.join(fp, item)
                 if not os.path.isdir(path):
                     continue
-                seen.add(item)
                 task = FM.load(path)
+                actual_state = task.metadata.get("St", state)
+                if actual_state != state:
+                    continue
                 tt, tb = self._parse_filename(item)
                 task_id = task.metadata.get("Id")
                 if not task_id:
@@ -1137,6 +1149,7 @@ class TasksCLI:
                         ],
                         cwd=self.tasks_path,
                     )
+                seen.add(item)
                 tasks.append(
                     {
                         "id": task_id,
