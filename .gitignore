@@ -2,3 +2,7 @@ tasks/
 venv/
 
 .tasks/
+
+__pycache__/
+*.pyc
+.pytest_cache/
