@@ -1,30 +1,30 @@
 # Tasks AI: Task Management for AI Agents
 
-`tasks-ai` gives AI agents a structured way to manage their work. It lives in your Git repo and provides a reliable framework for agents to track, progress, and complete tasks without requiring human intervention at every step.
+`tasks` gives AI agents a structured way to manage their work. It lives in your Git repo and provides a reliable framework for agents to track, progress, and complete tasks without requiring human intervention at every step.
 
 ## 🚀 One-Line Install
 
 ### Local (No Sudo)
-Installs to `~/.local/bin/tasks-ai`.
+Installs to `~/.local/bin/tasks`.
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/tim-projects/tasks/main/install.sh | bash
 ```
 
 ### System-Wide (Global)
-Installs to `/usr/local/bin/tasks-ai`.
+Installs to `/usr/local/bin/tasks`.
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | sudo bash -s -- -g
+curl -sSL https://raw.githubusercontent.com/tim-projects/tasks/main/install.sh | sudo bash -s -- -g
 ```
 
 ## 🛠️ Getting Started
 
 To enable autonomous task management in your project, simply add the following directive to your `AGENTS.md` file:
 
-> **Directive**: "Manage project tasks using the `tasks-ai` command. Run `tasks-ai -h` to discover the interface and operational protocol."
+> **Directive**: "Manage project tasks using the `tasks` command. Run `tasks -h` to discover the interface and operational protocol."
 
 The agent will then autonomously:
-1. Initialize the system (`tasks-ai init`).
-2. Discover or create tasks (`tasks-ai list` / `tasks-ai create`).
+1. Initialize the system (`tasks init`).
+2. Discover or create tasks (`tasks list` / `tasks create`).
 3. Manage work-in-progress and promotions through the Git-native state machine.
 
 ## The Problem
@@ -41,7 +41,7 @@ Without a structured system, agents improvise. They skip steps, lose track of wh
 
 ## The Solution
 
-`tasks-ai` provides a deterministic state machine with quality gates. Agents must follow the lifecycle, meeting criteria at each step before advancing.
+`tasks` provides a deterministic state machine with quality gates. Agents must follow the lifecycle, meeting criteria at each step before advancing.
 
 ### The State Machine
 
@@ -82,28 +82,28 @@ Each transition has rules:
 
 ```bash
 # Add to AGENTS.md so agents discover the tool:
-# "Manage project tasks using the tasks-ai command. Run tasks-ai -h to discover the interface."
+# "Manage project tasks using the tasks command. Run tasks -h to discover the interface."
 
 # Agent initializes on first run
-tasks-ai init
+tasks init
 
 # Agent creates work
-tasks-ai create "Add user login" \
+tasks create "Add user login" \
   --story "..." --tech "..." --criteria "..." --plan "..."
 
 # Agent starts working (creates branch automatically)
-tasks-ai move 1 PROGRESSING
+tasks move 1 PROGRESSING
 
 # Agent progresses through states
-tasks-ai move 1 TESTING
-tasks-ai move 1 REVIEW
+tasks move 1 TESTING
+tasks move 1 REVIEW
 
 # When code merges to main, agent archives
-tasks-ai move 1 ARCHIVED -y  # pushes branch, deletes local, archives
+tasks move 1 ARCHIVED -y  # pushes branch, deletes local, archives
 
 # Or use cleanup to scan and clean all merged branches
-tasks-ai cleanup --dry-run   # preview what would be cleaned
-tasks-ai cleanup             # clean merged branches and archive tasks
+tasks cleanup --dry-run   # preview what would be cleaned
+tasks cleanup             # clean merged branches and archive tasks
 ```
 
 ## Why This Over alternatives?

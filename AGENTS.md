@@ -1,10 +1,10 @@
 # Agent Task Management Protocol
 
-AI Agents should follow these instructions to manage their workflow using the `tasks-ai` CLI.
+AI Agents should follow these instructions to manage their workflow using the `tasks` CLI.
 
-## ⚠️ Important: Use Local tasks-ai
+## ⚠️ Important: Use Local tasks
 
-This repo has a local `tasks.py` that should be used instead of the system-installed `tasks-ai` binary. The local version may be newer or have modifications.
+This repo has a local `tasks.py` that should be used instead of the system-installed `tasks` binary. The local version may be newer or have modifications.
 
 ```bash
 # Use this repo's version (recommended)
@@ -18,7 +18,7 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
 ## 🤖 Mandatory Workflow
 
 1. **Discovery**: On every session start, run `python tasks.py -j list` to identify high-priority work.
-2. **Initialization**: If `tasks-ai` is not initialized, run `python tasks.py init`.
+2. **Initialization**: If `tasks` is not initialized, run `python tasks.py init`.
 3. **Activation**: Before writing any code, move your target task to PROGRESSING using its numeric Id:
    ```bash
    python tasks.py -j move <id> PROGRESSING

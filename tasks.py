@@ -5,7 +5,7 @@ from tasks_ai.help_text import get_help_text
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="tasks-ai",
+        prog="tasks",
         description="Tasks AI: Agent-optimized, Git-backed task lifecycle manager.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=True,

@@ -274,7 +274,7 @@ class TasksCLI:
                 f.write(f"{ignore_line}\n")
         self.log("Tasks initialized.")
         self.log(
-            'Tip: Create a task with: tasks-ai create "Your task title" --story "As a user..." --tech "..." --criteria "..." --plan "1. ..."'
+            'Tip: Create a task with: tasks create "Your task title" --story "As a user..." --tech "..." --criteria "..." --plan "1. ..."'
         )
         self.log("Use -j for JSON output. Run 'list' to see all tasks with their Ids.")
         self.finish()
@@ -470,7 +470,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks-ai list' to see all available task filenames/IDs.",
+                hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -567,7 +567,7 @@ class TasksCLI:
             self.log(
                 f"Task '[{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}' marked for deletion."
             )
-            self.log(f"To confirm, run: tasks-ai delete {task_id} --confirm {code}")
+            self.log(f"To confirm, run: tasks delete {task_id} --confirm {code}")
             self.log("WARNING: Running any other command will revert this mark.")
             self.finish(
                 {
@@ -581,7 +581,7 @@ class TasksCLI:
         if task.metadata.get("DeleteCode") != confirm:
             self.error(
                 "Invalid or missing confirmation code.",
-                hint=f"Run 'tasks-ai delete {task_id}' again to get a new code.",
+                hint=f"Run 'tasks delete {task_id}' again to get a new code.",
             )
 
         try:
@@ -707,7 +707,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks-ai list' to see all available task filenames/IDs.",
+                hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -786,7 +786,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks-ai list' to see all available task filenames/IDs.",
+                hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
         if current_state == new_status:
             return
@@ -854,7 +854,7 @@ class TasksCLI:
                         missing.append("repro")
                 self.error(
                     f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'tasks-ai modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro.',
+                    hint='Use \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro.',
                 )
 
         if new_status == "PROGRESSING":
@@ -896,7 +896,7 @@ class TasksCLI:
             if missing:
                 self.error(
                     f"Task lacks sufficient detail to move to PROGRESSING. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'tasks-ai show <id>\' to see current content, then \'tasks-ai modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'tasks-ai modify --help\' for syntax help.',
+                    hint='Use \'tasks show <id>\' to see current content, then \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'tasks modify --help\' for syntax help.',
                 )
 
         tt, branch = self._parse_filename(os.path.basename(filepath))
@@ -958,7 +958,7 @@ class TasksCLI:
                     if not self.as_json:
                         print(f"Branch '{branch}' is merged to main.")
                         print(
-                            f"To archive and clean up, run: tasks-ai move {task_id_num} ARCHIVED -y"
+                            f"To archive and clean up, run: tasks move {task_id_num} ARCHIVED -y"
                         )
                     self.finish(
                         {
@@ -1056,7 +1056,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks-ai list' to see available task Ids.",
+                hint="Use 'tasks list' to see available task Ids.",
             )
         task = FM.load(filepath)
         tn = os.path.basename(filepath)
@@ -1286,8 +1286,8 @@ class TasksCLI:
             for c in candidates:
                 title = c["title"][:38] if len(c["title"]) > 38 else c["title"]
                 print(f"{c['id']:>3} {c['state']:<12} {title:<40} {c['branch']}")
-            print("\nTo archive a task, run: tasks-ai reconcile <id>")
-            print("To archive all, run: tasks-ai reconcile --all")
+            print("\nTo archive a task, run: tasks reconcile <id>")
+            print("To archive all, run: tasks reconcile --all")
 
     def _reconcile_archive_all(self):
         candidates = []
@@ -1359,7 +1359,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks-ai list' to see available task Ids and filenames.",
+                hint="Use 'tasks list' to see available task Ids and filenames.",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -1559,7 +1559,7 @@ class TasksCLI:
             if self.as_json:
                 self.finish({"actions": ["get", "set", "list", "detect"]})
             else:
-                print("Usage: tasks-ai config [get|set|list|detect] [key] [value]")
+                print("Usage: tasks config [get|set|list|detect] [key] [value]")
                 print("  get <key>     - Get config value")
                 print("  set <key> <val> - Set config value")
                 print("  list          - List all config")
@@ -1653,19 +1653,17 @@ class TasksCLI:
             if detected:
                 print("\nWould you like to save this configuration?")
                 print(
-                    "Run: tasks-ai config set repo.lint "
-                    + detected.get("lint", "<tool>")
+                    "Run: tasks config set repo.lint " + detected.get("lint", "<tool>")
                 )
                 print(
-                    "      tasks-ai config set repo.type_check "
+                    "      tasks config set repo.type_check "
                     + detected.get("type_check", "<tool>")
                 )
                 print(
-                    "      tasks-ai config set repo.test "
-                    + detected.get("test", "<tool>")
+                    "      tasks config set repo.test " + detected.get("test", "<tool>")
                 )
                 print(
-                    "      tasks-ai config set repo.format "
+                    "      tasks config set repo.format "
                     + detected.get("format", "<tool>")
                 )
 
@@ -1758,9 +1756,9 @@ class TasksCLI:
                 )
             else:
                 print(
-                    f"No {tool_type} tool configured. Run 'tasks-ai config detect' or set manually:"
+                    f"No {tool_type} tool configured. Run 'tasks config detect' or set manually:"
                 )
-                print(f"  tasks-ai config set repo.{tool_type} <tool>")
+                print(f"  tasks config set repo.{tool_type} <tool>")
             return
 
         cmd = commands[tool]

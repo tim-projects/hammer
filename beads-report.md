@@ -1,6 +1,6 @@
 # Beads Feature Report: Security & Robustness
 
-This report documents security and robustness features from [beads (bd)](https://github.com/steveyegge/beads) applicable to tasks-ai (Python + Markdown, no database).
+This report documents security and robustness features from [beads (bd)](https://github.com/steveyegge/beads) applicable to tasks (Python + Markdown, no database).
 
 ## 1. Security Features
 
@@ -77,7 +77,7 @@ This report documents security and robustness features from [beads (bd)](https:/
 **Description:** Provide a command to diagnose task data health.
 
 **Implementation:**
-- `tasks-ai doctor` command
+- `tasks doctor` command
 - Check task file integrity (valid YAML/markdown)
 - Verify dependency links exist
 - Report orphaned task files
@@ -101,7 +101,7 @@ This report documents security and robustness features from [beads (bd)](https:/
 **Description:** Detect and prevent circular dependencies between tasks.
 
 **Implementation:**
-- `tasks-ai dep cycles` command
+- `tasks dep cycles` command
 - Detect all dependency cycles
 - Report the dependency causing the cycle
 - Optionally auto-fix by removing one link
@@ -113,9 +113,9 @@ This report documents security and robustness features from [beads (bd)](https:/
 **Description:** List tasks that have no open blockers.
 
 **Implementation:**
-- `tasks-ai ready` command
+- `tasks ready` command
 - Only show tasks with no open `blocks` dependencies
-- `tasks-ai blocked` to see blocked tasks
+- `tasks blocked` to see blocked tasks
 
 **Reference:** beads README - "Essential Commands" / `bd ready`
 
@@ -180,11 +180,11 @@ This report documents security and robustness features from [beads (bd)](https:/
 **Description:** Structured configuration via CLI with namespaces.
 
 **Implementation:**
-- `tasks-ai config set <key> <value>`
-- `tasks-ai config get <key>`
-- `tasks-ai config list`
+- `tasks config set <key> <value>`
+- `tasks config get <key>`
+- `tasks config list`
 - Namespaced keys (e.g., `validation.*`, `output.*`)
-- Config stored in `.tasks/config.yaml` or `~/.config/tasks-ai/config.yaml`
+- Config stored in `.tasks/config.yaml` or `~/.config/tasks/config.yaml`
 
 **Reference:** beads CONFIG.md - "Project-Level Configuration (bd config)"
 
@@ -193,7 +193,7 @@ This report documents security and robustness features from [beads (bd)](https:/
 **Description:** Visualize task dependency tree to understand relationships.
 
 **Implementation:**
-- `tasks-ai dep tree <task-id>` command
+- `tasks dep tree <task-id>` command
 - Limit depth to prevent deep traversals (`--max-depth`)
 - Show dependency direction and types
 
@@ -231,7 +231,7 @@ This report documents security and robustness features from [beads (bd)](https:/
 
 ## 4. Excluded (Database-Dependent)
 
-The following beads features are not applicable to tasks-ai's Python + Markdown architecture:
+The following beads features are not applicable to tasks's Python + Markdown architecture:
 
 - Circuit breaker for database connections
 - Port conflict handling / shared server mode

@@ -67,6 +67,8 @@ remove_existing() {
 echo "Checking for existing installations..."
 remove_existing "$HOME/.local/bin/tasks-ai"
 remove_existing "/usr/local/bin/tasks-ai"
+remove_existing "$HOME/.local/bin/tasks"
+remove_existing "/usr/local/bin/tasks"
 remove_existing "$HOME/.local/bin/repo"
 remove_existing "/usr/local/bin/repo"
 remove_existing "$HOME/.local/bin/check"
@@ -111,7 +113,10 @@ chmod +x "$DEST_DIR/tasks.py"
 if [ -L "$DEST_DIR/tasks-ai" ]; then
     rm "$DEST_DIR/tasks-ai"
 fi
-ln -s "$DEST_DIR/tasks.py" "$DEST_DIR/tasks-ai"
+if [ -L "$DEST_DIR/tasks" ]; then
+    rm "$DEST_DIR/tasks"
+fi
+ln -s "$DEST_DIR/tasks.py" "$DEST_DIR/tasks"
 
 if [ -f "$DEST_DIR/repo.py" ]; then
     chmod +x "$DEST_DIR/repo.py"
@@ -140,6 +145,6 @@ if [ "$MODE" == "local" ]; then
         echo "  export PATH=\$PATH:\$HOME/.local/bin"
     fi
 fi
-echo "You can now run: tasks-ai -h"
+echo "You can now run: tasks -h"
 echo "                 check lint"
 echo "--------------------------------------------------"
