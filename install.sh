@@ -69,6 +69,8 @@ remove_existing "$HOME/.local/bin/tasks-ai"
 remove_existing "/usr/local/bin/tasks-ai"
 remove_existing "$HOME/.local/bin/repo"
 remove_existing "/usr/local/bin/repo"
+remove_existing "$HOME/.local/bin/check"
+remove_existing "/usr/local/bin/check"
 echo "Done."
 
 # Handle uninstall
@@ -84,7 +86,7 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # Define source and destination
-SOURCE_FILES=("tasks.py" "tasks_ai" "repo")
+SOURCE_FILES=("tasks.py" "tasks_ai" "repo.py" "check.py")
 DEST_DIR="$DEST_DIR"
 
 # Ensure destination directory exists
@@ -111,13 +113,22 @@ if [ -L "$DEST_DIR/tasks-ai" ]; then
 fi
 ln -s "$DEST_DIR/tasks.py" "$DEST_DIR/tasks-ai"
 
-if [ -f "$DEST_DIR/repo" ]; then
-    chmod +x "$DEST_DIR/repo"
+if [ -f "$DEST_DIR/repo.py" ]; then
+    chmod +x "$DEST_DIR/repo.py"
 fi
 if [ -L "$DEST_DIR/repo" ]; then
     rm "$DEST_DIR/repo"
 fi
-ln -s "$DEST_DIR/repo" "$DEST_DIR/r"
+ln -s "$DEST_DIR/repo.py" "$DEST_DIR/repo"
+ln -s "$DEST_DIR/repo.py" "$DEST_DIR/r"
+
+if [ -f "$DEST_DIR/check.py" ]; then
+    chmod +x "$DEST_DIR/check.py"
+fi
+if [ -L "$DEST_DIR/check" ]; then
+    rm "$DEST_DIR/check"
+fi
+ln -s "$DEST_DIR/check.py" "$DEST_DIR/check"
 
 echo "--------------------------------------------------"
 echo "Installation complete!"
@@ -130,4 +141,5 @@ if [ "$MODE" == "local" ]; then
     fi
 fi
 echo "You can now run: tasks-ai -h"
+echo "                 check lint"
 echo "--------------------------------------------------"

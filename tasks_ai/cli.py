@@ -1480,3 +1480,329 @@ class TasksCLI:
                 print("\nArchived tasks:")
                 for b in archived:
                     print(f"  - {b}")
+
+    def config(self, action=None, key=None, value=None, save=False):
+        """Manage configuration (get/set/list/detect)."""
+        config_path = os.path.join(self.tasks_path, "config.yaml")
+
+        def load_config():
+            if os.path.exists(config_path):
+                try:
+                    import yaml
+
+                    with open(config_path, "r") as f:
+                        return yaml.safe_load(f) or {}
+                except Exception:
+                    return {}
+            return {}
+
+        def save_config(cfg):
+            try:
+                import yaml
+
+                with open(config_path, "w") as f:
+                    yaml.safe_dump(cfg, f)
+            except Exception as e:
+                self.error(f"Failed to save config: {e}")
+
+        if action == "detect":
+            detected = self._detect_tools()
+            if save and detected:
+                cfg = load_config()
+                for k, v in detected.items():
+                    key_name = (
+                        f"repo.{k}"
+                        if k in ["lint", "test", "type_check", "format"]
+                        else k
+                    )
+                    if v:
+                        cfg[key_name] = v
+                save_config(cfg)
+                if self.as_json:
+                    self.finish({"detected": detected, "saved": True})
+                else:
+                    print("Configuration saved.")
+            elif self.as_json:
+                self.finish({"detected": detected})
+            return
+
+        cfg = load_config()
+
+        if action == "list":
+            if self.as_json:
+                self.finish(cfg)
+            else:
+                if cfg:
+                    print("Configuration:")
+                    for k, v in cfg.items():
+                        print(f"  {k} = {v}")
+                else:
+                    print("No configuration found.")
+                print("\nRun 'config detect' to auto-detect project tools.")
+        elif action == "get":
+            if not key:
+                self.error("Missing config key.")
+            if self.as_json:
+                self.finish({"key": key, "value": cfg.get(key)})
+            else:
+                print(cfg.get(key, ""))
+        elif action == "set":
+            if not key or value is None:
+                self.error("Missing config key or value.")
+            cfg[key] = value
+            save_config(cfg)
+            if self.as_json:
+                self.finish({"key": key, "value": value})
+            else:
+                print(f"Set {key} = {value}")
+        else:
+            if self.as_json:
+                self.finish({"actions": ["get", "set", "list", "detect"]})
+            else:
+                print("Usage: tasks-ai config [get|set|list|detect] [key] [value]")
+                print("  get <key>     - Get config value")
+                print("  set <key> <val> - Set config value")
+                print("  list          - List all config")
+                print("  detect        - Detect project tools and create config")
+
+    def _detect_tools(self):
+        """Detect project type and suggest/create config."""
+        detected = {}
+
+        if os.path.exists("package.json"):
+            detected["package_manager"] = "npm"
+            if os.path.exists("yarn.lock"):
+                detected["package_manager"] = "yarn"
+            elif os.path.exists("pnpm-lock.yaml"):
+                detected["package_manager"] = "pnpm"
+
+        if os.path.exists("pyproject.toml"):
+            detected["package_manager"] = "pip"
+        elif os.path.exists("requirements.txt"):
+            detected["package_manager"] = "pip"
+        elif os.path.exists("Pipfile"):
+            detected["package_manager"] = "pipenv"
+
+        if os.path.exists("go.mod"):
+            detected["language"] = "go"
+
+        if os.path.exists("Cargo.toml"):
+            detected["language"] = "rust"
+
+        if os.path.exists("composer.json"):
+            detected["language"] = "php"
+
+        if os.path.exists("Gemfile"):
+            detected["language"] = "ruby"
+
+        lint_files = {
+            "ruff.toml": "ruff",
+            "pyproject.toml": "ruff",
+            ".eslintrc.js": "eslint",
+            ".eslintrc.json": "eslint",
+            "eslint.config.js": "eslint",
+            "tsconfig.json": "typescript",
+            "rust-toolchain.toml": "rust",
+            ".golangci.yml": "golangci-lint",
+            "pylintrc": "pylint",
+            ".pylintrc": "pylint",
+        }
+
+        for file, tool in lint_files.items():
+            if os.path.exists(file):
+                detected["lint"] = tool
+                break
+
+        type_check_files = {
+            "mypy.ini": "mypy",
+            "pyrightconfig.json": "pyright",
+            "tsconfig.json": "typescript",
+        }
+
+        for file, tool in type_check_files.items():
+            if os.path.exists(file):
+                detected["type_check"] = tool
+                break
+
+        if os.path.exists("pytest.ini") or os.path.exists("pyproject.toml"):
+            detected["test"] = "pytest"
+        elif os.path.exists("go.mod"):
+            detected["test"] = "go test"
+        elif os.path.exists("Cargo.toml"):
+            detected["test"] = "cargo test"
+
+        format_files = {
+            "ruff.toml": "ruff",
+            "pyproject.toml": "ruff",
+            ".prettierrc": "prettier",
+            "rustfmt.toml": "rustfmt",
+        }
+
+        for file, tool in format_files.items():
+            if os.path.exists(file):
+                detected["format"] = tool
+                break
+
+        if self.as_json:
+            self.finish({"detected": detected})
+        else:
+            print("Detected tools:")
+            for k, v in detected.items():
+                print(f"  {k}: {v}")
+
+            if detected:
+                print("\nWould you like to save this configuration?")
+                print(
+                    "Run: tasks-ai config set repo.lint "
+                    + detected.get("lint", "<tool>")
+                )
+                print(
+                    "      tasks-ai config set repo.type_check "
+                    + detected.get("type_check", "<tool>")
+                )
+                print(
+                    "      tasks-ai config set repo.test "
+                    + detected.get("test", "<tool>")
+                )
+                print(
+                    "      tasks-ai config set repo.format "
+                    + detected.get("format", "<tool>")
+                )
+
+        return detected
+
+    def _get_config(self, key=None):
+        """Load config and optionally get a specific key."""
+        config_path = os.path.join(self.tasks_path, "config.yaml")
+        if os.path.exists(config_path):
+            try:
+                import yaml
+
+                with open(config_path, "r") as f:
+                    cfg = yaml.safe_load(f) or {}
+            except Exception:
+                cfg = {}
+        else:
+            cfg = {}
+
+        if key:
+            return cfg.get(key)
+        return cfg
+
+    def get_tool(self, tool_type):
+        """Get the configured tool for a given type (lint, test, type_check, format)."""
+        key_map = {
+            "lint": "repo.lint",
+            "test": "repo.test",
+            "type_check": "repo.type_check",
+            "format": "repo.format",
+        }
+        config_key = key_map.get(tool_type)
+        if config_key:
+            return self._get_config(config_key)
+        return None
+
+    def run_tool(self, tool_name=None, fix=False):
+        """Run configured tools (lint, test, typecheck, format)."""
+        if not tool_name or tool_name == "all":
+            self._run_tool("lint", fix)
+            self._run_tool("test", fix)
+            self._run_tool("typecheck", fix)
+            self._run_tool("format", fix)
+            return
+
+        self._run_tool(tool_name, fix)
+
+    def _run_tool(self, tool_type, fix=False):
+        """Run a single tool based on configuration."""
+        tool = self.get_tool(tool_type)
+
+        tool_commands = {
+            "lint": {
+                "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
+                "pylint": ["pylint", "."],
+                "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
+                "golangci-lint": ["golangci-lint", "run", "./..."]
+                + (["--fix"] if fix else []),
+            },
+            "test": {
+                "pytest": ["pytest"],
+                "go test": ["go", "test", "./..."],
+                "cargo test": ["cargo", "test"],
+                "npm test": ["npm", "test"],
+            },
+            "typecheck": {
+                "mypy": ["mypy", "."],
+                "pyright": ["npx", "pyright", "."],
+                "typescript": ["npx", "tsc", "--noEmit"],
+            },
+            "format": {
+                "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
+                "prettier": ["npx", "prettier", "--write", "."]
+                if fix
+                else ["npx", "prettier", "--check", "."],
+                "rustfmt": ["cargo", "fmt"] + (["--check"] if not fix else []),
+            },
+        }
+
+        commands = tool_commands.get(tool_type, {})
+
+        if not tool or tool not in commands:
+            if self.as_json:
+                self.finish(
+                    {
+                        "tool": tool_type,
+                        "error": f"No {tool_type} tool configured",
+                        "configured": tool,
+                    }
+                )
+            else:
+                print(
+                    f"No {tool_type} tool configured. Run 'tasks-ai config detect' or set manually:"
+                )
+                print(f"  tasks-ai config set repo.{tool_type} <tool>")
+            return
+
+        cmd = commands[tool]
+
+        import shutil
+
+        cmd0 = shutil.which(cmd[0])
+
+        if not cmd0:
+            venv_bin = os.path.join(self.root, "venv", "bin", cmd[0])
+            if os.path.exists(venv_bin):
+                cmd0 = venv_bin
+
+        if not cmd0:
+            if self.as_json:
+                self.finish(
+                    {
+                        "tool": tool_type,
+                        "error": f"Tool '{cmd[0]}' not found in PATH",
+                        "configured": tool,
+                    }
+                )
+            else:
+                print(
+                    f"Tool '{cmd[0]}' not found in PATH. Install it or check configuration."
+                )
+            return
+
+        cmd[0] = cmd0
+
+        if self.as_json:
+            self.finish({"tool": tool_type, "command": cmd, "configured": tool})
+        else:
+            print(f"Running {tool} ({tool_type})...")
+            result = subprocess.run(
+                cmd, cwd=self.root, capture_output=True, text=True, shell=False
+            )
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            if result.returncode == 0:
+                print(f"✅ {tool} passed")
+            else:
+                print(f"❌ {tool} failed")

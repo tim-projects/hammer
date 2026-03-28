@@ -109,6 +109,19 @@ if __name__ == "__main__":
         "-y", "--yes", action="store_true", help="Auto-push and delete branches."
     )
 
+    cfg_p = subparsers.add_parser("config", help="Manage configuration.")
+    cfg_p.add_argument(
+        "action",
+        nargs="?",
+        choices=["get", "set", "list", "detect"],
+        help="Config action.",
+    )
+    cfg_p.add_argument("key", nargs="?", help="Config key.")
+    cfg_p.add_argument("value", nargs="?", help="Config value.")
+    cfg_p.add_argument(
+        "--save", action="store_true", help="Save detected config (for detect action)."
+    )
+
     args = parser.parse_args()
     cli = TasksCLI(as_json=args.json, command=args.command)
 
@@ -157,3 +170,5 @@ if __name__ == "__main__":
         cli.reconcile(args.target, all=args.all)
     elif args.command == "cleanup":
         cli.cleanup(dry_run=args.dry_run, yes=args.yes)
+    elif args.command == "config":
+        cli.config(args.action, args.key, args.value, save=args.save)
