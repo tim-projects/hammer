@@ -1408,6 +1408,24 @@ class TasksCLI:
 
     def cleanup(self, dry_run=False, yes=False):
         """Clean up branches merged to main and archive corresponding tasks."""
+        current_branch = self._run_git(
+            ["rev-parse", "--abbrev-ref", "HEAD"]
+        ).stdout.strip()
+
+        if current_branch not in ("main", "master", "staging", "testing"):
+            if self.as_json:
+                self.finish(
+                    {
+                        "error": f"Cleanup must be run from main, staging, or testing branch. Currently on '{current_branch}'."
+                    }
+                )
+            else:
+                print(
+                    f"Error: Cleanup must be run from main, staging, or testing branch."
+                )
+                print(f"Currently on: {current_branch}")
+            return
+
         main_sha = (
             self._run_git(["rev-parse", "main"]).stdout.strip()
             if self._run_git(["rev-parse", "--verify", "main"]).returncode == 0
@@ -1442,11 +1460,15 @@ class TasksCLI:
                 continue
 
             branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-            merge_base = self._run_git(
-                ["merge-base", branch_sha, "main"]
-            ).stdout.strip()
 
-            if merge_base != main_sha:
+            is_ancestor = (
+                self._run_git(
+                    ["merge-base", "--is-ancestor", branch_sha, "main"]
+                ).returncode
+                == 0
+            )
+
+            if not is_ancestor:
                 continue
 
             if not dry_run:
