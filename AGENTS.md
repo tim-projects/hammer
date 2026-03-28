@@ -22,7 +22,13 @@ Run `tasks-ai --help` to discover the interface, JSON schemas, and operational r
    ```bash
    tasks-ai -j move <id> TESTING
    ```
-6. **Promotion**: Follow the state machine (`TESTING` -> `REVIEW` -> `STAGING` -> `LIVE`) as criteria are met.
+6. **Promotion**: Follow the state machine (`TESTING` -> `REVIEW` -> `STAGING` -> `LIVE`).
+   - Note: Tasks can move from `REVIEW`, `ARCHIVED`, or `REJECTED` back to `PROGRESSING` if further work is required.
+7. **Archiving**: When ready to archive from STAGING:
+   - Branch must be merged to main first
+   - Run `tasks-ai move <id> ARCHIVED` - if merged, it will prompt for `-y` confirmation
+   - Use `tasks-ai move <id> ARCHIVED -y` to auto-push branch to remote and delete local copy
+   - Alternatively, move to `REJECTED` if code was not merged
 
 ## ⚠️ Operational Rules
 
@@ -53,5 +59,6 @@ Run `tasks-ai --help` to discover the interface, JSON schemas, and operational r
 | `tasks-ai show <id> repro` | Show only the reproduction steps (for issues) |
 | `tasks-ai show <id> progress` | Show active progress notes |
 | `tasks-ai move <id> <state>` | Move task to new state (use comma-separated for multi-step) |
+| `tasks-ai move <id> ARCHIVED -y` | Archive and auto-push/delete branch (requires branch merged to main) |
 | `tasks-ai modify <id> --plan "1. Step"` | Update task fields |
-| `tasks-ai reconcile all` | Archive tasks whose branches no longer exist in remote |
+| `tasks-ai reconcile <id>` | Archive a task whose branch no longer exists |

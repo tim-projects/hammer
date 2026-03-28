@@ -15,12 +15,14 @@ USEFUL COMMANDS:
   tasks-ai show <id>              Show full task details
   tasks-ai show <id> story        Show only the story section  
   tasks-ai show <id> repro        Show only the reproduction steps (for issues)
-  tasks-ai show <id> progress    Show active progress notes
+  tasks-ai show <id> progress     Show active progress notes
   tasks-ai move <id> <state>      Move task to new state (use comma-separated for multi-step)
+  tasks-ai move <id> ARCHIVED -y  Archive and auto-push/delete branch (requires merged to main)
   tasks-ai modify <id> --plan "1. Step"  Update task fields
   tasks-ai reconcile <id>         Archive task with orphaned branch
 
 STATE MACHINE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> LIVE -> ARCHIVED
+               (REJECTED also available from TESTING/STAGING)
 """
 
 MISSION = """Misson: Identify and fix the highest priority test failures first."""
