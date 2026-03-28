@@ -19,13 +19,16 @@ USEFUL COMMANDS:
   tasks-ai move <id> <state>      Move task to new state (use comma-separated for multi-step)
   tasks-ai move <id> ARCHIVED -y  Archive and auto-push/delete branch (requires merged to main)
   tasks-ai modify <id> --plan "1. Step"  Update task fields
-  tasks-ai reconcile <id>         Archive task with orphaned branch
+  tasks-ai reconcile              Scan for tasks with merged branches (dry-run)
+  tasks-ai reconcile --all        Clean up merged branches and archive tasks
+  tasks-ai cleanup --dry-run      Preview what would be cleaned up
+  tasks-ai cleanup               Clean up merged branches, push to remote, delete local, archive tasks
 
 STATE MACHINE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> LIVE -> ARCHIVED
                (REJECTED also available from TESTING/STAGING)
 """
 
-MISSION = """Misson: Identify and fix the highest priority test failures first."""
+MISSION = """Mission: Identify and fix the highest priority test failures first."""
 
 
 def get_help_text():

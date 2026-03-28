@@ -90,15 +90,20 @@ if __name__ == "__main__":
     del_p.add_argument("filename")
     del_p.add_argument("--confirm", help="Confirmation code.")
 
-    rec_p = subparsers.add_parser("reconcile", help="Archive orphans.")
+    rec_p = subparsers.add_parser(
+        "reconcile", help="Scan/clean merged branches (see cleanup)."
+    )
     rec_p.add_argument("target", nargs="?")
-    rec_p.add_argument("--all", action="store_true", help="Archive all candidates.")
+    rec_p.add_argument("--all", action="store_true", help="Clean up all candidates.")
 
     clean_p = subparsers.add_parser(
-        "cleanup", help="Clean up merged branches and archive tasks."
+        "cleanup",
+        help="Clean up merged branches, push to remote, delete local, archive tasks.",
     )
     clean_p.add_argument(
-        "--dry-run", action="store_true", help="Show what would be cleaned up."
+        "--dry-run",
+        action="store_true",
+        help="Show what would be cleaned up without making changes.",
     )
     clean_p.add_argument(
         "-y", "--yes", action="store_true", help="Auto-push and delete branches."

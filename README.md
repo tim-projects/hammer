@@ -100,6 +100,10 @@ tasks-ai move 1 REVIEW
 
 # When code merges to main, agent archives
 tasks-ai move 1 ARCHIVED -y  # pushes branch, deletes local, archives
+
+# Or use cleanup to scan and clean all merged branches
+tasks-ai cleanup --dry-run   # preview what would be cleaned
+tasks-ai cleanup             # clean merged branches and archive tasks
 ```
 
 ## Why This Over alternatives?
