@@ -94,6 +94,16 @@ if __name__ == "__main__":
     rec_p.add_argument("target", nargs="?")
     rec_p.add_argument("--all", action="store_true", help="Archive all candidates.")
 
+    clean_p = subparsers.add_parser(
+        "cleanup", help="Clean up merged branches and archive tasks."
+    )
+    clean_p.add_argument(
+        "--dry-run", action="store_true", help="Show what would be cleaned up."
+    )
+    clean_p.add_argument(
+        "-y", "--yes", action="store_true", help="Auto-push and delete branches."
+    )
+
     args = parser.parse_args()
     cli = TasksCLI(as_json=args.json, command=args.command)
 
@@ -140,3 +150,5 @@ if __name__ == "__main__":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
         cli.reconcile(args.target, all=args.all)
+    elif args.command == "cleanup":
+        cli.cleanup(dry_run=args.dry_run, yes=args.yes)

@@ -1214,11 +1214,13 @@ class TasksCLI:
 
     def reconcile(self, target=None, all=False):
         if not target and not all:
-            self._reconcile_scan()
+            self.cleanup(dry_run=True)
         elif all:
-            self._reconcile_archive_all()
+            self.cleanup(yes=True)
         else:
-            self._reconcile_single(target)
+            filepath, _ = self.find_task(target)
+            if filepath:
+                self._move_logic(target, "ARCHIVED", force=True)
 
     def _reconcile_scan(self):
         candidates = []
@@ -1403,3 +1405,78 @@ class TasksCLI:
                 self.finish({"archived": False, "task_id": task_id})
             else:
                 print("Cancelled.")
+
+    def cleanup(self, dry_run=False, yes=False):
+        """Clean up branches merged to main and archive corresponding tasks."""
+        main_sha = (
+            self._run_git(["rev-parse", "main"]).stdout.strip()
+            if self._run_git(["rev-parse", "--verify", "main"]).returncode == 0
+            else self._run_git(["rev-parse", "master"]).stdout.strip()
+            if self._run_git(["rev-parse", "--verify", "master"]).returncode == 0
+            else None
+        )
+        if not main_sha:
+            if self.as_json:
+                self.finish({"cleaned": [], "archived": [], "count": 0})
+            else:
+                print("No main or master branch found.")
+            return
+
+        branches = self._run_git(
+            ["branch", "--format", "%(refname:short)"]
+        ).stdout.strip()
+        if not branches:
+            if self.as_json:
+                self.finish({"cleaned": [], "archived": [], "count": 0})
+            else:
+                print("No local branches found.")
+            return
+
+        cleaned = []
+        archived = []
+        has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
+
+        for branch in branches.splitlines():
+            branch = branch.strip()
+            if not branch or branch in ("main", "master", "staging", "testing"):
+                continue
+
+            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+            merge_base = self._run_git(
+                ["merge-base", branch_sha, "main"]
+            ).stdout.strip()
+
+            if merge_base != main_sha:
+                continue
+
+            if not dry_run:
+                if has_origin:
+                    self._run_git(["push", "origin", branch], cwd=self.root)
+                self._run_git(["branch", "-D", branch], cwd=self.root)
+
+            cleaned.append(branch)
+
+            filepath, state = self.find_task(branch)
+            if filepath and state in ("REVIEW", "ARCHIVED"):
+                if not dry_run:
+                    if state == "REVIEW":
+                        self._move_logic(branch, "ARCHIVED", force=True, yes=yes)
+                        archived.append(branch)
+                else:
+                    archived.append(branch)
+
+        if self.as_json:
+            self.finish(
+                {"cleaned": cleaned, "archived": archived, "count": len(cleaned)}
+            )
+        else:
+            if dry_run:
+                print("Dry run - would clean up:")
+            else:
+                print("Cleaned up:")
+            for b in cleaned:
+                print(f"  - {b}")
+            if archived:
+                print("\nArchived tasks:")
+                for b in archived:
+                    print(f"  - {b}")

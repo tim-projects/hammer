@@ -213,9 +213,9 @@ def test_reconcile_single_only(repo_dir):
     """Test that reconcile without target does a scan (not failure)."""
     run_cmd(repo_dir, ["init"])
     res = run_cmd(repo_dir, ["reconcile"])
-    # Reconcile without target does a scan (returns success with candidates list)
+    # Reconcile without target does a scan (returns success with cleaned list)
     assert res["success"] is True, res
-    assert "candidates" in res["data"], res
+    assert "cleaned" in res["data"], res
 
 
 def test_show(repo_dir):
