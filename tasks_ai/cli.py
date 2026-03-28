@@ -1204,13 +1204,145 @@ class TasksCLI:
                         )
             self.finish()
 
-    def reconcile(self, target=None):
-        if not target:
-            self.error(
-                "Missing target. Provide a specific task Id/filename to reconcile.",
-                hint="Run 'tasks-ai list' to see available task Ids and filenames.",
-            )
-        self._reconcile_single(target)
+    def reconcile(self, target=None, all=False):
+        if not target and not all:
+            self._reconcile_scan()
+        elif all:
+            self._reconcile_archive_all()
+        else:
+            self._reconcile_single(target)
+
+    def _reconcile_scan(self):
+        candidates = []
+        for state, folder in STATE_FOLDERS.items():
+            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
+                continue
+            fp = os.path.join(self.tasks_path, folder)
+            if not os.path.exists(fp):
+                continue
+            for item in os.listdir(fp):
+                if item == ".gitkeep":
+                    continue
+                path = os.path.join(fp, item)
+                if not os.path.isdir(path):
+                    continue
+                task = FM.load(path)
+                task_id = task.metadata.get("Id")
+                if not task_id:
+                    continue
+                branch = os.path.basename(path)
+                main_sha = (
+                    self._run_git(["rev-parse", "main"]).stdout.strip()
+                    if self._run_git(["rev-parse", "--verify", "main"]).returncode == 0
+                    else None
+                )
+                if not main_sha:
+                    continue
+                branch_sha = (
+                    self._run_git(["rev-parse", branch]).stdout.strip()
+                    if self._run_git(["rev-parse", "--verify", branch]).returncode == 0
+                    else None
+                )
+                if not branch_sha:
+                    continue
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
+                if merge_base == main_sha:
+                    candidates.append(
+                        {
+                            "id": task_id,
+                            "task_id": task_id,
+                            "title": task.metadata.get("Ti", ""),
+                            "state": state,
+                            "branch": branch,
+                            "filepath": path,
+                        }
+                    )
+
+        if not candidates:
+            if self.as_json:
+                self.finish({"candidates": [], "count": 0})
+            else:
+                print("No archive candidates found.")
+            return
+
+        if self.as_json:
+            self.finish({"candidates": candidates, "count": len(candidates)})
+        else:
+            print(f"\nFound {len(candidates)} archive candidates:\n")
+            print(f"{'#':>3} {'State':<12} {'Title':<40} {'Branch'}")
+            print("-" * 80)
+            for c in candidates:
+                title = c["title"][:38] if len(c["title"]) > 38 else c["title"]
+                print(f"{c['id']:>3} {c['state']:<12} {title:<40} {c['branch']}")
+            print("\nTo archive a task, run: tasks-ai reconcile <id>")
+            print("To archive all, run: tasks-ai reconcile --all")
+
+    def _reconcile_archive_all(self):
+        candidates = []
+        for state, folder in STATE_FOLDERS.items():
+            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
+                continue
+            fp = os.path.join(self.tasks_path, folder)
+            if not os.path.exists(fp):
+                continue
+            for item in os.listdir(fp):
+                if item == ".gitkeep":
+                    continue
+                path = os.path.join(fp, item)
+                if not os.path.isdir(path):
+                    continue
+                task = FM.load(path)
+                task_id = task.metadata.get("Id")
+                if not task_id:
+                    continue
+                branch = os.path.basename(path)
+                main_sha = (
+                    self._run_git(["rev-parse", "main"]).stdout.strip()
+                    if self._run_git(["rev-parse", "--verify", "main"]).returncode == 0
+                    else None
+                )
+                if not main_sha:
+                    continue
+                branch_sha = (
+                    self._run_git(["rev-parse", branch]).stdout.strip()
+                    if self._run_git(["rev-parse", "--verify", branch]).returncode == 0
+                    else None
+                )
+                if not branch_sha:
+                    continue
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
+                if merge_base == main_sha:
+                    candidates.append(
+                        {
+                            "id": task_id,
+                            "task_id": task_id,
+                            "title": task.metadata.get("Ti", ""),
+                            "state": state,
+                            "branch": branch,
+                            "filepath": path,
+                        }
+                    )
+
+        if not candidates:
+            if self.as_json:
+                self.finish({"archived": 0, "count": 0})
+            else:
+                print("No candidates to archive.")
+            return
+
+        archived = 0
+        for c in candidates:
+            self._move_logic(c["branch"], "ARCHIVED", force=True, yes=True)
+            archived += 1
+            if not self.as_json:
+                print(f"Archived: [{c['id']}] {c['title']}")
+
+        if self.as_json:
+            self.finish({"archived": archived, "count": len(candidates)})
 
     def _reconcile_single(self, filename):
         filepath, _ = self.find_task(filename)

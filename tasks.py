@@ -92,6 +92,7 @@ if __name__ == "__main__":
 
     rec_p = subparsers.add_parser("reconcile", help="Archive orphans.")
     rec_p.add_argument("target", nargs="?")
+    rec_p.add_argument("--all", action="store_true", help="Archive all candidates.")
 
     args = parser.parse_args()
     cli = TasksCLI(as_json=args.json, command=args.command)
@@ -138,4 +139,4 @@ if __name__ == "__main__":
     elif args.command == "link":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
-        cli.reconcile(args.target)
+        cli.reconcile(args.target, all=args.all)
