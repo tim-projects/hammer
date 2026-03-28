@@ -12,6 +12,13 @@ if __name__ == "__main__":
         epilog=get_help_text(),
     )
     parser.add_argument("-j", "--json", action="store_true", help="JSON output.")
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress output (for scripting).",
+        default=False,
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("init", help="Init tasks.")
@@ -123,7 +130,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    cli = TasksCLI(as_json=args.json, command=args.command)
+    cli = TasksCLI(as_json=args.json, command=args.command, quiet=args.quiet)
 
     if args.command == "init":
         cli.init()

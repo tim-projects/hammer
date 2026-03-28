@@ -35,8 +35,9 @@ from .file_manager import FM
 
 
 class TasksCLI:
-    def __init__(self, as_json=False, command=None):
+    def __init__(self, as_json=False, command=None, quiet=False):
         self.as_json = as_json
+        self.quiet = quiet
         self.output_messages = []
         self.root = self._get_git_root()
         self.tasks_path = os.path.join(self.root, TASKS_DIR)
@@ -146,7 +147,9 @@ class TasksCLI:
     def error(self, message, hint=None):
         if hint:
             message = f"{message} | HINT: {hint}"
-        if self.as_json:
+        if self.quiet:
+            pass
+        elif self.as_json:
             print(
                 json.dumps(
                     {
@@ -162,7 +165,9 @@ class TasksCLI:
             sys.exit(1)
 
     def finish(self, data=None):
-        if self.as_json:
+        if self.quiet:
+            pass
+        elif self.as_json:
             print(
                 json.dumps(
                     {"success": True, "messages": self.output_messages, "data": data},
@@ -1174,6 +1179,8 @@ class TasksCLI:
                 all_data[state] = tasks
         if self.as_json:
             self.finish(all_data)
+        elif self.quiet:
+            pass
         else:
             term_width = get_terminal_width()
             summary_width = max(30, term_width - 45)
