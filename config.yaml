@@ -1,0 +1,4 @@
+repo.format: ruff
+repo.lint: ruff
+repo.test: pytest
+repo.type_check: pyright
