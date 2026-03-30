@@ -5,6 +5,7 @@ AI Agents should follow these instructions to manage their workflow using the `t
 ## ⚠️ Important: Use Local tasks
 
 This repo has a local `tasks.py` that should be used instead of the system-installed `tasks` binary. The local version may be newer or have modifications.
+Never delete .tasks, if you create tasks for testing you must clean them up afterwards
 
 ```bash
 # Use this repo's version (recommended)
