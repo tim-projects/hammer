@@ -88,10 +88,6 @@ def test_repo_branch_delete(repo_dir):
     # Ensure we are not on the branch to delete
     run_repo(repo_dir, ["branch", "create", "to-delete"])
     
-    # Get current (to switch back to it)
-    res = run_repo(repo_dir, ["git", "rev-parse", "--abbrev-ref", "HEAD"])
-    current = res.stdout.strip()
-    
     # Create another one to switch to
     run_repo(repo_dir, ["branch", "create", "other"])
     
