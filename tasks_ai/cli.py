@@ -227,7 +227,7 @@ class TasksCLI:
             path = os.path.join(live_dir, folder)
             if not os.path.isdir(path):
                 continue
-            log_path = os.path.join(self.logs_path, folder)
+            log_path = os.path.join(path, "activity.log")
             if os.path.exists(log_path):
                 with open(log_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
@@ -454,13 +454,25 @@ class TasksCLI:
             parts={
                 "story": story or "",
                 "tech": tech or "",
-                "criteria": "\n".join(f"- [ ] {c}" for c in criteria)
+                "criteria": (
+                    "\n".join(f"- [ ] {c}" for c in criteria)
+                    if isinstance(criteria, list)
+                    else f"- [ ] {criteria}"
+                )
                 if criteria
                 else "",
-                "plan": "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
+                "plan": (
+                    "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
+                    if isinstance(plan, list)
+                    else f"1. {plan}"
+                )
                 if plan
                 else "",
-                "repro": "\n".join(f"{i}. {r}" for i, r in enumerate(repro, 1))
+                "repro": (
+                    "\n".join(f"{i}. {r}" for i, r in enumerate(repro, 1))
+                    if isinstance(repro, list)
+                    else f"1. {repro}"
+                )
                 if repro
                 else None,
             },

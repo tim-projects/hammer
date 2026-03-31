@@ -36,16 +36,19 @@ class TestCLIRobustness(unittest.TestCase):
         self.assertIn("Usage: repo", result.stdout)
 
     def test_check_no_command(self):
-        """Running 'check' without any command should return 0 and show usage."""
+        """Running 'check' without any command should return 1 and show usage."""
         result = subprocess.run([sys.executable, self.check_py], 
                                cwd=self.repo_dir, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0)
-        self.assertIn("usage: check", result.stdout)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("usage: check", result.stdout + result.stderr)
 
     def test_tasks_missing_tool(self):
         """Running a tool that is not configured or missing should fail."""
         # Initialize tasks first
         subprocess.run([sys.executable, self.tasks_py, "init"], cwd=self.repo_dir, capture_output=True)
+        
+        # Copy check.py to temp repo because TasksCLI.run_tool calls it
+        shutil.copy(self.check_py, self.repo_dir)
         
         # Configure a tool that doesn't exist
         subprocess.run([sys.executable, self.tasks_py, "config", "set", "repo.lint", "nonexistent-tool"], 
@@ -61,6 +64,9 @@ class TestCLIRobustness(unittest.TestCase):
     def test_repo_validation_failure(self):
         """repo commit should fail if validation tools fail or are missing."""
         subprocess.run([sys.executable, self.tasks_py, "init"], cwd=self.repo_dir, capture_output=True)
+        
+        # Copy check.py to temp repo because repo.py calls it
+        shutil.copy(self.check_py, self.repo_dir)
         
         # Configure a tool that is missing from PATH
         subprocess.run([sys.executable, self.tasks_py, "config", "set", "repo.lint", "ruff"], 

@@ -19,7 +19,6 @@ import argparse
 import os
 import subprocess
 import sys
-import yaml
 import json
 import shutil
 
@@ -41,8 +40,11 @@ def load_config():
     config = {}
     if os.path.exists(config_path_yaml):
         try:
+            import yaml
             with open(config_path_yaml, "r") as f:
                 config.update(yaml.safe_load(f) or {})
+        except ImportError:
+            print("Warning: 'PyYAML' library not found. Skipping config.yaml parsing.", file=sys.stderr)
         except Exception as e:
             print(f"Warning: Could not parse {config_path_yaml}: {e}", file=sys.stderr)
 
@@ -217,7 +219,7 @@ def main():
 
     if not args.command:
         parser.print_help()
-        return 0
+        return 1
 
     if args.command == "all":
         return run_all(args.fix, args.json)

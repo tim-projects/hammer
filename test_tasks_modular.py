@@ -37,10 +37,10 @@ def test_create_and_modify(setup_tasks):
     cli = setup_tasks
     cli.create(
         "Valid Task Title", 
-        story="As a user...", 
-        tech="Python", 
-        criteria=["Pass"], 
-        plan=["Step 1"]
+        story="As a user I want to create a task.", 
+        tech="Python and Markdown.", 
+        criteria="Task is created successfully.", 
+        plan="1. Call create\n2. Verify file"
     )
     task_id = "1" 
     filepath, state = cli.find_task(task_id)
@@ -53,8 +53,13 @@ def test_create_and_modify(setup_tasks):
 
 def test_move_and_delete(setup_tasks):
     cli = setup_tasks
-    cli.create("Move Test Task Name", story="S", tech="T", criteria=["C"], plan=["P"])
+    cli.create("Move Test Task Name", story="As a user I want to move tasks.", tech="Python logic.", criteria="State changes correctly.", plan="1. Move to READY\n2. Verify state")
     task_id = "1"
+    
+    # We need to add repro for issues or make it a regular task
+    # It's a regular task by default. 
+    # But it needs fields to leave BACKLOG.
+    cli.modify(task_id, story="As a user I want to move tasks.", tech="Python logic.", criteria="State changes correctly.", plan="1. Move to READY\n2. Verify state")
     
     # Move through states
     cli.move(task_id, "READY")
@@ -82,11 +87,13 @@ def test_move_and_delete(setup_tasks):
 
 def test_link_tasks(setup_tasks):
     cli = setup_tasks
-    cli.create("Task A Title Long", story="S", tech="T", criteria=["C"], plan=["P"])
-    cli.create("Task B Title Long", story="S", tech="T", criteria=["C"], plan=["P"])
+    cli.create("Task A Title Long", story="As a user I want to link tasks.", tech="Python and Git.", criteria="Linking works correctly.", plan="1. Create two tasks\n2. Link them")
+    cli.create("Task B Title Long", story="As a user I want to link tasks.", tech="Python and Git.", criteria="Linking works correctly.", plan="1. Create two tasks\n2. Link them")
+    # Linking 1 to 2
     cli.link("1", "2")
     
     from tasks_ai.file_manager import FM
     path, _ = cli.find_task("1")
     task = FM.load(path)
-    assert "2" in task.metadata.get("BlockedBy", [])
+    # TasksCLI.link adds the branch name or Id to 'Bl' list
+    assert any("2" in b for b in task.metadata.get("Bl", []))

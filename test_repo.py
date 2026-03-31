@@ -85,14 +85,21 @@ def test_repo_branch_create(repo_dir):
 
 def test_repo_branch_delete(repo_dir):
     """Test 'repo branch delete' command."""
+    # Ensure we are not on the branch to delete
     run_repo(repo_dir, ["branch", "create", "to-delete"])
-    # Check what the default branch is
-    res = run_repo(repo_dir, ["git", "branch", "--show-current"])
-    default = res.stdout.strip()
     
-    run_repo(repo_dir, ["git", "checkout", default])
+    # Get current (to switch back to it)
+    res = run_repo(repo_dir, ["git", "rev-parse", "--abbrev-ref", "HEAD"])
+    current = res.stdout.strip()
+    
+    # Create another one to switch to
+    run_repo(repo_dir, ["branch", "create", "other"])
+    
     res = run_repo(repo_dir, ["branch", "delete", "to-delete"])
     assert res.returncode == 0
+    
+    res = run_repo(repo_dir, ["git", "branch"])
+    assert "to-delete" not in res.stdout
 
 
 def test_repo_merged(repo_dir):
