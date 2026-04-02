@@ -1,1 +1,0 @@
-Verify buffer handling for large stdin inputs.

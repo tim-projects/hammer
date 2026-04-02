@@ -1,1 +1,0 @@
-Long inputs are captured without truncation.

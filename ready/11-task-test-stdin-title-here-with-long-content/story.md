@@ -1,1 +1,0 @@
-As a user I want to test long content input via stdin.
