@@ -1,7 +1,7 @@
 {
   "Id": 5,
   "Ti": "Fix race condition in task ID assignment",
-  "St": "REVIEW",
+  "St": "ARCHIVED",
   "Pr": 1,
   "Cr": "260401 22:17"
 }
