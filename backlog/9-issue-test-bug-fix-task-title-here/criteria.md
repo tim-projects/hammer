@@ -1,1 +1,0 @@
-Issue tasks are created with priority 1 and correct branch prefix.
