@@ -1,0 +1,1 @@
+1. 1. Fix optional type handling in cli.py\n2. Add type hints to FM methods\n3. Resolve unbound variables in repo.py\n4. Verify with pyright

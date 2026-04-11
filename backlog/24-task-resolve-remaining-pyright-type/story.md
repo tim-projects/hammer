@@ -1,0 +1,1 @@
+As a developer I want the codebase to be fully type-safe so that pyright passes consistently in the pipeline.

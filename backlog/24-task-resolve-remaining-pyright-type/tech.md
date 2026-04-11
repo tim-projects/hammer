@@ -1,0 +1,1 @@
+Address ~90 remaining pyright errors in cli.py, repo.py, and file_manager.py.
