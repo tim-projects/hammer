@@ -1,1 +1,0 @@
-Debug logging is correctly enabled and directed based on environment variables.
