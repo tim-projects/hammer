@@ -1,0 +1,1 @@
+- [ ] 1) Linking A -> B as blocker when B -> A exists fails with error. 2) Error message clearly explains the circular dependency.

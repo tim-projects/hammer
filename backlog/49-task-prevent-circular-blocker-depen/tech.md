@@ -1,0 +1,1 @@
+Extend the existing circular dependency detection (_has_path) to check blocker relationships when linking tasks. This is the same fix we did for task 14 but should apply to all link operations.

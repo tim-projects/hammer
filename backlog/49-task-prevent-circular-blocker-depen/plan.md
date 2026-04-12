@@ -1,0 +1,1 @@
+1. 1. The existing _has_path function already handles this case. 2. Verify it works. 3. Add test.

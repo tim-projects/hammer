@@ -1,0 +1,1 @@
+When linking tasks as blockers (using the link command), the system should prevent circular dependencies (A blocked by B, B blocked by A). Currently this is allowed and causes tasks to be stuck.
