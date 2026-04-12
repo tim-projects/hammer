@@ -1,0 +1,1 @@
+1. 1. Read cleanup() function in cli.py. 2. Update logic to check state before cleaning up branches. 3. Add reporting for tasks that need to move to REVIEW/ARCHIVED. 4. Test the fix.

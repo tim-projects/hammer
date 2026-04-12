@@ -1,0 +1,1 @@
+The reconcile --all command is cleaning up branches for tasks that haven't been moved to REVIEW or ARCHIVED, leaving behind orphaned task directories. Instead, it should report which tasks need to move to REVIEW or ARCHIVED first before their branches can be cleaned up, respecting the workflow gates.

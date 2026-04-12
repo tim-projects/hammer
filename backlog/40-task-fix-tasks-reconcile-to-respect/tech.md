@@ -1,0 +1,1 @@
+Update cleanup() in cli.py to: 1) Not delete branches for tasks not in REVIEW/ARCHIVED state. 2) Report tasks that need to be moved to REVIEW/ARCHIVED first. 3) Only clean up branches for tasks already in REVIEW or ARCHIVED state.

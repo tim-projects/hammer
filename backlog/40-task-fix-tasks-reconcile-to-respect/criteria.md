@@ -1,0 +1,1 @@
+- [ ] 1) reconcile --all does not delete branches for BACKLOG/READY/PROGRESSING tasks. 2) reconcile --all reports which tasks need to move to REVIEW/ARCHIVED. 3) reconcile --all still works for tasks in REVIEW/ARCHIVED state.
