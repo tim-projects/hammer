@@ -792,7 +792,8 @@ class TasksCLI:
         if not filepath:
             return False
         filepath_str = cast(str, filepath)
-        _, branch = self._parse_filename(os.path.basename(filepath_str))
+        tn = os.path.basename(filepath_str)
+        _, branch = self._parse_filename(tn)
         updated = False
         res = self._run_git(
             ["log", branch, f"^{self._get_default_branch()}", "--oneline"]
@@ -820,22 +821,26 @@ class TasksCLI:
         f2, _ = self.find_task(blocked_by_filename)
         if not f1 or not f2:
             self.error("Not found.")
-        task = FM.load(f1)
+        
+        f1_str = cast(str, f1)
+        f2_str = cast(str, f2)
+        
+        task = FM.load(f1_str)
         task_title = str(task.metadata.get("Ti", ""))
         task_id_num = str(task.metadata.get("Id", ""))
-        tt, _ = self._parse_filename(os.path.basename(f1))
+        tt, _ = self._parse_filename(os.path.basename(f1_str))
         bl = task.metadata.get("Bl", [])
         if not isinstance(bl, list):
             bl = []
-        b_name = os.path.basename(f2)
-        b_task = FM.load(f2)
+        b_name = os.path.basename(f2_str)
+        b_task = FM.load(f2_str)
         b_title = str(b_task.metadata.get("Ti", ""))
         b_id = str(b_task.metadata.get("Id", ""))
-        b_tt, _ = self._parse_filename(os.path.basename(f2))
+        b_tt, _ = self._parse_filename(os.path.basename(f2_str))
         if b_name not in bl:
             bl.append(b_name)
             task.metadata["Bl"] = bl
-            self._atomic_write(f1, task)
+            self._atomic_write(f1_str, task)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
                 ["commit", "--allow-empty", "-m", f"Lk {filename}->{b_name}"],
@@ -924,16 +929,21 @@ class TasksCLI:
             )
 
     def _perform_move(self, task, current_state, new_status, filepath):
-        self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
+        if not filepath:
+            self.error("Invalid task path.")
+        filepath_str = cast(str, filepath)
+        self._sync_task_content(filepath_str, task, is_final=(new_status == "ARCHIVED"))
         task.metadata["St"] = new_status
-        fname = os.path.basename(filepath)
-        new_filepath = os.path.join(self.tasks_path, STATE_FOLDERS[new_status], fname)
-        if os.path.isdir(filepath):
-            shutil.move(filepath, new_filepath)
+        fname = os.path.basename(filepath_str)
+        new_filepath = os.path.join(
+            self.tasks_path, STATE_FOLDERS[new_status], fname
+        )
+        if os.path.isdir(filepath_str):
+            shutil.move(filepath_str, new_filepath)
         else:
             self._atomic_write(new_filepath, task)
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if os.path.exists(filepath_str):
+                os.remove(filepath_str)
         self._atomic_write(new_filepath, task)
         self._append_log(new_filepath, f"{current_state}->{new_status}")
         return task
@@ -946,6 +956,7 @@ class TasksCLI:
                 f"Task '{filename}' not found.",
                 hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
+        filepath_str = cast(str, filepath)
         if current_state == new_status:
             return
         if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and not force:
@@ -953,10 +964,11 @@ class TasksCLI:
                 f"Forbidden transition: {current_state} -> {new_status}",
                 hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}",
             )
-        task = FM.load(filepath)
-        tt, branch = self._parse_filename(os.path.basename(filepath))
+        task = FM.load(filepath_str)
+        fname = os.path.basename(filepath_str)
+        tt, branch = self._parse_filename(fname)
         task_id_num = task.metadata.get("Id", "")
-        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
+        task_id = fname.rsplit(".", 1)[0]
         title = task.metadata.get("Ti", "")
 
         def _has_complete_content(t, fn):
@@ -990,33 +1002,33 @@ class TasksCLI:
             return True
 
         if current_state == "BACKLOG" and new_status != "BACKLOG":
-            if not _has_complete_content(task, os.path.basename(filepath)):
+            if not _has_complete_content(task, fname):
                 missing = []
                 if (
                     not task.parts.get("story")
-                    or len(task.parts.get("story", "").strip()) < 10
+                    or len(str(task.parts.get("story", "")).strip()) < 10
                 ):
                     missing.append("story")
                 if (
                     not task.parts.get("tech")
-                    or len(task.parts.get("tech", "").strip()) < 10
+                    or len(str(task.parts.get("tech", "")).strip()) < 10
                 ):
                     missing.append("tech")
                 if (
                     not task.parts.get("criteria")
-                    or len(task.parts.get("criteria", "").strip()) < 10
+                    or len(str(task.parts.get("criteria", "")).strip()) < 10
                 ):
                     missing.append("criteria")
                 if (
                     not task.parts.get("plan")
-                    or len(task.parts.get("plan", "").strip()) < 10
+                    or len(str(task.parts.get("plan", "")).strip()) < 10
                 ):
                     missing.append("plan")
-                tt, _ = self._parse_filename(os.path.basename(filepath))
+                tt, _ = self._parse_filename(fname)
                 if tt == "issue":
                     if (
                         not task.parts.get("repro")
-                        or len(task.parts.get("repro", "").strip()) < 10
+                        or len(str(task.parts.get("repro", "")).strip()) < 10
                     ):
                         missing.append("repro")
                 self.error(
@@ -1055,7 +1067,7 @@ class TasksCLI:
             ):
                 missing.append("plan")
 
-            tt, _ = self._parse_filename(os.path.basename(filepath))
+            tt, _ = self._parse_filename(fname)
             if tt == "issue":
                 if (
                     not task.parts.get("repro")
@@ -1069,9 +1081,10 @@ class TasksCLI:
                     hint='Use \'tasks show <id>\' to see current content, then \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'tasks modify --help\' for syntax help.',
                 )
 
-        tt, branch = self._parse_filename(os.path.basename(filepath))
+        tt, branch = self._parse_filename(fname)
         # Resolve branch to SHA if it exists
-        branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+        branch_sha_res = self._run_git(["rev-parse", branch])
+        branch_sha = branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
         if not branch_sha:
             # Try to find it in reflog or by name in commits
             res = self._run_git(["log", "-1", "--format=%H", branch])
