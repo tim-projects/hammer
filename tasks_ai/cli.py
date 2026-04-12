@@ -721,7 +721,7 @@ class TasksCLI:
         filepath, _ = self.find_task(filename)
         if not filepath:
             self.error(f"Task '{filename}' not found.")
-        
+
         if not self._validate_path(filepath):
             self.error(f"Invalid task path: {filepath}")
 
@@ -856,6 +856,66 @@ class TasksCLI:
                 return b
         return "main"
 
+    def _has_path(self, start_id, target_id, visited=None):
+        """Check if there's a path from start_id to target_id via BlockedBy links."""
+        if visited is None:
+            visited = set()
+
+        if start_id in visited:
+            return False
+        visited.add(start_id)
+
+        # Find the task file for start_id
+        task_file = None
+        for state_folder in STATE_FOLDERS.values():
+            state_path = os.path.join(self.tasks_path, state_folder)
+            if not os.path.exists(state_path):
+                continue
+            for task_dir in os.listdir(state_path):
+                task_dir_path = os.path.join(state_path, task_dir)
+                if not os.path.isdir(task_dir_path):
+                    continue
+                meta_file = os.path.join(task_dir_path, "meta.json")
+                if os.path.exists(meta_file):
+                    try:
+                        import json
+
+                        with open(meta_file, "r") as f:
+                            meta = json.load(f)
+                        if str(meta.get("Id")) == str(start_id):
+                            task_file = task_dir_path
+                            break
+                    except (json.JSONDecodeError, IOError):
+                        pass
+            if task_file:
+                break
+
+        if not task_file:
+            return False
+
+        # Load the task and check its BlockedBy
+        try:
+            task = FM.load(task_file)
+            bl = task.metadata.get("Bl", [])
+            if not isinstance(bl, list):
+                bl = []
+
+            # Check direct links
+            for blocker_dir in bl:
+                # Extract task ID from directory name (format: {id}-{type}-{title})
+                blocker_id = (
+                    blocker_dir.split("-")[0] if "-" in blocker_dir else blocker_dir
+                )
+                if str(blocker_id) == str(target_id):
+                    return True
+                # Recursively check indirect paths
+                if self._has_path(blocker_id, target_id, visited.copy()):
+                    return True
+        except Exception:
+            pass
+
+        return False
+
     def link(self, filename, blocked_by_filename):
         f1, _ = self.find_task(filename)
         f2, _ = self.find_task(blocked_by_filename)
@@ -883,6 +943,14 @@ class TasksCLI:
         b_title = str(b_task.metadata.get("Ti", ""))
         b_id = str(b_task.metadata.get("Id", ""))
         b_tt, _ = self._parse_filename(f2_fname)
+
+        # Check for circular dependency
+        if self._has_path(b_id, task_id_num):
+            self.error(
+                f"Circular dependency detected: linking '{filename}' -> '{blocked_by_filename}' "
+                f"would create a cycle. Task {b_id} already depends on task {task_id_num}."
+            )
+
         if b_name not in bl:
             bl.append(b_name)
             task.metadata["Bl"] = bl
