@@ -1,1 +1,0 @@
-- [ ] Test criteria C

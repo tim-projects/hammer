@@ -1,1 +1,1 @@
-Test story for atomic writes
+Updated story for testing atomic writes work
