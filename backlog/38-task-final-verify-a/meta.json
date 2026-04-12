@@ -3,6 +3,8 @@
   "Ti": "Final verify A",
   "St": "BACKLOG",
   "Cr": "260412 17:59",
-  "Bl": [],
+  "Bl": [
+    "39-task-final-verify-b"
+  ],
   "Pr": 2
 }
