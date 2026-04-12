@@ -3,6 +3,8 @@
   "Ti": "Test task B",
   "St": "BACKLOG",
   "Cr": "260412 14:09",
-  "Bl": [],
+  "Bl": [
+    "27-task-test-task-c"
+  ],
   "Pr": 2
 }
