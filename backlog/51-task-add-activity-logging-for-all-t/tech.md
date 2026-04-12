@@ -1,0 +1,1 @@
+Add _append_log calls to all operations that modify tasks: create, modify, link, move, delete, undo, checkpoint.

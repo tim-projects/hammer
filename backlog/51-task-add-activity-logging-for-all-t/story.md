@@ -1,0 +1,1 @@
+As a user, I want all task changes to be logged in the activity log so I can track what happened.

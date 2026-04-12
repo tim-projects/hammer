@@ -1,0 +1,1 @@
+1. 1. Add _append_log call to link() method\n2. Add _append_log call to undo() method\n3. Add _append_log call to delete operation\n4. Add _append_log call to checkpoint operation\n5. Verify all operations are logged

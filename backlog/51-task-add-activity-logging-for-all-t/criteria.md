@@ -1,0 +1,1 @@
+- [ ] Activity log is updated for create, modify, link, move, delete, undo, checkpoint operations
