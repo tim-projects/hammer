@@ -1,1 +1,1 @@
-When linking tasks as blockers (using the link command), the system should prevent circular dependencies (A blocked by B, B blocked by A). Currently this is allowed and causes tasks to be stuck.
+Updated story: While task 14 added circular dependency detection for new links, existing tasks with circular blockers need detection. The reconcile or cleanup command should detect and report circular blockers so users can fix them manually.
