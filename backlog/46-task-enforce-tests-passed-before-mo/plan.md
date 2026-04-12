@@ -1,0 +1,1 @@
+1. 1. Add tests_passed to KEY_MAP in constants.py. 2. Update modify command to accept --tests-passed flag. 3. Update _move_logic to check tests_passed when moving TESTING -> REVIEW. 4. Test the implementation.

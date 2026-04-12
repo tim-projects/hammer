@@ -1,0 +1,1 @@
+Add a tests_passed checkbox to task metadata. In _move_logic, when moving TESTING -> REVIEW, check if tests_passed is True. If not, deny the move with appropriate error message.

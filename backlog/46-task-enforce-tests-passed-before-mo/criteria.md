@@ -1,0 +1,1 @@
+- [ ] 1) Task in TESTING state shows tests_passed: false. 2) Moving TESTING -> REVIEW without tests_passed fails with message. 3) After setting tests_passed: true, move succeeds. 4) tasks modify --tests-passed flag works.

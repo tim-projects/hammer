@@ -1,0 +1,1 @@
+When moving a task from TESTING to REVIEW, the system should check for a 'tests passed' checkbox in the task logs. If not checked, deny the move and show a message that tests must be written and passed before moving to REVIEW.
