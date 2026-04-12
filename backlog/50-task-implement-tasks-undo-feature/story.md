@@ -1,0 +1,1 @@
+As a user, I want to undo mistakes in task operations (like accidentally linking tasks or modifying wrong fields), so I can recover from errors without manual git intervention.

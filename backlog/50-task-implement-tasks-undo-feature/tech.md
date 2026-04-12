@@ -1,0 +1,1 @@
+Implement an 'undo' command that reverts the last operation on a task by examining git history and restoring previous state. Should work for: link (unlink), modify (restore previous values), move (restore previous state).

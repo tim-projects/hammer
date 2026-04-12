@@ -1,0 +1,1 @@
+1. 1. Add undo command that uses git log to find last change. 2. Use git show to get previous state. 3. Restore and commit.
