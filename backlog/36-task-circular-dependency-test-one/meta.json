@@ -3,6 +3,8 @@
   "Ti": "Circular dependency test one",
   "St": "BACKLOG",
   "Cr": "260412 17:57",
-  "Bl": [],
+  "Bl": [
+    "37-task-circular-dependency-test-two"
+  ],
   "Pr": 2
 }
