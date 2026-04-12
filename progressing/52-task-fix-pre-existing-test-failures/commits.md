@@ -1,0 +1,1 @@
+5598fe5 Add activity logging for link, delete, checkpoint, and undo operations
