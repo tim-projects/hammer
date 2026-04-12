@@ -1,1 +1,0 @@
-1. 1. Update delete command in cli.py to add --force flag. 2. Test the fix.

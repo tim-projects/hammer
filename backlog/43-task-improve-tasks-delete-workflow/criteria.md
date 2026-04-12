@@ -1,1 +1,0 @@
-- [ ] 1) tasks delete <id> --force deletes without prompt. 2) tasks delete <id> works for BACKLOG tasks without prompt.

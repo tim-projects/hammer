@@ -1,1 +1,0 @@
-Add --force/-f flag to delete command to bypass confirmation prompt. Allow deletion from BACKLOG without confirmation.
