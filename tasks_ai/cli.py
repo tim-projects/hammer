@@ -718,47 +718,36 @@ class TasksCLI:
         )
 
     def delete(self, filename, confirm=None):
-        filepath, _ = self.find_task(filename)
+        filepath, current_state = self.find_task(filename)
         if not filepath:
             self.error(f"Task '{filename}' not found.")
 
         if not self._validate_path(filepath):
             self.error(f"Invalid task path: {filepath}")
 
-        # filepath is definitely not None here for pyright
         filepath_str = cast(str, filepath)
         task = FM.load(filepath_str)
         fname = os.path.basename(filepath_str)
         task_id = fname.rsplit(".", 1)[0]
         tt, _ = self._parse_filename(fname)
 
+        # If no confirm, move to REJECTED (respecting workflow gates)
         if not confirm:
-            code = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
-            task.metadata["DeleteCode"] = code
-            self._atomic_write(filepath_str, task)
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "--allow-empty", "-m", f"Mark {task_id} for deletion"],
-                cwd=self.tasks_path,
-            )
-            self.log(
-                f"Task '[{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}' marked for deletion."
-            )
-            self.log(f"To confirm, run: tasks delete {task_id} --confirm {code}")
-            self.log("WARNING: Running any other command will revert this mark.")
+            self._move_logic(task_id, "REJECTED", force=True)
             self.finish(
                 {
                     "id": task.metadata.get("Id"),
                     "task_id": task_id,
                     "title": task.metadata.get("Ti", ""),
-                    "delete_code": code,
+                    "state": "REJECTED",
                 }
             )
 
-        if task.metadata.get("DeleteCode") != confirm:
+        # If confirm provided, only delete if already in REJECTED state
+        if current_state != "REJECTED":
             self.error(
-                "Invalid or missing confirmation code.",
-                hint=f"Run 'tasks delete {task_id}' again to get a new code.",
+                f"Task must be in REJECTED state to delete. Currently in {current_state}.",
+                hint="Use 'tasks delete <id>' first to move to REJECTED, then confirm.",
             )
 
         try:
@@ -780,6 +769,7 @@ class TasksCLI:
                 "id": task.metadata.get("Id"),
                 "task_id": task_id,
                 "title": task.metadata.get("Ti", ""),
+                "state": "DELETED",
             }
         )
 
@@ -1119,7 +1109,7 @@ class TasksCLI:
                     return False
             return True
 
-        if current_state == "BACKLOG" and new_status != "BACKLOG":
+        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
             if not _has_complete_content(task, fname):
                 missing = []
                 if (
