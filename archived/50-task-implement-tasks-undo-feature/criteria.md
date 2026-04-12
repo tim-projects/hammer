@@ -1,0 +1,3 @@
+- [x] tasks undo <id> reverts the last operation
+- [x] Only works for the last operation, not multiple undos
+- [x] Error message if nothing to undo
