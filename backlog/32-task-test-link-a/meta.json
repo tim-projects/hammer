@@ -3,6 +3,8 @@
   "Ti": "Test link A",
   "St": "BACKLOG",
   "Cr": "260412 14:18",
-  "Bl": [],
+  "Bl": [
+    "33-task-test-link-b"
+  ],
   "Pr": 2
 }
