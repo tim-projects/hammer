@@ -1763,6 +1763,7 @@ class TasksCLI:
 
         cleaned = []
         archived = []
+        pending_archive = []
         has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
 
         for branch in branches.splitlines():
@@ -1782,6 +1783,16 @@ class TasksCLI:
             if not is_ancestor:
                 continue
 
+            # Find task first to check its state BEFORE deleting branch
+            res_find = self.find_task(branch)
+            filepath = res_find[0]
+            state = res_find[1]
+
+            # Respect workflow gates: only clean up branches for REVIEW/ARCHIVED tasks
+            if state not in ("REVIEW", "ARCHIVED"):
+                pending_archive.append(branch)
+                continue
+
             if not dry_run:
                 if has_origin:
                     self._run_git(["push", "origin", branch], cwd=self.root)
@@ -1789,20 +1800,21 @@ class TasksCLI:
 
             cleaned.append(branch)
 
-            res_find = self.find_task(branch)
-            filepath = res_find[0]
-            state = res_find[1]
-            if filepath and state in ("REVIEW", "ARCHIVED"):
+            if state == "REVIEW":
                 if not dry_run:
-                    if state == "REVIEW":
-                        self._move_logic(branch, "ARCHIVED", force=True, yes=yes)
-                        archived.append(branch)
+                    self._move_logic(branch, "ARCHIVED", force=True, yes=yes)
+                    archived.append(branch)
                 else:
                     archived.append(branch)
 
         if self.as_json:
             self.finish(
-                {"cleaned": cleaned, "archived": archived, "count": len(cleaned)}
+                {
+                    "cleaned": cleaned,
+                    "archived": archived,
+                    "pending": pending_archive,
+                    "count": len(cleaned),
+                }
             )
         else:
             if dry_run:
@@ -1814,6 +1826,10 @@ class TasksCLI:
             if archived:
                 print("\nArchived tasks:")
                 for b in archived:
+                    print(f"  - {b}")
+            if pending_archive:
+                print("\nTasks not ready for cleanup (move to REVIEW/ARCHIVED first):")
+                for b in pending_archive:
                     print(f"  - {b}")
 
     def config(self, action=None, key=None, value=None, save=False):
