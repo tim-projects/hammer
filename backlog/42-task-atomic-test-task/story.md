@@ -1,1 +1,0 @@
-Updated story for testing atomic writes work
