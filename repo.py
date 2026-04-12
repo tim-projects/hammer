@@ -196,6 +196,7 @@ def ensure_pipeline_branch(name):
 
 def cmd_merge(src_input, target):
     src = resolve_branch(src_input)
+    # target is passed as argument, ensure it's used correctly
     ensure_pipeline_branch(target)
 
     info(f"Merging {src} → {target}")

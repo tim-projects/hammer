@@ -54,9 +54,10 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
 
 ## ⚠️ Operational Rules
 
-- **Always use `-j`**: Never run commands without the `-j` flag for machine-parseable JSON output.
+- **Use `repo.py` for all merges**: You MUST use the `python repo.py promote` or `python repo.py merge` commands for all pipeline transitions. Manual Git merges are forbidden.
+- **Resolve Validation Errors**: All validation errors (lint, test, typecheck) related to your changes MUST be resolved before promotion.
+- **Unrelated Errors**: If validation fails due to pre-existing errors unrelated to your task, you MUST create a new task to address them before merging to `main`. Do not bypass errors.
 - **Use `--dev` for testing**: You MUST use the `--dev` flag for all tool experimentation, "dry runs", or any task operation that is not directly part of the active project's workflow. This protects the real `.tasks` worktree.
-- **No Invisible Work**: Do not modify files unless a task is in the `PROGRESSING` state.
 - **Priority First**: Always pick the task with the lowest `P` (Priority) value first.
 - **Blockers**: If stuck, move the task to `BLOCKED` immediately and document the reason in `current-task.md` before checkpointing.
 - **Dependencies**: Use `python tasks.py -j link <task-id> <blocker-id>` to link a task to a blocker.

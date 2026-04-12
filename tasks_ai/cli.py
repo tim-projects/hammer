@@ -10,6 +10,7 @@ import shutil
 import random
 import string
 import fcntl
+from typing import cast
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -98,7 +99,7 @@ class TasksCLI:
                     continue
                 path = os.path.join(dir_path, item)
                 task = FM.load(path)
-                if "DeleteCode" in task.metadata:
+                if task and task.metadata and "DeleteCode" in task.metadata:
                     del task.metadata["DeleteCode"]
                     self._atomic_write(path, task)
                     updated = True
@@ -169,7 +170,9 @@ class TasksCLI:
         return result
 
     def _parse_filename(self, name):
-        name_part = name.rsplit(".", 1)[0]
+        if not name:
+            return "task", ""
+        name_part = str(name).rsplit(".", 1)[0]
         if "-" in name_part:
             parts = name_part.split("-", 2)
             if len(parts) >= 3:
@@ -269,31 +272,32 @@ class TasksCLI:
         if not os.path.exists(live_dir):
             return
         now = datetime.now()
-        for folder in os.listdir(live_dir):
-            path = os.path.join(live_dir, folder)
-            if not os.path.isdir(path):
+        for item in os.listdir(live_dir):
+            if item == ".gitkeep":
                 continue
-            log_path = os.path.join(path, "activity.log")
-            if os.path.exists(log_path):
-                with open(log_path, "r", encoding="utf-8") as f:
-                    lines = f.readlines()
-                live_date = None
-                for line in reversed(lines):
-                    if "->LIVE" in line:
-                        match = re.search(r"- (\d{6} \d{2}:\d{2}):", line)
-                        if match:
-                            live_date = datetime.strptime(
-                                match.group(1), "%y%m%d %H:%M"
+            path = os.path.join(live_dir, item)
+            if os.path.isdir(path):
+                log_path = os.path.join(path, "activity.log")
+                if os.path.exists(log_path):
+                    with open(log_path, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                    live_date = None
+                    for line in reversed(lines):
+                        if "->LIVE" in line:
+                            match = re.search(r"- (\d{6} \d{2}:\d{2}):", line)
+                            if match:
+                                live_date = datetime.strptime(
+                                    match.group(1), "%y%m%d %H:%M"
+                                )
+                                break
+                    if live_date and (now - live_date) > timedelta(days=7):
+                        if self._has_incomplete_checkboxes(path):
+                            self.log(
+                                f"Skipping archive for {item}: incomplete checkboxes"
                             )
-                            break
-                if live_date and (now - live_date) > timedelta(days=7):
-                    if self._has_incomplete_checkboxes(path):
-                        self.log(
-                            f"Skipping archive for {folder}: incomplete checkboxes"
-                        )
-                        continue
-                    self.log(f"Auto-archiving: {folder}")
-                    self._move_logic(folder, "ARCHIVED", force=True, yes=False)
+                            continue
+                        self.log(f"Auto-archiving: {item}")
+                        self._move_logic(item, "ARCHIVED", force=True, yes=False)
 
     def init(self):
         if self.dev:
@@ -380,7 +384,10 @@ class TasksCLI:
         self.finish()
 
     def _append_log(self, task_path, entry):
-        log_file = os.path.join(task_path, "activity.log")
+        if not task_path:
+            return
+        task_path_str = cast(str, task_path)
+        log_file = os.path.join(task_path_str, "activity.log")
         timestamp = datetime.now().strftime("%y%m%d %H:%M")
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(f"- {timestamp}: {entry}\n")
@@ -388,7 +395,7 @@ class TasksCLI:
             [
                 "add",
                 os.path.join(
-                    os.path.relpath(task_path, self.tasks_path), "activity.log"
+                    os.path.relpath(task_path_str, self.tasks_path), "activity.log"
                 ),
             ],
             cwd=self.tasks_path,
@@ -591,8 +598,9 @@ class TasksCLI:
                 hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
-        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
-        tt, _ = self._parse_filename(os.path.basename(filepath))
+        fname = os.path.basename(filepath)
+        task_id = fname.rsplit(".", 1)[0]
+        tt, _ = self._parse_filename(fname)
         updated = False
         if title:
             if len(title) < 10:
@@ -606,13 +614,22 @@ class TasksCLI:
             task.parts["tech"] = tech
             updated = True
         if criteria:
-            task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+            if isinstance(criteria, list):
+                task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+            else:
+                task.parts["criteria"] = criteria
             updated = True
         if plan:
-            task.parts["plan"] = "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
+            if isinstance(plan, list):
+                task.parts["plan"] = "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
+            else:
+                task.parts["plan"] = plan
             updated = True
         if repro:
-            task.parts["repro"] = "\n".join(f"{i}. {r}" for i, r in enumerate(repro, 1))
+            if isinstance(repro, list):
+                task.parts["repro"] = "\n".join(f"{i}. {r}" for i, r in enumerate(repro, 1))
+            else:
+                task.parts["repro"] = repro
             updated = True
 
         if notes or progress or findings or mitigations:
@@ -669,14 +686,18 @@ class TasksCLI:
         filepath, _ = self.find_task(filename)
         if not filepath:
             self.error(f"Task '{filename}' not found.")
-        task = FM.load(filepath)
-        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
-        tt, _ = self._parse_filename(os.path.basename(filepath))
+        
+        # filepath is definitely not None here for pyright
+        filepath_str = cast(str, filepath)
+        task = FM.load(filepath_str)
+        fname = os.path.basename(filepath_str)
+        task_id = fname.rsplit(".", 1)[0]
+        tt, _ = self._parse_filename(fname)
 
         if not confirm:
             code = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
             task.metadata["DeleteCode"] = code
-            self._atomic_write(filepath, task)
+            self._atomic_write(filepath_str, task)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
                 ["commit", "--allow-empty", "-m", f"Mark {task_id} for deletion"],
@@ -703,10 +724,10 @@ class TasksCLI:
             )
 
         try:
-            if os.path.isdir(filepath):
-                shutil.rmtree(filepath)
+            if os.path.isdir(filepath_str):
+                shutil.rmtree(filepath_str)
             else:
-                os.remove(filepath)
+                os.remove(filepath_str)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
                 ["commit", "--allow-empty", "-m", f"Del {task_id}"], cwd=self.tasks_path
@@ -735,7 +756,7 @@ class TasksCLI:
             dirs = [
                 d
                 for d in os.listdir(prog_dir)
-                if os.path.isdir(os.path.join(prog_dir, d))
+                if os.path.isdir(os.path.join(prog_dir, d)) and d != ".gitkeep"
             ]
             if dirs:
                 filepath = os.path.join(prog_dir, dirs[0])
@@ -744,14 +765,18 @@ class TasksCLI:
 
     def checkpoint(self, filename=None):
         filepath, task = self.get_active_task(filename)
-        if not filepath:
+        if not filepath or not task:
             self.error("No active task.")
-        self.log(f"Checkpointing {os.path.basename(filepath)}...")
-        if self._sync_task_content(filepath, task):
-            self._atomic_write(filepath, task)
+        
+        # filepath is definitely not None here for pyright
+        filepath_str = cast(str, filepath)
+        fname = os.path.basename(filepath_str)
+        self.log(f"Checkpointing {fname}...")
+        if self._sync_task_content(filepath_str, task):
+            self._atomic_write(filepath_str, task)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
-                ["commit", "--allow-empty", "-m", f"Cp: {os.path.basename(filepath)}"],
+                ["commit", "--allow-empty", "-m", f"Cp: {fname}"],
                 cwd=self.tasks_path,
             )
             self.log("Done.")
@@ -760,7 +785,10 @@ class TasksCLI:
         self.finish()
 
     def _sync_task_content(self, filepath, task, is_final=False):
-        _, branch = self._parse_filename(os.path.basename(filepath))
+        if not filepath:
+            return False
+        filepath_str = cast(str, filepath)
+        _, branch = self._parse_filename(os.path.basename(filepath_str))
         updated = False
         res = self._run_git(
             ["log", branch, f"^{self._get_default_branch()}", "--oneline"]
@@ -769,7 +797,7 @@ class TasksCLI:
         if commits:
             task.parts["commits"] = commits
             updated = True
-        dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
+        dump_path = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
         if os.path.exists(dump_path):
             dump = FM.load(dump_path)
             if dump.parts.get("content"):
@@ -789,18 +817,20 @@ class TasksCLI:
         if not f1 or not f2:
             self.error("Not found.")
         task = FM.load(f1)
-        task_title = task.metadata.get("Ti", "")
-        task_id_num = task.metadata.get("Id", "")
+        task_title = str(task.metadata.get("Ti", ""))
+        task_id_num = str(task.metadata.get("Id", ""))
         tt, _ = self._parse_filename(os.path.basename(f1))
-        bl = task.get("Bl", [])
+        bl = task.metadata.get("Bl", [])
+        if not isinstance(bl, list):
+            bl = []
         b_name = os.path.basename(f2)
         b_task = FM.load(f2)
-        b_title = b_task.metadata.get("Ti", "")
-        b_id = b_task.metadata.get("Id", "")
+        b_title = str(b_task.metadata.get("Ti", ""))
+        b_id = str(b_task.metadata.get("Id", ""))
         b_tt, _ = self._parse_filename(os.path.basename(f2))
         if b_name not in bl:
             bl.append(b_name)
-            task["Bl"] = bl
+            task.metadata["Bl"] = bl
             self._atomic_write(f1, task)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
@@ -835,7 +865,7 @@ class TasksCLI:
 
         if "," in new_status:
             statuses = [s.strip().upper() for s in new_status.split(",")]
-            current_state = task.get("St")
+            current_state = str(task.metadata.get("St", ""))
             for i, target in enumerate(statuses):
                 if (
                     target not in ALLOWED_TRANSITIONS.get(current_state, [])
@@ -846,18 +876,22 @@ class TasksCLI:
                         hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}",
                     )
                 if target == "PROGRESSING":
-                    for b in task.get("Bl", []):
-                        _, bs = self.find_task(b)
+                    bl = task.metadata.get("Bl", [])
+                    if not isinstance(bl, list):
+                        bl = []
+                    for b in bl:
+                        _, bs = self.find_task(str(b))
                         if bs != "ARCHIVED":
                             self.error(
                                 f"Blocked by {b}. Blocker must be ARCHIVED first."
                             )
                 try:
                     task = self._perform_move(task, current_state, target, filepath)
+                    fname = os.path.basename(filepath)
                     filepath = os.path.join(
                         self.tasks_path,
                         STATE_FOLDERS[target],
-                        os.path.basename(filepath),
+                        fname,
                     )
                     current_state = target
                 except Exception as e:
@@ -887,9 +921,10 @@ class TasksCLI:
 
     def _perform_move(self, task, current_state, new_status, filepath):
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
-        task["St"] = new_status
+        task.metadata["St"] = new_status
+        fname = os.path.basename(filepath)
         new_filepath = os.path.join(
-            self.tasks_path, STATE_FOLDERS[new_status], os.path.basename(filepath)
+            self.tasks_path, STATE_FOLDERS[new_status], fname
         )
         if os.path.isdir(filepath):
             shutil.move(filepath, new_filepath)
@@ -923,22 +958,22 @@ class TasksCLI:
         title = task.metadata.get("Ti", "")
 
         def _has_complete_content(t, fn):
-            if not t.parts.get("story") or len(t.parts.get("story", "").strip()) < 10:
+            if not t.parts.get("story") or len(str(t.parts.get("story", "")).strip()) < 10:
                 return False
-            if not t.parts.get("tech") or len(t.parts.get("tech", "").strip()) < 10:
+            if not t.parts.get("tech") or len(str(t.parts.get("tech", "")).strip()) < 10:
                 return False
             if (
                 not t.parts.get("criteria")
-                or len(t.parts.get("criteria", "").strip()) < 10
+                or len(str(t.parts.get("criteria", "")).strip()) < 10
             ):
                 return False
-            if not t.parts.get("plan") or len(t.parts.get("plan", "").strip()) < 10:
+            if not t.parts.get("plan") or len(str(t.parts.get("plan", "")).strip()) < 10:
                 return False
             type_part, _ = self._parse_filename(fn)
             if type_part == "issue":
                 if (
                     not t.parts.get("repro")
-                    or len(t.parts.get("repro", "").strip()) < 10
+                    or len(str(t.parts.get("repro", "")).strip()) < 10
                 ):
                     return False
             return True
@@ -979,30 +1014,33 @@ class TasksCLI:
                 )
 
         if new_status == "PROGRESSING":
-            for b in task.get("Bl", []):
-                _, bs = self.find_task(b)
+            bl = task.metadata.get("Bl", [])
+            if not isinstance(bl, list):
+                bl = []
+            for b in bl:
+                _, bs = self.find_task(str(b))
                 if bs != "ARCHIVED":
                     self.error(f"Blocked by {b}. Blocker must be ARCHIVED first.")
 
             missing = []
             if (
                 not task.parts.get("story")
-                or len(task.parts.get("story", "").strip()) < 10
+                or len(str(task.parts.get("story", "")).strip()) < 10
             ):
                 missing.append("story")
             if (
                 not task.parts.get("tech")
-                or len(task.parts.get("tech", "").strip()) < 10
+                or len(str(task.parts.get("tech", "")).strip()) < 10
             ):
                 missing.append("tech")
             if (
                 not task.parts.get("criteria")
-                or len(task.parts.get("criteria", "").strip()) < 10
+                or len(str(task.parts.get("criteria", "")).strip()) < 10
             ):
                 missing.append("criteria")
             if (
                 not task.parts.get("plan")
-                or len(task.parts.get("plan", "").strip()) < 10
+                or len(str(task.parts.get("plan", "")).strip()) < 10
             ):
                 missing.append("plan")
 
@@ -1010,7 +1048,7 @@ class TasksCLI:
             if tt == "issue":
                 if (
                     not task.parts.get("repro")
-                    or len(task.parts.get("repro", "").strip()) < 10
+                    or len(str(task.parts.get("repro", "")).strip()) < 10
                 ):
                     missing.append("repro")
 
@@ -1136,21 +1174,26 @@ class TasksCLI:
 
     def current(self, filename=None):
         filepath, task = self.get_active_task(filename)
-        if not filepath:
+        if not filepath or not task:
             self.error("No active task.")
-        tn = os.path.basename(filepath)
+        
+        # filepath is definitely not None here for pyright
+        filepath_str = cast(str, filepath)
+        tn = os.path.basename(filepath_str)
         tt, br = self._parse_filename(tn)
         data = {
-            "file": os.path.relpath(filepath, self.root),
+            "file": os.path.relpath(filepath_str, self.root),
             "name": tn,
             "type": tt,
             "branch": br,
-            "metadata": {KEY_MAP.get(k, k): v for k, v in task.metadata.items()},
+            "metadata": {
+                str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()
+            },
             "log_file": os.path.relpath(
-                os.path.join(filepath, "activity.log"), self.root
+                os.path.join(filepath_str, "activity.log"), self.root
             ),
         }
-        dp = os.path.join(filepath, CURRENT_TASK_FILENAME)
+        dp = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
         if os.path.exists(dp):
             d = FM.load(dp)
             data["dump"] = {
@@ -1179,20 +1222,25 @@ class TasksCLI:
                 f"Task '{filename}' not found.",
                 hint="Use 'tasks list' to see available task Ids.",
             )
-        task = FM.load(filepath)
-        tn = os.path.basename(filepath)
+        
+        # filepath is definitely not None here for pyright
+        filepath_str = cast(str, filepath)
+        task = FM.load(filepath_str)
+        tn = os.path.basename(filepath_str)
         tt, br = self._parse_filename(tn)
         data = {
-            "file": os.path.relpath(filepath, self.root),
+            "file": os.path.relpath(filepath_str, self.root),
             "name": tn,
             "type": tt,
             "branch": br,
-            "metadata": {KEY_MAP.get(k, k): v for k, v in task.metadata.items()},
+            "metadata": {
+                str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()
+            },
             "log_file": os.path.relpath(
-                os.path.join(filepath, "activity.log"), self.root
+                os.path.join(filepath_str, "activity.log"), self.root
             ),
         }
-        dp = os.path.join(filepath, CURRENT_TASK_FILENAME)
+        dp = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
         if os.path.exists(dp):
             d = FM.load(dp)
             data["dump"] = {
@@ -1363,19 +1411,13 @@ class TasksCLI:
                 task_id = task.metadata.get("Id")
                 if not task_id:
                     continue
-                branch = os.path.basename(path)
-                main_sha = (
-                    self._run_git(["rev-parse", "main"]).stdout.strip()
-                    if self._run_git(["rev-parse", "--verify", "main"]).returncode == 0
-                    else None
-                )
+                branch = item
+                main_sha_res = self._run_git(["rev-parse", "main"])
+                main_sha = main_sha_res.stdout.strip() if main_sha_res.returncode == 0 else ""
                 if not main_sha:
                     continue
-                branch_sha = (
-                    self._run_git(["rev-parse", branch]).stdout.strip()
-                    if self._run_git(["rev-parse", "--verify", branch]).returncode == 0
-                    else None
-                )
+                branch_sha_res = self._run_git(["rev-parse", branch])
+                branch_sha = branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
                 if not branch_sha:
                     continue
                 merge_base = self._run_git(
@@ -1430,19 +1472,13 @@ class TasksCLI:
                 task_id = task.metadata.get("Id")
                 if not task_id:
                     continue
-                branch = os.path.basename(path)
-                main_sha = (
-                    self._run_git(["rev-parse", "main"]).stdout.strip()
-                    if self._run_git(["rev-parse", "--verify", "main"]).returncode == 0
-                    else None
-                )
+                branch = item
+                main_sha_res = self._run_git(["rev-parse", "main"])
+                main_sha = main_sha_res.stdout.strip() if main_sha_res.returncode == 0 else ""
                 if not main_sha:
                     continue
-                branch_sha = (
-                    self._run_git(["rev-parse", branch]).stdout.strip()
-                    if self._run_git(["rev-parse", "--verify", branch]).returncode == 0
-                    else None
-                )
+                branch_sha_res = self._run_git(["rev-parse", branch])
+                branch_sha = branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
                 if not branch_sha:
                     continue
                 merge_base = self._run_git(
@@ -1597,7 +1633,9 @@ class TasksCLI:
 
             cleaned.append(branch)
 
-            filepath, state = self.find_task(branch)
+            res_find = self.find_task(branch)
+            filepath = res_find[0]
+            state = res_find[1]
             if filepath and state in ("REVIEW", "ARCHIVED"):
                 if not dry_run:
                     if state == "REVIEW":
@@ -1841,7 +1879,8 @@ class TasksCLI:
 
     def run_tool(self, tool_name=None, fix=False):
         """Run configured tools (lint, test, typecheck, format)."""
-        check_py = os.path.join(self.root, "check.py")
+        root_str = cast(str, self.root)
+        check_py = os.path.join(root_str, "check.py")
         if not os.path.exists(check_py):
             self.error("check.py not found in project root.")
             return 1
