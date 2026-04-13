@@ -3,5 +3,6 @@
   "Ti": "Health check / doctor command",
   "St": "TESTING",
   "Pr": 2,
-  "Cr": "260401 22:17"
+  "Cr": "260401 22:17",
+  "Tp": true
 }
