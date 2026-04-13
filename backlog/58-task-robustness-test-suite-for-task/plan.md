@@ -1,0 +1,1 @@
+1. 1. Research 2. Define 3. Implement 4. Verify
