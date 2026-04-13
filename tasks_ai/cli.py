@@ -1348,7 +1348,19 @@ class TasksCLI:
                             f"Branch '{branch}' not merged to main. Merge to main first. Alternatively, move to REJECTED."
                         )
                 if yes:
-                    self._run_git(["push", "origin", branch], cwd=self.root)
+                    # Only delete if branch has been pushed to remote (or no remote exists)
+                    has_origin = (
+                        self._run_git(["remote", "get-url", "origin"]).returncode == 0
+                    )
+                    if has_origin:
+                        remote_check = self._run_git(
+                            ["ls-remote", "--heads", "origin", branch]
+                        )
+                        if not remote_check.stdout.strip():
+                            self.error(
+                                f"Branch '{branch}' not pushed to remote. Push first."
+                            )
+                        self._run_git(["push", "origin", branch], cwd=self.root)
                     self._run_git(["branch", "-d", branch], cwd=self.root)
                 else:
                     if not self.as_json:
@@ -1920,10 +1932,24 @@ class TasksCLI:
             res_find = self.find_task(branch)
             _, state = res_find
 
-            # Respect workflow gates: only clean up branches for REVIEW/ARCHIVED tasks
-            if state not in ("REVIEW", "ARCHIVED"):
+            # Respect workflow gates: only clean up branches for LIVE or REJECTED tasks
+            if state not in ("LIVE", "REJECTED"):
                 pending_archive.append(branch)
                 continue
+
+            # Check branch was pushed to remote before cleaning up
+            if has_origin:
+                remote_check = self._run_git(["ls-remote", "--heads", "origin", branch])
+                if not remote_check.stdout.strip():
+                    pending_archive.append(f"{branch} (not pushed to remote)")
+                    continue
+
+            # Check branch was pushed to remote before cleaning up
+            if has_origin:
+                remote_check = self._run_git(["ls-remote", "--heads", "origin", branch])
+                if not remote_check.stdout.strip():
+                    pending_archive.append(f"{branch} (not pushed to remote)")
+                    continue
 
             if not dry_run:
                 if has_origin:
@@ -1932,7 +1958,7 @@ class TasksCLI:
 
             cleaned.append(branch)
 
-            if state == "REVIEW":
+            if state == "LIVE":
                 if not dry_run:
                     self._move_logic(branch, "ARCHIVED", force=True, yes=yes)
                     archived.append(branch)
