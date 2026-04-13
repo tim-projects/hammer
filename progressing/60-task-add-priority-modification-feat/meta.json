@@ -1,8 +1,10 @@
 {
   "Id": 60,
   "Ti": "Add priority modification feature to 'tasks modify'",
-  "St": "BACKLOG",
+  "St": "PROGRESSING",
   "Cr": "260413 17:43",
   "Bl": [],
-  "Pr": 2
+  "Pr": 2,
+  "Tp": false,
+  "P": 1
 }
