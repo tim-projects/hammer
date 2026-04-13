@@ -1,7 +1,7 @@
 {
   "Id": 13,
   "Ti": "Validation on task create",
-  "St": "REVIEW",
+  "St": "STAGING",
   "Pr": 1,
   "Cr": "260401 22:17",
   "Tp": true
