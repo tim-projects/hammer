@@ -1316,6 +1316,21 @@ class TasksCLI:
                         f"Branch '{branch}' not merged to testing. Merge to testing first."
                     )
 
+            if new_status == "STAGING":
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha or branch, "testing"]
+                ).stdout.strip()
+                testing_sha = (
+                    self._run_git(["rev-parse", "testing"]).stdout.strip()
+                    if self._run_git(["rev-parse", "--verify", "testing"]).returncode
+                    == 0
+                    else None
+                )
+                if not testing_sha or merge_base != testing_sha:
+                    self.error(
+                        f"Branch '{branch}' not merged to testing. Merge to testing first."
+                    )
+
             if new_status in ("LIVE", "ARCHIVED") and not force:
                 main_sha = (
                     self._run_git(["rev-parse", "main"]).stdout.strip()
