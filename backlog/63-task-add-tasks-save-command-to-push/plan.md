@@ -1,0 +1,1 @@
+1. 1. Add 'save' parser to tasks.py 2. Add save() method to cli.py 3. Handle git push in .tasks directory 4. Add --branch option for custom branch

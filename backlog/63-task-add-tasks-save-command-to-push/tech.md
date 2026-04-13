@@ -1,0 +1,1 @@
+Add a new 'save' subcommand that: 1) Accepts optional --branch flag for branch name (default: 'tasks'), 2) Runs git push in the .tasks directory, 3) Updates config to track the remote branch. Handle edge cases like: no remote configured, branch already exists, push fails.
