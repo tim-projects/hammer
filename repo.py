@@ -170,10 +170,33 @@ def resolve_branch(name):
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
         path, _ = cli.find_task(name)
         if path:
-            return os.path.basename(path)
+            branch_name = os.path.basename(path)
+            # If local branch doesn't exist but remote does, restore it
+            if not branch_exists(branch_name):
+                remote_check = run(
+                    ["git", "ls-remote", "--heads", "origin", branch_name],
+                    check=False,
+                    capture=True,
+                )
+                if remote_check.stdout.strip():
+                    run(
+                        ["git", "checkout", "-b", branch_name, f"origin/{branch_name}"],
+                        check=False,
+                    )
+                    log(f"Restored branch '{branch_name}' from remote for promotion")
+            return branch_name
 
     # Check if exists as is
     if branch_exists(name):
+        return name
+
+    # Check if exists on remote
+    remote_check = run(
+        ["git", "ls-remote", "--heads", "origin", name], check=False, capture=True
+    )
+    if remote_check.stdout.strip():
+        run(["git", "checkout", "-b", name, f"origin/{name}"], check=False)
+        log(f"Restored branch '{name}' from remote")
         return name
 
     error(f"Could not resolve branch: {name}")
@@ -263,15 +286,6 @@ def cmd_merge(src_input, target):
     # 4. Push
     if prompt_yes_no(f"Push {target} to origin?"):
         run(["git", "push", "origin", target])
-
-    # 5. Auto-cleanup local feature branch if merged to main (keep remote for restoration)
-    is_feature_branch = src not in ("main", "master", "testing", "staging")
-    if is_feature_branch and target == "main":
-        if FLAGS["yes"] or prompt_yes_no(
-            f"Delete local branch '{src}'? (Remote branch kept for restoration)"
-        ):
-            run(["git", "branch", "-D", src], check=False)
-            log(f"🗑️ Deleted local branch '{src}' (remote preserved)")
 
     # 6. Return
     if src and (FLAGS["yes"] or prompt_yes_no(f"Switch back to {src}?")):
