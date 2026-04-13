@@ -57,11 +57,11 @@ def test_create_and_modify(setup_tasks):
 def test_move_and_delete(setup_tasks):
     cli = setup_tasks
     cli.create(
-        "Move Test Task Name",
-        story="As a user I want to move tasks.",
-        tech="Python logic.",
-        criteria="State changes correctly.",
-        plan="1. Move to READY\n2. Verify state",
+        "Move Test Task Name Here",
+        story="As a user I want to move tasks between states.",
+        tech="Python and Git for state management.",
+        criteria="State changes correctly and task moves as expected.",
+        plan="1. Move to READY\n2. Verify state\n3. Complete workflow",
     )
     task_id = "1"
 
@@ -70,10 +70,10 @@ def test_move_and_delete(setup_tasks):
     # But it needs fields to leave BACKLOG.
     cli.modify(
         task_id,
-        story="As a user I want to move tasks.",
-        tech="Python logic.",
-        criteria="State changes correctly.",
-        plan="1. Move to READY\n2. Verify state",
+        story="As a user I want to move tasks between states.",
+        tech="Python and Git for state management.",
+        criteria="State changes correctly and task moves as expected.",
+        plan="1. Move to READY\n2. Verify state\n3. Complete workflow",
     )
 
     # Move through states
@@ -104,18 +104,18 @@ def test_move_and_delete(setup_tasks):
 def test_link_tasks(setup_tasks):
     cli = setup_tasks
     cli.create(
-        "Task A Title Long",
-        story="As a user I want to link tasks.",
-        tech="Python and Git.",
-        criteria="Linking works correctly.",
-        plan="1. Create two tasks\n2. Link them",
+        "Task A Title Long Enough",
+        story="As a user I want to link tasks together.",
+        tech="Python and Git for managing task links.",
+        criteria="Linking works correctly between tasks.",
+        plan="1. Create two tasks\n2. Link them together\n3. Verify link exists",
     )
     cli.create(
-        "Task B Title Long",
-        story="As a user I want to link tasks.",
-        tech="Python and Git.",
-        criteria="Linking works correctly.",
-        plan="1. Create two tasks\n2. Link them",
+        "Task B Title Long Enough",
+        story="As a user I want to link tasks together for dependencies.",
+        tech="Python and Git for managing task links.",
+        criteria="Linking works correctly between tasks.",
+        plan="1. Create two tasks\n2. Link them together\n3. Verify link exists",
     )
     # Linking 1 to 2
     cli.link("1", "2")

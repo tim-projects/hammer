@@ -531,6 +531,31 @@ class TasksCLI:
                 f"Missing required fields: {', '.join(missing)}. Task not created. These are required to move to PROGRESSING anyway."
             )
 
+        MIN_LEN = 15
+        too_short = []
+        story_str = (
+            story if isinstance(story, str) else " ".join(story) if story else ""
+        )
+        tech_str = tech if isinstance(tech, str) else " ".join(tech) if tech else ""
+        if story and len(story_str.strip()) < MIN_LEN:
+            too_short.append(f"--story (min {MIN_LEN} chars)")
+        if tech and len(tech_str.strip()) < MIN_LEN:
+            too_short.append(f"--tech (min {MIN_LEN} chars)")
+        if criteria:
+            crit_str = " ".join(criteria) if isinstance(criteria, list) else criteria
+            if len(crit_str.strip()) < MIN_LEN:
+                too_short.append(f"--criteria (min {MIN_LEN} chars)")
+        if plan:
+            plan_str = " ".join(plan) if isinstance(plan, list) else plan
+            if len(plan_str.strip()) < MIN_LEN:
+                too_short.append(f"--plan (min {MIN_LEN} chars)")
+        if task_type == "issue" and repro:
+            repro_str = " ".join(repro) if isinstance(repro, list) else repro
+            if len(repro_str.strip()) < MIN_LEN:
+                too_short.append(f"--repro (min {MIN_LEN} chars)")
+        if too_short:
+            self.error(f"Fields too short: {', '.join(too_short)}. Task not created.")
+
         if priority is not None:
             try:
                 p = int(priority)

@@ -143,6 +143,62 @@ class TestCLIRobustness(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("failed", result.stdout + result.stderr)
 
+    def test_create_validation_short_fields(self):
+        """Task create should fail if fields are too short."""
+        subprocess.run(
+            [sys.executable, self.tasks_py, "init"],
+            cwd=self.repo_dir,
+            capture_output=True,
+        )
+
+        # Test with too short fields
+        result = subprocess.run(
+            [
+                sys.executable,
+                self.tasks_py,
+                "create",
+                "Valid Task Title Here",
+                "--story",
+                "Short",
+                "--tech",
+                "Short",
+                "--criteria",
+                "Short",
+                "--plan",
+                "Short",
+            ],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("too short", result.stderr)
+
+    def test_create_validation_missing_fields(self):
+        """Task create should fail if required fields are missing."""
+        subprocess.run(
+            [sys.executable, self.tasks_py, "init"],
+            cwd=self.repo_dir,
+            capture_output=True,
+        )
+
+        # Test with missing fields
+        result = subprocess.run(
+            [
+                sys.executable,
+                self.tasks_py,
+                "create",
+                "Valid Task Title Here",
+            ],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing required fields", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
