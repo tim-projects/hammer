@@ -1,1 +1,1 @@
-- [ ] Tasks cannot move to LIVE without merge to main
+- [x] Tasks cannot move to LIVE without merge to main
