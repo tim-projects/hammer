@@ -1,0 +1,1 @@
+The blocker check in cli.py at lines 1071-1080 and 1236-1243 checks if blocker tasks are ARCHIVED, but the test expects the task to progress through TESTING->REVIEW->STAGING->LIVE while the blocker is still in PROGRESSING. Need to understand if this is a test bug or a code bug.

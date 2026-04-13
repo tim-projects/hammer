@@ -1,0 +1,1 @@
+The tests test_full_lifecycle and test_auto_archival fail because the blocker check runs before any state transitions, causing the task to be blocked by a task that's still in PROGRESSING rather than having moved through the full pipeline.
