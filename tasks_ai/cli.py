@@ -159,8 +159,7 @@ class TasksCLI:
                     idx = args.index("-m")
                     msg = f": {args[idx + 1]}"
                 self.log(f"Git: Committed changes{msg}")
-            elif cmd == "add":
-                self.log("Git: Staged changes")
+
             elif cmd == "push":
                 remote = args[1] if len(args) > 1 else ""
                 branch = args[2] if len(args) > 2 else ""
