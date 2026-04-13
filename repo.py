@@ -222,7 +222,17 @@ def cmd_merge(src_input, target):
     # Run compliance
     log("Running compliance checks...")
     if not ToolRunner().run_validation(fix=True, dev=FLAGS["dev"]):
-        error("Compliance failed. Fix issues before merging.")
+        error(
+            "Compliance failed. Cannot merge to main.\n\n"
+            "IMPORTANT: You must fix ALL validation errors (both related AND unrelated to your task) before merging.\n"
+            "If the errors are pre-existing/unrelated to your changes, you must:\n"
+            "  1. Create a new task to fix the pre-existing errors\n"
+            "  2. Move that task to PROGRESSING and fix the errors\n"
+            "  3. Move that task through the workflow to LIVE\n"
+            "  4. Then retry merging your original task\n\n"
+            "Do NOT attempt to bypass this by using direct git merge - "
+            "the workflow requires all validation to pass."
+        )
 
     # 2. Perform Merge
     log(f"Merging {src} into {target}...")
@@ -262,6 +272,7 @@ def cmd_promote(src_input):
         target = "main"
     elif src == "main" or src == "master":
         error("Cannot promote main/master branch further.")
+        return  # Ensure target is always bound for pyright
     else:
         # It's a feature branch, promote to testing
         target = "testing"
@@ -269,10 +280,9 @@ def cmd_promote(src_input):
     cmd_merge(src, target)
 
     # If it was a feature branch promoted to testing, ask to promote testing to staging etc.
-    if target != "main" and prompt_yes_no(
-        f"Continue promotion from {target} to next stage?"
-    ):
-        cmd_promote(target)
+    if target != "main":
+        if prompt_yes_no(f"Continue promotion from {target} to next stage?"):
+            cmd_promote(target)
 
 
 def cmd_status():
