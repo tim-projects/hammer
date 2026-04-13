@@ -1,7 +1,7 @@
 {
   "Id": 56,
   "Ti": "Fix test_full_lifecycle and test_auto_archival failures",
-  "St": "PROGRESSING",
+  "St": "TESTING",
   "Cr": "260413 11:15",
   "Bl": [],
   "Pr": 1
