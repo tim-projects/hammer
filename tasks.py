@@ -157,6 +157,13 @@ if __name__ == "__main__":
     undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
 
+    doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
+    doc_p.add_argument(
+        "--fix",
+        action="store_true",
+        help="Attempt to fix issues automatically.",
+    )
+
     args = parser.parse_args()
 
     if args.version:
@@ -221,3 +228,5 @@ if __name__ == "__main__":
         cli.run_tool(args.tool, fix=args.fix)
     elif args.command == "undo":
         cli.undo(args.filename)
+    elif args.command == "doctor":
+        cli.doctor(fix=args.fix)

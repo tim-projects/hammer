@@ -98,12 +98,21 @@ def get_current_branch():
 def prompt_yes_no(prompt):
     if FLAGS["yes"]:
         return True
-    while True:
-        res = input(f"{prompt} [y/n] ").strip().lower()
-        if res in ["y", "yes"]:
-            return True
-        if res in ["n", "no"]:
-            return False
+    if not sys.stdin.isatty():
+        warn(
+            "Non-interactive mode detected. Use -y flag to auto-confirm: 'python repo.py -y ...'"
+        )
+    try:
+        while True:
+            res = input(f"{prompt} [y/n] ").strip().lower()
+            if res in ["y", "yes"]:
+                return True
+            if res in ["n", "no"]:
+                return False
+    except EOFError:
+        error(
+            "EOFError: stdin closed. Use -y flag to auto-confirm: 'python repo.py -y ...'"
+        )
 
 
 class ToolRunner:
