@@ -1,1 +1,0 @@
-- [ ] Ability to update priority via 'tasks modify <id> -p <new_priority>'; updated priority reflected in task metadata.
