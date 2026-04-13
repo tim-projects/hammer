@@ -152,11 +152,11 @@ tasks config set repo.test pytest   # Set test tool
 ### Repository Integration
 
 ```bash
-python repo.py merge <src> to <target>  # Merge with compliance checks
-python repo.py promote <id>            # Promote through pipeline: testing → staging → main
-python repo.py sync                    # Sync: testing → staging → main
-python repo.py status                  # Show current branch and pending changes
-python repo.py branch list             # List all branches
+repo merge <src> to <target>  # Merge with compliance checks
+repo promote <id>            # Promote through pipeline: testing → staging → main
+repo sync                    # Sync: testing → staging → main
+repo status                  # Show current branch and pending changes
+repo branch list             # List all branches
 ```
 
 ## Task File Structure
