@@ -54,7 +54,7 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
 
 ## ⚠️ Operational Rules
 
-- **Use `repo.py` for all merges**: You MUST use the `python repo.py promote` or `python repo.py merge` commands for all pipeline transitions. Manual Git merges are forbidden.
+- **Use `python repo.py` for all merges**: You MUST use the `python repo.py promote` or `python repo.py merge` commands for all pipeline transitions. Manual Git merges are forbidden.
 - **Resolve Validation Errors**: All validation errors (lint, test, typecheck) related to your changes MUST be resolved before promotion.
 - **Unrelated Errors**: If validation fails due to pre-existing errors unrelated to your task, you MUST create a new task to address them before merging to `main`. Do not bypass errors.
 - **Use `--dev` for testing**: You MUST use the `--dev` flag for all tool experimentation, "dry runs", or any task operation that is not directly part of the active project's workflow. This protects the real `.tasks` worktree.

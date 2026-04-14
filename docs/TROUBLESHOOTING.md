@@ -56,8 +56,8 @@ tasks modify 17 --story "As a user..." --tech "Background..." --criteria "Criter
 # Switch to the task branch
 git checkout 17-task-description
 
-# Or use repo.py to handle branch switching
-python repo.py promote 17
+# Or use repo to handle branch switching
+repo promote 17
 ```
 
 ### Cannot Move to REVIEW
@@ -83,8 +83,8 @@ tasks move 17 REVIEW
 
 **Solution**:
 ```bash
-# Merge the branch using repo.py
-python repo.py merge 17 to main
+# Merge the branch using repo
+repo merge 17 to main
 
 # Then archive
 tasks move 17 ARCHIVED -y
@@ -122,7 +122,7 @@ tasks unlink 17 18
 
 ### Merge Conflicts During Promotion
 
-**Symptom**: Merge conflicts when using `python repo.py promote`
+**Symptom**: Merge conflicts when using `repo promote`
 
 **Cause**: Branch has diverged from target branch.
 
@@ -134,7 +134,7 @@ git merge 17-task-description
 # Fix conflicts, then commit
 
 # Continue promotion
-python repo.py promote 17
+repo promote 17
 ```
 
 ### Orphan Branches
@@ -228,10 +228,32 @@ tasks config set repo.lint ruff
 tasks config set repo.type_check pyright
 ```
 
+## Running Validation
+
+### Check Command
+
+Run `check` to validate your code before promoting tasks:
+
+```bash
+# Run all checks (lint, test, typecheck, format)
+check all
+
+# Run individual checks
+check lint
+check test
+check typecheck
+check format
+
+# Auto-fix lint errors
+check lint --fix
+```
+
+The validation runs automatically when moving tasks to TESTING. Fix any errors before proceeding.
+
 ## Getting More Help
 
 1. Run `tasks -h` for command help
 2. Run `tasks <command> -h` for specific command help
 3. Run `tasks doctor` for data integrity checks
-4. Check git status: `python repo.py status`
-5. List all branches: `python repo.py branch list`
+4. Check git status: `repo status`
+5. List all branches: `repo branch list`
