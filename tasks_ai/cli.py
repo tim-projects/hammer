@@ -187,15 +187,16 @@ class TasksCLI:
         if not os.path.exists(check_path):
             return
         result = subprocess.run(
-            [sys.executable, check_path, "all"] + (["--fix"] if fix else []),
+            [sys.executable, check_path, "lint"] + (["--fix"] if fix else []),
             cwd=self.root,
             capture_output=True,
             text=True,
+            timeout=60,
         )
         if result.returncode != 0:
             self.error(
                 "Validation failed. Fix errors before proceeding.",
-                hint="Run 'python check.py all' to see errors.",
+                hint="Run 'python check.py lint' to see errors.",
             )
 
     def _parse_filename(self, name):
@@ -430,6 +431,24 @@ class TasksCLI:
         )
         self.log("Use -j for JSON output. Run 'list' to see all tasks with their Ids.")
         self.finish()
+
+    def save(self, branch="tasks"):
+        if not os.path.exists(self.tasks_path):
+            self.error("Tasks not initialized. Run 'tasks init' first.")
+        remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
+        if not remotes.stdout.strip():
+            self.error("No remote configured in .tasks. Add a remote first.")
+        current = self._run_git(
+            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+        ).stdout.strip()
+        push_result = self._run_git(
+            ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
+            cwd=self.tasks_path,
+        )
+        if push_result.returncode != 0:
+            self.error(f"Failed to push to remote: {push_result.stderr}")
+        self.log(f"Pushed {current} to origin/{branch}")
+        self.finish({"branch": branch, "remote": "origin", "from_branch": current})
 
     def _append_log(self, task_path, entry):
         if not task_path:
@@ -679,6 +698,7 @@ class TasksCLI:
         findings=None,
         mitigations=None,
         tests_passed=None,
+        priority=None,
     ):
         filepath, _ = self.find_task(filename)
         if not filepath:
@@ -740,6 +760,10 @@ class TasksCLI:
 
         if tests_passed is not None:
             task.metadata["Tp"] = bool(tests_passed)
+            updated = True
+
+        if priority is not None:
+            task.metadata["P"] = priority
             updated = True
 
         if updated:

@@ -1,6 +1,6 @@
-# Tasks AI: Git-Backed Project Management for AI Agents
+# Ship Faster with AI-Powered Git-Backed Project Management
 
-`tasks` is a comprehensive project management system built on Git. It provides a structured workflow for AI agents to manage work from conception to completion, with quality gates at every stage, full audit trails, and reliable state management.
+`tasks` gives your project a complete project management system that lives IN your repo. State machines, quality gates, audit trails, full automation - all powered by git worktrees, designed for AI agents.
 
 ## 🚀 One-Line Install
 
@@ -29,20 +29,11 @@ The agent will then autonomously:
 
 ## The Problem
 
-AI agents working on code need to:
-- Know what tasks exist and their priority
-- Understand what state each task is in
-- Track their progress as they work
-- Know when work is ready for review
-- Handle blockers and dependencies
-- Report results back reliably
-- Maintain audit trails of all decisions and changes
-
-Without a structured system, agents improvise, skip steps, lose track of what's done, and can't communicate their status reliably.
+AI agents working on code need to know what exists, track progress, meet quality gates, handle blockers, and report results reliably. Without structure, they improvise, skip steps, lose track, and can't communicate status.
 
 ## The Solution
 
-`tasks` provides a deterministic state machine with quality gates. Agents must follow the lifecycle, meeting criteria at each step before advancing.
+`tasks` gives you a deterministic state machine with quality gates. Agents follow the lifecycle, meeting criteria at each step before advancing - no shortcuts, no surprises.
 
 ### The State Machine
 
@@ -60,24 +51,17 @@ Each transition has rules:
 - Can't move to LIVE without being merged to main
 - Can't move to ARCHIVED without merged to main (or REJECTED)
 
-## Key Features
+## Why It's Different
 
-| Feature | Benefit |
-|---------|---------|
-| **Atomic Task IDs** | Race-condition free ID generation for parallel agent operations |
-| **Quality Gates** | Tasks can't advance without meeting requirements |
-| **Branch Per Task** | Each task gets its own branch, automatically managed |
-| **Dependency Management** | Block tasks until blockers are resolved |
-| **Circular Dependency Prevention** | Automatically detects and prevents circular blocker relationships |
-| **Activity Logging** | Full audit trail of all task operations |
-| **Undo Capability** | Revert the last operation on a task |
-| **Self-Healing** | Auto-restore branches from remote when resuming archived tasks |
-| **Health Checks** | `tasks doctor` diagnoses data integrity and git state |
-| **Integrated Validation** | Run lint/test/typecheck/format via `tasks run` |
-| **Config Detection** | Auto-detect project tools (ruff, pytest, pyright, etc.) |
-| **Full Audit Trail** | Every state change is a Git commit |
-| **JSON Output** | Reliable parsing for agent consumption |
-| **Zero Dependencies** | Works with Python standard library only |
+| Instead of... | tasks gives you... |
+|--------------|-------------------|
+| Scattered notes & PR comments | Everything in one place, git-backed |
+| Manual status updates | State machine with enforced gates |
+| Lost context when switching tasks | Full audit trail, every change logged |
+| Wondering "what's ready to ship?" | Clear pipeline: testing → staging → live |
+| No parallel agent coordination | Atomic IDs, branch-per-task, blockers |
+| Disconnected tooling | Integrated: lint, test, typecheck, format - all in one command |
+| Fragile project state | Self-healing: auto-restore from remote |
 
 ## Commands Overview
 
@@ -152,11 +136,11 @@ tasks config set repo.test pytest   # Set test tool
 ### Repository Integration
 
 ```bash
-python repo.py merge <src> to <target>  # Merge with compliance checks
-python repo.py promote <id>            # Promote through pipeline: testing → staging → main
-python repo.py sync                    # Sync: testing → staging → main
-python repo.py status                  # Show current branch and pending changes
-python repo.py branch list             # List all branches
+repo merge <src> to <target>  # Merge with compliance checks
+repo promote <id>            # Promote through pipeline: testing → staging → main
+repo sync                    # Sync: testing → staging → main
+repo status                  # Show current branch and pending changes
+repo branch list             # List all branches
 ```
 
 ## Task File Structure

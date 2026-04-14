@@ -32,6 +32,16 @@ if __name__ == "__main__":
 
     subparsers.add_parser("init", help="Init tasks.")
 
+    save_p = subparsers.add_parser(
+        "save", help="Save and push .tasks worktree to remote."
+    )
+    save_p.add_argument(
+        "--branch",
+        "-b",
+        default="tasks",
+        help="Remote branch name (default: 'tasks').",
+    )
+
     list_p = subparsers.add_parser("list", help="List tasks.")
     list_p.add_argument("--all", action="store_true")
 
@@ -87,6 +97,7 @@ if __name__ == "__main__":
     mod_p.add_argument(
         "--tests-passed", action="store_true", help="Mark tests as passed."
     )
+    mod_p.add_argument("-p", "--priority", type=int, help="Update priority.")
 
     mv_p = subparsers.add_parser("move", help="Move task.")
     mv_p.add_argument(
@@ -176,6 +187,8 @@ if __name__ == "__main__":
 
     if args.command == "init":
         cli.init()
+    elif args.command == "save":
+        cli.save(branch=args.branch)
     elif args.command == "create":
         cli.create(
             args.title,
@@ -201,6 +214,7 @@ if __name__ == "__main__":
             findings=args.findings,
             mitigations=args.mitigations,
             tests_passed=args.tests_passed,
+            priority=args.priority,
         )
     elif args.command == "move":
         cli.move(args.filename, args.status, yes=args.yes)
