@@ -1,7 +1,6 @@
 {
   "Id": 64,
   "Ti": "Refactor task state storage: remove state from task files, use folder path only",
-  "St": "PROGRESSING",
   "Cr": "260415 13:55",
   "Bl": [],
   "Pr": 2,
