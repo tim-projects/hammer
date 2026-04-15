@@ -1,4 +1,6 @@
 - [ ] find_task correctly derives state from folder path
 - [ ] doctor only uses folder path for state validation
 - [ ] tasks can be moved without writing state to task files
+- [ ] check.py works without St field in task files
+- [ ] repo.py merge/promote uses folder-based state
 - [ ] backward compatible: existing tasks with St field still work
