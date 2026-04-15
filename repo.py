@@ -29,6 +29,7 @@ import subprocess
 import sys
 import os
 import json
+import shutil
 from pathlib import Path
 
 # Add current dir to path to import tasks_ai
@@ -121,7 +122,8 @@ class ToolRunner:
 
     def run_validation(self, fix=False, dev=False):
         check_py = os.path.join(os.getcwd(), "check.py")
-        if not os.path.exists(check_py):
+        check_cmd = shutil.which("check")
+        if not os.path.exists(check_py) and not check_cmd:
             warn("check.py not found, skipping tool validation")
             return True
 
@@ -137,7 +139,10 @@ class ToolRunner:
 
         # Simpler: just run 'check all'
         log("Running codebase validation (check all)...")
-        cmd = [sys.executable, check_py, "all"]
+        if check_cmd:
+            cmd = ["check", "all"]
+        else:
+            cmd = [sys.executable, check_py, "all"]
         if fix:
             cmd.append("--fix")
         if dev:
