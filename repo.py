@@ -120,8 +120,22 @@ class ToolRunner:
     def __init__(self):
         pass
 
+    def _get_git_root(self):
+        try:
+            return (
+                subprocess.check_output(
+                    ["git", "rev-parse", "--show-toplevel"],
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode()
+                .strip()
+            )
+        except subprocess.CalledProcessError:
+            return os.getcwd()
+
     def run_validation(self, fix=False, dev=False):
-        check_py = os.path.join(os.getcwd(), "check.py")
+        git_root = self._get_git_root()
+        check_py = os.path.join(git_root, "check.py")
         check_cmd = shutil.which("check")
         if not os.path.exists(check_py) and not check_cmd:
             warn("check.py not found, skipping tool validation")
@@ -140,7 +154,7 @@ class ToolRunner:
         # Simpler: just run 'check all'
         log("Running codebase validation (check all)...")
         # Prefer local check.py over system check
-        local_check = os.path.join(os.getcwd(), "check.py")
+        local_check = os.path.join(git_root, "check.py")
         if os.path.exists(local_check):
             cmd = [sys.executable, local_check, "all"]
         elif check_cmd:
