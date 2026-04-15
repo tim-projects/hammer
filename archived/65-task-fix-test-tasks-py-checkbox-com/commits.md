@@ -1,0 +1,1 @@
+d47e98a Add helpful error message when tasks not initialized
