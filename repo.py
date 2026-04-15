@@ -77,10 +77,38 @@ def info(msg):
         print(f"{CYAN}[repo]{NC} {msg}")
 
 
+def find_project_root(start_path=None):
+    """Search upward for .tasks directory or .git directory."""
+    if start_path is None:
+        start_path = os.path.dirname(os.path.abspath(__file__))
+
+    current = os.path.abspath(start_path)
+    while True:
+        if os.path.isdir(os.path.join(current, ".tasks")) or os.path.isdir(
+            os.path.join(current, ".git")
+        ):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+
+    if start_path != os.getcwd():
+        return find_project_root(os.getcwd())
+
+    return start_path
+
+
 def run(cmd, check=True, capture=False, env=None, cwd=None):
+    project_root = find_project_root()
     try:
         return subprocess.run(
-            cmd, check=check, capture_output=capture, text=True, env=env, cwd=cwd
+            cmd,
+            check=check,
+            capture_output=capture,
+            text=True,
+            env=env,
+            cwd=cwd or project_root,
         )
     except subprocess.CalledProcessError as e:
         if check:
@@ -140,7 +168,8 @@ class ToolRunner:
         # Simpler: just run 'check all'
         log("Running codebase validation (check all)...")
         # Prefer local check.py over system check
-        local_check = os.path.join(os.getcwd(), "check.py")
+        git_root = self._get_git_root()
+        local_check = os.path.join(git_root, "check.py")
         if os.path.exists(local_check):
             cmd = [sys.executable, local_check, "all"]
         elif check_cmd:
@@ -153,7 +182,9 @@ class ToolRunner:
             cmd.append("--dev")
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=600, cwd=git_root
+            )
         except subprocess.TimeoutExpired:
             error(
                 "Validation timed out after 10 minutes.\n"
