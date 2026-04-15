@@ -254,7 +254,9 @@ def cmd_merge(src_input, target):
     # Check clean
     st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
     if st:
-        error(f"Uncommitted changes on {src}. Commit or stash first.")
+        warn(f"Uncommitted changes on {src}. Auto-committing...")
+        run(["git", "add", "."])
+        run(["git", "commit", "-m", f"WIP: {src}"])
 
     # Run compliance
     log("Running compliance checks...")
