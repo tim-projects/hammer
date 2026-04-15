@@ -139,7 +139,11 @@ class ToolRunner:
 
         # Simpler: just run 'check all'
         log("Running codebase validation (check all)...")
-        if check_cmd:
+        # Prefer local check.py over system check
+        local_check = os.path.join(os.getcwd(), "check.py")
+        if os.path.exists(local_check):
+            cmd = [sys.executable, local_check, "all"]
+        elif check_cmd:
             cmd = ["check", "all"]
         else:
             cmd = [sys.executable, check_py, "all"]
