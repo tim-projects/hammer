@@ -110,7 +110,7 @@ def get_commands(fix=False):
         },
         "typecheck": {
             "mypy": ["mypy", "."],
-            "pyright": ["npx", "pyright", "."],
+            "pyright": ["npx", "pyright"],
             "typescript": ["npx", "tsc", "--noEmit"],
         },
         "format": {
