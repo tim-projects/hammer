@@ -170,6 +170,14 @@ class TestTasksAI(unittest.TestCase):
                 subprocess.run(
                     ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
                 )
+                # Complete checkboxes before LIVE move (write to staging folder)
+                criteria_path = os.path.join(
+                    self.repo_dir, ".tasks", "staging", issue_file, "criteria.md"
+                )
+                with open(criteria_path, "r") as f:
+                    content = f.read()
+                with open(criteria_path, "w") as f:
+                    f.write(content.replace("- [ ]", "- [x]"))
 
             # Complete checkboxes only when moving to LIVE
             # (write to staging folder - will be moved to live)
@@ -266,6 +274,14 @@ class TestTasksAI(unittest.TestCase):
                 subprocess.run(
                     ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
                 )
+                # Complete checkboxes BEFORE LIVE move (write to staging folder)
+                criteria_path = os.path.join(
+                    self.repo_dir, ".tasks", "staging", file, "criteria.md"
+                )
+                with open(criteria_path, "r") as f:
+                    content = f.read()
+                with open(criteria_path, "w") as f:
+                    f.write(content.replace("- [ ]", "- [x]"))
 
             # Complete checkboxes only when moving to LIVE (write to staging folder)
             if state == "LIVE":
