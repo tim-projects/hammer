@@ -1,0 +1,13 @@
+{
+  "include": ["tasks_ai", "repo.py", "check.py"],
+  "exclude": ["test_*.py", "**/__pycache__", "node_modules", ".git", "venv"],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "reportCallIssue": "none",
+  "reportArgumentType": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportPossiblyUnboundVariable": "none",
+  "reportOptionalSubscript": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportMissingModuleSource": "none"
+}

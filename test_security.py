@@ -9,7 +9,7 @@ class TestSecurity(unittest.TestCase):
     def setUp(self):
         import sys
 
-        sys._called_from_test = True
+        sys._called_from_test = True  # type: ignore[attr-defined]
         self.tmp_dir = tempfile.mkdtemp()
         # Mock git root
         self.old_cwd = os.getcwd()

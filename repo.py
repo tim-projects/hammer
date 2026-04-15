@@ -256,6 +256,7 @@ def cmd_promote(src_input):
     src = resolve_branch(src_input)
 
     # Determine target
+    target = "testing"  # default
     if src == "testing":
         target = "staging"
     elif src == "staging":

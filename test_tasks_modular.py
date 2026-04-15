@@ -10,7 +10,7 @@ from tasks_ai.cli import TasksCLI
 @pytest.fixture
 def setup_tasks():
     # Setup a temp environment
-    sys._called_from_test = True
+    sys._called_from_test = True  # type: ignore[attr-defined]
     test_dir = tempfile.mkdtemp()
     repo_dir = os.path.join(test_dir, "repo")
     os.makedirs(repo_dir)
@@ -32,7 +32,7 @@ def setup_tasks():
     # Cleanup
     os.chdir(old_cwd)
     shutil.rmtree(test_dir)
-    del sys._called_from_test
+    del sys._called_from_test  # type: ignore[attr-defined]
 
 
 def test_create_and_modify(setup_tasks):

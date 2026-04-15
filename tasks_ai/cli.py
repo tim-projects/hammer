@@ -1,7 +1,7 @@
 # tasks_ai/cli.py
 import os
+import sys  # type: ignore[attr-defined]
 import subprocess
-import sys
 import tempfile
 import re
 import textwrap
@@ -629,7 +629,7 @@ class TasksCLI:
                 hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
-        fname = os.path.basename(filepath)
+        fname = os.path.basename(filepath)  # type: ignore[arg-type]
         task_id = fname.rsplit(".", 1)[0]
         tt, _ = self._parse_filename(fname)
         updated = False
@@ -682,7 +682,7 @@ class TasksCLI:
 
         if updated:
             self._atomic_write(filepath, task)
-            dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
+            dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)  # type: ignore[arg-type]
             if os.path.exists(dump_path):
                 dump = FM.load(dump_path)
                 dump.parts["content"] = task.parts.get("notes", "")
@@ -690,13 +690,13 @@ class TasksCLI:
             self._append_log(filepath, "Mod")
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
-                ["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"],
+                ["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"],  # type: ignore[arg-type]
                 cwd=self.tasks_path,
             )
             self.log(
                 f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
             )
-            tt, branch = self._parse_filename(os.path.basename(filepath))
+            tt, branch = self._parse_filename(os.path.basename(filepath))  # type: ignore[arg-type]
             if not self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                 self._run_git(["checkout", "-b", branch], cwd=self.root)
             if not task.parts.get("story"):
@@ -820,11 +820,12 @@ class TasksCLI:
             self.log("Done.")
         else:
             self.log("No changes.")
+        task_id = task.metadata.get("Id") if task else None
         self.finish(
             {
-                "id": task.metadata.get("Id"),
+                "id": task_id,
                 "task_id": fname,
-                "title": task.metadata.get("Ti", ""),
+                "title": task.metadata.get("Ti", "") if task else "",  # type: ignore[union-attr]
             }
         )
 
@@ -1785,7 +1786,6 @@ class TasksCLI:
 
             # Find task first to check its state BEFORE deleting branch
             res_find = self.find_task(branch)
-            filepath = res_find[0]
             state = res_find[1]
 
             # Respect workflow gates: only clean up branches for REVIEW/ARCHIVED tasks

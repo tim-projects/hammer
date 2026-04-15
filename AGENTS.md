@@ -4,7 +4,7 @@ AI Agents should follow these instructions to manage their workflow using the `t
 
 ## ⚠️ Important: Use Local tasks
 
-This repo has a local `tasks.py` that should be used instead of the system-installed `tasks` binary. The local version may be newer or have modifications.
+This repo has a local `tasks.py` that should be used instead of the system-installed `tasks` binary. The local version may be newer or has modifications.
 
 ```bash
 # Use this repo's version (recommended)
@@ -92,3 +92,16 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
 | `python check.py` | Run validation checks (lint, test, typecheck, format) |
 | `python check.py all` | Run all validation checks |
 | `python check.py lint --fix` | Run linter with auto-fix |
+
+## 🚫 Never Skip or Bypass
+
+**NEVER** skip or bypass validation to get something to work:
+- Do NOT remove checks from `check.py all`
+- Do NOT disable lint/typecheck rules  
+- Do NOT modify validation config to hide errors
+- Do NOT comment out failing tests
+
+If validation fails:
+1. **Fix the actual issue** - Not the validation tool
+2. **Create a new task** for pre-existing issues  
+3. **Ask the user** what to do instead of bypassing

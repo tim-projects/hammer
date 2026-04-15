@@ -254,6 +254,11 @@ def run_all(fix=False, as_json=False, dev=False):
             for check, code in results.items():
                 status = "✅" if code == 0 else "❌"
                 print(f"  {status} {check}")
+            print(
+                "\n⚠️ IMPORTANT: Do not modify validation config or disable checks to hide errors."
+            )
+            print("   See AGENTS.md - Never Skip or Bypass section.")
+            print("   Fix the actual code issues, not the validation tool.")
 
     return total_code
 
