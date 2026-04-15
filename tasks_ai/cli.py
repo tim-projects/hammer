@@ -1,7 +1,7 @@
 # tasks_ai/cli.py
 import os
+import sys  # type: ignore[attr-defined]
 import subprocess
-import sys
 import tempfile
 import re
 import textwrap
@@ -769,7 +769,7 @@ class TasksCLI:
 
         if updated:
             self._atomic_write(filepath, task)
-            dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
+            dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)  # type: ignore[arg-type]
             if os.path.exists(dump_path):
                 dump = FM.load(dump_path)
                 dump.parts["content"] = task.parts.get("notes", "")
@@ -777,13 +777,13 @@ class TasksCLI:
             self._append_log(filepath, "Mod")
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
-                ["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"],
+                ["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"],  # type: ignore[arg-type]
                 cwd=self.tasks_path,
             )
             self.log(
                 f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
             )
-            tt, branch = self._parse_filename(os.path.basename(filepath))
+            tt, branch = self._parse_filename(os.path.basename(filepath))  # type: ignore[arg-type]
             if not self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                 self._run_git(["checkout", "-b", branch], cwd=self.root)
             if not task.parts.get("story"):
@@ -910,11 +910,12 @@ class TasksCLI:
         else:
             self._append_log(filepath_str, "Cp")
             self.log("No changes.")
+        task_id = task.metadata.get("Id") if task else None
         self.finish(
             {
-                "id": task.metadata.get("Id"),
+                "id": task_id,
                 "task_id": fname,
-                "title": task.metadata.get("Ti", ""),
+                "title": task.metadata.get("Ti", "") if task else "",  # type: ignore[union-attr]
             }
         )
 
