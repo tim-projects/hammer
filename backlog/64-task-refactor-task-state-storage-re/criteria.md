@@ -1,0 +1,4 @@
+- [ ] find_task correctly derives state from folder path
+- [ ] doctor only uses folder path for state validation
+- [ ] tasks can be moved without writing state to task files
+- [ ] backward compatible: existing tasks with St field still work

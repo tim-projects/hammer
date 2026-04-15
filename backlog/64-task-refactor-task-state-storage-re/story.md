@@ -1,0 +1,1 @@
+Currently tasks store state both in the folder name and in the YAML frontmatter. This redundancy causes issues: agents manually editing files can cause state mismatches. The folder path should be the single source of truth for state.

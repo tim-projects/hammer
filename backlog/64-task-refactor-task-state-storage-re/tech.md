@@ -1,0 +1,1 @@
+1. Remove 'St' field from task file reading/writing in FM (frontmatter.py) or cli.py\n2. Update find_task() to derive state from folder path\n3. Update doctor to only check folder-based state\n4. Update all move logic to only set folder, not write to task file\n5. Keep state in folder for backwards compatibility but ignore it

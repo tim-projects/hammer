@@ -1,0 +1,1 @@
+1. 1. Modify find_task to extract state from folder path\n2. Remove St from task file writes in move logic\n3. Update doctor state check to use folder only\n4. Test the changes\n5. Document the change
