@@ -477,9 +477,7 @@ class TasksCLI:
         for state, folder in STATE_FOLDERS.items():
             dir_path = os.path.join(self.tasks_path, folder, task_id)
             if os.path.isdir(dir_path):
-                task = FM.load(dir_path)
-                task_state = task.metadata.get("St", state)
-                matches.append((dir_path, task_state))
+                matches.append((dir_path, state))
 
         if not matches and task_id.isdigit():
             for state, folder in STATE_FOLDERS.items():
@@ -491,8 +489,7 @@ class TasksCLI:
                     if os.path.isdir(path):
                         task = FM.load(path)
                         if str(task.metadata.get("Id")) == task_id:
-                            task_state = task.metadata.get("St", state)
-                            matches.append((path, task_state))
+                            matches.append((path, state))
 
         if not matches:
             return None, None
@@ -623,7 +620,6 @@ class TasksCLI:
             metadata={
                 "Id": numeric_id,
                 "Ti": title,
-                "St": "BACKLOG",
                 "Cr": datetime.now().strftime("%y%m%d %H:%M"),
                 "Bl": [],
                 "Pr": priority or (1 if task_type == "issue" else 2),
@@ -1062,7 +1058,7 @@ class TasksCLI:
         )
 
     def move(self, filename, new_status, yes=False):
-        filepath, _ = self.find_task(filename)
+        filepath, current_state_from_folder = self.find_task(filename)
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
@@ -1082,7 +1078,7 @@ class TasksCLI:
                         f"Invalid status '{s}' in multi-move sequence.",
                         hint=f"Valid statuses are: {', '.join(STATE_FOLDERS.keys())}",
                     )
-            current_state = str(task.metadata.get("St", ""))
+            current_state = current_state_from_folder
             for i, target in enumerate(statuses):
                 if (
                     target not in ALLOWED_TRANSITIONS.get(current_state, [])
@@ -1166,7 +1162,7 @@ class TasksCLI:
             self.error("Invalid task path.")
         filepath_str = cast(str, filepath)
         self._sync_task_content(filepath_str, task, is_final=(new_status == "ARCHIVED"))
-        task.metadata["St"] = new_status
+        task.metadata.pop("St", None)
         fname = os.path.basename(filepath_str)
         new_filepath = os.path.join(self.tasks_path, STATE_FOLDERS[new_status], fname)
         if os.path.isdir(filepath_str):
@@ -1188,24 +1184,6 @@ class TasksCLI:
                 hint="Use 'tasks list' to see all available task filenames/IDs.",
             )
         filepath_str = cast(str, filepath)
-
-        task = FM.load(filepath_str)
-        task_state = task.metadata.get("St", "") if task and task.metadata else ""
-        if task_state and task_state != current_state:
-            self.log(
-                f"Fixing: Task state was '{task_state}', folder is '{current_state}'. Syncing metadata."
-            )
-            task.metadata["St"] = current_state
-            FM.dump(task, filepath_str)
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                [
-                    "--allow-empty",
-                    "-m",
-                    f"Fix {os.path.basename(filepath)}: sync state metadata to '{current_state}'",
-                ],
-                cwd=self.tasks_path,
-            )
 
         if current_state == new_status:
             return
@@ -1230,6 +1208,7 @@ class TasksCLI:
             self._run_validation()
 
         task = FM.load(filepath_str)
+        task.metadata.pop("St", None)
         fname = os.path.basename(filepath_str)
         tt, branch = self._parse_filename(fname)
         task_id_num = task.metadata.get("Id", "")
@@ -1486,7 +1465,7 @@ class TasksCLI:
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
-        task["St"] = new_status
+        task.metadata.pop("St", None)
         new_filepath = os.path.join(
             self.tasks_path, STATE_FOLDERS[new_status], os.path.basename(filepath)
         )
@@ -1672,9 +1651,6 @@ class TasksCLI:
                 if not os.path.isdir(path):
                     continue
                 task = FM.load(path)
-                actual_state = task.metadata.get("St", state)
-                if actual_state != state:
-                    continue
                 tt, tb = self._parse_filename(item)
                 task_id = task.metadata.get("Id")
                 if not task_id:
@@ -1920,7 +1896,7 @@ class TasksCLI:
             self.finish({"archived": archived, "count": len(candidates)})
 
     def _reconcile_single(self, filename):
-        filepath, _ = self.find_task(filename)
+        filepath, state = self.find_task(filename)
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
@@ -1948,7 +1924,7 @@ class TasksCLI:
 
         if not self.as_json:
             print(f"Task: [{task.metadata.get('Id', '')}] {title}")
-            print(f"State: {task.metadata.get('St', 'unknown')}")
+            print(f"State: {state}")
 
         do_archive = False
         if self.as_json:
@@ -2570,7 +2546,7 @@ class TasksCLI:
                             }
                         )
                         continue
-                    required_fields = ["Id", "Ti", "St", "Cr"]
+                    required_fields = ["Id", "Ti", "Cr"]
                     missing_fields = [
                         f for f in required_fields if f not in task.metadata
                     ]
@@ -2584,22 +2560,6 @@ class TasksCLI:
                                 "actual": f"Missing fields: {', '.join(missing_fields)}",
                             }
                         )
-
-                    task_state = task.metadata.get("St", "")
-                    if task_state != state:
-                        bugs.append(
-                            {
-                                "id": f"state-mismatch-{item}",
-                                "title": f"Task '{item}' state mismatch",
-                                "repro": f"Task is in '{folder}' but metadata shows state '{task_state}'",
-                                "expected": f"Task state in metadata should match folder ('{state}')",
-                                "actual": f"Task state is '{task_state}' but folder is '{folder}'",
-                            }
-                        )
-                        if fix:
-                            task.metadata["St"] = state
-                            FM.dump(task, task_path)
-                            self.log(f"Fixed: Updated task '{item}' state to '{state}'")
 
         def check_markdown_content():
             for state, folder in STATE_FOLDERS.items():
