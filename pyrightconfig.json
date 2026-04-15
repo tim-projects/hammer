@@ -8,5 +8,6 @@
   "reportOptionalMemberAccess": "none",
   "reportPossiblyUnboundVariable": "none",
   "reportOptionalSubscript": "none",
-  "reportAttributeAccessIssue": "none"
+  "reportAttributeAccessIssue": "none",
+  "reportMissingModuleSource": "none"
 }
