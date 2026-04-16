@@ -1,0 +1,1 @@
+Found via strace: pytest forks child processes that run git init in temp directories. The find_project_root() function walks up from script location to find .tasks, but when cwd is /opt/tasks-ai (no .tasks), it falls back to cwd, but pytest child processes create their own temp dirs and keep spinning.

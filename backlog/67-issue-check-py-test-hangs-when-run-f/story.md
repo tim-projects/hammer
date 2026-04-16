@@ -1,0 +1,1 @@
+When check.py runs the test command (pytest) from /opt/tasks-ai, it hangs indefinitely. The root cause is that pytest spawns subprocesses that run git init in random temp directories, creating an infinite loop.
