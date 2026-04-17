@@ -1,0 +1,1 @@
+- [x] - check.py test runs and all tests pass\n- Gate blocks moving task to TESTING when branch is clean and up-to-date with testing\n- Gate allows moving when there are unstaged changes OR branch has commits not in testing\n- Manual testing confirms correct behavior
