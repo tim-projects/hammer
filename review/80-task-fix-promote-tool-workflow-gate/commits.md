@@ -1,3 +1,5 @@
+4933b9d WIP: 80-task-fix-promote-tool-workflow-gate
+a80a30c WIP: 80-task-fix-promote-tool-workflow-gate
 705ef95 WIP: 80-task-fix-promote-tool-workflow-gate
 3933df9 Finalize review gate and demotion logic
 ee0d05a WIP: Auto-commit before promote to 80-task-fix-promote-tool-workflow-gate
