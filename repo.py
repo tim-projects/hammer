@@ -430,7 +430,7 @@ def cmd_promote(src_input):
                         hint=f"Move task to REVIEW first: 'tasks move {task_id_part} REVIEW'",
                     )
                 # Verify Regression Check (Rc)
-                from tasks_ai.models import FileManager as FM
+                from tasks_ai.file_manager import FM
                 task = FM.load(path)
                 if not task.metadata.get("Rc"):
                      error(
