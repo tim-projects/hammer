@@ -1,0 +1,20 @@
+- [x] Update constants.py: Add Rc metadata field documentation
+- [x] Update cli.py: Add _generate_review_diff method
+- [x] Update cli.py: Call diff generation when moving to REVIEW
+- [x] Update cli.py: Set Rc=False on REVIEW entry
+- [x] Update cli.py: Agent instruction message includes regression handling workflow (move back to PROGRESSING/TESTING if regressions)
+- [x] Update cli.py: Add gate REVIEW->STAGING requires Rc=True
+- [x] Update cli.py: Add --regression-check flag to modify command
+- [x] Update help_text.py: Document regression check gate
+- [x] Update AGENTS.md: Add regression verification step
+- [x] Update README.md: Document --regression-check flag and workflow
+- [x] Update repo.py: Any relevant help text
+- [x] Update test_tasks.py: Test diff generation on REVIEW move
+- [x] Update test_tasks.py: Test Rc gate blocks REVIEW->STAGING
+- [x] Update test_tasks.py: Test --regression-check sets Rc and unblocks
+- [x] Update test_tasks.py: Test moving REVIEW->PROGRESSING when regressions found
+- [x] Update test_robustness.py: Regression check gate tests
+- [x] Update test_robustness.py: Regression workflow (REVIEW->PROGRESSING->REVIEW)
+- [x] Verify diff file created at .tasks/review/<id>/diff.patch
+- [x] Verify agent instruction message appears on REVIEW move
+- [x] Verify backward compatibility (existing tasks work)
