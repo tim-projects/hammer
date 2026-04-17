@@ -39,15 +39,17 @@ AI agents working on code need to know what exists, track progress, meet quality
 
 ```
 BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → LIVE → ARCHIVED
-                                              ↓                    ↓
-                                         REJECTED              REJECTED
+                                          ↓        ↑
+                                     (regression check needed)
+                                          ↓
+                                     (back to fix if fails)
 ```
 
 Each transition has rules:
 - Can't move to PROGRESSING without complete story/tech/criteria/plan
 - Can't move to TESTING without passing your own verification
 - Can't move to REVIEW without tests passing and branch pushed
-- Can't move to STAGING without passing review checks
+- **Can't move to STAGING without passing regression check (Rc)** — review diff at `.tasks/review/<id>/diff.patch`, if regressions found move task back to PROGRESSING/TESTING to fix
 - Can't move to LIVE without being merged to main
 - Can't move to ARCHIVED without merged to main (or REJECTED)
 
@@ -105,7 +107,8 @@ tasks unlink <id> <blocker-id>      # Remove blocker relationship
 ```bash
 tasks modify <id> --story "..."     # Update story
 tasks modify <id> --plan "1. Step"  # Update implementation plan
-tasks modify <id> --priority 1     # Change priority
+tasks modify <id> --priority 1      # Change priority
+tasks modify <id> --regression-check # Mark regression check as passed (enables STAGING)
 tasks undo <id>                     # Undo last operation on task
 ```
 
@@ -213,12 +216,37 @@ tasks checkpoint
 tasks run test
 tasks move 1 TESTING
 
-# Agent moves to review (requires tests passing)
+# Agent moves to review (auto-generates diff, requires regression check)
 tasks move 1 REVIEW
 
-# Once PR reviewed and merged to main, archive
+# Agent reviews .tasks/review/1/diff.patch for regressions
+# If regressions found, task moves back to PROGRESSING/TESTING to fix:
+tasks move 1 PROGRESSING  # Fix issues
+
+# Once clean, agent marks regression check passed
+tasks modify 1 --regression-check
+
+# Now can promote to staging
+tasks move 1 STAGING
+
+# Once PR merged to main, archive
 tasks move 1 ARCHIVED -y
 ```
+
+## Regression Check
+
+When a task enters REVIEW, the system automatically generates a unified diff patch at `.tasks/review/<task_id>/diff.patch`. This diff includes:
+- All commits on the task branch that are not in `main`
+- Any unstaged working tree changes
+
+**Agent workflow:**
+1. On `REVIEW` entry, read the diff file
+2. Inspect for potential regressions, breaking changes, or unwanted side effects
+3. If regressions found → move task back to `PROGRESSING` or `TESTING` for fixes
+4. If diff is clean → run `tasks modify <id> --regression-check` to mark as passed
+5. STAGING promotion is blocked until `--regression-check` is confirmed
+
+This gate ensures code with regressions never reaches STAGING.
 
 ## Why This Over Alternatives?
 

@@ -174,6 +174,72 @@ class TasksCLI:
 
         return result
 
+    def _generate_review_diff(self, task_path, branch):
+        """Generate a unified diff patch for the task branch against main including unstaged changes."""
+        review_dir = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"])
+        task_id = os.path.basename(task_path)
+        diff_path = os.path.join(review_dir, f"{task_id}.patch")
+
+        os.makedirs(review_dir, exist_ok=True)
+        # early debug
+        with open("/tmp/kilo_early_debug.log", "a") as f:
+            f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        self.log(
+            f"[DEBUG] Generating review diff: task_id={task_id}, branch='{branch}'"
+        )
+
+        # Get commits diff: default_branch...HEAD (commits on branch not in default branch)
+        # Use merge-base to find common ancestor
+        default_branch = self._get_default_branch()
+        main_sha = None
+        try:
+            main_sha = self._run_git(["rev-parse", default_branch]).stdout.strip()
+        except Exception:
+            main_sha = None
+
+        self.log(
+            f"[DEBUG] branch={branch}, default_branch={default_branch}, main_sha={main_sha}"
+        )
+
+        diff_content = ""
+
+        if main_sha:
+            # Get log with patches for commits on branch not in default branch: git log --patch <main_sha>..<branch>
+            result = self._run_git(
+                ["log", "--patch", f"{main_sha}..{branch}"], cwd=self.root
+            )
+            self.log(
+                f"[DEBUG] log-patch cmd returncode={result.returncode}, stdout len={len(result.stdout)}"
+            )
+            if result.returncode == 0:
+                diff_content += result.stdout
+            else:
+                self.log(f"[DEBUG] log-patch cmd stderr: {result.stderr}")
+
+        # Get unstaged working tree changes
+        result = self._run_git(["diff", "--patch"], cwd=self.root)
+        self.log(
+            f"[DEBUG] unstaged diff returncode={result.returncode}, stdout len={len(result.stdout)}"
+        )
+        if result.returncode == 0 and result.stdout:
+            if diff_content and not diff_content.endswith("\n"):
+                diff_content += "\n"
+            diff_content += result.stdout
+
+        # Write diff file
+        with open(diff_path, "w", encoding="utf-8") as f:
+            f.write(diff_content or "# No changes detected\n")
+
+        # Debug: record values to a file in repo root
+        debug_path = os.path.join(self.root, "diff_debug.log")
+        with open(debug_path, "a") as f:
+            f.write(
+                f"branch={branch}, main_sha={main_sha}, diff_len={len(diff_content)}\n"
+            )
+
+        self.log(f"Regression diff generated at {diff_path}")
+        return diff_path
+
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
         repo_path = os.path.join(self.root, "repo")
@@ -648,6 +714,7 @@ class TasksCLI:
                 "Cr": datetime.now().strftime("%y%m%d %H:%M"),
                 "Bl": [],
                 "Pr": priority or (1 if task_type == "issue" else 2),
+                "Br": task_id,
             },
             parts={
                 "story": story or "",
@@ -720,6 +787,7 @@ class TasksCLI:
         mitigations=None,
         tests_passed=None,
         priority=None,
+        regression_check=None,
     ):
         filepath, _ = self.find_task(filename)
         if not filepath:
@@ -785,6 +853,13 @@ class TasksCLI:
 
         if priority is not None:
             task.metadata["P"] = priority
+            updated = True
+
+        if regression_check is not None:
+            if regression_check:
+                task.metadata["Rc"] = True
+            else:
+                task.metadata["Rc"] = ""
             updated = True
 
         if updated:
@@ -1559,6 +1634,16 @@ class TasksCLI:
                 "Cannot move to LIVE: contains unfinished checkboxes (- [ ])",
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
+
+        # Regression check gate: REVIEW -> STAGING requires Rc to be set
+        if current_state == "REVIEW" and new_status == "STAGING":
+            task = FM.load(filepath_str)
+            if not task.metadata.get("Rc"):
+                self.error(
+                    "Cannot move to STAGING: regression check not passed (Rc flag not set).",
+                    hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <id> --regression-check' to confirm and allow STAGING.",
+                )
+
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
         task.metadata.pop("St", None)
         new_filepath = os.path.join(
@@ -1608,6 +1693,19 @@ class TasksCLI:
                     },
                 )
                 self._atomic_write(dump_path, d)
+
+            if new_status == "REVIEW":
+                # Generate regression diff patch
+                branch = task.metadata.get("Br", "")
+                self._generate_review_diff(new_filepath, branch)
+                # Reset regression check flag (must be explicitly set via --regression-check)
+                task.metadata["Rc"] = ""
+                self._atomic_write(new_filepath, task)
+                self.log(
+                    "REVIEW entered: Diff generated. Check .tasks/review/<task_id>/diff.patch for regressions. "
+                    "If issues found, move task back to PROGRESSING/TESTING to fix. "
+                    "Once clean, run 'tasks modify <id> --regression-check' to enable STAGING."
+                )
         except Exception as e:
             self.error(str(e))
 
