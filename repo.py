@@ -434,45 +434,63 @@ def cmd_promote(src_input, original_task_id=None):
         # It's a feature branch, promote to testing
         target = "testing"
 
-    # Review Gate: Stop before merging testing → staging if task hasn't passed review
-    if target == "staging" and task_id:
-        if TasksCLI:
-            cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
-            path, status = cli.find_task(task_id)
-            if path:
-                if status != "REVIEW":
-                    # If it's in TESTING, we can auto-move to REVIEW to generate diff
-                    if status == "TESTING":
+    # Task State and Review Gate Enforcement
+    if task_id and TasksCLI:
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+        path, status = cli.find_task(task_id)
+        if path:
+            # If target is staging or main, we require Rc flag to be set
+            if target in ("staging", "main"):
+                if status == "TESTING":
+                    info(
+                        f"Task {task_id} is in TESTING. Moving to REVIEW to generate diff..."
+                    )
+                    try:
+                        cli.move(task_id, "REVIEW")
+                    except SystemExit:
+                        pass
+                    error(
+                        f"Task {task_id} moved to REVIEW for audit.",
+                        hint=f"Review .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check'",
+                    )
+
+                if status == "REVIEW":
+                    from tasks_ai.file_manager import FM
+
+                    task = FM.load(path)
+                    if not task.metadata.get("Rc"):
+                        error(
+                            f"Task {task_id} has not passed regression check (Rc flag not set).",
+                            hint=f"Review the diff and run 'tasks modify {task_id} --regression-check' before promoting to {target}.",
+                        )
+
+                    # Auto-move to STAGING state if target is staging branch
+                    if target == "staging":
                         info(
-                            f"Task {task_id} is in TESTING. Moving to REVIEW to generate diff..."
+                            f"Task {task_id} passed regression check. Moving to STAGING state..."
                         )
                         try:
-                            cli.move(task_id, "REVIEW")
-                            log(f"✅ Task {task_id} moved to REVIEW.")
+                            cli.move(task_id, "STAGING")
                         except SystemExit:
                             pass
 
-                        error(
-                            f"Task {task_id} has been moved to REVIEW.",
-                            hint=f"Please review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to staging.",
-                        )
-                    else:
-                        error(
-                            f"Task {task_id} is in '{status}' state, not 'REVIEW'.",
-                            hint=f"Move task to REVIEW first: 'tasks move {task_id} REVIEW'",
-                        )
-
-                # Verify Regression Check (Rc)
-                from tasks_ai.file_manager import FM
-
-                task = FM.load(path)
-                if not task.metadata.get("Rc"):
-                    error(
-                        f"Task {task_id} has not passed regression check (Rc flag not set).",
-                        hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm.",
-                    )
-
     cmd_merge(src, target)
+
+    # Post-merge Task State Enforcement
+    if task_id and TasksCLI:
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+        if target == "testing":
+            _, status = cli.find_task(task_id)
+            if status == "PROGRESSING":
+                try:
+                    cli.move(task_id, "TESTING")
+                except SystemExit:
+                    pass
+        elif target == "main":
+            try:
+                cli.move(task_id, "DONE")
+            except SystemExit:
+                pass
 
     # If it was a feature branch promoted to testing, ask to promote testing to staging etc.
     if target != "main":
