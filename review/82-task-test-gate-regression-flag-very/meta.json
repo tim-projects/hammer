@@ -4,5 +4,7 @@
   "Cr": "260417 23:06",
   "Bl": [],
   "Pr": 2,
-  "Br": "82-task-test-gate-regression-flag-very"
+  "Br": "82-task-test-gate-regression-flag-very",
+  "Tp": false,
+  "Rc": true
 }
