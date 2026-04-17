@@ -1711,34 +1711,47 @@ class TasksCLI:
                     hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <id> --regression-check' to confirm and allow STAGING.",
                 )
 
-                        # Sync and Reset for regression states
+                # Sync and Reset for regression states
         if new_status in ("PROGRESSING", "TESTING", "REVIEW"):
             task.metadata["Rc"] = ""
             fname = os.path.basename(filepath_str)
             _, feature_branch = self._parse_filename(fname)
-            
+
             # Sync
-            current_branch = self._run_git(["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.root).stdout.strip()
+            current_branch = self._run_git(
+                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.root
+            ).stdout.strip()
             if current_branch != feature_branch:
                 self._run_git(["checkout", feature_branch], cwd=self.root)
-            
-            has_staging = self._run_git(["rev-parse", "--verify", "staging"]).returncode == 0
-            has_testing = self._run_git(["rev-parse", "--verify", "testing"]).returncode == 0
+
+            has_staging = (
+                self._run_git(["rev-parse", "--verify", "staging"]).returncode == 0
+            )
+            has_testing = (
+                self._run_git(["rev-parse", "--verify", "testing"]).returncode == 0
+            )
             if has_staging:
-                self._run_git(["merge", "staging", "-m", f"Sync: staging -> {feature_branch}"], cwd=self.root)
+                self._run_git(
+                    ["merge", "staging", "-m", f"Sync: staging -> {feature_branch}"],
+                    cwd=self.root,
+                )
             elif has_testing:
-                self._run_git(["merge", "testing", "-m", f"Sync: testing -> {feature_branch}"], cwd=self.root)
+                self._run_git(
+                    ["merge", "testing", "-m", f"Sync: testing -> {feature_branch}"],
+                    cwd=self.root,
+                )
 
         # Trigger automatic promotion for TESTING
         if new_status == "TESTING":
             self.log("Automatically promoting to testing branch...")
             from repo import cmd_promote
+
             try:
                 cmd_promote(branch)
             except Exception as e:
                 self.error(f"Promotion failed: {e}")
 
-# Regression check enforcement for ARCHIVED
+        # Regression check enforcement for ARCHIVED
         if new_status == "ARCHIVED":
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
