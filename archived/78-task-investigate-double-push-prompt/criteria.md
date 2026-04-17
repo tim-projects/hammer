@@ -1,0 +1,1 @@
+- [x] Promotion prompts appear once per stage.
