@@ -2851,10 +2851,184 @@ class TasksCLI:
                         }
                     )
 
+        def check_task_counter():
+            counter_file = os.path.join(self.tasks_path, ".task_counter")
+            if not os.path.exists(counter_file):
+                bugs.append(
+                    {
+                        "id": "missing-task-counter",
+                        "title": "Missing .task_counter file",
+                        "repro": "Checking for .task_counter file",
+                        "expected": ".task_counter file should exist",
+                        "actual": "File does not exist",
+                    }
+                )
+                return
+
+            with open(counter_file, "r") as f:
+                counter_value = int(f.read().strip())
+
+            max_id = 0
+            for state, folder in STATE_FOLDERS.items():
+                dir_path = os.path.join(self.tasks_path, folder)
+                if not os.path.exists(dir_path):
+                    continue
+                for item in os.listdir(dir_path):
+                    if item == ".gitkeep":
+                        continue
+                    task_path = os.path.join(dir_path, item)
+                    if os.path.isdir(task_path):
+                        meta_path = os.path.join(task_path, "meta.json")
+                        if os.path.exists(meta_path):
+                            try:
+                                with open(meta_path, "r") as f:
+                                    meta = json.load(f)
+                                    if "Id" in meta:
+                                        max_id = max(max_id, int(meta["Id"]))
+                            except Exception:
+                                pass
+
+            expected_counter = max_id + 1
+            if counter_value < expected_counter:
+                bugs.append(
+                    {
+                        "id": "stale-task-counter",
+                        "title": "Stale task counter",
+                        "repro": f"Current counter is {counter_value}, highest task ID is {max_id}",
+                        "expected": f"Counter should be at least {expected_counter}",
+                        "actual": f"Counter is {counter_value}",
+                    }
+                )
+                if fix:
+                    with open(counter_file, "w") as f:
+                        f.write(str(expected_counter))
+                    self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
+                    self._run_git(
+                        [
+                            "commit",
+                            "-m",
+                            f"Fix: Bump stale counter from {counter_value} to {expected_counter}",
+                        ],
+                        cwd=self.tasks_path,
+                    )
+                    self.log(
+                        f"Fixed stale task counter: {counter_value} -> {expected_counter}"
+                    )
+
+        def check_orphaned_tasks():
+            task_branches = set()
+            for state, folder in STATE_FOLDERS.items():
+                dir_path = os.path.join(self.tasks_path, folder)
+                if not os.path.exists(dir_path):
+                    continue
+                for item in os.listdir(dir_path):
+                    if item == ".gitkeep":
+                        continue
+                    task_path = os.path.join(dir_path, item)
+                    if os.path.isdir(task_path):
+                        meta_path = os.path.join(task_path, "meta.json")
+                        if os.path.exists(meta_path):
+                            try:
+                                with open(meta_path, "r") as f:
+                                    meta = json.load(f)
+                                    if "Br" in meta and meta["Br"]:
+                                        task_branches.add(meta["Br"])
+                            except Exception:
+                                pass
+
+            branches = (
+                self._run_git(["branch", "--format", "%(refname:short)"])
+                .stdout.strip()
+                .splitlines()
+                if self.tasks_path
+                else []
+            )
+
+            for branch in branches:
+                branch = branch.strip()
+                if not branch or branch in (
+                    "main",
+                    "master",
+                    "staging",
+                    "testing",
+                    TASKS_BRANCH,
+                ):
+                    continue
+                if branch not in task_branches:
+                    bugs.append(
+                        {
+                            "id": f"orphan-branch-{branch}",
+                            "title": f"Branch '{branch}' has no corresponding task",
+                            "repro": f"Checking for task matching branch '{branch}'",
+                            "expected": "Each branch should have a corresponding task in .tasks/",
+                            "actual": f"Branch '{branch}' exists but no task found",
+                        }
+                    )
+
         check_file_structure()
         check_yaml_metadata()
         check_markdown_content()
         check_branch_sync()
+
+        def check_state_mismatch():
+            for state, folder in STATE_FOLDERS.items():
+                dir_path = os.path.join(self.tasks_path, folder)
+                if not os.path.exists(dir_path):
+                    continue
+                for item in os.listdir(dir_path):
+                    if item == ".gitkeep":
+                        continue
+                    task_path = os.path.join(dir_path, item)
+                    if not os.path.isdir(task_path):
+                        continue
+                    meta_path = os.path.join(task_path, "meta.json")
+                    if not os.path.exists(meta_path):
+                        continue
+                    try:
+                        with open(meta_path, "r") as f:
+                            meta = json.load(f)
+                        task_state = meta.get("St")
+                        if task_state and task_state != state:
+                            bugs.append(
+                                {
+                                    "id": f"state-mismatch-{item}",
+                                    "title": f"Task '{item}' state mismatch",
+                                    "repro": f"Task folder is '{folder}' but metadata state is '{task_state}'",
+                                    "expected": f"Task should be in '{task_state}/' folder",
+                                    "actual": f"Task is in '{folder}/' but metadata says '{task_state}'",
+                                }
+                            )
+                            if fix:
+                                target_folder = STATE_FOLDERS.get(task_state)
+                                if target_folder:
+                                    target_path = os.path.join(
+                                        self.tasks_path, target_folder, item
+                                    )
+                                    if not os.path.exists(target_path):
+                                        os.rename(task_path, target_path)
+                                        self._run_git(
+                                            ["add", folder], cwd=self.tasks_path
+                                        )
+                                        self._run_git(
+                                            ["add", target_folder], cwd=self.tasks_path
+                                        )
+                                        self._run_git(
+                                            [
+                                                "commit",
+                                                "-m",
+                                                f"Fix: Move task {item} from {folder} to {target_folder}",
+                                            ],
+                                            cwd=self.tasks_path,
+                                        )
+                                        self.log(
+                                            f"Fixed: Moved task {item} from {folder}/ to {target_folder}/"
+                                        )
+                    except Exception:
+                        pass
+
+        check_state_mismatch()
+        check_task_counter()
+        check_orphaned_tasks()
 
         for bug in bugs:
             filename = create_bug_report(

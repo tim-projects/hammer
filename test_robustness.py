@@ -1715,6 +1715,135 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"])
 
+    def test_doctor_stale_counter_detection_and_fix(self):
+        """45. Verify doctor detects stale task counter and fixes with --fix."""
+        self.run_cmd(["init"])
+        # Create two tasks to generate IDs 1 and 2
+        res1 = self.run_cmd(
+            [
+                "create",
+                "Stale Counter Task One",
+                "--story",
+                "First task for stale counter test with enough detail.",
+                "--tech",
+                "Testing counter logic and doctor fix behavior.",
+                "--criteria",
+                "Task created successfully with proper validation.",
+                "--plan",
+                "Implement the task fully with tests and documentation.",
+            ]
+        )
+        self.assertTrue(res1["success"])
+        res2 = self.run_cmd(
+            [
+                "create",
+                "Stale Counter Task Two",
+                "--story",
+                "Second task for stale counter test with enough detail.",
+                "--tech",
+                "Testing counter logic and doctor fix behavior.",
+                "--criteria",
+                "Task created successfully with proper validation.",
+                "--plan",
+                "Implement the task fully with tests and documentation.",
+            ]
+        )
+        self.assertTrue(res2["success"])
+
+        # Simulate stale counter by manually setting .task_counter to 0
+        tasks_dir = os.path.join(self.repo_dir, ".tasks")
+        counter_path = os.path.join(tasks_dir, ".task_counter")
+        with open(counter_path, "w") as f:
+            f.write("0")
+        subprocess.run(
+            ["git", "add", ".task_counter"], cwd=tasks_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Simulate stale counter"],
+            cwd=tasks_dir,
+            capture_output=True,
+        )
+
+        # Doctor without fix should detect the issue
+        res = self.run_cmd(["doctor"])
+        self.assertTrue(res["success"])
+        self.assertEqual(res["data"]["issues_found"], 1)
+        self.assertEqual(res["data"]["bugs"][0]["id"], "stale-task-counter")
+
+        # Doctor with --fix should update counter to max_id + 1 (which is 2+1=3)
+        res_fix = self.run_cmd(["doctor", "--fix"])
+        self.assertTrue(res_fix["success"])
+
+        # Verify counter value
+        with open(counter_path, "r") as f:
+            new_val = int(f.read().strip())
+        self.assertEqual(new_val, 3)
+
+    def test_doctor_state_mismatch_detection_and_fix(self):
+        """46. Verify doctor detects state folder mismatch and fixes with --fix."""
+        self.run_cmd(["init"])
+        # Create task (default state is BACKLOG)
+        res = self.run_cmd(
+            [
+                "create",
+                "State Mismatch Task",
+                "--story",
+                "Task to test state mismatch detection with enough details.",
+                "--tech",
+                "Testing state consistency and doctor fix behavior.",
+                "--criteria",
+                "Task moved to correct state automatically by doctor.",
+                "--plan",
+                "Implement the task with proper testing and documentation.",
+            ]
+        )
+        self.assertTrue(res["success"])
+        tid = res["data"]["file"]
+
+        # Task should be in backlog/
+        backlog_dir = os.path.join(self.repo_dir, ".tasks", "backlog")
+        task_dir = os.path.join(backlog_dir, tid)
+        self.assertTrue(os.path.exists(task_dir))
+
+        # Manually set metadata state to LIVE without moving the folder
+        meta_path = os.path.join(task_dir, "meta.json")
+        with open(meta_path, "r") as f:
+            meta = json.load(f)
+        meta["St"] = "LIVE"
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        tasks_dir = os.path.join(self.repo_dir, ".tasks")
+        subprocess.run(["git", "add", "."], cwd=tasks_dir, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Set state mismatch manually"],
+            cwd=tasks_dir,
+            capture_output=True,
+        )
+
+        # Doctor should detect state mismatch (and also stale counter if counter < expected)
+        res = self.run_cmd(["doctor"])
+        self.assertTrue(res["success"])
+        self.assertGreaterEqual(res["data"]["issues_found"], 1)
+        mismatch_found = any(
+            "state-mismatch" in bug["id"] for bug in res["data"]["bugs"]
+        )
+        self.assertTrue(mismatch_found, "Expected state-mismatch bug to be detected")
+
+        # Doctor with --fix should move task to live/
+        res_fix = self.run_cmd(["doctor", "--fix"])
+        self.assertTrue(res_fix["success"])
+
+        # After fix, issues should be resolved (re-run doctor should show 0)
+        res_after = self.run_cmd(["doctor"])
+        self.assertEqual(res_after["data"]["issues_found"], 0)
+
+        # Verify task moved to live/
+        new_task_dir = os.path.join(self.repo_dir, ".tasks", "live", tid)
+        self.assertTrue(os.path.exists(new_task_dir))
+        # Old location should be gone
+        self.assertFalse(os.path.exists(task_dir))
+
 
 if __name__ == "__main__":
     unittest.main()
