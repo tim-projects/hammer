@@ -52,6 +52,7 @@ ALLOWED_CONFIG_KEYS = {
     "repo.test",
     "repo.type_check",
     "repo.format",
+    "repo.skip_user_test_prompt",
 }
 
 AGENT_GUIDANCE = """

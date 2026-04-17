@@ -98,6 +98,46 @@ def find_project_root(start_path=None):
     return Path(__file__).parent.resolve()
 
 
+def load_config(dev=False):
+    project_root = find_project_root()
+    # Prioritize project_root/.tasks/config.yaml (or /tmp/.tasks/config.yaml if dev), then project_root/pyproject.toml
+    if dev:
+        config_path_yaml = "/tmp/.tasks/config.yaml"
+    else:
+        config_path_yaml = os.path.join(project_root, ".tasks", "config.yaml")
+
+    config_path_toml = os.path.join(project_root, "pyproject.toml")
+
+    config = {}
+    if os.path.exists(config_path_yaml):
+        try:
+            import yaml
+
+            with open(config_path_yaml, "r") as f:
+                config.update(yaml.safe_load(f) or {})
+        except ImportError:
+            pass
+        except Exception as e:
+            warn(f"Could not parse {config_path_yaml}: {e}")
+
+    if os.path.exists(config_path_toml):
+        try:
+            import toml
+
+            with open(config_path_toml, "r") as f:
+                pyproject_data = toml.load(f)
+                config_section = (
+                    pyproject_data.get("tool", {}).get("tasks_ai", {}).get("repo", {})
+                )
+                config.update(config_section)
+        except ImportError:
+            pass
+        except Exception as e:
+            warn(f"Could not parse pyproject.toml: {e}")
+
+    return config
+
+
 def run(cmd, check=True, capture=False, env=None, cwd=None):
     project_root = find_project_root()
     try:
@@ -328,14 +368,19 @@ def cmd_merge(src_input, target):
         )
 
     if not FLAGS["yes"]:
-        info(
-            "Compliance passed. Have you run any environment-specific user tests? (y/n)"
-        )
-        if not prompt_yes_no("Proceed with promotion?"):
+        config = load_config(dev=FLAGS["dev"])
+        if not config.get("repo.skip_user_test_prompt"):
             info(
-                "Promotion halted. Please run your user tests manually, then re-run 'repo promote <task>' to continue."
+                "Compliance passed. Have you run any environment-specific user tests? (y/n)"
             )
-            sys.exit(0)
+            print(
+                f"{CYAN}[repo]{NC} HINT: You can disable this prompt by running: tasks config set repo.skip_user_test_prompt true"
+            )
+            if not prompt_yes_no("Proceed with promotion?"):
+                info(
+                    "Promotion halted. Please run your user tests manually, then re-run 'repo promote <task>' to continue."
+                )
+                sys.exit(0)
 
     # 2. Perform Merge
     log(f"Merging {src} into {target}...")
