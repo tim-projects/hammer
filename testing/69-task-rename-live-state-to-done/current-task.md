@@ -1,3 +1,6 @@
+---
+---
+
 Task: 69-task-rename-live-state-to-done
 
 ## Progress
