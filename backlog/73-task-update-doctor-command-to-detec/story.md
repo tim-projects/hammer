@@ -1,0 +1,1 @@
+As a developer, I want the tasks doctor command to automatically detect and fix common repository issues to maintain health. Current issues: stale task counter not reflecting highest existing task ID after archiving, orphaned .task_counter, mismatched task metadata vs actual state.

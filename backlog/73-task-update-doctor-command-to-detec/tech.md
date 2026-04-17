@@ -1,0 +1,1 @@
+Enhance tasks_ai/cli.py doctor() method (or create new _doctor_checks()) to: 1. Scan all task folders and compute highest task ID 2. Compare with .task_counter value 3. If counter < max_id, auto-bump counter to max_id + 1 and commit 4. Detect tasks with missing metadata or mismatched state folders 5. Report and optionally fix with --fix flag. Update help_text.py doctor section.

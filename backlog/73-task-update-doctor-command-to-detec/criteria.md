@@ -1,0 +1,1 @@
+- [ ] Doctor detects stale counter and fixes it - Detects orphaned task directories - Detects metadata inconsistencies - --fix flag applies corrections automatically - doctor help text updated - Tests for doctor fixes added

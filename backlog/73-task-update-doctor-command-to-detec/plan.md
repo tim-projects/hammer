@@ -1,0 +1,1 @@
+1. 1. Add _doctor_checks method to cli.py 2. Implement counter validation logic 3. Add --fix flag to doctor command 4. Update help_text.py 5. Add unit tests to test_robustness.py 6. Run all validation
