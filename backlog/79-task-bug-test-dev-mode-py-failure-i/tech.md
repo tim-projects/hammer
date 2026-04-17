@@ -1,0 +1,1 @@
+The test appears to be expecting a transition that is explicitly forbidden in the state machine. Need to investigate if this is a test bug or a logic bug.

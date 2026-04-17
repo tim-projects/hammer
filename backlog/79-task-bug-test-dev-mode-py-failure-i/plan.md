@@ -1,0 +1,1 @@
+1. 1. Investigate if BACKLOG -> PROGRESSING should be allowed. 2. Fix test_dev_mode.py to follow valid transitions or correct the state machine if needed.

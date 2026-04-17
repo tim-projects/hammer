@@ -1,0 +1,1 @@
+The test suite failure in test_dev_mode.py indicates that BACKLOG -> PROGRESSING is a forbidden transition, preventing the test from completing successfully.

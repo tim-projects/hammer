@@ -1,0 +1,1 @@
+- [ ] 1. Fix the test failure in test_dev_mode.py. 2. Ensure BACKLOG -> PROGRESSING transition behavior is intentional or fixed.
