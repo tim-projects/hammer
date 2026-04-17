@@ -1,9 +1,0 @@
-{
-  "Id": 70,
-  "Ti": "Rename PROGRESSING state to INPROGRESS throughout codebase",
-  "Cr": "170417 10:08",
-  "Bl": [],
-  "Pr": 2,
-  "Tp": "task",
-  "Br": "70-task-rename-progressing-to-inprogress"
-}
