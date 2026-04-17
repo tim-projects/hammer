@@ -1,2 +1,4 @@
 branch=73-task-update-doctor-command-to-detec, main_sha=67f50210fc7bfb0c2a71973a2fd8ecda50ccedab, diff_len=26080
 branch=75-task-investigate-missing-repo-binar, main_sha=2867d1627fb3c850c9ae6d95e92beb8b88f36cc4, diff_len=982
+branch=69-task-rename-done-state-to-done, main_sha=abba63f074ec92d70ff9d8386c625af1ca3df8fb, diff_len=1655
+branch=81-task-test-review-gate, main_sha=abba63f074ec92d70ff9d8386c625af1ca3df8fb, diff_len=66780

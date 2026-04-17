@@ -64,7 +64,9 @@ def warn(msg):
         print(f"{YELLOW}[repo] WARN:{NC} {msg}")
 
 
-def error(msg):
+def error(msg, hint=None):
+    if hint:
+        msg = f"{msg} | HINT: {hint}"
     if FLAGS["json"]:
         print(json.dumps({"success": False, "error": msg}))
     else:
@@ -415,6 +417,21 @@ def cmd_merge(src_input, target):
 def cmd_promote(src_input):
     src = resolve_branch(src_input)
 
+    # Review Gate: Verify task is in REVIEW if promoting a feature branch to testing
+    if src not in PIPELINE:
+        if TasksCLI:
+            cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+            # Need to get task ID from branch name
+            # Format is usually <id>-task-...
+            task_id_part = src.split("-")[0]
+            if task_id_part.isdigit():
+                path, status = cli.find_task(task_id_part)
+                if status != "REVIEW":
+                    error(
+                        f"Task {task_id_part} is in '{status}' state, not 'REVIEW'.",
+                        hint=f"Move task to REVIEW first: 'tasks move {task_id_part} REVIEW'",
+                    )
+    
     # Determine target
     target = "testing"  # default
     if src == "testing":

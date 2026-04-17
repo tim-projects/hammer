@@ -1696,7 +1696,7 @@ class TasksCLI:
                 "Cannot archive task: contains unfinished checkboxes (- [ ])",
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
-        if new_status in ("DONE", "DONE") and self._has_incomplete_checkboxes(filepath):
+        if new_status == "DONE" and self._has_incomplete_checkboxes(filepath):
             self.error(
                 f"Cannot move to {new_status}: contains unfinished checkboxes (- [ ])",
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
@@ -2294,7 +2294,7 @@ class TasksCLI:
 
             # Respect workflow gates: only clean up branches for DONE, DONE, or REJECTED tasks
             # (ARCHIVED tasks should also be cleaned up - they completed the pipeline)
-            if state not in ("DONE", "DONE", "REJECTED", "ARCHIVED"):
+            if state not in ("DONE", "REJECTED", "ARCHIVED"):
                 pending_archive.append(branch)
                 continue
 
@@ -2312,7 +2312,7 @@ class TasksCLI:
 
             cleaned.append(branch)
 
-            if state in ("DONE", "DONE"):
+            if state == "DONE":
                 if not dry_run:
                     self._move_logic(branch, "ARCHIVED", force=True, yes=yes)
                     archived.append(branch)
