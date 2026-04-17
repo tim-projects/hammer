@@ -1,0 +1,1 @@
+- [x] Validation suite is skipped when code hasn't changed; Hash updates correctly after changes.
