@@ -1407,6 +1407,58 @@ class TasksCLI:
                             f"Branch '{branch}' not pushed to remote. Push and try again. Do not bypass this tool.",
                         )
 
+            # Gate for TESTING: ensure branch has changes not yet in testing
+            # Only apply when moving from READY, BACKLOG, or PROGRESSING
+            if new_status == "TESTING" and current_state in (
+                "READY",
+                "BACKLOG",
+                "PROGRESSING",
+            ):
+                # Check for unstaged/uncommitted changes first
+                status_res = self._run_git(["status", "--porcelain"], cwd=self.root)
+                has_unstaged = bool(status_res.stdout.strip())
+
+                # Check if branch has commits not in testing
+                # Get testing commit if it exists
+                testing_sha = None
+                testing_verify = self._run_git(
+                    ["rev-parse", "--verify", "testing"], cwd=self.root
+                )
+                if testing_verify.returncode == 0:
+                    testing_sha = self._run_git(
+                        ["rev-parse", "testing"], cwd=self.root
+                    ).stdout.strip()
+
+                branch_tip_sha = (
+                    branch_sha
+                    or self._run_git(
+                        ["rev-parse", branch], cwd=self.root
+                    ).stdout.strip()
+                )
+
+                # Determine if branch has new commits not in testing
+                # Use merge-base --is-ancestor: returns 0 if branch_tip is ancestor of testing (i.e., testing already contains it)
+                newer_than_testing = True  # assume new unless proven otherwise
+                if testing_sha:
+                    ancestor_res = self._run_git(
+                        ["merge-base", "--is-ancestor", branch_tip_sha, testing_sha],
+                        cwd=self.root,
+                    )
+                    # If branch is ancestor of testing (returncode 0), then no new commits
+                    if ancestor_res.returncode == 0:
+                        newer_than_testing = False
+                    else:
+                        newer_than_testing = True
+                else:
+                    # No testing branch yet, any work is new
+                    newer_than_testing = True
+
+                if not has_unstaged and not newer_than_testing:
+                    self.error(
+                        f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
+                        f"Make some progress before moving to testing. Do not bypass this tool."
+                    )
+
             if new_status == "REVIEW":
                 merge_base = self._run_git(
                     ["merge-base", branch_sha or branch, "testing"]
@@ -1464,10 +1516,14 @@ class TasksCLI:
                 if not branch_commit:
                     branch_commit = main_sha
                 if main_sha and branch_commit:
-                    merge_base = self._run_git(
-                        ["merge-base", branch_commit, "main"]
-                    ).stdout.strip()
-                    if merge_base != main_sha:
+                    # Check if branch is merged into main using merge-base --is-ancestor
+                    is_ancestor = (
+                        self._run_git(
+                            ["merge-base", "--is-ancestor", branch_commit, "main"]
+                        ).returncode
+                        == 0
+                    )
+                    if not is_ancestor:
                         self.error(
                             f"Branch '{branch}' not merged to main. Merge to main first. Alternatively, move to REJECTED. Do not bypass this tool.",
                         )

@@ -315,6 +315,121 @@ class TestTasksAI(unittest.TestCase):
             os.path.exists(os.path.join(self.repo_dir, ".tasks", "live", file))
         )
 
+    def test_testing_gate_blocks_when_no_new_changes(self):
+        """Gate should prevent moving to TESTING if branch is clean and up-to-date with testing."""
+        self.run_cmd(["init"])
+        # Commit the .gitignore created by init to avoid it appearing as unstaged
+        subprocess.run(
+            ["git", "add", ".gitignore"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Add .gitignore"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+
+        res = self.run_cmd(
+            [
+                "create",
+                "Testing Gate",
+                "--story",
+                "As a developer I want the gate to block when appropriate",
+                "--tech",
+                "Python CLI and Git branch validation gates",
+                "--criteria",
+                "Gate blocks when no changes",
+                "--plan",
+                "1. Test gate logic",
+            ]
+        )
+        self.assertTrue(res["success"], res)
+        task_file = res["data"]["file"]
+
+        # Move through READY -> PROGRESSING
+        self.run_cmd(["move", task_file, "READY"])
+        self.run_cmd(["move", task_file, "PROGRESSING"])
+
+        # Create initial commit on the task branch
+        subprocess.run(
+            ["git", "checkout", task_file],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+        work_file = os.path.join(self.repo_dir, "work.txt")
+        with open(work_file, "w") as f:
+            f.write("initial work\n")
+        subprocess.run(
+            ["git", "add", "work.txt"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Add work"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+
+        # Capture the commit SHA of the task branch
+        sha_res = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        task_sha = sha_res.stdout.strip()
+
+        # Create/force-update a 'testing' branch to point to the same commit,
+        # simulating that testing already contains this work.
+        subprocess.run(
+            ["git", "branch", "-f", "testing", task_sha],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+
+        # Ensure we are on the task branch and working tree is clean
+        subprocess.run(
+            ["git", "checkout", task_file],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=True,
+        )
+        status_check = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+        )
+        self.assertFalse(status_check.stdout.strip(), "Working tree should be clean")
+
+        # Attempt to move to TESTING: should fail because no unstaged changes and no newer commits
+        res = self.run_cmd(["move", task_file, "TESTING"])
+        self.assertFalse(
+            res["success"],
+            f"Move to TESTING should have been blocked but succeeded: {res}",
+        )
+        error_msg = res.get("error", "").lower()
+        self.assertIn("no unstaged", error_msg)
+        self.assertIn("no commits newer", error_msg)
+
+        # Add an unstaged file; now move should succeed
+        with open(work_file, "a") as f:
+            f.write("additional unstaged work\n")
+        # Don't git add or commit
+        res = self.run_cmd(["move", task_file, "TESTING"])
+        self.assertTrue(
+            res["success"],
+            f"Move to TESTING should succeed with unstaged changes: {res}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
