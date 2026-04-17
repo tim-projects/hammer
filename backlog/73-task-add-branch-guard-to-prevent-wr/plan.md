@@ -1,0 +1,1 @@
+1. 1. Implement _validate_branch in cli.py 2. Integrate into _move_logic 3. Add force handling 4. Update help_text.py 5. Add tests to test_robustness.py 6. Run all validation

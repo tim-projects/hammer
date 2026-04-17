@@ -1,0 +1,1 @@
+- [ ] Guard active for TESTING/REVIEW/STAGING/LIVE/ARCHIVED transitions - Mismatch blocks move with clear error and hint - --force bypasses - Help text updated - 4 tests added (blocked, allowed, force bypass, inapplicable states)

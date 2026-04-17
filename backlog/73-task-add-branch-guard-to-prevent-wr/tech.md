@@ -1,0 +1,1 @@
+Modify TasksCLI._move_logic(): add branch validation before commits. Get current branch via git branch --show-current, compare with task.metadata.get('Br'). On mismatch: error with hint. Add --force flag to move command to bypass. Update help_text.py STATE_MACHINE and move help. Tests in test_robustness.py.
