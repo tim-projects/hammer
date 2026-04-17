@@ -431,7 +431,7 @@ def cmd_promote(src_input):
                         f"Task {task_id_part} is in '{status}' state, not 'REVIEW'.",
                         hint=f"Move task to REVIEW first: 'tasks move {task_id_part} REVIEW'",
                     )
-    
+
     # Determine target
     target = "testing"  # default
     if src == "testing":
