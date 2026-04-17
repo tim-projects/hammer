@@ -444,7 +444,7 @@ def cmd_promote(src_input, original_task_id=None):
                 if status == "TESTING":
                     info(f"Task {task_id} is in TESTING. Moving to REVIEW to generate audit diff...")
                     try:
-                        cli.move(task_id, "REVIEW")
+                        cli.move(task_id, "REVIEW", sync=False)
                     except SystemExit:
                         pass
                     error(
@@ -471,19 +471,19 @@ def cmd_promote(src_input, original_task_id=None):
             _, status = cli.find_task(task_id)
             if status == "PROGRESSING":
                 try:
-                    cli.move(task_id, "TESTING")
+                    cli.move(task_id, "TESTING", sync=False)
                 except SystemExit:
                     pass
         elif target == "staging":
              _, status = cli.find_task(task_id)
              if status == "REVIEW":
                 try:
-                    cli.move(task_id, "STAGING")
+                    cli.move(task_id, "STAGING", sync=False)
                 except SystemExit:
                     pass
         elif target == "main":
             try:
-                cli.move(task_id, "DONE")
+                cli.move(task_id, "DONE", sync=False)
             except SystemExit:
                 pass
 

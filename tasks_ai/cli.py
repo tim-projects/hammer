@@ -1340,7 +1340,7 @@ class TasksCLI:
         self._append_log(new_filepath, f"{current_state}->{new_status}")
         return task
 
-    def _move_logic(self, filename, new_status, force=False, yes=False):
+    def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         new_status = new_status.upper()
         filepath, current_state = self.find_task(filename)
         if not filepath:
@@ -1709,6 +1709,26 @@ class TasksCLI:
                 self.error(
                     "Cannot move to STAGING: regression check not passed (Rc flag not set).",
                     hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <id> --regression-check' to confirm and allow STAGING.",
+                )
+
+                # Sync and Reset for regression states
+        if new_status in ("PROGRESSING", "TESTING", "REVIEW") and sync:
+            # 1. Reset Rc flag
+            task.metadata["Rc"] = ""
+            
+            # 2. Sync via repo demote
+            from repo import cmd_demote
+            try:
+                cmd_demote(fname, new_status)
+            except Exception as e:
+                self.error(f"Branch synchronization failed: {e}")
+# Regression check enforcement for ARCHIVED
+        if new_status == "ARCHIVED":
+            task = FM.load(filepath_str)
+            if not task.metadata.get("Rc"):
+                self.error(
+                    "Cannot move to ARCHIVED: regression check not passed (Rc flag not set).",
+                    hint="Ensure you have performed a regression review and run 'tasks modify <id> --regression-check' before archiving."
                 )
 
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
