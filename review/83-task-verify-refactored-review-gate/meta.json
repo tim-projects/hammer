@@ -5,5 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "83-task-verify-refactored-review-gate",
-  "Vp": true
+  "Vp": true,
+  "Rc": true,
+  "Tp": false
 }
