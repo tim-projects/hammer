@@ -442,38 +442,26 @@ def cmd_promote(src_input, original_task_id=None):
             # If target is staging or main, we require Rc flag to be set
             if target in ("staging", "main"):
                 if status == "TESTING":
-                    info(
-                        f"Task {task_id} is in TESTING. Moving to REVIEW to generate diff..."
-                    )
+                    info(f"Task {task_id} is in TESTING. Moving to REVIEW to generate audit diff...")
                     try:
                         cli.move(task_id, "REVIEW")
                     except SystemExit:
                         pass
                     error(
                         f"Task {task_id} moved to REVIEW for audit.",
-                        hint=f"Review .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check'",
+                        hint=f"Review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to {target}."
                     )
 
                 if status == "REVIEW":
                     from tasks_ai.file_manager import FM
-
                     task = FM.load(path)
                     if not task.metadata.get("Rc"):
                         error(
                             f"Task {task_id} has not passed regression check (Rc flag not set).",
-                            hint=f"Review the diff and run 'tasks modify {task_id} --regression-check' before promoting to {target}.",
+                            hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm promotion to {target}."
                         )
-
-                    # Auto-move to STAGING state if target is staging branch
-                    if target == "staging":
-                        info(
-                            f"Task {task_id} passed regression check. Moving to STAGING state..."
-                        )
-                        try:
-                            cli.move(task_id, "STAGING")
-                        except SystemExit:
-                            pass
-
+                    # If Rc is present, we proceed automatically.
+    
     cmd_merge(src, target)
 
     # Post-merge Task State Enforcement
@@ -486,6 +474,13 @@ def cmd_promote(src_input, original_task_id=None):
                     cli.move(task_id, "TESTING")
                 except SystemExit:
                     pass
+        elif target == "staging":
+             _, status = cli.find_task(task_id)
+             if status == "REVIEW":
+                try:
+                    cli.move(task_id, "STAGING")
+                except SystemExit:
+                    pass
         elif target == "main":
             try:
                 cli.move(task_id, "DONE")
@@ -496,6 +491,9 @@ def cmd_promote(src_input, original_task_id=None):
     if target != "main":
         if prompt_yes_no(f"Continue promotion from {target} to next stage?"):
             cmd_promote(target, original_task_id=task_id)
+        else:
+            info(f"Promotion stopped after merge to {target}.")
+            sys.exit(0)
 
 
 def cmd_status():
