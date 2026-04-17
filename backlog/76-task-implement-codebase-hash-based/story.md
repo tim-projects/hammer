@@ -1,0 +1,1 @@
+Optimize 'repo promote' by caching validation results based on codebase state to avoid redundant test runs. Generate a fingerprint of the codebase state and skip 'check.py all' if the state hasn't changed since the last successful validation.

@@ -1,0 +1,1 @@
+1. 1. Implement hashing logic in check.py using git-hash or file-set hashing. 2. Store and compare hash in .tasks/.last_validation_hash. 3. Update repo.py/check.py workflow to conditionally run validation.

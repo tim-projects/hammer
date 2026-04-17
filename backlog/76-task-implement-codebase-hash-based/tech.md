@@ -1,0 +1,1 @@
+Fingerprinting, persistent caching in .tasks/, integration with check.py
