@@ -4,7 +4,8 @@
   "Cr": "170417 10:18",
   "Bl": [],
   "Pr": 2,
-  "Tp": "task",
+  "Tp": false,
   "Br": "71-task-auto-diff-and-regression-on-review",
-  "Vp": true
+  "Vp": true,
+  "Rc": true
 }
