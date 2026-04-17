@@ -80,7 +80,8 @@ def info(msg):
 def find_project_root(start_path=None):
     """Search upward for .tasks directory or .git directory."""
     if start_path is None:
-        start_path = os.path.dirname(os.path.abspath(__file__))
+        # Start from cwd first, not script dir, to respect test isolation
+        start_path = os.getcwd()
 
     current = os.path.abspath(start_path)
     while True:
@@ -93,10 +94,8 @@ def find_project_root(start_path=None):
             break
         current = parent
 
-    if start_path != os.getcwd():
-        return find_project_root(os.getcwd())
-
-    return start_path
+    # Fallback to script location
+    return Path(__file__).parent.resolve()
 
 
 def run(cmd, check=True, capture=False, env=None, cwd=None):

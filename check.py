@@ -22,6 +22,7 @@ import sys
 import json
 import shutil
 import tempfile
+from pathlib import Path
 
 
 def get_git_root():
@@ -40,7 +41,8 @@ def get_git_root():
 def find_project_root(start_path=None):
     """Search upward for .tasks directory or .git directory."""
     if start_path is None:
-        start_path = os.path.dirname(os.path.abspath(__file__))
+        # Start from cwd first to respect test isolation and invocation context
+        start_path = os.getcwd()
 
     current = os.path.abspath(start_path)
     while True:
@@ -53,10 +55,8 @@ def find_project_root(start_path=None):
             break
         current = parent
 
-    if start_path != os.getcwd():
-        return find_project_root(os.getcwd())
-
-    return start_path
+    # Fallback to script location
+    return Path(__file__).parent.resolve()
 
 
 ROOT = find_project_root()
@@ -224,7 +224,6 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     if not as_json:
         print(f"Running {tool} ({tool_type})...")
 
-    sys.stderr.flush()
     try:
         if as_json:
             # Capture output using temporary files to avoid pipe deadlocks
