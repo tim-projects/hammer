@@ -12,6 +12,7 @@ STATE_FOLDERS = {
     "REVIEW": "review",
     "STAGING": "staging",
     "DONE": "done",
+    "BLOCKED": "blocked",
     "ARCHIVED": "archived",
     "REJECTED": "rejected",
 }

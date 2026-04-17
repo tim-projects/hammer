@@ -57,6 +57,8 @@ class TestDevMode(unittest.TestCase):
             cwd=self.root,
             capture_output=True,
         )
+        # Initialize pipeline branches for dev mode
+        subprocess.run(["git", "branch", "staging"], cwd=self.root)
         # Configure git user for commits
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],

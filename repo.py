@@ -49,7 +49,7 @@ YELLOW = "\033[1;33m"
 CYAN = "\033[0;36m"
 NC = "\033[0m"
 
-FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
+FLAGS = {"yes": False, "quiet": False, "json": False, "dev": os.path.exists("/tmp/.tasks")}
 
 PIPELINE = ["testing", "staging", "main"]
 
@@ -196,16 +196,6 @@ class ToolRunner:
         if not os.path.exists(check_py) and not check_cmd:
             warn("check.py not found, skipping tool validation")
             return True
-
-        tools = ["format", "lint", "typecheck", "test"]
-        all_passed = True
-        for t in tools:
-            # We still need to know if it's configured.
-            # check.py handles the config check itself and returns 1 if not configured.
-            # But we only want to fail if it IS configured and FAILS.
-            # Wait, if it's NOT configured, check.py prints an error and returns 1.
-            # We should probably only run 'all' if we want to check everything.
-            pass
 
         # Simpler: just run 'check all'
         log("Running codebase validation (check all)...")
