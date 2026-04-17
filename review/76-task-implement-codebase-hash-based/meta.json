@@ -5,6 +5,6 @@
   "Bl": [],
   "Pr": 2,
   "Br": "76-task-implement-codebase-hash-based",
-  "Tp": true,
-  "Rc": ""
+  "Tp": false,
+  "Rc": true
 }
