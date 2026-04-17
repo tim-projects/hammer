@@ -431,14 +431,13 @@ def cmd_promote(src_input):
                     )
                 # Verify Regression Check (Rc)
                 from tasks_ai.file_manager import FM
+
                 task = FM.load(path)
                 if not task.metadata.get("Rc"):
-                     error(
+                    error(
                         f"Task {task_id_part} has not passed regression check (Rc flag not set).",
                         hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <task_id> --regression-check' to confirm.",
                     )
-
-
 
     # Determine target
     target = "testing"  # default
