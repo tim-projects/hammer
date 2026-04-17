@@ -1,0 +1,1 @@
+1. 1. Set config repo.skip_user_test_prompt to true. 2. Run repo promote on a dummy task. 3. Verify output message.

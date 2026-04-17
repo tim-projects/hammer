@@ -1,0 +1,1 @@
+Ensure that when repo.skip_user_test_prompt is enabled, the tool outputs a message indicating the prompt is skipped.
