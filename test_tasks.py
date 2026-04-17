@@ -8,6 +8,8 @@ import json
 import sys
 from datetime import datetime, timedelta
 
+from tasks_ai.file_manager import FM
+
 
 class TestTasksAI(unittest.TestCase):
     def setUp(self):
@@ -23,7 +25,10 @@ class TestTasksAI(unittest.TestCase):
             f.write("# Test Repo")
         subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)
         subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)
-        self.script_path = os.path.abspath("tasks.py")
+        # Compute absolute path to tasks.py based on this file's location
+        self.script_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "tasks.py"
+        )
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)
@@ -190,6 +195,9 @@ class TestTasksAI(unittest.TestCase):
                 with open(criteria_path, "w") as f:
                     f.write(content.replace("- [ ]", "- [x]"))
 
+            if state == "STAGING":
+                self.run_cmd(["modify", issue_file, "--regression-check"])
+
             # Pass -y for LIVE since it requires merge confirmation
             move_args = ["move", issue_file, state]
             if state == "LIVE":
@@ -292,6 +300,9 @@ class TestTasksAI(unittest.TestCase):
                     content = f.read()
                 with open(criteria_path, "w") as f:
                     f.write(content.replace("- [ ]", "- [x]"))
+
+            if state == "STAGING":
+                self.run_cmd(["modify", file, "--regression-check"])
 
             # Pass -y for LIVE since it requires merge confirmation
             move_args = ["move", file, state]
@@ -428,6 +439,330 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(
             res["success"],
             f"Move to TESTING should succeed with unstaged changes: {res}",
+        )
+
+    def test_review_diff_generated(self):
+        """Test that moving to REVIEW automatically generates a diff patch."""
+        self.run_cmd(["init"])
+        res = self.run_cmd(
+            [
+                "create",
+                "Review Diff Generation Test Task",
+                "--story",
+                "This is a sufficiently long story to meet minimum length requirements for task creation.",
+                "--tech",
+                "The diff generation uses git commands to capture changes; this test verifies file creation.",
+                "--criteria",
+                "A .patch file must appear in .tasks/review/ after REVIEW transition.",
+                "--plan",
+                "1. Create task\n2. Move to PROGRESSING\n3. Commit changes\n4. Move to TESTING\n5. Setup testing branch merge\n6. Move to REVIEW\n7. Verify diff exists and contains commit",
+            ]
+        )
+        self.assertTrue(res["success"])
+        task_file = res["data"]["file"]
+        branch = task_file
+
+        # Move to PROGRESSING
+        self.run_cmd(["move", task_file, "PROGRESSING"])
+
+        # Create a code file and commit on the task branch
+        code_file = os.path.join(self.repo_dir, "feature.py")
+        with open(code_file, "w") as f:
+            f.write("def new_feature():\n    return 42\n")
+        subprocess.run(
+            ["git", "add", "feature.py"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Add new feature implementation"],
+            cwd=self.repo_dir,
+            capture_output=True,
+        )
+
+        # Move to TESTING (requires branch ahead of testing)
+        res = self.run_cmd(["move", task_file, "TESTING"])
+        self.assertTrue(res["success"], f"Move to TESTING failed: {res}")
+
+        # Prepare testing branch: go to main, create testing, merge task, back to main
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Mark tests as passed (required for REVIEW)
+        res = self.run_cmd(["modify", task_file, "--tests-passed"])
+        self.assertTrue(res["success"])
+
+        # Move to REVIEW
+        res = self.run_cmd(["move", task_file, "REVIEW"])
+        self.assertTrue(res["success"], f"Move to REVIEW failed: {res}")
+
+        # Verify diff file exists
+        diff_path = os.path.join(self.repo_dir, ".tasks", "review", f"{branch}.patch")
+        self.assertTrue(
+            os.path.exists(diff_path), f"Review diff not found at {diff_path}"
+        )
+
+        # Diff should contain our commit message
+        with open(diff_path) as f:
+            content = f.read()
+        self.assertIn("new feature", content.lower())
+
+    def test_review_to_staging_requires_regression_check(self):
+        """Test REVIEW -> STAGING is blocked until --regression-check is used."""
+        self.run_cmd(["init"])
+        res = self.run_cmd(
+            [
+                "create",
+                "Regression Check Gate Test Task",
+                "--story",
+                "This story is long enough to meet minimum length requirements for task creation.",
+                "--tech",
+                "Technical details about the regression gate implementation are documented here for compliance.",
+                "--criteria",
+                "STAGING must be blocked without Rc and allowed with Rc.",
+                "--plan",
+                "1. Create task\n2. Move through pipeline to REVIEW\n3. Try STAGING without Rc -> fail\n4. Set Rc\n5. STAGING -> success",
+            ]
+        )
+        self.assertTrue(res["success"])
+        task_file = res["data"]["file"]
+        branch = task_file
+
+        # Move to PROGRESSING and make commit
+        self.run_cmd(["move", task_file, "PROGRESSING"])
+        code_file = os.path.join(self.repo_dir, "code.py")
+        with open(code_file, "w") as f:
+            f.write("def func():\n    pass\n")
+        subprocess.run(
+            ["git", "add", "code.py"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Add code"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Move to TESTING
+        res = self.run_cmd(["move", task_file, "TESTING"])
+        self.assertTrue(res["success"])
+
+        # Setup testing branch merge
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Mark tests passed and move to REVIEW
+        res = self.run_cmd(["modify", task_file, "--tests-passed"])
+        self.assertTrue(res["success"])
+        res = self.run_cmd(["move", task_file, "REVIEW"])
+        self.assertTrue(res["success"])
+
+        # Attempt move to STAGING without regression check - should fail
+        res = self.run_cmd(["move", task_file, "STAGING"])
+        self.assertFalse(
+            res["success"], "Should not allow STAGING without regression check"
+        )
+        error = res.get("error", "").lower()
+        self.assertIn("regression", error, f"Error should mention regression: {res}")
+
+        # Set regression check
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertTrue(res["success"], f"modify --regression-check failed: {res}")
+
+        # Now STAGING should succeed
+        res = self.run_cmd(["move", task_file, "STAGING"])
+        self.assertTrue(res["success"], f"STAGING should succeed after Rc set: {res}")
+
+    def test_regression_check_flag_sets_rc_metadata(self):
+        """Test that --regression-check correctly sets Rc metadata field."""
+        self.run_cmd(["init"])
+        res = self.run_cmd(
+            [
+                "create",
+                "Rc Metadata Flag Test Task",
+                "--story",
+                "This story is long enough to meet the 15 character minimum requirement for task creation.",
+                "--tech",
+                "Technical explanation long enough to satisfy the 15 character minimum check.",
+                "--criteria",
+                "Rc field must be True after using modify flag to confirm regression check.",
+                "--plan",
+                "1. Create\n2. Move to REVIEW\n3. Verify Rc unset\n4. Modify --regression-check\n5. Verify Rc true",
+            ]
+        )
+        self.assertTrue(res["success"])
+        task_file = res["data"]["file"]
+        branch = task_file
+
+        # Move to PROGRESSING and commit
+        self.run_cmd(["move", task_file, "PROGRESSING"])
+        code_file = os.path.join(self.repo_dir, "file.txt")
+        with open(code_file, "w") as f:
+            f.write("content\n")
+        subprocess.run(
+            ["git", "add", "file.txt"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Add file"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Move to TESTING
+        self.run_cmd(["move", task_file, "TESTING"])
+
+        # Setup testing branch
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Move to REVIEW (after tests passed)
+        self.run_cmd(["modify", task_file, "--tests-passed"])
+        self.run_cmd(["move", task_file, "REVIEW"])
+
+        # Load task from review folder
+        review_task_path = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        task = FM.load(review_task_path)
+        self.assertFalse(
+            task.metadata.get("Rc"), "Rc should be unset after entering REVIEW"
+        )
+
+        # Apply regression check
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertTrue(res["success"], "modify --regression-check must succeed")
+
+        # Verify Rc is now True
+        task = FM.load(review_task_path)
+        self.assertTrue(task.metadata.get("Rc"), "Rc should be True after modify")
+
+    def test_regression_workflow_move_back_to_progressing(self):
+        """Test full regression workflow: REVIEW -> PROGRESSING (fix) -> TESTING -> REVIEW."""
+        self.run_cmd(["init"])
+        res = self.run_cmd(
+            [
+                "create",
+                "Full Regression Recovery Workflow Task",
+                "--story",
+                "This story is long enough to meet the minimum length requirement for task creation in the system.",
+                "--tech",
+                "Technical setup and workflow steps are documented here with sufficient length to pass validation.",
+                "--criteria",
+                "Cycle REVIEW->PROGRESSING->TESTING->REVIEW; diff regenerated; Rc cleared each REVIEW entry.",
+                "--plan",
+                "1. Enter REVIEW\n2. Move back to PROGRESSING\n3. Fix and commit\n4. Update testing\n5. Re-enter REVIEW\n6. Verify diff updated and Rc cleared",
+            ]
+        )
+        self.assertTrue(res["success"])
+        task_file = res["data"]["file"]
+        branch = task_file
+
+        # Initial commit on task branch
+        self.run_cmd(["move", task_file, "PROGRESSING"])
+        with open(os.path.join(self.repo_dir, "initial.txt"), "w") as f:
+            f.write("initial\n")
+        subprocess.run(
+            ["git", "add", "initial.txt"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Initial commit"],
+            cwd=self.repo_dir,
+            capture_output=True,
+        )
+
+        # Move to TESTING
+        self.run_cmd(["move", task_file, "TESTING"])
+
+        # Setup testing branch (merge initial commit)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Set tests passed and move to REVIEW
+        self.run_cmd(["modify", task_file, "--tests-passed"])
+        self.run_cmd(["move", task_file, "REVIEW"])
+
+        # Diff should exist
+        diff_path = os.path.join(self.repo_dir, ".tasks", "review", f"{branch}.patch")
+        self.assertTrue(os.path.exists(diff_path), "Initial diff should exist")
+        with open(diff_path) as f:
+            diff1 = f.read()
+        self.assertIn("initial", diff1.lower())
+
+        # Move back to PROGRESSING (simulate finding regression)
+        res = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertTrue(res["success"], "Move back to PROGRESSING should succeed")
+
+        # Diff should still exist (not auto-deleted)
+        self.assertTrue(
+            os.path.exists(diff_path), "Diff should persist after moving back"
+        )
+
+        # Create fix commit on task branch
+        subprocess.run(
+            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
+        )
+        with open(os.path.join(self.repo_dir, "fix.txt"), "w") as f:
+            f.write("fixed\n")
+        subprocess.run(
+            ["git", "add", "fix.txt"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Fix regression issue"],
+            cwd=self.repo_dir,
+            capture_output=True,
+        )
+
+        # Move to TESTING (branch ahead)
+        self.run_cmd(["move", task_file, "TESTING"])
+
+        # Update testing to include fix (fast-forward merge)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(
+            ["git", "checkout", "testing"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )
+
+        # Move to REVIEW (new diff regenerated, Rc reset)
+        self.run_cmd(["move", task_file, "REVIEW"])
+
+        # Verify diff updated
+        with open(diff_path) as f:
+            diff2 = f.read()
+        self.assertIn("Fix regression", diff2, "Diff should contain fix commit")
+
+        # Verify Rc is reset
+        review_task_path = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        task = FM.load(review_task_path)
+        self.assertFalse(
+            task.metadata.get("Rc"), "Rc should be reset when re-entering REVIEW"
         )
 
 

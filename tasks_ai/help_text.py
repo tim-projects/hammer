@@ -19,6 +19,7 @@ USEFUL COMMANDS:
   tasks move <id> <state>      Move task to new state (use comma-separated for multi-step)
   tasks move <id> ARCHIVED -y  Archive and auto-push/delete branch (requires merged to main)
   tasks modify <id> --plan "1. Step"  Update task fields
+  tasks modify <id> --regression-check  Mark regression check as passed (enables STAGING)
   tasks reconcile              Scan for tasks with merged branches (dry-run)
   tasks reconcile --all        Clean up merged branches and archive tasks
   tasks cleanup --dry-run      Preview what would be cleaned up
@@ -26,6 +27,14 @@ USEFUL COMMANDS:
 
 STATE MACHINE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> LIVE -> ARCHIVED
                (REJECTED also available from TESTING/STAGING)
+               
+REGRESSION CHECK: Moving to REVIEW auto-generates a diff at `.tasks/review/<task_id>/diff.patch`.
+Review the diff carefully. If regressions found, move the task back to PROGRESSING or TESTING to fix issues.
+Once the diff is clean, run `tasks modify <id> --regression-check` to confirm and enable STAGING.
+               
+REGRESSION CHECK: Moving to REVIEW auto-generates diff at .tasks/review/<id>/diff.patch.
+Review diff carefully. If regressions found, move task back to PROGRESSING/TESTING to fix.
+Once clean, run 'tasks modify <id> --regression-check' to enable STAGING.
 """
 
 MISSION = """Mission: Identify and fix the highest priority test failures first."""
