@@ -273,4 +273,4 @@ tasks config set repo.format ruff
 ## Documentation
 
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Common issues and solutions
-- [AGENTS.md](AGENTS.md) - Agent directives and protocols
+- [AGENTS.md](AGENTS.md) - Agent directives and protocols# test
