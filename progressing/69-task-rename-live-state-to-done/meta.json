@@ -5,6 +5,7 @@
   "Cr": "170426 09:58",
   "Bl": [],
   "Pr": 2,
-  "Tp": "task",
-  "Br": "69-task-rename-live-state-to-done"
+  "Tp": false,
+  "Br": "69-task-rename-live-state-to-done",
+  "Rc": ""
 }
