@@ -6,6 +6,6 @@
   "Pr": 2,
   "Br": "75-task-investigate-missing-repo-binar",
   "Vp": true,
-  "Tp": true,
-  "Rc": ""
+  "Tp": false,
+  "Rc": true
 }

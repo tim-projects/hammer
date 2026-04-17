@@ -1,0 +1,18 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 5107040..43922ea 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -1289,9 +1289,12 @@ class TasksCLI:
+         if current_state == new_status:
+             return
+         if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and not force:
++            hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
++            if current_state == "REJECTED" and new_status == "ARCHIVED":
++                hint += " Use 'tasks delete <id>' to permanently remove the task."
+             self.error(
+                 f"Forbidden transition: {current_state} -> {new_status}",
+-                hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool.",
++                hint=hint,
+             )
+ 
+         # Check tests_passed when moving from TESTING to REVIEW
