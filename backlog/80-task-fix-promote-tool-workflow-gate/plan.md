@@ -1,0 +1,1 @@
+1. 1. Investigate repo.py promote logic.\n2. Add status check for task.\n3. Add logic to move to REVIEW if missing.\n4. Verify fix.

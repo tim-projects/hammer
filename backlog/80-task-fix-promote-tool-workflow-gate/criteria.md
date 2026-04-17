@@ -1,0 +1,1 @@
+- [ ] promote tool checks task status; stops if not REVIEW; triggers move to REVIEW if missing.

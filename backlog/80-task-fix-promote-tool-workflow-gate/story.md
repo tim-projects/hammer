@@ -1,0 +1,1 @@
+The repo promote tool currently bypasses the REVIEW state gate, merging changes directly into main. I need it to check for the REVIEW status and stop if the task is not in REVIEW, prompting a move to REVIEW first.
