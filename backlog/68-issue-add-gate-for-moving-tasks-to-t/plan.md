@@ -1,0 +1,1 @@
+1. 1. Identify where in _move_logic to add the gate (inside if not force block)\n2. Implement the git commands to check unstaged changes\n3. Implement commit comparison logic (merge-base)\n4. Add error message with helpful guidance\n5. Write test case(s) in test_tasks.py or new test file\n6. Run check.py all to validate\n7. Move task through pipeline to LIVE

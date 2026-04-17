@@ -1,0 +1,1 @@
+1. 1. Create a task branch\n2. Ensure it's merged to testing (so no new commits)\n3. Ensure working tree is clean (no unstaged files)\n4. Try to move task to TESTING: should be blocked\n5. Add an unstaged file: should now allow\n6. Commit a change: should also allow

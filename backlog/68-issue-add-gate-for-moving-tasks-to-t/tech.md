@@ -1,0 +1,1 @@
+Implement a validation gate in TasksCLI._move_logic() that checks: (1) if the task branch has unstaged/uncommitted changes using git status --porcelain, and (2) if the branch tip has commits not yet merged to testing using git merge-base comparison. Block the transition if both conditions are false.

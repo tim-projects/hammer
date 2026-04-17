@@ -1,0 +1,1 @@
+Prevent moving a task to TESTING if the task branch has no unstaged file changes and has no commits newer than the testing branch.
