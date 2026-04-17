@@ -20,7 +20,7 @@ STATE_FOLDERS = {
 ALLOWED_TRANSITIONS = {
     "BACKLOG": ["READY", "PROGRESSING", "REJECTED"],
     "READY": ["PROGRESSING", "BLOCKED", "REJECTED"],
-    "PROGRESSING": ["TESTING", "BLOCKED"],
+    "PROGRESSING": ["TESTING", "BLOCKED", "REJECTED"],
     "TESTING": ["REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
     "REVIEW": ["STAGING", "TESTING", "BLOCKED", "PROGRESSING"],
     "STAGING": ["LIVE", "ARCHIVED", "REVIEW", "BLOCKED", "REJECTED"],
@@ -39,6 +39,7 @@ KEY_MAP = {
     "Pr": "Priority",
     "Ar": "ArchivedAt",
     "Tp": "TestsPassed",
+    "Rc": "RegressionCheck",
 }
 
 ALLOWED_CONFIG_KEYS = {
@@ -65,22 +66,22 @@ AGENT OPERATIONAL PROTOCOL:
    This bypasses the need for 3 separate move commands.
 4. CREATION: 'create' requires --story, --tech, --criteria, and --plan. 
    --repro is mandatory for --type issue. Titles must be >= 10 chars.
-5. LIFECYCLE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> LIVE -> ARCHIVED.
-   - Note: REVIEW, ARCHIVED, and REJECTED tasks can move back to PROGRESSING if needed.
-   - Task MUST be in PROGRESSING before modifying project code.
-   - 'move' to PROGRESSING creates/syncs '.tasks/progressing/<task_id>/current-task.md'.
-6. PROGRESS: Use 'modify' to update --progress, --findings, or --mitigations.
-   - Updates to the active task automatically sync to its 'current-task.md'.
-   - Use '.tasks/progressing/<task_id>/current-task.md' as your primary scratchpad while working.
-7. SYNC: Use 'checkpoint' to pull git commits and current-task.md notes into the task file.
-8. ARCHIVING: When moving STAGING -> ARCHIVED:
-   - Branch must be merged to main first
-   - Use 'tasks move <id> ARCHIVED' - if merged, it will prompt for -y
-   - Use 'tasks move <id> ARCHIVED -y' to auto-push and delete branch
-   - Or move to REJECTED if code was not merged
-9. RULES: 
-   - All blockers (Bl) in metadata MUST be ARCHIVED before moving to PROGRESSING.
-   - Use 'list' to find tasks and 'current' to see full metadata/logs.
-10. ERROR RECOVERY: If a command fails, read the 'error' field in the JSON response. 
-   It will contain specific guidance and allowed next steps (HINT).
+ 6. REVIEW: When moving to REVIEW, a diff is auto-generated at `.tasks/review/<task_id>/diff.patch`.
+    - Review the diff for regressions. If regressions found, move task back to PROGRESSING/TESTING to fix.
+    - Once clean, run `tasks modify <id> --regression-check` to mark as passed.
+    - Cannot move to STAGING until regression check is passed (Rc metadata set).
+ 7. PROGRESS: Use 'modify' to update --progress, --findings, or --mitigations.
+    - Updates to the active task automatically sync to its 'current-task.md'.
+    - Use '.tasks/progressing/<task_id>/current-task.md' as your primary scratchpad while working.
+ 8. SYNC: Use 'checkpoint' to pull git commits and current-task.md notes into the task file.
+ 9. ARCHIVING: When moving STAGING -> ARCHIVED:
+    - Branch must be merged to main first
+    - Use 'tasks move <id> ARCHIVED' - if merged, it will prompt for -y
+    - Use 'tasks move <id> ARCHIVED -y' to auto-push and delete branch
+    - Or move to REJECTED if code was not merged
+ 10. RULES: 
+    - All blockers (Bl) in metadata MUST be ARCHIVED before moving to PROGRESSING.
+    - Use 'list' to find tasks and 'current' to see full metadata/logs.
+ 11. ERROR RECOVERY: If a command fails, read the 'error' field in the JSON response. 
+    It will contain specific guidance and allowed next steps (HINT).
 """

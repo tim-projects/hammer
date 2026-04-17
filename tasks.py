@@ -97,6 +97,11 @@ if __name__ == "__main__":
     mod_p.add_argument(
         "--tests-passed", action="store_true", help="Mark tests as passed."
     )
+    mod_p.add_argument(
+        "--regression-check",
+        action="store_true",
+        help="Mark regression check as passed (enables STAGING from REVIEW).",
+    )
     mod_p.add_argument("-p", "--priority", type=int, help="Update priority.")
 
     mv_p = subparsers.add_parser("move", help="Move task.")
@@ -215,6 +220,7 @@ if __name__ == "__main__":
             mitigations=args.mitigations,
             tests_passed=args.tests_passed,
             priority=args.priority,
+            regression_check=args.regression_check,
         )
     elif args.command == "move":
         cli.move(args.filename, args.status, yes=args.yes)

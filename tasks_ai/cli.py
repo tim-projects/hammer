@@ -174,6 +174,72 @@ class TasksCLI:
 
         return result
 
+    def _generate_review_diff(self, task_path, branch):
+        """Generate a unified diff patch for the task branch against main including unstaged changes."""
+        review_dir = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"])
+        task_id = os.path.basename(task_path)
+        diff_path = os.path.join(review_dir, f"{task_id}.patch")
+
+        os.makedirs(review_dir, exist_ok=True)
+        # early debug
+        with open("/tmp/kilo_early_debug.log", "a") as f:
+            f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        self.log(
+            f"[DEBUG] Generating review diff: task_id={task_id}, branch='{branch}'"
+        )
+
+        # Get commits diff: default_branch...HEAD (commits on branch not in default branch)
+        # Use merge-base to find common ancestor
+        default_branch = self._get_default_branch()
+        main_sha = None
+        try:
+            main_sha = self._run_git(["rev-parse", default_branch]).stdout.strip()
+        except Exception:
+            main_sha = None
+
+        self.log(
+            f"[DEBUG] branch={branch}, default_branch={default_branch}, main_sha={main_sha}"
+        )
+
+        diff_content = ""
+
+        if main_sha:
+            # Get log with patches for commits on branch not in default branch: git log --patch <main_sha>..<branch>
+            result = self._run_git(
+                ["log", "--patch", f"{main_sha}..{branch}"], cwd=self.root
+            )
+            self.log(
+                f"[DEBUG] log-patch cmd returncode={result.returncode}, stdout len={len(result.stdout)}"
+            )
+            if result.returncode == 0:
+                diff_content += result.stdout
+            else:
+                self.log(f"[DEBUG] log-patch cmd stderr: {result.stderr}")
+
+        # Get unstaged working tree changes
+        result = self._run_git(["diff", "--patch"], cwd=self.root)
+        self.log(
+            f"[DEBUG] unstaged diff returncode={result.returncode}, stdout len={len(result.stdout)}"
+        )
+        if result.returncode == 0 and result.stdout:
+            if diff_content and not diff_content.endswith("\n"):
+                diff_content += "\n"
+            diff_content += result.stdout
+
+        # Write diff file
+        with open(diff_path, "w", encoding="utf-8") as f:
+            f.write(diff_content or "# No changes detected\n")
+
+        # Debug: record values to a file in repo root
+        debug_path = os.path.join(self.root, "diff_debug.log")
+        with open(debug_path, "a") as f:
+            f.write(
+                f"branch={branch}, main_sha={main_sha}, diff_len={len(diff_content)}\n"
+            )
+
+        self.log(f"Regression diff generated at {diff_path}")
+        return diff_path
+
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
         repo_path = os.path.join(self.root, "repo")
@@ -198,6 +264,26 @@ class TasksCLI:
                 "Validation failed. Fix errors before proceeding.",
                 hint="Run 'check lint' to see errors. Do not bypass this tool.",
             )
+
+    def _run_tests(self, fail_safe=False):
+        check_path = os.path.join(self.root, "check.py")
+        if not os.path.exists(check_path):
+            return subprocess.CompletedProcess("", 0)
+        result = subprocess.run(
+            [sys.executable, check_path, "test"],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            if fail_safe:
+                return result
+            self.error(
+                "Tests failed. Fix test failures before proceeding.",
+                hint="Run 'check test' to see failures. Do not bypass this tool.",
+            )
+        return result
 
     def _parse_filename(self, name):
         if not name:
@@ -628,6 +714,7 @@ class TasksCLI:
                 "Cr": datetime.now().strftime("%y%m%d %H:%M"),
                 "Bl": [],
                 "Pr": priority or (1 if task_type == "issue" else 2),
+                "Br": task_id,
             },
             parts={
                 "story": story or "",
@@ -700,6 +787,7 @@ class TasksCLI:
         mitigations=None,
         tests_passed=None,
         priority=None,
+        regression_check=None,
     ):
         filepath, _ = self.find_task(filename)
         if not filepath:
@@ -765,6 +853,13 @@ class TasksCLI:
 
         if priority is not None:
             task.metadata["P"] = priority
+            updated = True
+
+        if regression_check is not None:
+            if regression_check:
+                task.metadata["Rc"] = True
+            else:
+                task.metadata["Rc"] = ""
             updated = True
 
         if updated:
@@ -1208,10 +1303,23 @@ class TasksCLI:
                     hint="Run 'tasks modify <id> --tests-passed' to mark tests as passed. Do not bypass this tool.",
                 )
             self._run_validation()
+            self._run_tests()
+
+        # Re-validate when moving out of TESTING to any state
+        if current_state == "TESTING" and new_status != "REVIEW":
+            self._run_validation()
+            task = FM.load(filepath_str)
+            task.metadata["Vp"] = True
+            FM.dump(task, filepath_str)
 
         # Auto-validate when moving from PROGRESSING to TESTING
         if current_state == "PROGRESSING" and new_status == "TESTING":
             self._run_validation()
+            self.log("Validation passed. Marking validation_passed...")
+            task = FM.load(filepath_str)
+            task.metadata["Vp"] = True
+            FM.dump(task, filepath_str)
+            new_status = "TESTING"
 
         task = FM.load(filepath_str)
         task.metadata.pop("St", None)
@@ -1374,6 +1482,58 @@ class TasksCLI:
                             f"Branch '{branch}' not pushed to remote. Push and try again. Do not bypass this tool.",
                         )
 
+            # Gate for TESTING: ensure branch has changes not yet in testing
+            # Only apply when moving from READY, BACKLOG, or PROGRESSING
+            if new_status == "TESTING" and current_state in (
+                "READY",
+                "BACKLOG",
+                "PROGRESSING",
+            ):
+                # Check for unstaged/uncommitted changes first
+                status_res = self._run_git(["status", "--porcelain"], cwd=self.root)
+                has_unstaged = bool(status_res.stdout.strip())
+
+                # Check if branch has commits not in testing
+                # Get testing commit if it exists
+                testing_sha = None
+                testing_verify = self._run_git(
+                    ["rev-parse", "--verify", "testing"], cwd=self.root
+                )
+                if testing_verify.returncode == 0:
+                    testing_sha = self._run_git(
+                        ["rev-parse", "testing"], cwd=self.root
+                    ).stdout.strip()
+
+                branch_tip_sha = (
+                    branch_sha
+                    or self._run_git(
+                        ["rev-parse", branch], cwd=self.root
+                    ).stdout.strip()
+                )
+
+                # Determine if branch has new commits not in testing
+                # Use merge-base --is-ancestor: returns 0 if branch_tip is ancestor of testing (i.e., testing already contains it)
+                newer_than_testing = True  # assume new unless proven otherwise
+                if testing_sha:
+                    ancestor_res = self._run_git(
+                        ["merge-base", "--is-ancestor", branch_tip_sha, testing_sha],
+                        cwd=self.root,
+                    )
+                    # If branch is ancestor of testing (returncode 0), then no new commits
+                    if ancestor_res.returncode == 0:
+                        newer_than_testing = False
+                    else:
+                        newer_than_testing = True
+                else:
+                    # No testing branch yet, any work is new
+                    newer_than_testing = True
+
+                if not has_unstaged and not newer_than_testing:
+                    self.error(
+                        f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
+                        f"Make some progress before moving to testing. Do not bypass this tool."
+                    )
+
             if new_status == "REVIEW":
                 merge_base = self._run_git(
                     ["merge-base", branch_sha or branch, "testing"]
@@ -1431,10 +1591,14 @@ class TasksCLI:
                 if not branch_commit:
                     branch_commit = main_sha
                 if main_sha and branch_commit:
-                    merge_base = self._run_git(
-                        ["merge-base", branch_commit, "main"]
-                    ).stdout.strip()
-                    if merge_base != main_sha:
+                    # Check if branch is merged into main using merge-base --is-ancestor
+                    is_ancestor = (
+                        self._run_git(
+                            ["merge-base", "--is-ancestor", branch_commit, "main"]
+                        ).returncode
+                        == 0
+                    )
+                    if not is_ancestor:
                         self.error(
                             f"Branch '{branch}' not merged to main. Merge to main first. Alternatively, move to REJECTED. Do not bypass this tool.",
                         )
@@ -1470,6 +1634,16 @@ class TasksCLI:
                 "Cannot move to LIVE: contains unfinished checkboxes (- [ ])",
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
+
+        # Regression check gate: REVIEW -> STAGING requires Rc to be set
+        if current_state == "REVIEW" and new_status == "STAGING":
+            task = FM.load(filepath_str)
+            if not task.metadata.get("Rc"):
+                self.error(
+                    "Cannot move to STAGING: regression check not passed (Rc flag not set).",
+                    hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <id> --regression-check' to confirm and allow STAGING.",
+                )
+
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
         task.metadata.pop("St", None)
         new_filepath = os.path.join(
@@ -1519,6 +1693,19 @@ class TasksCLI:
                     },
                 )
                 self._atomic_write(dump_path, d)
+
+            if new_status == "REVIEW":
+                # Generate regression diff patch
+                branch = task.metadata.get("Br", "")
+                self._generate_review_diff(new_filepath, branch)
+                # Reset regression check flag (must be explicitly set via --regression-check)
+                task.metadata["Rc"] = ""
+                self._atomic_write(new_filepath, task)
+                self.log(
+                    "REVIEW entered: Diff generated. Check .tasks/review/<task_id>/diff.patch for regressions. "
+                    "If issues found, move task back to PROGRESSING/TESTING to fix. "
+                    "Once clean, run 'tasks modify <id> --regression-check' to enable STAGING."
+                )
         except Exception as e:
             self.error(str(e))
 
@@ -2019,8 +2206,28 @@ class TasksCLI:
             res_find = self.find_task(branch)
             _, state = res_find
 
-            # Respect workflow gates: only clean up branches for LIVE (completed) or REJECTED tasks
-            if state not in ("LIVE", "REJECTED"):
+            # If task not found in any state folder but branch is merged to main, allow cleanup
+            # (task may have been deleted/archived manually, or is a test branch)
+            if state is None:
+                if is_ancestor:
+                    self.log(
+                        f"Branch '{branch}' merged to main but task not found - cleaning up"
+                    )
+                    if not dry_run:
+                        if has_origin:
+                            self._run_git(["push", "origin", branch], cwd=self.root)
+                        self._run_git(["branch", "-D", branch], cwd=self.root)
+                    cleaned.append(branch)
+                    continue
+                else:
+                    pending_archive.append(
+                        f"{branch} (task not found, not merged to main)"
+                    )
+                    continue
+
+            # Respect workflow gates: only clean up branches for LIVE or REJECTED tasks
+            # (ARCHIVED tasks should also be cleaned up - they completed the pipeline)
+            if state not in ("LIVE", "REJECTED", "ARCHIVED"):
                 pending_archive.append(branch)
                 continue
 

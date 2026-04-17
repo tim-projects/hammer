@@ -51,6 +51,9 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
    python tasks.py -j move <id> TESTING
    ```
 6. **Promotion**: Follow the state machine (`TESTING` -> `REVIEW` -> `STAGING` -> `LIVE`).
+   - When moving to REVIEW, a diff file is auto-generated at `.tasks/review/<task_id>/diff.patch`.
+   - **Review the diff for regressions**. If regressions found, move task back to `PROGRESSING` or `TESTING` to fix before proceeding.
+   - Once the diff is clean, run `tasks modify <id> --regression-check` to confirm.
    - Note: Tasks can move from `REVIEW`, `ARCHIVED`, or `REJECTED` back to `PROGRESSING` if further work is required.
 7. **Archiving**: When ready to archive from STAGING:
    - Branch must be merged to main first

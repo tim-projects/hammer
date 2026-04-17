@@ -21,6 +21,8 @@ import subprocess
 import sys
 import json
 import shutil
+import tempfile
+from pathlib import Path
 
 
 def get_git_root():
@@ -39,8 +41,8 @@ def get_git_root():
 def find_project_root(start_path=None):
     """Search upward for .tasks directory or .git directory."""
     if start_path is None:
-        # Start from script location, not cwd - works when installed to /opt
-        start_path = os.path.dirname(os.path.abspath(__file__))
+        # Start from cwd first to respect test isolation and invocation context
+        start_path = os.getcwd()
 
     current = os.path.abspath(start_path)
     while True:
@@ -52,10 +54,12 @@ def find_project_root(start_path=None):
         if parent == current:
             break
         current = parent
-    return start_path
+
+    # Fallback to script location
+    return Path(__file__).parent.resolve()
 
 
-ROOT = get_git_root()
+ROOT = find_project_root()
 
 
 def load_config(dev=False):
@@ -144,7 +148,9 @@ def get_commands(fix=False):
 
 
 def run_check(tool_type, fix=False, as_json=False, dev=False):
+    sys.stderr.flush()
     config = load_config(dev)
+    sys.stderr.flush()
 
     # Standardize tool type to config key mapping
     key_map = {
@@ -155,26 +161,13 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     }
     config_key = key_map.get(tool_type)
     tool = config.get(config_key)
+    sys.stderr.flush()
 
     commands = get_commands(fix).get(tool_type, {})
+    sys.stderr.flush()
 
     if not tool or tool not in commands:
         msg = f"No {tool_type} tool configured (expected key: {config_key}). Run 'tasks config detect' or set manually: tasks config set {config_key} <tool>"
-        if as_json:
-            print(
-                json.dumps(
-                    {
-                        "success": False,
-                        "tool": tool_type,
-                        "error": msg,
-                        "configured": tool,
-                    }
-                )
-            )
-        else:
-            print(f"Error: {msg}")
-        return 1
-        msg = f"No {tool_type} tool configured. Run 'tasks config detect' or set manually: tasks config set repo.{tool_type} <tool>"
         if as_json:
             print(
                 json.dumps(
@@ -219,15 +212,67 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
 
     cmd[0] = cmd0
 
-    if as_json:
-        # In JSON mode, we just return the command that would be run?
-        # No, we should probably run it if we want 'check' to actually check.
-        pass
+    # Run pytest with explicit path to project root to avoid test discovery issues
+    cmd_to_run = cmd.copy()
+    if tool == "pytest":
+        # Add explicit path to the project root to ensure pytest finds tests
+        # Also disable test collection caching to avoid issues
+        cmd_to_run.append(project_root)
+        cmd_to_run.extend(["--cache-clear", "-x"])  # Clear cache, stop on first failure
 
+    # Execute the command
     if not as_json:
         print(f"Running {tool} ({tool_type})...")
 
-    result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True)
+    try:
+        if as_json:
+            # Capture output using temporary files to avoid pipe deadlocks
+            with (
+                tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stdout_file,
+                tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stderr_file,
+            ):
+                result = subprocess.run(
+                    cmd_to_run,
+                    cwd=project_root,
+                    stdout=stdout_file,
+                    stderr=stderr_file,
+                    timeout=300,
+                )
+                stdout_file.seek(0)
+                stderr_file.seek(0)
+                stdout_content = stdout_file.read().decode("utf-8", errors="replace")
+                stderr_content = stderr_file.read().decode("utf-8", errors="replace")
+            # Cleanup temp files
+            try:
+                os.unlink(stdout_file.name)
+                os.unlink(stderr_file.name)
+            except Exception:
+                pass
+        else:
+            # Stream output directly to console to avoid deadlocks
+            result = subprocess.run(cmd_to_run, cwd=project_root, timeout=300)
+            stdout_content = ""
+            stderr_content = ""
+    except subprocess.TimeoutExpired:
+        msg = f"Tool '{tool}' timed out after 5 minutes."
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "tool": tool_type,
+                        "error": msg,
+                        "configured": tool,
+                    }
+                )
+            )
+        else:
+            print(f"Error: {msg}")
+        return 1
+
+    # Attach captured output to result for unified handling
+    result.stdout = stdout_content
+    result.stderr = stderr_content
 
     if as_json:
         print(

@@ -77,6 +77,27 @@ def info(msg):
         print(f"{CYAN}[repo]{NC} {msg}")
 
 
+def find_project_root(start_path=None):
+    """Search upward for .tasks directory or .git directory."""
+    if start_path is None:
+        # Start from cwd first, not script dir, to respect test isolation
+        start_path = os.getcwd()
+
+    current = os.path.abspath(start_path)
+    while True:
+        if os.path.isdir(os.path.join(current, ".tasks")) or os.path.isdir(
+            os.path.join(current, ".git")
+        ):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+
+    # Fallback to script location
+    return Path(__file__).parent.resolve()
+
+
 def run(cmd, check=True, capture=False, env=None, cwd=None):
     project_root = find_project_root()
     try:
@@ -122,56 +143,12 @@ def prompt_yes_no(prompt):
         )
 
 
-def find_project_root(start_path=None):
-    """Search upward for .tasks directory or .git directory."""
-    if start_path is None:
-        start_path = os.path.dirname(os.path.abspath(__file__))
-
-    current = os.path.abspath(start_path)
-    while True:
-        if os.path.isdir(os.path.join(current, ".tasks")) or os.path.isdir(
-            os.path.join(current, ".git")
-        ):
-            return current
-        parent = os.path.dirname(current)
-        if parent == current:
-            break
-        current = parent
-
-    # Fallback: try current working directory
-    if start_path != os.getcwd():
-        return find_project_root(os.getcwd())
-
-    return start_path
-
-
 class ToolRunner:
     def __init__(self):
         pass
 
-    def _get_git_root(self):
-        root = find_project_root()
-        # If script is installed to /opt but project is elsewhere, try git rev-parse
-        if os.path.isdir(os.path.join(root, ".git")):
-            return root
-        # Try to find git root from cwd as fallback
-        try:
-            git_root = (
-                subprocess.check_output(
-                    ["git", "rev-parse", "--show-toplevel"],
-                    stderr=subprocess.DEVNULL,
-                )
-                .decode()
-                .strip()
-            )
-            if git_root:
-                return git_root
-        except Exception:
-            pass
-        return root
-
     def run_validation(self, fix=False, dev=False):
-        git_root = self._get_git_root()
+        git_root = find_project_root()
         check_py = os.path.join(git_root, "check.py")
         check_cmd = shutil.which("check")
         if not os.path.exists(check_py) and not check_cmd:
@@ -204,7 +181,9 @@ class ToolRunner:
             cmd.append("--dev")
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=600, cwd=git_root
+            )
         except subprocess.TimeoutExpired:
             error(
                 "Validation timed out after 10 minutes.\n"
@@ -368,6 +347,9 @@ def cmd_merge(src_input, target):
     # 4. Push
     if prompt_yes_no(f"Push {target} to origin?"):
         run(["git", "push", "origin", target])
+        # Sync local branch with remote after push
+        run(["git", "fetch", "origin", target])
+        run(["git", "reset", "--hard", f"origin/{target}"])
 
     # 6. Return
     if src and (FLAGS["yes"] or prompt_yes_no(f"Switch back to {src}?")):
