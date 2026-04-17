@@ -362,9 +362,6 @@ def cmd_merge(src_input, target):
         run(["git", "reset", "--hard", f"origin/{target}"])
 
     # 6. Return
-    if src and (FLAGS["yes"] or prompt_yes_no(f"Switch back to {src}?")):
-        run(["git", "checkout", src])
-
     log(f"✅ Successfully merged {src} → {target}")
 
 
