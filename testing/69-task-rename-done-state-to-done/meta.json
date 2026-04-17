@@ -1,11 +1,11 @@
 {
   "Id": 69,
   "Ti": "Rename LIVE state to DONE throughout codebase",
-  "St": "PROGRESSING",
   "Cr": "170426 09:58",
   "Bl": [],
   "Pr": 2,
   "Tp": false,
   "Br": "69-task-rename-done-state-to-done",
-  "Rc": ""
+  "Rc": "",
+  "Vp": true
 }
