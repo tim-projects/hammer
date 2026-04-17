@@ -1,0 +1,1 @@
+1. 1. Create task\n2. Move to PROGRESSING\n3. Try promote

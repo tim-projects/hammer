@@ -1,0 +1,1 @@
+Test tech details requirement for task creation.
