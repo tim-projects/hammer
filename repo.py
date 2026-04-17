@@ -414,30 +414,12 @@ def cmd_merge(src_input, target):
     log(f"✅ Successfully merged {src} → {target}")
 
 
-def cmd_promote(src_input):
+def cmd_promote(src_input, original_task_id=None):
     src = resolve_branch(src_input)
 
-    # Review Gate: Verify task is in REVIEW if promoting a feature branch to testing
+    task_id = original_task_id
     if src not in PIPELINE:
-        if TasksCLI:
-            cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
-            task_id_part = src.split("-")[0]
-            if task_id_part.isdigit():
-                path, status = cli.find_task(task_id_part)
-                if status != "REVIEW":
-                    error(
-                        f"Task {task_id_part} is in '{status}' state, not 'REVIEW'.",
-                        hint=f"Move task to REVIEW first: 'tasks move {task_id_part} REVIEW'",
-                    )
-                # Verify Regression Check (Rc)
-                from tasks_ai.file_manager import FM
-
-                task = FM.load(path)
-                if not task.metadata.get("Rc"):
-                    error(
-                        f"Task {task_id_part} has not passed regression check (Rc flag not set).",
-                        hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <task_id> --regression-check' to confirm.",
-                    )
+        task_id = src.split("-")[0] if src.split("-")[0].isdigit() else None
 
     # Determine target
     target = "testing"  # default
@@ -452,12 +434,47 @@ def cmd_promote(src_input):
         # It's a feature branch, promote to testing
         target = "testing"
 
+    # Review Gate: Stop before merging testing → staging if task hasn't passed review
+    if target == "staging" and task_id:
+        if TasksCLI:
+            cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+            path, status = cli.find_task(task_id)
+            if path:
+                if status != "REVIEW":
+                    # If it's in TESTING, we can auto-move to REVIEW to generate diff
+                    if status == "TESTING":
+                        info(f"Task {task_id} is in TESTING. Moving to REVIEW to generate diff...")
+                        try:
+                            cli.move(task_id, "REVIEW")
+                            log(f"✅ Task {task_id} moved to REVIEW.")
+                        except SystemExit:
+                            pass
+                        
+                        error(
+                            f"Task {task_id} has been moved to REVIEW.",
+                            hint=f"Please review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to staging."
+                        )
+                    else:
+                        error(
+                            f"Task {task_id} is in '{status}' state, not 'REVIEW'.",
+                            hint=f"Move task to REVIEW first: 'tasks move {task_id} REVIEW'"
+                        )
+                
+                # Verify Regression Check (Rc)
+                from tasks_ai.file_manager import FM
+                task = FM.load(path)
+                if not task.metadata.get("Rc"):
+                    error(
+                        f"Task {task_id} has not passed regression check (Rc flag not set).",
+                        hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm."
+                    )
+
     cmd_merge(src, target)
 
     # If it was a feature branch promoted to testing, ask to promote testing to staging etc.
     if target != "main":
         if prompt_yes_no(f"Continue promotion from {target} to next stage?"):
-            cmd_promote(target)
+            cmd_promote(target, original_task_id=task_id)
 
 
 def cmd_status():
