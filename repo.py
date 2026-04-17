@@ -421,8 +421,6 @@ def cmd_promote(src_input):
     if src not in PIPELINE:
         if TasksCLI:
             cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
-            # Need to get task ID from branch name
-            # Format is usually <id>-task-...
             task_id_part = src.split("-")[0]
             if task_id_part.isdigit():
                 path, status = cli.find_task(task_id_part)
@@ -431,6 +429,16 @@ def cmd_promote(src_input):
                         f"Task {task_id_part} is in '{status}' state, not 'REVIEW'.",
                         hint=f"Move task to REVIEW first: 'tasks move {task_id_part} REVIEW'",
                     )
+                # Verify Regression Check (Rc)
+                from tasks_ai.models import FileManager as FM
+                task = FM.load(path)
+                if not task.metadata.get("Rc"):
+                     error(
+                        f"Task {task_id_part} has not passed regression check (Rc flag not set).",
+                        hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <task_id> --regression-check' to confirm.",
+                    )
+
+
 
     # Determine target
     target = "testing"  # default
