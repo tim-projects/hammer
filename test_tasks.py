@@ -129,7 +129,7 @@ class TestTasksAI(unittest.TestCase):
         self.assertIn("Blocked by", res.get("error", ""))
 
         # Move issue through states
-        for state in ["TESTING", "REVIEW", "STAGING", "LIVE"]:
+        for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
             branch = issue_file
             subprocess.run(
                 ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
@@ -160,7 +160,7 @@ class TestTasksAI(unittest.TestCase):
                 subprocess.run(
                     ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
                 )
-            elif state == "LIVE":
+            elif state == "DONE":
                 subprocess.run(
                     ["git", "checkout", "-b", "staging"],
                     cwd=self.repo_dir,
@@ -175,7 +175,7 @@ class TestTasksAI(unittest.TestCase):
                 subprocess.run(
                     ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
                 )
-                # Complete checkboxes before LIVE move (write to staging folder)
+                # Complete checkboxes before DONE move (write to staging folder)
                 criteria_path = os.path.join(
                     self.repo_dir, ".tasks", "staging", issue_file, "criteria.md"
                 )
@@ -184,9 +184,9 @@ class TestTasksAI(unittest.TestCase):
                 with open(criteria_path, "w") as f:
                     f.write(content.replace("- [ ]", "- [x]"))
 
-            # Complete checkboxes only when moving to LIVE
-            # (write to staging folder - will be moved to live)
-            if state == "LIVE":
+            # Complete checkboxes only when moving to DONE
+            # (write to staging folder - will be moved to done)
+            if state == "DONE":
                 criteria_path = os.path.join(
                     self.repo_dir, ".tasks", "staging", issue_file, "criteria.md"
                 )
@@ -198,9 +198,9 @@ class TestTasksAI(unittest.TestCase):
             if state == "STAGING":
                 self.run_cmd(["modify", issue_file, "--regression-check"])
 
-            # Pass -y for LIVE since it requires merge confirmation
+            # Pass -y for DONE since it requires merge confirmation
             move_args = ["move", issue_file, state]
-            if state == "LIVE":
+            if state == "DONE":
                 move_args.append("-y")
             res = self.run_cmd(move_args)
             print(f"DEBUG: Full response for {state}: {res}")
@@ -252,7 +252,7 @@ class TestTasksAI(unittest.TestCase):
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
-        for state in ["TESTING", "REVIEW", "STAGING", "LIVE"]:
+        for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
             # Simulate pipeline merges to satisfy enforcement
             if state == "REVIEW":
                 self.run_cmd(["modify", file, "--tests-passed"])
@@ -267,7 +267,7 @@ class TestTasksAI(unittest.TestCase):
                 subprocess.run(
                     ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
                 )
-            elif state == "LIVE":
+            elif state == "DONE":
                 subprocess.run(
                     ["git", "checkout", "-b", "staging"],
                     cwd=self.repo_dir,
@@ -282,7 +282,7 @@ class TestTasksAI(unittest.TestCase):
                 subprocess.run(
                     ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
                 )
-                # Complete checkboxes BEFORE LIVE move (write to staging folder)
+                # Complete checkboxes BEFORE DONE move (write to staging folder)
                 criteria_path = os.path.join(
                     self.repo_dir, ".tasks", "staging", file, "criteria.md"
                 )
@@ -291,8 +291,8 @@ class TestTasksAI(unittest.TestCase):
                 with open(criteria_path, "w") as f:
                     f.write(content.replace("- [ ]", "- [x]"))
 
-            # Complete checkboxes only when moving to LIVE (write to staging folder)
-            if state == "LIVE":
+            # Complete checkboxes only when moving to DONE (write to staging folder)
+            if state == "DONE":
                 criteria_path = os.path.join(
                     self.repo_dir, ".tasks", "staging", file, "criteria.md"
                 )
@@ -304,18 +304,18 @@ class TestTasksAI(unittest.TestCase):
             if state == "STAGING":
                 self.run_cmd(["modify", file, "--regression-check"])
 
-            # Pass -y for LIVE since it requires merge confirmation
+            # Pass -y for DONE since it requires merge confirmation
             move_args = ["move", file, state]
-            if state == "LIVE":
+            if state == "DONE":
                 move_args.append("-y")
             res = self.run_cmd(move_args)
             self.assertTrue(res["success"], f"Failed move to {state}: {res}")
 
         # Backdate log
-        log_path = os.path.join(self.repo_dir, ".tasks", "live", file, "activity.log")
+        log_path = os.path.join(self.repo_dir, ".tasks", "done", file, "activity.log")
         old_date = (datetime.now() - timedelta(days=8)).strftime("%y%m%d %H:%M")
         with open(log_path, "w") as f:
-            f.write(f"- {old_date}: STAGING->LIVE\n")
+            f.write(f"- {old_date}: STAGING->DONE\n")
 
         res = self.run_cmd(["list"])
         self.assertIn(f"Auto-archiving: {file}", res["messages"], res)
@@ -323,7 +323,7 @@ class TestTasksAI(unittest.TestCase):
             os.path.exists(os.path.join(self.repo_dir, ".tasks", "archived", file))
         )
         self.assertFalse(
-            os.path.exists(os.path.join(self.repo_dir, ".tasks", "live", file))
+            os.path.exists(os.path.join(self.repo_dir, ".tasks", "done", file))
         )
 
     def test_testing_gate_blocks_when_no_new_changes(self):

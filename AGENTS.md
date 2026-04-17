@@ -50,7 +50,7 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
    ```bash
    python tasks.py -j move <id> TESTING
    ```
-6. **Promotion**: Follow the state machine (`TESTING` -> `REVIEW` -> `STAGING` -> `LIVE`).
+6. **Promotion**: Follow the state machine (`TESTING` -> `REVIEW` -> `STAGING` -> `DONE`).
    - When moving to REVIEW, a diff file is auto-generated at `.tasks/review/<task_id>/diff.patch`.
    - **Review the diff for regressions**. If regressions found, move task back to `PROGRESSING` or `TESTING` to fix before proceeding.
    - Once the diff is clean, run `tasks modify <id> --regression-check` to confirm.

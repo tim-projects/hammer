@@ -1,6 +1,6 @@
 # Ship Faster with AI-Powered Git-Backed Project Management
 
-`tasks` gives your project a complete project management system that lives IN your repo. State machines, quality gates, audit trails, full automation - all powered by git worktrees, designed for AI agents.
+`tasks` gives your project a complete project management system that dones IN your repo. State machines, quality gates, audit trails, full automation - all powered by git worktrees, designed for AI agents.
 
 ## 🚀 One-Line Install
 
@@ -38,7 +38,7 @@ AI agents working on code need to know what exists, track progress, meet quality
 ### The State Machine
 
 ```
-BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → LIVE → ARCHIVED
+BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED
                                           ↓        ↑
                                      (regression check needed)
                                           ↓
@@ -50,7 +50,7 @@ Each transition has rules:
 - Can't move to TESTING without passing your own verification
 - Can't move to REVIEW without tests passing and branch pushed
 - **Can't move to STAGING without passing regression check (Rc)** — review diff at `.tasks/review/<id>/diff.patch`, if regressions found move task back to PROGRESSING/TESTING to fix
-- Can't move to LIVE without being merged to main
+- Can't move to DONE without being merged to main
 - Can't move to ARCHIVED without merged to main (or REJECTED)
 
 ## Why It's Different
@@ -60,7 +60,7 @@ Each transition has rules:
 | Scattered notes & PR comments | Everything in one place, git-backed |
 | Manual status updates | State machine with enforced gates |
 | Lost context when switching tasks | Full audit trail, every change logged |
-| Wondering "what's ready to ship?" | Clear pipeline: testing → staging → live |
+| Wondering "what's ready to ship?" | Clear pipeline: testing → staging → done |
 | No parallel agent coordination | Atomic IDs, branch-per-task, blockers |
 | Disconnected tooling | Integrated: lint, test, typecheck, format - all in one command |
 | Fragile project state | Self-healing: auto-restore from remote |
@@ -88,7 +88,7 @@ tasks move <id> PROGRESSING         # Start working (creates branch)
 tasks move <id> TESTING             # Move to testing
 tasks move <id> REVIEW              # Move to review
 tasks move <id> STAGING             # Move to staging
-tasks move <id> LIVE                # Move to live (requires merged to main)
+tasks move <id> DONE                # Move to done (requires merged to main)
 tasks move <id> ARCHIVED -y         # Archive (pushes branch, deletes local)
 
 # Multi-step moves - chain multiple states
@@ -255,7 +255,7 @@ This gate ensures code with regressions never reaches STAGING.
 - **Git-native** - Leverages existing infrastructure
 - **Enforced quality** - Can't bypass gates
 - **Agent-optimized** - JSON output, clear protocols, deterministic behavior
-- **Full project lifecycle** - From backlog to live with proper gates
+- **Full project lifecycle** - From backlog to done with proper gates
 - **Self-healing** - Auto-restore branches, circular dependency prevention
 - **Comprehensive audit** - Activity logging, undo, checkpoint
 

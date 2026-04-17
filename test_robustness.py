@@ -220,8 +220,8 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(["move", str(file_id), "REVIEW"])
         self.assertTrue(res["success"], res)
 
-    def test_delete_live_task_fails(self):
-        """7. Attempt to delete task when not in LIVE state."""
+    def test_delete_done_task_fails(self):
+        """7. Attempt to delete task when not in DONE state."""
         self.run_cmd(["init"])
         res = self.run_cmd(
             [
@@ -234,7 +234,7 @@ class TestRobustness(unittest.TestCase):
                 "--criteria",
                 "Delete operation handles the task state.",
                 "--plan",
-                "Create task move to LIVE try delete.",
+                "Create task move to DONE try delete.",
             ]
         )
         self.assertTrue(res["success"], res)
@@ -286,7 +286,7 @@ class TestRobustness(unittest.TestCase):
         with open(criteria_path, "w") as f:
             f.write(content.replace("- [ ]", "- [x]"))
         subprocess.run(
-            ["git", "checkout", "-b", "live"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
@@ -294,8 +294,8 @@ class TestRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "live"], cwd=self.repo_dir, capture_output=True)
-        res = self.run_cmd(["move", file, "LIVE", "-y"])
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        res = self.run_cmd(["move", file, "DONE", "-y"])
         self.assertTrue(res["success"], res)
         res = self.run_cmd(["delete", file])
         self.assertTrue(res["success"], res)
@@ -426,7 +426,7 @@ class TestRobustness(unittest.TestCase):
         )
 
     def test_illegal_state_transition(self):
-        """12. Attempt to move task to illegal state (READY -> LIVE)."""
+        """12. Attempt to move task to illegal state (READY -> DONE)."""
         self.run_cmd(["init"])
         res = self.run_cmd(
             [
@@ -445,7 +445,7 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        res = self.run_cmd(["move", file, "LIVE"])
+        res = self.run_cmd(["move", file, "DONE"])
         self.assertFalse(res["success"], res)
 
     def test_link_task_to_itself(self):
@@ -528,7 +528,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.run_cmd(["move", file, "REVIEW"])
         subprocess.run(
-            ["git", "checkout", "-b", "live"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
@@ -536,7 +536,7 @@ class TestRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "live"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         res = self.run_cmd(["move", file, "REJECTED"])
@@ -657,7 +657,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.run_cmd(["move", str(file_id), "REVIEW"])
         subprocess.run(
-            ["git", "checkout", "-b", "live"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
@@ -665,8 +665,8 @@ class TestRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "live"], cwd=self.repo_dir, capture_output=True)
-        self.run_cmd(["move", str(file_id), "LIVE", "-y"])
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        self.run_cmd(["move", str(file_id), "DONE", "-y"])
         self.run_cmd(["move", str(file_id), "ARCHIVED", "-y"])
         res = self.run_cmd(["modify", str(file_id), "--story", "New story"])
         self.assertTrue(res["success"], res)
@@ -811,7 +811,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.run_cmd(["move", file, "REVIEW"])
         subprocess.run(
-            ["git", "checkout", "-b", "live"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
@@ -819,7 +819,7 @@ class TestRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "live"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         criteria_path = os.path.join(
@@ -829,7 +829,7 @@ class TestRobustness(unittest.TestCase):
             content = f.read()
         with open(criteria_path, "w") as f:
             f.write(content.replace("- [ ]", "- [x]"))
-        self.run_cmd(["move", file, "LIVE", "-y"])
+        self.run_cmd(["move", file, "DONE", "-y"])
         self.run_cmd(["move", file, "ARCHIVED", "-y"])
         res = self.run_cmd(["cleanup"])
         self.assertTrue(res["success"], res)
@@ -1004,7 +1004,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.run_cmd(["move", str(file_id), "REVIEW"])
         subprocess.run(
-            ["git", "checkout", "-b", "live"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
@@ -1012,7 +1012,7 @@ class TestRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "live"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
         self.run_cmd(["modify", str(file_id), "--regression-check"])
         self.run_cmd(["move", str(file_id), "STAGING"])
         criteria_path = os.path.join(
@@ -1022,7 +1022,7 @@ class TestRobustness(unittest.TestCase):
             content = f.read()
         with open(criteria_path, "w") as f:
             f.write(content.replace("- [ ]", "- [x]"))
-        self.run_cmd(["move", str(file_id), "LIVE", "-y"])
+        self.run_cmd(["move", str(file_id), "DONE", "-y"])
         self.run_cmd(["move", str(file_id), "ARCHIVED", "-y"])
         res = self.run_cmd(
             [
@@ -1125,7 +1125,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.run_cmd(["move", file, "REVIEW"])
         subprocess.run(
-            ["git", "checkout", "-b", "live"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
@@ -1133,7 +1133,7 @@ class TestRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "live"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         criteria_path = os.path.join(
@@ -1143,7 +1143,7 @@ class TestRobustness(unittest.TestCase):
             content = f.read()
         with open(criteria_path, "w") as f:
             f.write(content.replace("- [ ]", "- [x]"))
-        self.run_cmd(["move", file, "LIVE", "-y"])
+        self.run_cmd(["move", file, "DONE", "-y"])
         self.run_cmd(["move", file, "ARCHIVED", "-y"])
         res = self.run_cmd(["cleanup", "--dry-run"])
         self.assertTrue(res["success"], res)
@@ -1805,11 +1805,11 @@ class TestRobustness(unittest.TestCase):
         task_dir = os.path.join(backlog_dir, tid)
         self.assertTrue(os.path.exists(task_dir))
 
-        # Manually set metadata state to LIVE without moving the folder
+        # Manually set metadata state to DONE without moving the folder
         meta_path = os.path.join(task_dir, "meta.json")
         with open(meta_path, "r") as f:
             meta = json.load(f)
-        meta["St"] = "LIVE"
+        meta["St"] = "DONE"
         with open(meta_path, "w") as f:
             json.dump(meta, f)
 
@@ -1830,7 +1830,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(mismatch_found, "Expected state-mismatch bug to be detected")
 
-        # Doctor with --fix should move task to live/
+        # Doctor with --fix should move task to done/
         res_fix = self.run_cmd(["doctor", "--fix"])
         self.assertTrue(res_fix["success"])
 
@@ -1838,8 +1838,8 @@ class TestRobustness(unittest.TestCase):
         res_after = self.run_cmd(["doctor"])
         self.assertEqual(res_after["data"]["issues_found"], 0)
 
-        # Verify task moved to live/
-        new_task_dir = os.path.join(self.repo_dir, ".tasks", "live", tid)
+        # Verify task moved to done/
+        new_task_dir = os.path.join(self.repo_dir, ".tasks", "done", tid)
         self.assertTrue(os.path.exists(new_task_dir))
         # Old location should be gone
         self.assertFalse(os.path.exists(task_dir))

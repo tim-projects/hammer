@@ -25,7 +25,7 @@ USEFUL COMMANDS:
   tasks cleanup               Clean up merged branches, push to remote, delete local, archive tasks
   tasks doctor [--fix]         Diagnose repository health; auto-fix with --fix flag
 
-STATE MACHINE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> LIVE -> ARCHIVED
+STATE MACHINE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED
                (REJECTED also available from TESTING/STAGING)
 
 DOCTOR: Run 'tasks doctor' to diagnose repository health. Detects:
