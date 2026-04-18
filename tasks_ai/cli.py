@@ -1702,13 +1702,17 @@ class TasksCLI:
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
 
-        # Regression check gate: REVIEW -> STAGING requires Rc to be set
-        if current_state == "REVIEW" and new_status == "STAGING":
+        # Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
+        if current_state in ["REVIEW", "TESTING"] and new_status in [
+            "STAGING",
+            "DONE",
+            "ARCHIVED",
+        ]:
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
                 self.error(
-                    "Cannot move to STAGING: regression check not passed (Rc flag not set).",
-                    hint="Review the diff at .tasks/review/<task_id>/diff.patch. If regressions found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <id> --regression-check' to confirm and allow STAGING.",
+                    f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
+                    hint="If this is a code change, please move to REVIEW, audit the diff at .tasks/review/<task_id>/diff.patch, then run 'tasks modify <id> --regression-check' to confirm.",
                 )
 
                 # Sync and Reset for regression states
