@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""
+HAMMER - Main wrapper for all tools
+Usage: hammer <tool> <command> [args]
+
+Tools:
+  tasks <command>     - Task management (list, create, move, etc.)
+  check <command>      - Quality checks (lint, test, all, etc.)
+  repo <command>      - Repo management (promote, merge, sync, etc.)
+
+Examples:
+  hammer tasks list
+  hammer tasks move 42 PROGRESSING
+  hammer check all
+  hammer check lint --fix
+  hammer repo promote 42
+  hammer repo sync
+"""
+
+import sys
+import subprocess
+import os
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).parent.resolve()
+
+TOOLS = {
+    "tasks": SCRIPT_DIR / "tasks.py",
+    "check": SCRIPT_DIR / "check.py",
+    "repo": SCRIPT_DIR / "repo.py",
+}
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
+    tool = sys.argv[1]
+
+    if tool not in TOOLS:
+        print(f"✗ HAMMER SAY NO! Unknown tool: {tool} 🔨")
+        print(f"Valid tools: {', '.join(TOOLS.keys())}")
+        sys.exit(1)
+
+    tool_path = TOOLS[tool]
+    args = sys.argv[2:]
+
+    if not args:
+        print(f"HAMMER DEMAND: Specify command for {tool}")
+        sys.exit(1)
+
+    cmd = [sys.executable, str(tool_path)] + args
+    os.chdir(SCRIPT_DIR)
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
+
+if __name__ == "__main__":
+    main()
