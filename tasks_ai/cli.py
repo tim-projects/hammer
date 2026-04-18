@@ -1764,6 +1764,7 @@ class TasksCLI:
                 print("DEBUG: cmd_promote returned")
             except Exception as e:
                 self.error(f"Promotion failed: {e}")
+            return  # Don't continue to move task file again
 
         # Regression check enforcement for ARCHIVED
         if new_status == "ARCHIVED":

@@ -216,9 +216,7 @@ def cmd_commit(message):
             error("Compliance failed.")
         run(["git", "commit", "-m", message])
         info(f"Committed on {current.upper()}")
-        if FLAGS["yes"]:
-            run(["git", "push", "origin", current], check=False)
-        elif prompt_yes_no(f"Push {current}?"):
+        if FLAGS["yes"] or prompt_yes_no(f"Push {current}?"):
             run(["git", "push", "origin", current])
         log("✅ Commit successful")
     else:
@@ -259,15 +257,10 @@ def cmd_promote(src_input, original_task_id=None):
                         )
 
     cmd_merge(src, target)
-    print(
-        f"DEBUG: After cmd_merge, about to call cli.move. task_id={task_id}, target={target}"
-    )
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
         if target == "testing" and cli.find_task(task_id)[1] == "PROGRESSING":
-            print("DEBUG: Calling cli.move for TESTING")
             cli.move(task_id, "TESTING", yes=FLAGS["yes"], skip_gate=True)
-            print("DEBUG: cli.move returned for TESTING")
         elif target == "staging" and cli.find_task(task_id)[1] == "REVIEW":
             cli.move(task_id, "STAGING", yes=FLAGS["yes"])
         elif target == "main":
@@ -275,7 +268,6 @@ def cmd_promote(src_input, original_task_id=None):
 
     if target != "main":
         if task_id:
-            print("DEBUG: Returning early (task_id present)")
             return  # Stop after TESTING merge when called from tasks.py
         if FLAGS["yes"] or prompt_yes_no(
             f"Continue promotion from {target.upper()} to next stage?"
