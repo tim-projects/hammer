@@ -1,0 +1,1 @@
+As a developer I want an automated review gate that forces a thorough code review of each changed file, ensuring regressions are caught before merging.

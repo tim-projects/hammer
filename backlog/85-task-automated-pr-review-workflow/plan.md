@@ -1,0 +1,1 @@
+1. 1. Create task\n2. Move to PROGRESSING\n3. Implement condensed diff view in tasks_review command\n4. Add file-by-file confirmation workflow\n5. Add review progress tracking in current-task.md\n6. Handle Rc flag reset to also clear review progress\n7. Run tests in --dev environment\n8. Move to TESTING\n9. Promote through pipeline
