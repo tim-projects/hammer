@@ -1,1 +1,8 @@
-- [ ] - [ ] Add EPIC state to state machine (holds parent until children merged)\n- [ ] Parent-Child linking via new metadata field (e.g., Pt for Parent task)\n- [ ] Child task moves to parent's branch when done (not testing/staging)\n- [ ] Parent in EPIC state blocked from gates until all children merged\n- [ ] Auto-detect when all children merged, prompt to move from EPIC to PROGRESSING\n- [ ] Child tasks can be REJECTED to remove from parent requirements\n- [ ] Test: Create parent in EPIC, create child, merge child to parent, verify parent unblocks
+- [ ] Add EPIC state to state machine (holds parent until children merged)
+- [ ] Parent-Child linking via new metadata field (e.g., Pt for Parent task)
+- [ ] Child moves to DONE triggers merge to parent branch
+- [ ] Child REJECTION auto-removes requirement from parent
+- [ ] Parent in EPIC state blocked from gates until all children merged
+- [ ] Auto-detect when all children merged, prompt to move from EPIC to PROGRESSING
+- [ ] Parent shows children state in tasks show command
+- [ ] Test: Create parent in EPIC, create child with parent link, merge child to parent, verify parent unblocks
