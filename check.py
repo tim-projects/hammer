@@ -239,7 +239,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stdout_file,
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stderr_file,
             ):
-                result = subprocess.run(
+                print(f"DEBUG_CMD: {cmd_to_run}", file=sys.stderr); result = subprocess.run(
                     cmd_to_run,
                     cwd=project_root,
                     stdout=stdout_file,
@@ -258,7 +258,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 pass
         else:
             # Stream output directly to console to avoid deadlocks
-            result = subprocess.run(cmd_to_run, cwd=project_root, timeout=300)
+            print(f"DEBUG_CMD: {cmd_to_run}", file=sys.stderr); result = subprocess.run(cmd_to_run, cwd=project_root, timeout=300)
             stdout_content = ""
             stderr_content = ""
     except subprocess.TimeoutExpired:
@@ -398,4 +398,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print("CHECK.PY STARTED", file=sys.stderr)
     sys.exit(main())

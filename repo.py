@@ -78,7 +78,7 @@ def find_project_root(start_path=None):
     if start_path is None:
         start_path = os.getcwd()
     current = os.path.abspath(start_path)
-    while True:
+    print(f"DEBUG: current={current}", file=sys.stderr); while True:
         if os.path.isdir(os.path.join(current, ".tasks")) or os.path.isdir(
             os.path.join(current, ".git")
         ):
@@ -140,7 +140,7 @@ def prompt_yes_no(prompt):
     if FLAGS["yes"]:
         return True
     try:
-        while True:
+        print(f"DEBUG: current={current}", file=sys.stderr); while True:
             res = input(f"{prompt} [y/n] ").strip().lower()
             if res in ["y", "yes"]:
                 return True
@@ -159,7 +159,7 @@ class ToolRunner:
             cmd.append("--fix")
         if dev:
             cmd.append("--dev")
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root); print(f"DEBUG: cmd={cmd}, stdout={result.stdout}, stderr={result.stderr}", file=sys.stderr)
         if result.returncode != 0:
             warn(f"Validation failed. STDOUT: {result.stdout} | STDERR: {result.stderr}")
             return False
