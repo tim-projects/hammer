@@ -1,0 +1,1 @@
+Long enough story for creation

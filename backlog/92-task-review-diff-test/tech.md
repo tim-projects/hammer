@@ -1,0 +1,1 @@
+Tech description is also long enough
