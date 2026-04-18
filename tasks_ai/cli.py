@@ -1751,6 +1751,9 @@ class TasksCLI:
             from repo import cmd_promote, FLAGS
 
             FLAGS["yes"] = yes
+            FLAGS["quiet"] = self.quiet
+            FLAGS["json"] = False
+            FLAGS["dev"] = self.dev
 
             try:
                 cmd_promote(branch)
