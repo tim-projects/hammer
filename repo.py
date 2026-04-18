@@ -161,7 +161,7 @@ class ToolRunner:
             cmd.append("--dev")
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)
         if result.returncode != 0:
-            warn("Validation failed")
+            warn(f"Validation failed. STDOUT: {result.stdout} | STDERR: {result.stderr}")
             return False
         log("✅ Validation passed")
         return True

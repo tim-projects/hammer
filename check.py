@@ -64,13 +64,16 @@ ROOT = find_project_root()
 
 def load_config(dev=False):
     project_root = find_project_root()
-    # Prioritize project_root/.tasks/config.yaml (or /tmp/.tasks/config.yaml if dev), then project_root/pyproject.toml
     if dev:
         config_path_yaml = "/tmp/.tasks/config.yaml"
     else:
         config_path_yaml = os.path.join(project_root, ".tasks", "config.yaml")
 
     config_path_toml = os.path.join(project_root, "pyproject.toml")
+    
+    # DEBUG
+    print(f"DEBUG: project_root={project_root}", file=sys.stderr)
+    print(f"DEBUG: config_path_yaml={config_path_yaml}", file=sys.stderr)
 
     config = {}
     if os.path.exists(config_path_yaml):
@@ -79,11 +82,16 @@ def load_config(dev=False):
 
             with open(config_path_yaml, "r") as f:
                 config.update(yaml.safe_load(f) or {})
+            print(f"DEBUG: Loaded config: {config}, files={os.listdir(".")}", file=sys.stderr)
         except ImportError:
-            print(
-                "Warning: 'PyYAML' library not found. Skipping config.yaml parsing.",
-                file=sys.stderr,
-            )
+            try:
+                import json
+
+                with open(config_path_yaml, "r") as f:
+                    config.update(json.load(f) or {})
+                print(f"DEBUG: Loaded config (JSON): {config}", file=sys.stderr)
+            except Exception as e:
+                print(f"DEBUG: JSON parse failed: {e}", file=sys.stderr)
         except Exception as e:
             print(f"Warning: Could not parse {config_path_yaml}: {e}", file=sys.stderr)
 
@@ -134,7 +142,7 @@ def get_commands(fix=False):
         },
         "typecheck": {
             "mypy": ["mypy", "."],
-            "pyright": ["npx", "pyright"],
+            "pyright": ["pyright"],
             "typescript": ["npx", "tsc", "--noEmit"],
         },
         "format": {
@@ -217,7 +225,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     if tool == "pytest":
         # Add explicit path to the project root to ensure pytest finds tests
         # Also disable test collection caching to avoid issues
-        cmd_to_run.append(project_root)
+        cmd_to_run.append(str(project_root))
         cmd_to_run.extend(["--cache-clear", "-x"])  # Clear cache, stop on first failure
 
     # Execute the command
@@ -231,7 +239,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stdout_file,
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stderr_file,
             ):
-                result = subprocess.run(print(cmd),
+                result = subprocess.run(
                     cmd_to_run,
                     cwd=project_root,
                     stdout=stdout_file,
@@ -250,7 +258,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 pass
         else:
             # Stream output directly to console to avoid deadlocks
-            result = subprocess.run(print(cmd),cmd_to_run, cwd=project_root, timeout=300)
+            result = subprocess.run(cmd_to_run, cwd=project_root, timeout=300)
             stdout_content = ""
             stderr_content = ""
     except subprocess.TimeoutExpired:
@@ -270,10 +278,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             print(f"Error: {msg}")
         return 1
 
-    # Attach captured output to result for unified handling
-    result.stdout = stdout_content
-    result.stderr = stderr_content
-
+    # Return captured output and returncode
     if as_json:
         print(
             json.dumps(
@@ -281,17 +286,17 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                     "success": result.returncode == 0,
                     "tool": tool_type,
                     "configured": tool,
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
+                    "stdout": stdout_content,
+                    "stderr": stderr_content,
                     "exit_code": result.returncode,
                 }
             )
         )
     else:
-        if result.stdout:
-            print(result.stdout)
-        if result.stderr:
-            print(result.stderr, file=sys.stderr)
+        if stdout_content:
+            print(stdout_content)
+        if stderr_content:
+            print(stderr_content, file=sys.stderr)
 
         if result.returncode == 0:
             print(f"✅ HAMMER LIKE! {tool} PASSED! ⚔️🔨")

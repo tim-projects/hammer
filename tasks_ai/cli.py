@@ -2514,7 +2514,13 @@ class TasksCLI:
 
     def _detect_tools(self):
         """Detect project type and suggest/create config."""
+        import shutil
         detected = {}
+        found_tools = {
+            t: shutil.which(t)
+            for t in ["ruff", "pytest", "pyright", "pylint", "mypy", "prettier", "rustfmt", "golangci-lint", "eslint"]
+            if shutil.which(t)
+        }
 
         if os.path.exists("package.json"):
             detected["package_manager"] = "npm"
@@ -2557,7 +2563,7 @@ class TasksCLI:
 
         for file, tool in lint_files.items():
             if os.path.exists(file):
-                detected["lint"] = tool
+                detected["lint"] = found_tools.get(tool, tool)
                 break
 
         type_check_files = {
@@ -2568,11 +2574,11 @@ class TasksCLI:
 
         for file, tool in type_check_files.items():
             if os.path.exists(file):
-                detected["type_check"] = tool
+                detected["type_check"] = found_tools.get(tool, tool)
                 break
 
         if os.path.exists("pytest.ini") or os.path.exists("pyproject.toml"):
-            detected["test"] = "pytest"
+            detected["test"] = found_tools.get("pytest", "pytest")
         elif os.path.exists("go.mod"):
             detected["test"] = "go test"
         elif os.path.exists("Cargo.toml"):
@@ -2587,31 +2593,9 @@ class TasksCLI:
 
         for file, tool in format_files.items():
             if os.path.exists(file):
-                detected["format"] = tool
+                detected["format"] = found_tools.get(tool, tool)
                 break
-
-        if not self.as_json:
-            print("Detected tools:")
-            for k, v in detected.items():
-                print(f"  {k}: {v}")
-
-            if detected:
-                print("\nWould you like to save this configuration?")
-                print(
-                    "Run: tasks config set repo.lint " + detected.get("lint", "<tool>")
-                )
-                print(
-                    "      tasks config set repo.type_check "
-                    + detected.get("type_check", "<tool>")
-                )
-                print(
-                    "      tasks config set repo.test " + detected.get("test", "<tool>")
-                )
-                print(
-                    "      tasks config set repo.format "
-                    + detected.get("format", "<tool>")
-                )
-
+        
         return detected
 
     def _get_config(self, key=None):
