@@ -1,0 +1,1 @@
+1. 1. Create task\n2. Move to PROGRESSING\n3. Add EPIC state to ALLOWED_TRANSITIONS\n4. Add parent task field (Pt) to KEY_MAP\n5. Implement child->parent merge hook in repo.py merge command\n6. Implement EPIC state blocking logic in move command\n7. Add auto-detect for children merged\n8. Test in --dev\n9. Move to TESTING\n10. Promote through pipeline

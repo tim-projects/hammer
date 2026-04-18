@@ -1,0 +1,1 @@
+As a developer I want to create hierarchical feature branches (epics/parent tasks) where child tasks merge into the parent branch, and the parent waits in a holding state until all children are merged, then continues through normal gates.
