@@ -1,1 +1,0 @@
-- [ ] - [ ] All CLI help messages updated to hammer theme\n- [ ] Error messages use hammer-themed language\n- [ ] Log messages use pounding/dominant theme\n- [ ] Tool outputs branded as hammer\n- [ ] Agent guidance uses hammer persona\n- [ ] README and docs updated with hammer branding
