@@ -234,6 +234,37 @@ class TasksCLI:
 
         return result
 
+    def _parse_diff_summary(self, diff_content):
+        """Parse diff content to extract file headers with line counts."""
+        if not diff_content:
+            return []
+        files = []
+        current_file = None
+        added = 0
+        removed = 0
+        for line in diff_content.split("\n"):
+            if line.startswith("diff --git"):
+                if current_file:
+                    files.append(
+                        {"file": current_file, "added": added, "removed": removed}
+                    )
+                # Extract filename from "diff --git a/path b/path"
+                parts = line.split()
+                if len(parts) >= 4:
+                    current_file = parts[-1].replace("b/", "")
+                else:
+                    current_file = "unknown"
+                added = 0
+                removed = 0
+            elif line.startswith("+") and not line.startswith("+++"):
+                added += 1
+            elif line.startswith("-") and not line.startswith("---"):
+                removed += 1
+        # Append last file
+        if current_file:
+            files.append({"file": current_file, "added": added, "removed": removed})
+        return files
+
     def _generate_review_diff(self, task_path, branch):
         """Generate a unified diff patch for the task branch against main including unstaged changes."""
         review_dir = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"])
@@ -289,6 +320,21 @@ class TasksCLI:
         # Write diff file
         with open(diff_path, "w", encoding="utf-8") as f:
             f.write(diff_content or "# No changes detected\n")
+
+        # Generate condensed summary with file headers and line counts
+        summary_path = diff_path.replace(".patch", ".summary")
+        file_counts = self._parse_diff_summary(diff_content)
+        with open(summary_path, "w", encoding="utf-8") as f:
+            if file_counts:
+                total_added = sum(c["added"] for c in file_counts)
+                total_removed = sum(c["removed"] for c in file_counts)
+                f.write(
+                    f"# Changed Files ({len(file_counts)} files, +{total_added}/-{total_removed})\n\n"
+                )
+                for fc in file_counts:
+                    f.write(f"- {fc['file']} (+{fc['added']}/-{fc['removed']})\n")
+            else:
+                f.write("# No changes detected\n")
 
         # Debug: record values to a file in repo root
         debug_path = os.path.join(self.root, "diff_debug.log")
@@ -923,7 +969,9 @@ class TasksCLI:
             if regression_check:
                 task.metadata["Rc"] = True
             else:
+                # Also clear review progress when clearing regression check
                 task.metadata["Rc"] = ""
+                task.metadata["Rv"] = ""
             updated = True
 
         if updated:
@@ -962,6 +1010,129 @@ class TasksCLI:
                 "title": task.metadata.get("Ti", ""),
             }
         )
+
+    def review(self, filename, file_to_confirm=None, list_files=False, show=None):
+        """Review changed files in a diff. Confirm each file before regression check passes."""
+        filepath, current_state = self.find_task(filename)
+        if not filepath:
+            self.error(f"Task '{filename}' not found.")
+        task = FM.load(filepath)
+        fname = os.path.basename(filepath)
+        task_id = fname.rsplit(".", 1)[0]
+
+        # Get review state (Rv) - list of reviewed files
+        reviewed_files = task.metadata.get("Rv", [])
+        if isinstance(reviewed_files, bool):
+            reviewed_files = []
+        elif isinstance(reviewed_files, str):
+            reviewed_files = reviewed_files.split(",") if reviewed_files else []
+
+        # Load diff summary
+        review_dir = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"])
+        summary_path = os.path.join(review_dir, f"{task_id}.summary")
+
+        if not os.path.exists(summary_path):
+            self.error(
+                "No diff summary found. Task must be in REVIEW state.",
+                hint="Move task to REVIEW first: 'tasks move <id> REVIEW'",
+            )
+
+        with open(summary_path, "r") as f:
+            summary_content = f.read()
+
+        # Parse files from summary - each line is like "- filename (+X/-Y)"
+        changed_files = []
+        for line in summary_content.split("\n"):
+            if line.startswith("- "):
+                # Extract filename from "- filename (+X/-Y)"
+                file_part = line[2:].split(" ")[0].strip()
+                changed_files.append(file_part)
+
+        if list_files:
+            if self.as_json:
+                self.finish(
+                    {
+                        "task_id": task_id,
+                        "changed_files": changed_files,
+                        "reviewed_files": reviewed_files,
+                        "progress": f"{len(reviewed_files)}/{len(changed_files)}",
+                    }
+                )
+            else:
+                self.log(f"# Review Progress for {task_id}")
+                self.log(f"Changed files ({len(changed_files)}):")
+                for f in changed_files:
+                    status = "✅" if f in reviewed_files else "⏳"
+                    self.log(f"  {status} {f}")
+                if changed_files:
+                    self.log(
+                        f"\nProgress: {len(reviewed_files)}/{len(changed_files)} files reviewed"
+                    )
+            return
+
+        if show:
+            # Show diff hunks for specific file
+            diff_path = os.path.join(review_dir, f"{task_id}.diff.patch")
+            if not os.path.exists(diff_path):
+                self.error("Diff file not found.")
+            hunks = []
+            current_file = None
+            with open(diff_path, "r") as f:
+                for line in f:
+                    if line.startswith("diff --git"):
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            current_file = parts[-1].replace("b/", "")
+                    if current_file == show:
+                        hunks.append(line)
+            if hunks:
+                self.log("".join(hunks[:100]))  # Limit output
+                self.log("\n... (showing first 100 lines)")
+            else:
+                self.log(f"File '{show}' not found in diff.")
+            return
+
+        if file_to_confirm:
+            # Confirm a file as reviewed
+            if file_to_confirm not in changed_files:
+                self.error(
+                    f"File '{file_to_confirm}' not in changed files.",
+                    hint=f"Use 'tasks review {task_id} --list' to see available files.",
+                )
+            if file_to_confirm not in reviewed_files:
+                reviewed_files.append(file_to_confirm)
+                task.metadata["Rv"] = ",".join(reviewed_files)
+                self._atomic_write(filepath, task)
+                self._append_log(filepath, "Rev")
+                self._run_git(["add", "--all"], cwd=self.tasks_path)
+                self._run_git(
+                    [
+                        "commit",
+                        "--allow-empty",
+                        "-m",
+                        f"Rev {fname}: reviewed {file_to_confirm}",
+                    ],
+                    cwd=self.tasks_path,
+                )
+                self.log(f"✅ Reviewed: {file_to_confirm}")
+            else:
+                self.log(f"File '{file_to_confirm}' already reviewed.")
+
+            # Check if all files reviewed
+            if set(changed_files) == set(reviewed_files):
+                self.log(
+                    "🎉 All files reviewed! Run 'tasks modify <id> --regression-check' to enable STAGING."
+                )
+            else:
+                remaining = len(changed_files) - len(reviewed_files)
+                self.log(f"Still {remaining} file(s) to review.")
+            return
+
+        # No specific action - show help
+        self.log("Usage: tasks review <id> [--list]| [<file>]| [--show ]")
+        self.log("  --list: Show changed files and review progress")
+        self.log("  <file>: Confirm a file as reviewed (e.g., tasks review 83 repo.py)")
+        self.log("  --show <file>: Show diff hunks for a specific file")
 
     def delete(self, filename, confirm=None):
         filepath, current_state = self.find_task(filename)
@@ -1702,13 +1873,24 @@ class TasksCLI:
                 hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
 
-        # Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
-        if (current_state in ["REVIEW", "TESTING"] and new_status in ["STAGING", "DONE", "ARCHIVED"]):
+        # Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc AND Rv to be set
+        if current_state in ["REVIEW", "TESTING"] and new_status in [
+            "STAGING",
+            "DONE",
+            "ARCHIVED",
+        ]:
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
-                    hint="If this is a code change, please move to REVIEW, audit the diff at .tasks/review/<task_id>/diff.patch, then run 'tasks modify <id> --regression-check' to confirm.",
+                    hint="Run 'tasks review <id> --list' to see review progress, then 'tasks modify <id> --regression-check' to confirm.",
+                )
+            # Also require all files to be reviewed (Rv must have content)
+            reviewed = task.metadata.get("Rv", "")
+            if not reviewed:
+                self.error(
+                    f"Cannot move to {new_status}: no files reviewed (Rv flag not set).",
+                    hint="Run 'tasks review <id> --list' to see files, then confirm each with 'tasks review <id> '.",
                 )
 
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
@@ -1765,13 +1947,14 @@ class TasksCLI:
                 # Generate regression diff patch
                 branch = task.metadata.get("Br", "")
                 self._generate_review_diff(new_filepath, branch)
-                # Reset regression check flag (must be explicitly set via --regression-check)
+                # Reset regression check and review flags (must be explicitly set via --regression-check and review command)
                 task.metadata["Rc"] = ""
+                task.metadata["Rv"] = ""
                 self._atomic_write(new_filepath, task)
                 self.log(
-                    "REVIEW entered: Diff generated. Check .tasks/review/<task_id>/diff.patch for regressions. "
-                    "If issues found, move task back to PROGRESSING/TESTING to fix. "
-                    "Once clean, run 'tasks modify <id> --regression-check' to enable STAGING."
+                    "REVIEW entered: Diff generated at .tasks/review/<task_id>/diff.patch and .diff.summary. "
+                    "Run 'tasks review <id> --list' to see changed files. "
+                    "Confirm each file with 'tasks review <id> ' before running --regression-check."
                 )
         except Exception as e:
             self.error(str(e))

@@ -27,7 +27,6 @@ import subprocess
 import sys
 import os
 import json
-import shutil
 from pathlib import Path
 
 sys.path.append(os.getcwd())
@@ -49,13 +48,16 @@ NC = "\033[0m"
 FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
 PIPELINE = ["testing", "staging", "main"]
 
+
 def log(msg):
     if not FLAGS["quiet"]:
         print(f"{GREEN}[repo]{NC} {msg}")
 
+
 def warn(msg):
     if not FLAGS["quiet"]:
         print(f"{YELLOW}[repo] WARN:{NC} {msg}")
+
 
 def error(msg, hint=None):
     if hint:
@@ -66,9 +68,11 @@ def error(msg, hint=None):
         print(f"{RED}[repo] ERROR:{NC} {msg}")
     sys.exit(1)
 
+
 def info(msg):
     if not FLAGS["quiet"]:
         print(f"{CYAN}[repo]{NC} {msg}")
+
 
 def find_project_root(start_path=None):
     if start_path is None:
@@ -84,6 +88,7 @@ def find_project_root(start_path=None):
             break
         current = parent
     return Path(__file__).parent.resolve()
+
 
 def run(cmd, check=True, capture=False, env=None, cwd=None):
     project_root = find_project_root()
@@ -101,10 +106,12 @@ def run(cmd, check=True, capture=False, env=None, cwd=None):
         error(f"Command failed: {' '.join(cmd)}\n{err_msg}")
         raise
 
+
 def get_current_branch():
     return run(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture=True
     ).stdout.strip()
+
 
 def prompt_yes_no(prompt):
     if FLAGS["yes"]:
@@ -119,41 +126,57 @@ def prompt_yes_no(prompt):
     except EOFError:
         error("EOFError: stdin closed. Use -y flag to auto-confirm.")
 
+
 class ToolRunner:
     def run_validation(self, fix=False, dev=False):
         git_root = find_project_root()
         local_check = os.path.join(git_root, "check.py")
         cmd = [sys.executable, local_check, "all"]
-        if fix: cmd.append("--fix")
-        if dev: cmd.append("--dev")
+        if fix:
+            cmd.append("--fix")
+        if dev:
+            cmd.append("--dev")
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)
         if result.returncode != 0:
-            warn(f"Validation failed")
+            warn("Validation failed")
             return False
         log("✅ Validation passed")
         return True
 
+
 def branch_exists(name):
-    return run(["git", "rev-parse", "--verify", name], check=False, capture=True).returncode == 0
+    return (
+        run(
+            ["git", "rev-parse", "--verify", name], check=False, capture=True
+        ).returncode
+        == 0
+    )
+
 
 def resolve_branch(name):
-    if name == "current": return get_current_branch()
+    if name == "current":
+        return get_current_branch()
     if name.isdigit() and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
         path, _ = cli.find_task(name)
         if path:
             branch_name = os.path.basename(path)
             return branch_name
-    if branch_exists(name): return name
+    if branch_exists(name):
+        return name
     error(f"Could not resolve branch: {name}")
 
+
 def ensure_pipeline_branch(name):
-    if branch_exists(name): return
-    if name not in PIPELINE: error(f"Branch {name} not in pipeline.")
+    if branch_exists(name):
+        return
+    if name not in PIPELINE:
+        error(f"Branch {name} not in pipeline.")
     idx = PIPELINE.index(name)
     base = PIPELINE[idx + 1] if idx + 1 < len(PIPELINE) else "main"
     run(["git", "checkout", "-b", name, base])
     run(["git", "checkout", "-"])
+
 
 def cmd_merge(src_input, target):
     src = resolve_branch(src_input)
@@ -167,10 +190,10 @@ def cmd_merge(src_input, target):
             run(["git", "add", "."])
             run(["git", "commit", "-m", f"WIP: Auto-commit {current}"])
         run(["git", "checkout", src])
-    
+
     if not ToolRunner().run_validation(fix=True, dev=FLAGS["dev"]):
         error("Compliance failed.")
-    
+
     log(f"Merging {src} into {target}...")
     run(["git", "checkout", target])
     run(["git", "pull", "origin", target], check=False)
@@ -179,10 +202,17 @@ def cmd_merge(src_input, target):
         run(["git", "push", "origin", target])
     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
 
+
 def cmd_promote(src_input, original_task_id=None):
     src = resolve_branch(src_input)
-    task_id = original_task_id or (src.split("-")[0] if src.split("-")[0].isdigit() else None)
-    target = "testing" if src not in PIPELINE else ("staging" if src == "testing" else "main")
+    task_id = original_task_id or (
+        src.split("-")[0] if src.split("-")[0].isdigit() else None
+    )
+    target = (
+        "testing"
+        if src not in PIPELINE
+        else ("staging" if src == "testing" else "main")
+    )
 
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
@@ -192,60 +222,126 @@ def cmd_promote(src_input, original_task_id=None):
                 if status == "TESTING":
                     info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
                     cli.move(task_id, "REVIEW")
-                    error(f"Task {task_id} moved to REVIEW for audit.", hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.")
+                    error(
+                        f"Task {task_id} moved to REVIEW for audit.",
+                        hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.",
+                    )
                 if status == "REVIEW":
                     from tasks_ai.file_manager import FM
+
                     task = FM.load(path)
                     if not task.metadata.get("Rc"):
-                        error(f"Regression check not passed.", hint=f"Run 'tasks modify {task_id} --regression-check'.")
-    
+                        error(
+                            "Regression check not passed.",
+                            hint=f"Run 'tasks modify {task_id} --regression-check'.",
+                        )
+
     cmd_merge(src, target)
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
-        if target == "testing" and cli.find_task(task_id)[1] == "PROGRESSING": cli.move(task_id, "TESTING")
-        elif target == "staging" and cli.find_task(task_id)[1] == "REVIEW": cli.move(task_id, "STAGING")
-        elif target == "main": cli.move(task_id, "DONE")
+        if target == "testing" and cli.find_task(task_id)[1] == "PROGRESSING":
+            cli.move(task_id, "TESTING")
+        elif target == "staging" and cli.find_task(task_id)[1] == "REVIEW":
+            cli.move(task_id, "STAGING")
+        elif target == "main":
+            cli.move(task_id, "DONE")
 
     if target != "main":
         if prompt_yes_no(f"Continue promotion from {target.upper()} to next stage?"):
             cmd_promote(target, original_task_id=task_id)
 
+
 def cmd_demote(task_id_input, target_state):
     from tasks_ai.file_manager import FM
+
     task_id = task_id_input.split("-")[0]
-    cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+    _cli = TasksCLI
+    if _cli is None:
+        error("tasks_ai not installed. Cannot demote.")
+    cli = _cli(quiet=True, dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
     path, _ = cli.find_task(task_id)
     task = FM.load(path)
     branch = task.metadata.get("Br")
     info(f"Demoting {task_id} to {target_state}...")
-    
-    branches_to_sync = ["staging", "testing"] if target_state == "PROGRESSING" else ["staging"]
+
+    branches_to_sync = (
+        ["staging", "testing"] if target_state == "PROGRESSING" else ["staging"]
+    )
     for b in branches_to_sync:
         if branch_exists(b):
             run(["git", "checkout", branch])
-            run(["git", "merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"], check=False)
-    
+            run(
+                ["git", "merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
+                check=False,
+            )
+
     cli.move(task_id, target_state)
     task.metadata["Rc"] = ""
     FM.dump(task, path)
-    log(f"✅ Successfully demoted.")
+    log("✅ Successfully demoted.")
+
 
 def main():
     global FLAGS
     args = []
     for arg in sys.argv[1:]:
-        if arg in ["-y", "--yes"]: FLAGS["yes"] = True
-        elif arg == "--dev": FLAGS["dev"] = True
-        else: args.append(arg)
-    
-    if not args: return
+        if arg in ["-y", "--yes"]:
+            FLAGS["yes"] = True
+        elif arg in ["-j", "--json"]:
+            FLAGS["json"] = True
+        elif arg in ["-q", "--quiet"]:
+            FLAGS["quiet"] = True
+        elif arg == "--dev":
+            FLAGS["dev"] = True
+        else:
+            args.append(arg)
+
+    if not args:
+        print(__doc__)
+        return
     cmd = args[0]
-    if cmd == "merge": cmd_merge(args[1], args[3])
-    elif cmd == "promote": cmd_promote(args[1])
-    elif cmd == "demote": cmd_demote(args[1], args[2])
+    if cmd == "merge":
+        cmd_merge(args[1], args[3])
+    elif cmd == "git":
+        run(["git"] + args[1:])
+    elif cmd == "branch":
+        subcmd = args[1] if len(args) > 1 else None
+        if subcmd == "list":
+            run(["git", "branch"])
+        elif subcmd == "create":
+            run(["git", "checkout", "-b", args[2]])
+        elif subcmd == "delete":
+            run(["git", "branch", "-d", args[2]])
+        elif subcmd == "exists":
+            has_branch = branch_exists(args[2])
+            if not has_branch:
+                error(f"Branch {args[2]} does not exist.")
+            log(f"Branch {args[2]} exists.")
+        else:
+            error("Unknown branch command. Use: list, create, delete, or exists")
+    elif cmd == "status":
+        branch = get_current_branch()
+        log(f"Current branch: {branch}")
+        status = run(["git", "status", "--porcelain"], capture=True).stdout
+        if status:
+            log("Changes:")
+            print(status)
+    elif cmd == "promote":
+        cmd_promote(args[1])
+    elif cmd == "demote":
+        cmd_demote(args[1], args[2])
     elif cmd == "sync":
         cmd_merge("testing", "staging")
         cmd_merge("staging", "main")
-    else: error(f"Unknown: {cmd}")
+    elif cmd == "commit":
+        msg = " ".join(args[1:])
+        if not ToolRunner().run_validation(fix=False, dev=FLAGS["dev"]):
+            error("Validation failed. Commit aborted.")
+        run(["git", "add", "."])
+        run(["git", "commit", "-m", msg])
+    else:
+        error(f"Unknown: {cmd}")
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()

@@ -39,6 +39,7 @@ KEY_MAP = {
     "Ar": "ArchivedAt",
     "Tp": "TestsPassed",
     "Rc": "RegressionCheck",
+    "Rv": "ReviewedFiles",
 }
 
 ALLOWED_CONFIG_KEYS = {

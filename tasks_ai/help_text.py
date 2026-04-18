@@ -41,9 +41,18 @@ Use 'tasks doctor --fix' to automatically fix:
   - Move tasks to correct state folders
   - (Other issues generate bug reports for manual review)
 
-REGRESSION CHECK: Moving to REVIEW auto-generates a diff at .tasks/review/<id>/diff.patch.
-Review the diff carefully. If regressions found, move the task back to PROGRESSING or TESTING to fix.
-Once clean, run 'tasks modify <id> --regression-check' to confirm and enable STAGING.
+REGRESSION CHECK: Moving to REVIEW auto-generates:
+  - .tasks/review/<id>/diff.patch - Full diff
+  - .tasks/review/<id>/diff.summary - Condensed view with file headers and line counts
+
+You MUST review EACH FILE before passing regression check:
+  1. Run 'tasks show <id> review' to see changed files summary
+  2. Run 'tasks review <id> ' to confirm each file (e.g., tasks review 83 repo.py)
+  3. Run 'tasks review --list' to see review progress
+  4. Once ALL files reviewed, run 'tasks modify <id> --regression-check' to enable STAGING
+
+The review progress is tracked in the task metadata (Rv field). Moving to REVIEW or 
+clearing Rc also clears the review progress.
 """
 
 MISSION = """Mission: Identify and fix the highest priority test failures first."""

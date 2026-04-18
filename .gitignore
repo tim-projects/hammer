@@ -10,3 +10,4 @@ __pycache__/
 *.md
 !README.md
 !AGENTS.md
+*.log

@@ -180,6 +180,27 @@ if __name__ == "__main__":
         help="Attempt to fix issues automatically.",
     )
 
+    rev_p = subparsers.add_parser(
+        "review", help="Review diff files before regression check."
+    )
+    rev_p.add_argument("filename", nargs="?", help="Task Id (or filename).")
+    rev_p.add_argument(
+        "file",
+        nargs="?",
+        help="File to confirm as reviewed (e.g., repo.py). Use --list to see files.",
+    )
+    rev_p.add_argument(
+        "--list",
+        "-l",
+        action="store_true",
+        help="List changed files and review progress.",
+    )
+    rev_p.add_argument(
+        "--show",
+        "-s",
+        help="Show diff hunks for a specific file.",
+    )
+
     args = parser.parse_args()
 
     if args.version:
@@ -250,3 +271,5 @@ if __name__ == "__main__":
         cli.undo(args.filename)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)
+    elif args.command == "review":
+        cli.review(args.filename, args.file, list_files=args.list, show=args.show)
