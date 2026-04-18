@@ -33,10 +33,11 @@ def get_terminal_width():
 
 
 class TasksCLI:
-    def __init__(self, as_json=False, command=None, quiet=False, dev=False):
+    def __init__(self, as_json=False, command=None, quiet=False, dev=False, yes=False):
         self.as_json = as_json
         self.quiet = quiet
         self.dev = dev
+        self.yes = yes
         self.output_messages = []
         self.root = self._get_git_root()
 
@@ -587,18 +588,32 @@ class TasksCLI:
             self.error("Tasks not initialized. Run 'tasks init' first.")
         remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
         if not remotes.stdout.strip():
-            self.error("No remote configured in .tasks. Add a remote first.")
-        current = self._run_git(
-            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
-        ).stdout.strip()
-        push_result = self._run_git(
-            ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
-            cwd=self.tasks_path,
-        )
-        if push_result.returncode != 0:
-            self.error(f"Failed to push to remote: {push_result.stderr}")
-        self.log(f"Pushed {current} to origin/{branch}")
-        self.finish({"branch": branch, "remote": "origin", "from_branch": current})
+            if self.dev or self.yes:
+                current = self._run_git(
+                    ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+                ).stdout.strip()
+                mode = "--dev" if self.dev else "-y"
+                self.log(
+                    f"No remote configured - continuing in local-only mode ({mode})"
+                )
+                self.finish({"branch": branch, "remote": None, "from_branch": current})
+            else:
+                self.error(
+                    "No remote configured in .tasks.",
+                    hint="Set up a remote or use --dev / -y flag for local-only mode.",
+                )
+        else:
+            current = self._run_git(
+                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+            ).stdout.strip()
+            push_result = self._run_git(
+                ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
+                cwd=self.tasks_path,
+            )
+            if push_result.returncode != 0:
+                self.error(f"Failed to push to remote: {push_result.stderr}")
+            self.log(f"Pushed {current} to origin/{branch}")
+            self.finish({"branch": branch, "remote": "origin", "from_branch": current})
 
     def _append_log(self, task_path, entry):
         if not task_path:
@@ -1747,19 +1762,13 @@ class TasksCLI:
 
         # Trigger automatic promotion for TESTING
         if new_status == "TESTING":
-            from repo import cmd_promote, FLAGS
-
-            FLAGS["yes"] = yes
-            FLAGS["quiet"] = self.quiet
-            FLAGS["json"] = False
-            FLAGS["dev"] = self.dev
-            FLAGS["in_promotion"] = True
+            self.log("Automatically promoting to testing branch...")
+            from repo import cmd_promote
 
             try:
                 cmd_promote(branch)
             except Exception as e:
                 self.error(f"Promotion failed: {e}")
-            return  # Don't continue to move task file again
 
         # Regression check enforcement for ARCHIVED
         if new_status == "ARCHIVED":

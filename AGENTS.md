@@ -19,14 +19,13 @@ python tasks.py -j list
 
 ### 🛠️ Development & Testing
 
-When testing the tool itself or performing "dry runs" of task operations without affecting the project's real `.tasks` worktree, use the `--dev` flag. This will use `/tmp/.tasks` as an isolated storage directory.
+When testing the tool itself or performing "dry runs" of task operations without affecting the project's real `.tasks` worktree, use the `--dev` flag. This will use `/tmp/.tasks` as an isolated storage directory. Note that the `--dev` flag is strictly for testing tool behavior and operational workflows in an isolated environment; it should NOT be used to create tasks meant for real project progress.
 
 ```bash
 # Initialize dev environment
 python tasks.py --dev init
 
 # Run any command in dev mode
-python tasks.py --dev create "Test Task" ...
 python tasks.py --dev list
 ```
 
