@@ -41,6 +41,12 @@ if __name__ == "__main__":
         default="tasks",
         help="Remote branch name (default: 'tasks').",
     )
+    save_p.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Continue without remote (local-only mode).",
+    )
 
     list_p = subparsers.add_parser("list", help="List tasks.")
     list_p.add_argument("--all", action="store_true")
@@ -187,7 +193,11 @@ if __name__ == "__main__":
         sys.exit(0)
 
     cli = TasksCLI(
-        as_json=args.json, command=args.command, quiet=args.quiet, dev=args.dev
+        as_json=args.json,
+        command=args.command,
+        quiet=args.quiet,
+        dev=args.dev,
+        yes=getattr(args, "yes", False),
     )
 
     if args.command == "init":

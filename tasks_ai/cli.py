@@ -33,10 +33,11 @@ def get_terminal_width():
 
 
 class TasksCLI:
-    def __init__(self, as_json=False, command=None, quiet=False, dev=False):
+    def __init__(self, as_json=False, command=None, quiet=False, dev=False, yes=False):
         self.as_json = as_json
         self.quiet = quiet
         self.dev = dev
+        self.yes = yes
         self.output_messages = []
         self.root = self._get_git_root()
 
@@ -587,18 +588,32 @@ class TasksCLI:
             self.error("Tasks not initialized. Run 'tasks init' first.")
         remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
         if not remotes.stdout.strip():
-            self.error("No remote configured in .tasks. Add a remote first.")
-        current = self._run_git(
-            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
-        ).stdout.strip()
-        push_result = self._run_git(
-            ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
-            cwd=self.tasks_path,
-        )
-        if push_result.returncode != 0:
-            self.error(f"Failed to push to remote: {push_result.stderr}")
-        self.log(f"Pushed {current} to origin/{branch}")
-        self.finish({"branch": branch, "remote": "origin", "from_branch": current})
+            if self.dev or self.yes:
+                current = self._run_git(
+                    ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+                ).stdout.strip()
+                mode = "--dev" if self.dev else "-y"
+                self.log(
+                    f"No remote configured - continuing in local-only mode ({mode})"
+                )
+                self.finish({"branch": branch, "remote": None, "from_branch": current})
+            else:
+                self.error(
+                    "No remote configured in .tasks.",
+                    hint="Set up a remote or use --dev / -y flag for local-only mode.",
+                )
+        else:
+            current = self._run_git(
+                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+            ).stdout.strip()
+            push_result = self._run_git(
+                ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
+                cwd=self.tasks_path,
+            )
+            if push_result.returncode != 0:
+                self.error(f"Failed to push to remote: {push_result.stderr}")
+            self.log(f"Pushed {current} to origin/{branch}")
+            self.finish({"branch": branch, "remote": "origin", "from_branch": current})
 
     def _append_log(self, task_path, entry):
         if not task_path:
@@ -1222,7 +1237,7 @@ class TasksCLI:
             }
         )
 
-    def move(self, filename, new_status, yes=False, skip_gate=False):
+    def move(self, filename, new_status, yes=False):
         filepath, current_state_from_folder = self.find_task(filename)
         if not filepath:
             self.error(
@@ -1311,7 +1326,7 @@ class TasksCLI:
                 }
             )
         else:
-            self._move_logic(filename, new_status, yes=yes, skip_gate=skip_gate)
+            self._move_logic(filename, new_status, yes=yes)
             self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
             self.finish(
                 {
@@ -1340,9 +1355,7 @@ class TasksCLI:
         self._append_log(new_filepath, f"{current_state}->{new_status}")
         return task
 
-    def _move_logic(
-        self, filename, new_status, force=False, yes=False, sync=True, skip_gate=False
-    ):
+    def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         new_status = new_status.upper()
         filepath, current_state = self.find_task(filename)
         if not filepath:
@@ -1597,7 +1610,7 @@ class TasksCLI:
                     # No testing branch yet, any work is new
                     newer_than_testing = True
 
-                if not skip_gate and not has_unstaged and not newer_than_testing:
+                if not has_unstaged and not newer_than_testing:
                     self.error(
                         f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
                         f"Make some progress before moving to testing. Do not bypass this tool."
@@ -1749,22 +1762,13 @@ class TasksCLI:
 
         # Trigger automatic promotion for TESTING
         if new_status == "TESTING":
-            print("DEBUG: About to call cmd_promote")
-            from repo import cmd_promote, FLAGS
-
-            FLAGS["yes"] = yes
-            FLAGS["quiet"] = self.quiet
-            FLAGS["json"] = False
-            FLAGS["dev"] = self.dev
-            FLAGS["in_promotion"] = True
+            self.log("Automatically promoting to testing branch...")
+            from repo import cmd_promote
 
             try:
-                print("DEBUG: Calling cmd_promote")
                 cmd_promote(branch)
-                print("DEBUG: cmd_promote returned")
             except Exception as e:
                 self.error(f"Promotion failed: {e}")
-            return  # Don't continue to move task file again
 
         # Regression check enforcement for ARCHIVED
         if new_status == "ARCHIVED":
