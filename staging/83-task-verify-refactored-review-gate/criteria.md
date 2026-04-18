@@ -1,1 +1,0 @@
-- [ ] Gate triggers before staging; auto-moves to review.
