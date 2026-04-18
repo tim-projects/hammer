@@ -14,9 +14,11 @@ class TestCLIRobustness(unittest.TestCase):
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
         subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
-        self.tasks_py = os.path.abspath("tasks.py")
-        self.repo_py = os.path.abspath("repo.py")
-        self.check_py = os.path.abspath("check.py")
+        # Get absolute path to project root (parent of tests directory)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.tasks_py = os.path.join(project_root, "tasks.py")
+        self.repo_py = os.path.join(project_root, "repo.py")
+        self.check_py = os.path.join(project_root, "check.py")
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)

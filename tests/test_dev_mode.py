@@ -13,9 +13,9 @@ class TestDevMode(unittest.TestCase):
         if os.path.exists(self.dev_dir):
             shutil.rmtree(self.dev_dir)
 
-        # Record absolute path to tasks.py (located in same directory as this test file)
+        # Record absolute path to tasks.py (located at project root)
         self.script_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "tasks.py"
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tasks.py"
         )
 
         # Create a fresh temporary git repository for this test

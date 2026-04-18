@@ -27,7 +27,7 @@ class TestTasksAI(unittest.TestCase):
         subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)
         # Compute absolute path to tasks.py based on this file's location
         self.script_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "tasks.py"
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tasks.py"
         )
 
         # Setup config
