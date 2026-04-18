@@ -29,14 +29,14 @@ curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.s
 
 ## 🛠️ Getting Started
 
-Add this to the top of your `AGENTS.md`:
+Add this to the top of your AGENTS.md:
 
 ```
-MANAGE TASKS WITH HAMMER. OBEY HAMMER PROTOCOL.
+Directive: "Manage project tasks using the tasks command. Run hammer tasks -h to discover the interface and operational protocol."
 ```
 
 Agent autonomously runs:
-1. `hammer tasks init` - Initialize system  
+1. `hammer tasks init` - Initialize system
 2. `hammer tasks list` / `hammer tasks create` - Discover/create tasks
 3. `hammer tasks move` - Move through Git-native state machine
 
@@ -81,7 +81,7 @@ hammer tasks current                  # ACTIVE BLADE!
 ### POUND THROUGH GATES
 ```bash
 hammer tasks move 42 PROGRESSING     # START SMASH! (Creates branch)
-hammer tasks move 42 TESTING         # ✓ HAMMER LIKE! MOVE → TESTING ⚔️🔨
+hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨
 hammer tasks move 42 LIVE            # 🔨 HAMMER SMASH GOOD! LIVE BLADE! ⚔️🔨
 ```
 
@@ -95,12 +95,12 @@ hammer tasks run all                 # HAMMER VALIDATE EVERYTHING!
 ## 🎯 REAL HAMMER FLOW
 
 ```bash
-hammer tasks init                    # ✓ HAMMER LIKE! SYSTEM READY! ⚔️🔨
+hammer tasks init                    # ✅ HAMMER LIKE! SYSTEM READY! ⚔️🔨
 hammer tasks create "SMASH LOGIN"    # NEW BLADE 42!
 hammer tasks move 42 PROGRESSING     # BRANCH CREATE!
-hammer check all                     # ✗ TEST BREAK! HAMMER SAY NO! FIX! 🔨
+hammer check all                     # ❌ TEST BREAK! HAMMER SAY NO! FIX! 🔨
 # LLM FIXES...
-hammer tasks move 42 TESTING         # ✓ HAMMER LIKE! MOVE → TESTING ⚔️🔨
+hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨
 hammer tasks move 42 LIVE            # 🔨 HAMMER SMASH GOOD! LIVE BLADE! ⚔️🔨
 ```
 

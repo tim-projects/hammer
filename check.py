@@ -167,7 +167,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     sys.stderr.flush()
 
     if not tool or tool not in commands:
-        msg = f"✗ NO {tool_type} TOOL CONFIGURED! (EXPECTED KEY: {config_key})! RUN 'tasks config detect' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
+        msg = f"❌ NO {tool_type} TOOL CONFIGURED! (EXPECTED KEY: {config_key})! RUN 'tasks config detect' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
         if as_json:
             print(
                 json.dumps(
@@ -180,7 +180,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 )
             )
         else:
-            print(f"✗ HAMMER SAY NO! {msg}")
+            print(f"❌ HAMMER SAY NO! {msg}")
         return 1
 
     cmd = commands[tool].copy()
@@ -194,7 +194,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             cmd0 = venv_bin
 
     if not cmd0:
-        msg = f"✗ TOOL '{cmd[0]}' NOT FOUND IN PATH! INSTALL IT OR CHECK CONFIGURATION! 🔨"
+        msg = f"❌ TOOL '{cmd[0]}' NOT FOUND IN PATH! INSTALL IT OR CHECK CONFIGURATION! 🔨"
         if as_json:
             print(
                 json.dumps(
@@ -207,7 +207,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 )
             )
         else:
-            print(f"✗ HAMMER SAY NO! {msg}")
+            print(f"❌ HAMMER SAY NO! {msg}")
         return 1
 
     cmd[0] = cmd0
@@ -254,7 +254,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             stdout_content = ""
             stderr_content = ""
     except subprocess.TimeoutExpired:
-        msg = f"✗ TOOL '{tool}' TIMED OUT AFTER 5 MINUTES! 🔨"
+        msg = f"❌ TOOL '{tool}' TIMED OUT AFTER 5 MINUTES! 🔨"
         if as_json:
             print(
                 json.dumps(
@@ -294,9 +294,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             print(result.stderr, file=sys.stderr)
 
         if result.returncode == 0:
-            print(f"✓ HAMMER LIKE! {tool} PASSED! ⚔️🔨")
+            print(f"✅ HAMMER LIKE! {tool} PASSED! ⚔️🔨")
         else:
-            print(f"✗ HAMMER SAY NO! {tool} FAILED! 🔨")
+            print(f"❌ HAMMER SAY NO! {tool} FAILED! 🔨")
             print(
                 "\n⚠️ HAMMER NO BYPASS TOOL - FIX ACTUAL CODE ISSUES, NOT VALIDATION CONFIG!"
             )
@@ -331,7 +331,7 @@ def run_all(fix=False, as_json=False, dev=False):
             last_hash = f.read().strip()
         if last_hash == current_hash:
             if not as_json:
-                print("✓ CODE UNCHANGED! HAMMER SKIP VALIDATION! ⚔️🔨")
+                print("✅ CODE UNCHANGED! HAMMER SKIP VALIDATION! ⚔️🔨")
             return 0
 
     results = {}
@@ -350,11 +350,11 @@ def run_all(fix=False, as_json=False, dev=False):
         print("\n" + "=" * 40)
         all_passed = total_code == 0
         if all_passed:
-            print("✓ HAMMER LIKE! ALL CHECKS PASSED! ⚔️🔨")
+            print("✅ HAMMER LIKE! ALL CHECKS PASSED! ⚔️🔨")
         else:
-            print("✗ HAMMER SAY NO! SOME CHECKS FAILED! 🔨")
+            print("❌ HAMMER SAY NO! SOME CHECKS FAILED! 🔨")
             for check, code in results.items():
-                status = "✓" if code == 0 else "✗"
+                status = "✅" if code == 0 else "❌"
                 print(f"  {status} {check}")
             print(
                 "\n⚠️ HAMMER IMPORTANT: DO NOT MODIFY VALIDATION CONFIG OR DISABLE CHECKS TO HIDE ERRORS!"

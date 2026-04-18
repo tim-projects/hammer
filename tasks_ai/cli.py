@@ -194,7 +194,7 @@ class TasksCLI:
                 .strip()
             )
         except subprocess.CalledProcessError:
-            self.error("✗ NOT GIT REPO! HAMMER NEEDS GIT! 🔨")
+            self.error("❌ NOT GIT REPO! HAMMER NEEDS GIT! 🔨")
             sys.exit(1)
 
     def _run_git(self, args, cwd=None):
@@ -321,7 +321,7 @@ class TasksCLI:
         )
         if result.returncode != 0:
             self.error(
-                "✗ HAMMER SAY NO! VALIDATION BROKEN! FIX NOW! 🔨",
+                "❌ HAMMER SAY NO! VALIDATION BROKEN! FIX NOW! 🔨",
                 hint="RUN 'check lint' TO SEE ERRORS. HAMMER NO BYPASS TOOL!",
             )
 
@@ -340,7 +340,7 @@ class TasksCLI:
             if fail_safe:
                 return result
             self.error(
-                "✗ TEST BREAK! HAMMER SAY NO! FIX NOW! 🔨",
+                "❌ TEST BREAK! HAMMER SAY NO! FIX NOW! 🔨",
                 hint="RUN 'check test' TO SEE FAILURES. HAMMER NO BYPASS TOOL!",
             )
         return result
@@ -414,7 +414,7 @@ class TasksCLI:
             )
             sys.exit(1)
         else:
-            print(f"✗ HAMMER SAY NO! FIX! 🔨 {message}", file=sys.stderr)
+            print(f"❌ HAMMER SAY NO! FIX! 🔨 {message}", file=sys.stderr)
             sys.exit(1)
 
     def finish(self, data=None):
@@ -584,10 +584,10 @@ class TasksCLI:
 
     def save(self, branch="tasks"):
         if not os.path.exists(self.tasks_path):
-            self.error("✗ TASKS NOT INIT! RUN 'tasks init' FIRST! 🔨")
+            self.error("❌ TASKS NOT INIT! RUN 'tasks init' FIRST! 🔨")
         remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
         if not remotes.stdout.strip():
-            self.error("✗ NO REMOTE! ADD REMOTE TO .tasks FIRST! 🔨")
+            self.error("❌ NO REMOTE! ADD REMOTE TO .tasks FIRST! 🔨")
         current = self._run_git(
             ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
         ).stdout.strip()
@@ -596,7 +596,7 @@ class TasksCLI:
             cwd=self.tasks_path,
         )
         if push_result.returncode != 0:
-            self.error(f"✗ PUSH FAIL! {push_result.stderr}! FIX NOW! 🔨")
+            self.error(f"❌ PUSH FAIL! {push_result.stderr}! FIX NOW! 🔨")
         self.log(f"Pushed {current} to origin/{branch}")
         self.finish({"branch": branch, "remote": "origin", "from_branch": current})
 
@@ -670,7 +670,7 @@ class TasksCLI:
             hint = "RUN 'tasks init' FIRST!"
             if self.dev:
                 hint = "DEV NOT INIT! RUN 'tasks --dev init' FIRST!"
-            self.error("✗ TASKS NOT INIT! 🔨", hint=hint)
+            self.error("❌ TASKS NOT INIT! 🔨", hint=hint)
         with open(counter_file, "r+") as f:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             try:
@@ -700,7 +700,7 @@ class TasksCLI:
         repro=None,
     ):
         if len(title) < 10:
-            self.error("✗ TITLE WEAK! MIN 10 CHARS! 🔨")
+            self.error("❌ TITLE WEAK! MIN 10 CHARS! 🔨")
         missing = []
         if not story:
             missing.append("--story")
@@ -714,7 +714,7 @@ class TasksCLI:
             missing.append("--repro")
         if missing:
             self.error(
-                f"✗ MISSING PARTS! ADD {', '.join(missing)}! NEED PROGRESSING ANYWAY! 🔨"
+                f"❌ MISSING PARTS! ADD {', '.join(missing)}! NEED PROGRESSING ANYWAY! 🔨"
             )
 
         MIN_LEN = 15
@@ -741,7 +741,7 @@ class TasksCLI:
                 too_short.append(f"--repro (min {MIN_LEN} chars)")
         if too_short:
             self.error(
-                f"✗ FIELDS TOO SHORT: {', '.join(too_short)}! HAMMER NEEDS MORE! 🔨"
+                f"❌ FIELDS TOO SHORT: {', '.join(too_short)}! HAMMER NEEDS MORE! 🔨"
             )
 
         if priority is not None:
@@ -750,14 +750,14 @@ class TasksCLI:
                 if not (1 <= p <= 9):
                     raise ValueError()
             except (ValueError, TypeError):
-                self.error("✗ PRIORITY WEAK! HAMMER WANTS 1-9! 🔨")
+                self.error("❌ PRIORITY WEAK! HAMMER WANTS 1-9! 🔨")
 
         clean_title = re.sub(r"[^a-zA-Z0-9]+", "-", title.lower()).strip("-")
         numeric_id = self._get_next_id()
         task_id = f"{numeric_id}-{task_type}-{clean_title[:30]}".strip("-")
         task_dir = os.path.join(self.tasks_path, STATE_FOLDERS["BACKLOG"], task_id)
         if self.find_task(task_id)[0]:
-            self.error(f"✗ TASK {task_id} ALREADY EXISTS! HAMMER NO DUPLICATES! 🔨")
+            self.error(f"❌ TASK {task_id} ALREADY EXISTS! HAMMER NO DUPLICATES! 🔨")
 
         for state, folder in STATE_FOLDERS.items():
             fp = os.path.join(self.tasks_path, folder)
@@ -769,7 +769,7 @@ class TasksCLI:
                 path = os.path.join(fp, item)
                 task = FM.load(path)
                 if task.metadata.get("Id") == numeric_id:
-                    self.error(f"✗ TASK {numeric_id} ALREADY EXISTS (IN {state})! 🔨")
+                    self.error(f"❌ TASK {numeric_id} ALREADY EXISTS (IN {state})! 🔨")
 
         task = Task(
             metadata={
@@ -834,7 +834,7 @@ class TasksCLI:
                 }
             )
         except Exception as e:
-            self.error(f"✗ TASK CREATE FAIL! {e}! 🔨")
+            self.error(f"❌ TASK CREATE FAIL! {e}! 🔨")
 
     def modify(
         self,
@@ -866,7 +866,7 @@ class TasksCLI:
         updated = False
         if title:
             if len(title) < 10:
-                self.error("✗ TITLE WEAK! MIN 10 CHARS! 🔨")
+                self.error("❌ TITLE WEAK! MIN 10 CHARS! 🔨")
             task.metadata["Ti"] = title
             updated = True
         if story:
@@ -966,10 +966,10 @@ class TasksCLI:
     def delete(self, filename, confirm=None):
         filepath, current_state = self.find_task(filename)
         if not filepath:
-            self.error(f"✗ TASK '{filename}' NOT FOUND! 🔨")
+            self.error(f"❌ TASK '{filename}' NOT FOUND! 🔨")
 
         if not self._validate_path(filepath):
-            self.error(f"✗ BAD PATH! {filepath}! 🔨")
+            self.error(f"❌ BAD PATH! {filepath}! 🔨")
 
         filepath_str = cast(str, filepath)
         task = FM.load(filepath_str)
@@ -1002,7 +1002,7 @@ class TasksCLI:
         # If confirm provided, only delete if already in REJECTED state
         if current_state != "REJECTED":
             self.error(
-                f"✗ MUST BE REJECTED TO DELETE! CURRENT: {current_state}! 🔨",
+                f"❌ MUST BE REJECTED TO DELETE! CURRENT: {current_state}! 🔨",
                 hint="RUN 'tasks delete <id>' MOVE TO REJECTED, THEN CONFIRM!",
             )
 
@@ -1020,7 +1020,7 @@ class TasksCLI:
                 f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
             )
         except Exception as e:
-            self.error(f"✗ TASK DELETE FAIL! {e}! 🔨")
+            self.error(f"❌ TASK DELETE FAIL! {e}! 🔨")
         self.finish(
             {
                 "id": task.metadata.get("Id"),
@@ -1051,7 +1051,7 @@ class TasksCLI:
     def checkpoint(self, filename=None):
         filepath, task = self.get_active_task(filename)
         if not filepath or not task:
-            self.error("✗ NO ACTIVE TASK! START WORK OR PICK ONE! 🔨")
+            self.error("❌ NO ACTIVE TASK! START WORK OR PICK ONE! 🔨")
 
         # filepath is definitely not None here for pyright
         filepath_str = cast(str, filepath)
@@ -1168,13 +1168,13 @@ class TasksCLI:
         f1, _ = self.find_task(filename)
         f2, _ = self.find_task(blocked_by_filename)
         if not f1 or not f2:
-            self.error("✗ TASK NOT FOUND! 🔨")
+            self.error("❌ TASK NOT FOUND! 🔨")
 
         f1_str = cast(str, f1)
         f2_str = cast(str, f2)
 
         if os.path.abspath(f1_str) == os.path.abspath(f2_str):
-            self.error("✗ CANNOT LINK TO SELF! 🔨")
+            self.error("❌ CANNOT LINK TO SELF! 🔨")
 
         f1_fname = os.path.basename(f1_str)
         f2_fname = os.path.basename(f2_str)
@@ -1195,7 +1195,7 @@ class TasksCLI:
         # Check for circular dependency
         if self._has_path(b_id, task_id_num):
             self.error(
-                f"✗ CIRCULAR DEPENDENCY! LINK {filename}->{blocked_by_filename} CREATE CYCLE! "
+                f"❌ CIRCULAR DEPENDENCY! LINK {filename}->{blocked_by_filename} CREATE CYCLE! "
                 f"TASK {b_id} ALREADY DEPEND ON {task_id_num}! 🔨"
             )
 
@@ -1226,7 +1226,7 @@ class TasksCLI:
         filepath, current_state_from_folder = self.find_task(filename)
         if not filepath:
             self.error(
-                f"✗ TASK '{filename}' NOT FOUND! 🔨",
+                f"❌ TASK '{filename}' NOT FOUND! 🔨",
                 hint="RUN 'tasks list' TO SEE ALL TASK FILENAMES/IDS!",
             )
         task = FM.load(filepath)
@@ -1240,7 +1240,7 @@ class TasksCLI:
             for s in statuses:
                 if s not in STATE_FOLDERS:
                     self.error(
-                        f"✗ INVALID STATUS '{s}' IN SEQUENCE! 🔨",
+                        f"❌ INVALID STATUS '{s}' IN SEQUENCE! 🔨",
                         hint=f"VALID: {', '.join(STATE_FOLDERS.keys())}",
                     )
             current_state = current_state_from_folder
@@ -1250,7 +1250,7 @@ class TasksCLI:
                     and current_state != target
                 ):
                     self.error(
-                        f"✗ FORBIDDEN! {current_state} -> {target} NOT ALLOWED! 🔨",
+                        f"❌ FORBIDDEN! {current_state} -> {target} NOT ALLOWED! 🔨",
                         hint=f"ALLOWED FROM {current_state}: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. HAMMER NO BYPASS TOOL!",
                     )
                 if target == "PROGRESSING":
@@ -1286,7 +1286,7 @@ class TasksCLI:
                         _, bs = self.find_task(str(b))
                         if bs != "ARCHIVED":
                             self.error(
-                                f"✗ BLOCKED BY {b}! ARCHIVE BLOCKER FIRST! HAMMER NO BYPASS TOOL! 🔨"
+                                f"❌ BLOCKED BY {b}! ARCHIVE BLOCKER FIRST! HAMMER NO BYPASS TOOL! 🔨"
                             )
                 try:
                     task = self._perform_move(task, current_state, target, filepath)
@@ -1298,7 +1298,7 @@ class TasksCLI:
                     )
                     current_state = target
                 except Exception as e:
-                    self.error(f"✗ MOVE FAIL AT {target}: {e}! 🔨")
+                    self.error(f"❌ MOVE FAIL AT {target}: {e}! 🔨")
 
             final_status = statuses[-1]
             self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {final_status}")
@@ -1324,7 +1324,7 @@ class TasksCLI:
 
     def _perform_move(self, task, current_state, new_status, filepath):
         if not filepath:
-            self.error("✗ INVALID TASK PATH! 🔨")
+            self.error("❌ INVALID TASK PATH! 🔨")
         filepath_str = cast(str, filepath)
         self._sync_task_content(filepath_str, task, is_final=(new_status == "ARCHIVED"))
         task.metadata.pop("St", None)
@@ -1345,7 +1345,7 @@ class TasksCLI:
         filepath, current_state = self.find_task(filename)
         if not filepath:
             self.error(
-                f"✗ TASK '{filename}' NOT FOUND! 🔨",
+                f"❌ TASK '{filename}' NOT FOUND! 🔨",
                 hint="RUN 'tasks list' TO SEE ALL TASK FILENAMES/IDS!",
             )
         filepath_str = cast(str, filepath)
@@ -1357,7 +1357,7 @@ class TasksCLI:
             if current_state == "REJECTED" and new_status == "ARCHIVED":
                 hint += " RUN 'tasks delete <id>' PERMANENT REMOVE!"
             self.error(
-                f"✗ FORBIDDEN! {current_state} -> {new_status} NOT ALLOWED! 🔨",
+                f"❌ FORBIDDEN! {current_state} -> {new_status} NOT ALLOWED! 🔨",
                 hint=hint,
             )
 
@@ -1366,7 +1366,7 @@ class TasksCLI:
             task = FM.load(filepath_str)
             if not task.metadata.get("Tp", False):
                 self.error(
-                    "✗ TESTS NOT PASSED! HAMMER SAY NO! 🔨",
+                    "❌ TESTS NOT PASSED! HAMMER SAY NO! 🔨",
                     hint="RUN 'tasks modify <id> --tests-passed' MARK TESTS PASSED! HAMMER NO BYPASS TOOL!",
                 )
             self._run_validation()
@@ -1457,7 +1457,7 @@ class TasksCLI:
                     ):
                         missing.append("repro")
                 self.error(
-                    f"✗ TASK LACKS CONTENT TO LEAVE BACKLOG! MISSING: {', '.join(missing)}! 🔨",
+                    f"❌ TASK LACKS CONTENT TO LEAVE BACKLOG! MISSING: {', '.join(missing)}! 🔨",
                     hint='RUN \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' ADD DETAILS! FOR ISSUES, ADD --repro! HAMMER NO BYPASS TOOL!',
                 )
 
@@ -1469,7 +1469,7 @@ class TasksCLI:
                 _, bs = self.find_task(str(b))
                 if bs != "ARCHIVED":
                     self.error(
-                        f"✗ BLOCKED BY {b}! ARCHIVE BLOCKER FIRST! HAMMER NO BYPASS TOOL! 🔨"
+                        f"❌ BLOCKED BY {b}! ARCHIVE BLOCKER FIRST! HAMMER NO BYPASS TOOL! 🔨"
                     )
 
             missing = []
@@ -1504,7 +1504,7 @@ class TasksCLI:
 
             if missing:
                 self.error(
-                    f"✗ TASK LACKS DETAIL FOR PROGRESSING! MISSING: {', '.join(missing)}! 🔨",
+                    f"❌ TASK LACKS DETAIL FOR PROGRESSING! MISSING: {', '.join(missing)}! 🔨",
                     hint='RUN \'tasks show <id>\' SEE CONTENT, THEN \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' ADD PROPER DETAILS! FOR ISSUES, ADD --repro! RUN \'tasks modify --help\' FOR SYNTAX! HAMMER NO BYPASS TOOL!',
                 )
 
@@ -1546,7 +1546,7 @@ class TasksCLI:
                         ["ls-remote", "--heads", "origin", branch]
                     ).stdout:
                         self.error(
-                            f"✗ BRANCH '{branch}' NOT PUSHED TO REMOTE! PUSH AND TRY AGAIN! HAMMER NO BYPASS TOOL! 🔨",
+                            f"❌ BRANCH '{branch}' NOT PUSHED TO REMOTE! PUSH AND TRY AGAIN! HAMMER NO BYPASS TOOL! 🔨",
                         )
 
             # Gate for TESTING: ensure branch has changes not yet in testing
@@ -1597,7 +1597,7 @@ class TasksCLI:
 
                 if not has_unstaged and not newer_than_testing:
                     self.error(
-                        f"✗ BRANCH '{branch}' NO UNSTAGED CHANGES AND NO COMMITS NEWER THAN TESTING! "
+                        f"❌ BRANCH '{branch}' NO UNSTAGED CHANGES AND NO COMMITS NEWER THAN TESTING! "
                         f"MAKE PROGRESS BEFORE TESTING! HAMMER NO BYPASS TOOL! 🔨",
                     )
 
@@ -1613,7 +1613,7 @@ class TasksCLI:
                 )
                 if not testing_sha or merge_base != testing_sha:
                     self.error(
-                        f"✗ BRANCH '{branch}' NOT MERGED TO TESTING! MERGE TO TESTING FIRST! HAMMER NO BYPASS TOOL! 🔨",
+                        f"❌ BRANCH '{branch}' NOT MERGED TO TESTING! MERGE TO TESTING FIRST! HAMMER NO BYPASS TOOL! 🔨",
                     )
 
             if new_status == "STAGING":
@@ -1667,7 +1667,7 @@ class TasksCLI:
                     )
                     if not is_ancestor:
                         self.error(
-                            f"✗ BRANCH '{branch}' NOT MERGED TO MAIN! MERGE TO MAIN FIRST! OR MOVE TO REJECTED! HAMMER NO BYPASS TOOL! 🔨",
+                            f"❌ BRANCH '{branch}' NOT MERGED TO MAIN! MERGE TO MAIN FIRST! OR MOVE TO REJECTED! HAMMER NO BYPASS TOOL! 🔨",
                         )
                 if yes:
                     # Only delete local branch if task was in DONE state (completed full pipeline)
@@ -1693,12 +1693,12 @@ class TasksCLI:
 
         if new_status == "ARCHIVED" and self._has_incomplete_checkboxes(filepath):
             self.error(
-                "✗ CANNOT ARCHIVE! CONTAINS UNFINISHED CHECKBOXES (- [ ])! 🔨",
+                "❌ CANNOT ARCHIVE! CONTAINS UNFINISHED CHECKBOXES (- [ ])! 🔨",
                 hint="EDIT .tasks/staging/<task>/criteria.md CHANGE '- [ ]' TO '- [x]' FOR COMPLETED ITEMS! OR RUN: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
         if new_status == "DONE" and self._has_incomplete_checkboxes(filepath):
             self.error(
-                f"✗ CANNOT MOVE TO {new_status}! CONTAINS UNFINISHED CHECKBOXES (- [ ])! 🔨",
+                f"❌ CANNOT MOVE TO {new_status}! CONTAINS UNFINISHED CHECKBOXES (- [ ])! 🔨",
                 hint="EDIT .tasks/staging/<task>/criteria.md CHANGE '- [ ]' TO '- [x]' FOR COMPLETED ITEMS! OR RUN: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
             )
 
@@ -1711,7 +1711,7 @@ class TasksCLI:
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
                 self.error(
-                    f"✗ CANNOT MOVE TO {new_status}! REGRESSION CHECK NOT PASSED (Rc FLAG NOT SET)! 🔨",
+                    f"❌ CANNOT MOVE TO {new_status}! REGRESSION CHECK NOT PASSED (Rc FLAG NOT SET)! 🔨",
                     hint="IF CODE CHANGE, MOVE TO REVIEW, AUDIT diff.patch AT .tasks/review/<task_id>/diff.patch, THEN RUN 'tasks modify <id> --regression-check' TO CONFIRM!",
                 )
 
@@ -1753,14 +1753,14 @@ class TasksCLI:
             try:
                 cmd_promote(branch)
             except Exception as e:
-                self.error(f"✗ PROMOTION FAIL! {e}! 🔨")
+                self.error(f"❌ PROMOTION FAIL! {e}! 🔨")
 
         # Regression check enforcement for ARCHIVED
         if new_status == "ARCHIVED":
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
                 self.error(
-                    "✗ CANNOT MOVE TO ARCHIVED! REGRESSION CHECK NOT PASSED (Rc FLAG NOT SET)! 🔨",
+                    "❌ CANNOT MOVE TO ARCHIVED! REGRESSION CHECK NOT PASSED (Rc FLAG NOT SET)! 🔨",
                     hint="PERFORM REGRESSION REVIEW AND RUN 'tasks modify <id> --regression-check' BEFORE ARCHIVING!",
                 )
 
@@ -1832,7 +1832,7 @@ class TasksCLI:
     def current(self, filename=None):
         filepath, task = self.get_active_task(filename)
         if not filepath or not task:
-            self.error("✗ NO ACTIVE TASK! START WORK OR PICK ONE! 🔨")
+            self.error("❌ NO ACTIVE TASK! START WORK OR PICK ONE! 🔨")
 
         # filepath is definitely not None here for pyright
         filepath_str = cast(str, filepath)
@@ -1876,7 +1876,7 @@ class TasksCLI:
         filepath, _ = self.find_task(filename)
         if not filepath:
             self.error(
-                f"✗ TASK '{filename}' NOT FOUND! 🔨",
+                f"❌ TASK '{filename}' NOT FOUND! 🔨",
                 hint="RUN 'tasks list' TO SEE AVAILABLE TASK IDS!",
             )
 
@@ -1925,7 +1925,7 @@ class TasksCLI:
                     print(f"## {title}\n{content}")
                 else:
                     self.error(
-                        f"✗ UNKNOWN SECTION '{section}'! 🔨",
+                        f"❌ UNKNOWN SECTION '{section}'! 🔨",
                         hint=f"VALID: {', '.join(section_map.keys())}",
                     )
             else:
@@ -1947,7 +1947,7 @@ class TasksCLI:
 
     def list(self, show_all=False):
         if not os.path.exists(self.tasks_path):
-            self.error("✗ TASKS NOT INIT! RUN 'tasks init' FIRST! 🔨")
+            self.error("❌ TASKS NOT INIT! RUN 'tasks init' FIRST! 🔨")
         all_data = {}
         seen = set()
         for state, folder in STATE_FOLDERS.items():
@@ -2213,7 +2213,7 @@ class TasksCLI:
         filepath, state = self.find_task(filename)
         if not filepath:
             self.error(
-                f"✗ TASK '{filename}' NOT FOUND! 🔨",
+                f"❌ TASK '{filename}' NOT FOUND! 🔨",
                 hint="RUN 'tasks list' TO SEE AVAILABLE TASK IDS AND FILENAMES!",
             )
         task = FM.load(filepath)
@@ -2420,7 +2420,7 @@ class TasksCLI:
                 with open(config_path, "w") as f:
                     yaml.safe_dump(cfg, f)
             except Exception as e:
-                self.error(f"✗ CONFIG SAVE FAIL! {e}! 🔨")
+                self.error(f"❌ CONFIG SAVE FAIL! {e}! 🔨")
 
         if action == "detect":
             detected = self._detect_tools()
@@ -2458,17 +2458,17 @@ class TasksCLI:
                 print("\nRun 'config detect' to auto-detect project tools.")
         elif action == "get":
             if not key:
-                self.error("✗ MISSING CONFIG KEY! 🔨")
+                self.error("❌ MISSING CONFIG KEY! 🔨")
             if self.as_json:
                 self.finish({"key": key, "value": cfg.get(key)})
             else:
                 print(cfg.get(key, ""))
         elif action == "set":
             if not key or value is None:
-                self.error("✗ MISSING CONFIG KEY OR VALUE! 🔨")
+                self.error("❌ MISSING CONFIG KEY OR VALUE! 🔨")
             if key not in ALLOWED_CONFIG_KEYS:
                 self.error(
-                    f"✗ INVALID CONFIG KEY '{key}'! 🔨",
+                    f"❌ INVALID CONFIG KEY '{key}'! 🔨",
                     hint=f"ALLOWED: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}! RUN 'tasks config detect' AUTO-DETECT TOOLS!",
                 )
             cfg[key] = value
@@ -2625,7 +2625,7 @@ class TasksCLI:
         root_str = cast(str, self.root)
         check_py = os.path.join(root_str, "check.py")
         if not os.path.exists(check_py):
-            self.error("✗ check.py NOT FOUND IN PROJECT ROOT! 🔨")
+            self.error("❌ check.py NOT FOUND IN PROJECT ROOT! 🔨")
             return 1
 
         cmd = [sys.executable, check_py, tool_name or "all"]
@@ -2648,7 +2648,7 @@ class TasksCLI:
                     sys.exit(1)
             except json.JSONDecodeError:
                 self.error(
-                    f"✗ VALIDATION FAIL! EXIT CODE {result.returncode}\n{result.stdout}\n{result.stderr}! 🔨"
+                    f"❌ VALIDATION FAIL! EXIT CODE {result.returncode}\n{result.stdout}\n{result.stderr}! 🔨"
                 )
         else:
             # In plain mode, check.py prints directly to stdout/stderr
@@ -2665,7 +2665,7 @@ class TasksCLI:
         filepath, current_state = self.find_task(filename)
         if not filepath:
             self.error(
-                f"✗ TASK '{filename}' NOT FOUND! 🔨",
+                f"❌ TASK '{filename}' NOT FOUND! 🔨",
                 hint="RUN 'tasks list' TO SEE ALL TASK FILENAMES/IDS!",
             )
 
@@ -2698,7 +2698,7 @@ class TasksCLI:
                 break
 
         if not prev_commit:
-            self.error("✗ NOTHING TO UNDO! NO GIT HISTORY FOR THIS TASK! 🔨")
+            self.error("❌ NOTHING TO UNDO! NO GIT HISTORY FOR THIS TASK! 🔨")
 
         prev_prev_commit = None
         found_current = False
@@ -2717,7 +2717,7 @@ class TasksCLI:
 
         if not prev_prev_commit:
             self.error(
-                "✗ NOTHING TO UNDO! FIRST COMMIT FOR THIS TASK! 🔨",
+                "❌ NOTHING TO UNDO! FIRST COMMIT FOR THIS TASK! 🔨",
                 hint="RUN 'git log' IN .tasks SEE FULL HISTORY!",
             )
 
@@ -2741,7 +2741,7 @@ class TasksCLI:
         ]
 
         if not files_to_restore:
-            self.error("✗ COULD NOT FIND FILES TO RESTORE FROM PREVIOUS COMMIT! 🔨")
+            self.error("❌ COULD NOT FIND FILES TO RESTORE FROM PREVIOUS COMMIT! 🔨")
 
         temp_dir = tempfile.mkdtemp(dir=self.tasks_path)
         try:
@@ -3185,13 +3185,13 @@ class TasksCLI:
             install_path = system_dir
             mode = "system"
         else:
-            self.error("✗ CANNOT WRITE TO ~/.local/tasks-ai OR /opt/tasks-ai! 🔨")
+            self.error("❌ CANNOT WRITE TO ~/.local/tasks-ai OR /opt/tasks-ai! 🔨")
 
         install_script = os.path.join(install_path, "install.sh")
 
         if not os.path.exists(install_script):
             self.error(
-                f"✗ install.sh NOT FOUND AT {install_path}! RUN 'tasks init' FIRST OR INSTALL MANUALLY! 🔨"
+                f"❌ install.sh NOT FOUND AT {install_path}! RUN 'tasks init' FIRST OR INSTALL MANUALLY! 🔨"
             )
 
         self.log(f"Detected installation: {mode} at {install_path}")

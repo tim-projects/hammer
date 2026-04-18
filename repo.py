@@ -65,7 +65,7 @@ def error(msg, hint=None):
     if FLAGS["json"]:
         print(json.dumps({"success": False, "error": msg}))
     else:
-        print(f"✗ HAMMER SAY NO! {msg} 🔨")
+        print(f"❌ HAMMER SAY NO! {msg} 🔨")
     sys.exit(1)
 
 
@@ -103,7 +103,7 @@ def run(cmd, check=True, capture=False, env=None, cwd=None):
         )
     except subprocess.CalledProcessError as e:
         err_msg = e.stderr if capture else ""
-        error(f"✗ COMMAND FAIL! {' '.join(cmd)}\n{err_msg}! 🔨")
+        error(f"❌ COMMAND FAIL! {' '.join(cmd)}\n{err_msg}! 🔨")
         raise
 
 
@@ -124,7 +124,7 @@ def prompt_yes_no(prompt):
             if res in ["n", "no"]:
                 return False
     except EOFError:
-        error("✗ EOFError: stdin CLOSED! USE -y FLAG AUTO-CONFIRM! 🔨")
+        error("❌ EOFError: stdin CLOSED! USE -y FLAG AUTO-CONFIRM! 🔨")
 
 
 class ToolRunner:
@@ -164,14 +164,14 @@ def resolve_branch(name):
             return branch_name
     if branch_exists(name):
         return name
-    error(f"✗ COULD NOT RESOLVE BRANCH: {name}! 🔨")
+    error(f"❌ COULD NOT RESOLVE BRANCH: {name}! 🔨")
 
 
 def ensure_pipeline_branch(name):
     if branch_exists(name):
         return
     if name not in PIPELINE:
-        error(f"✗ BRANCH {name} NOT IN PIPELINE! 🔨")
+        error(f"❌ BRANCH {name} NOT IN PIPELINE! 🔨")
     idx = PIPELINE.index(name)
     base = PIPELINE[idx + 1] if idx + 1 < len(PIPELINE) else "main"
     run(["git", "checkout", "-b", name, base])
@@ -205,13 +205,13 @@ def cmd_merge(src_input, target):
 
 def cmd_commit(message):
     if not message:
-        error("✗ commit: MESSAGE REQUIRED! 🔨")
+        error("❌ commit: MESSAGE REQUIRED! 🔨")
     current = get_current_branch()
     st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
     if st:
         run(["git", "add", "."])
         if not ToolRunner().run_validation(fix=True, dev=FLAGS["dev"]):
-            error("✗ COMPLIANCE FAIL! 🔨")
+            error("❌ COMPLIANCE FAIL! 🔨")
         run(["git", "commit", "-m", message])
         info(f"Committed on {current.upper()}")
         if FLAGS["yes"] or prompt_yes_no(f"Push {current}?"):
@@ -241,7 +241,7 @@ def cmd_promote(src_input, original_task_id=None):
                     info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
                     cli.move(task_id, "REVIEW")
                     error(
-                        f"✗ TASK {task_id} MOVED TO REVIEW FOR AUDIT! 🔨",
+                        f"❌ TASK {task_id} MOVED TO REVIEW FOR AUDIT! 🔨",
                         hint=f"RUN 'tasks modify {task_id} --regression-check' BEFORE PROMOTING!",
                     )
                 if status == "REVIEW":
@@ -250,7 +250,7 @@ def cmd_promote(src_input, original_task_id=None):
                     task = FM.load(path)
                     if not task.metadata.get("Rc"):
                         error(
-                            "✗ REGRESSION CHECK NOT PASSED! 🔨",
+                            "❌ REGRESSION CHECK NOT PASSED! 🔨",
                             hint=f"RUN 'tasks modify {task_id} --regression-check'!",
                         )
 
@@ -335,7 +335,7 @@ def main():
         print(result.stdout)
     elif cmd == "branch":
         if len(args) < 2:
-            error("✗ BRANCH: SPECIFY list, create, OR delete! 🔨")
+            error("❌ BRANCH: SPECIFY list, create, OR delete! 🔨")
         elif args[1] == "list":
             result = run(["git", "branch"], capture=True)
             print(result.stdout)
@@ -346,7 +346,7 @@ def main():
         elif args[1] == "exists" and len(args) > 2:
             sys.exit(0 if branch_exists(args[2]) else 1)
         else:
-            error("✗ BRANCH: UNKNOWN SUBCOMMAND! 🔨")
+            error("❌ BRANCH: UNKNOWN SUBCOMMAND! 🔨")
     else:
         error(f"Unknown: {cmd}")
 

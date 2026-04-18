@@ -38,7 +38,7 @@ def main():
     tool = sys.argv[1]
 
     if tool not in TOOLS:
-        print(f"✗ HAMMER SAY NO! Unknown tool: {tool} 🔨")
+        print(f"❌ HAMMER SAY NO! Unknown tool: {tool} 🔨")
         print(f"Valid tools: {', '.join(TOOLS.keys())}")
         sys.exit(1)
 
