@@ -453,7 +453,7 @@ def cmd_promote(src_input, original_task_id=None):
                         pass
                     error(
                         f"Task {task_id} moved to REVIEW for audit.",
-                        hint=f"Review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to {target}.",
+                        hint=f"Review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to {target.upper()}.",
                     )
 
                 if status == "REVIEW":
@@ -463,7 +463,7 @@ def cmd_promote(src_input, original_task_id=None):
                     if not task.metadata.get("Rc"):
                         error(
                             f"Task {task_id} has not passed regression check (Rc flag not set).",
-                            hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm promotion to {target}.",
+                            hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm promotion to {target.upper()}.",
                         )
                     # If Rc is present, we proceed automatically.
 
@@ -498,7 +498,7 @@ def cmd_promote(src_input, original_task_id=None):
         idx = PIPELINE.index(target)
         if idx + 1 < len(PIPELINE):
             next_stage = PIPELINE[idx + 1]
-            if prompt_yes_no(f"Continue promotion from {target} -> {next_stage}?"):
+            if prompt_yes_no(f"Continue promotion from {target.upper()} -> {next_stage}?"):
                 cmd_promote(target, original_task_id=task_id)
             else:
                 info(f"Promotion stopped after merge to {target}.")
