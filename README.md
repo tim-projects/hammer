@@ -136,5 +136,5 @@ hammer tasks config set repo.test pytest
 - **Enforced quality** - Gates BLOCK weak code
 - **Full lifecycle** - Backlog → DONE → ARCHIVED
 
-**HAMMER IS BOSS. WEAK CODE SUBMIT. STRONG BLADES SHIP!** 🔨⚔️
+**HAMMER IS BOSS. WEAK LLM SUBMIT. STRONG TEAM SHIP!** 🔨⚔️
 ```
