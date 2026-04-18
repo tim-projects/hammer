@@ -1,5 +1,3 @@
-import os
-import shutil
 
 repo_file = "tests/test_tasks.py"
 with open(repo_file, "r") as f:

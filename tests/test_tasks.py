@@ -46,12 +46,15 @@ class TestTasksAI(unittest.TestCase):
             json.dump(config_data, f)
 
     def tearDown(self):
-        print(os.listdir(self.repo_dir)); shutil.rmtree(self.test_dir)
+        print(os.listdir(self.repo_dir))
+        shutil.rmtree(self.test_dir)
 
     def run_cmd(self, args):
         # Ensure essential files exist
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); shutil.copy(os.path.join(base_dir, "check.py"), self.repo_dir)
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); shutil.copy(os.path.join(base_dir, "repo.py"), self.repo_dir)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        shutil.copy(os.path.join(base_dir, "check.py"), self.repo_dir)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        shutil.copy(os.path.join(base_dir, "repo.py"), self.repo_dir)
         result = subprocess.run(
             [sys.executable, self.script_path, "-j"] + args,
             cwd=self.repo_dir,

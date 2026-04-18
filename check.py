@@ -82,7 +82,7 @@ def load_config(dev=False):
 
             with open(config_path_yaml, "r") as f:
                 config.update(yaml.safe_load(f) or {})
-            print(f"DEBUG: Loaded config: {config}, files={os.listdir(".")}", file=sys.stderr)
+            print(f"DEBUG: Loaded config: {config}, files={os.listdir('.')}", file=sys.stderr)
         except ImportError:
             try:
                 import json
@@ -232,6 +232,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     if not as_json:
         print(f"Running {tool} ({tool_type})...")
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(project_root)
+
     try:
         if as_json:
             # Capture output using temporary files to avoid pipe deadlocks
@@ -239,9 +242,11 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stdout_file,
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stderr_file,
             ):
-                print(f"DEBUG_CMD: {cmd_to_run}", file=sys.stderr); result = subprocess.run(
+                print(f"DEBUG_CMD: {cmd_to_run}", file=sys.stderr)
+                result = subprocess.run(
                     cmd_to_run,
                     cwd=project_root,
+                    env=env,
                     stdout=stdout_file,
                     stderr=stderr_file,
                     timeout=300,
@@ -258,7 +263,8 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 pass
         else:
             # Stream output directly to console to avoid deadlocks
-            print(f"DEBUG_CMD: {cmd_to_run}", file=sys.stderr); result = subprocess.run(cmd_to_run, cwd=project_root, timeout=300)
+            print(f"DEBUG_CMD: {cmd_to_run}", file=sys.stderr)
+            result = subprocess.run(cmd_to_run, cwd=project_root, env=env, timeout=300)
             stdout_content = ""
             stderr_content = ""
     except subprocess.TimeoutExpired:
