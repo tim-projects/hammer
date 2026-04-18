@@ -1747,8 +1747,13 @@ class TasksCLI:
 
         # Trigger automatic promotion for TESTING
         if new_status == "TESTING":
-            self.log("Automatically promoting to testing branch...")
-            from repo import cmd_promote
+            from repo import cmd_promote, FLAGS
+
+            FLAGS["yes"] = yes
+            FLAGS["quiet"] = self.quiet
+            FLAGS["json"] = False
+            FLAGS["dev"] = self.dev
+            FLAGS["in_promotion"] = True
 
             try:
                 cmd_promote(branch)
