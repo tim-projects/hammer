@@ -4,12 +4,15 @@
 - Extracted `config`, `doctor`, and validation logic into separate files: `tasks_ai/commands.py` and `tasks_ai/validation.py`.
 - Fixed multiple lint/syntax errors across the project.
 - Implemented full `doctor` logic.
-- Identified that `test_review_diff_generated` failure is due to configuration format mismatch in tests: tests were using nested `repo: {lint: ...}` config instead of flat `repo.lint: ...`.
+- Updated `tasks_ai/cli.py` to store absolute tool paths in `.tasks/config.yaml`.
+- Updated `check.py` to support absolute tool paths by matching the tool basename against available commands.
 
 ## Findings
-- Test environment uses an outdated configuration schema for `repo.lint/test/type_check/format`.
-- Subprocess calls for validation fail because `check.py` expects flat configuration keys, but test setup provides a nested structure.
+- Test failure was caused by two issues:
+  1. Incorrect configuration key structure in `tests/test_tasks.py` (nested vs. flat).
+  2. `check.py` failing to recognize absolute tool paths saved in `config.yaml`.
 
 ## Mitigations
-- Updated `tests/test_tasks.py` to use the flat configuration schema for task initialization.
-- Re-running validation to confirm fix.
+- Updated `tests/test_tasks.py` to use flat configuration keys.
+- Modified `check.py` to resolve absolute tool paths to their basenames for command lookup.
+- Verified configuration saving uses absolute paths via `tasks_ai/cli.py` update.
