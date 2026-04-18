@@ -291,21 +291,27 @@ def ensure_pipeline_branch(name):
     if name not in PIPELINE:
         error(f"Branch {name} does not exist and is not a pipeline branch.")
 
-    # Create from next in pipeline or main
-    idx = PIPELINE.index(name)
+    # Create from next in pipeline or main, or fallback to main
+    # Identify the base branch
     base = "main"
-    if idx + 1 < len(PIPELINE):
-        base = PIPELINE[idx + 1]
-
+    if branch_exists("master"):
+        base = "master"
+    
+    # Try to find the next available pipeline branch
+    # PIPELINE = ["testing", "staging", "main"]
+    # If creating "testing", try "staging", then "main"
+    # If creating "staging", try "main"
+    idx = PIPELINE.index(name)
+    for b in PIPELINE[idx+1:]:
+        if branch_exists(b):
+            base = b
+            break
+            
     if not branch_exists(base):
-        if base == "main" and branch_exists("master"):
-            base = "master"
-        else:
-            error(f"Cannot create {name}: base branch {base} not found.")
+        error(f"Cannot create {name}: base branch {base} not found.")
 
     log(f"Creating pipeline branch {name} from {base}...")
     run(["git", "checkout", "-b", name, base])
-    run(["git", "checkout", "-"])  # Return
 
 
 def cmd_merge(src_input, target):
