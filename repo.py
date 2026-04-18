@@ -494,11 +494,15 @@ def cmd_promote(src_input, original_task_id=None):
 
     # If it was a feature branch promoted to testing, ask to promote testing to staging etc.
     if target != "main":
-        if prompt_yes_no(f"Continue promotion from {target} to next stage?"):
-            cmd_promote(target, original_task_id=task_id)
-        else:
-            info(f"Promotion stopped after merge to {target}.")
-            sys.exit(0)
+        # Identify next stage
+        idx = PIPELINE.index(target)
+        if idx + 1 < len(PIPELINE):
+            next_stage = PIPELINE[idx + 1]
+            if prompt_yes_no(f"Continue promotion from {target} -> {next_stage}?"):
+                cmd_promote(target, original_task_id=task_id)
+            else:
+                info(f"Promotion stopped after merge to {target}.")
+                sys.exit(0)
 
 
 def cmd_status():
