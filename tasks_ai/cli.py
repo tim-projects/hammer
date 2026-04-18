@@ -1222,7 +1222,7 @@ class TasksCLI:
             }
         )
 
-    def move(self, filename, new_status, yes=False):
+    def move(self, filename, new_status, yes=False, skip_gate=False):
         filepath, current_state_from_folder = self.find_task(filename)
         if not filepath:
             self.error(
@@ -1311,7 +1311,7 @@ class TasksCLI:
                 }
             )
         else:
-            self._move_logic(filename, new_status, yes=yes)
+            self._move_logic(filename, new_status, yes=yes, skip_gate=skip_gate)
             self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
             self.finish(
                 {
@@ -1340,7 +1340,9 @@ class TasksCLI:
         self._append_log(new_filepath, f"{current_state}->{new_status}")
         return task
 
-    def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
+    def _move_logic(
+        self, filename, new_status, force=False, yes=False, sync=True, skip_gate=False
+    ):
         new_status = new_status.upper()
         filepath, current_state = self.find_task(filename)
         if not filepath:
@@ -1595,7 +1597,7 @@ class TasksCLI:
                     # No testing branch yet, any work is new
                     newer_than_testing = True
 
-                if not has_unstaged and not newer_than_testing:
+                if not skip_gate and not has_unstaged and not newer_than_testing:
                     self.error(
                         f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
                         f"Make some progress before moving to testing. Do not bypass this tool."

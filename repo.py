@@ -262,7 +262,7 @@ def cmd_promote(src_input, original_task_id=None):
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
         if target == "testing" and cli.find_task(task_id)[1] == "PROGRESSING":
-            cli.move(task_id, "TESTING", yes=FLAGS["yes"])
+            cli.move(task_id, "TESTING", yes=FLAGS["yes"], skip_gate=True)
         elif target == "staging" and cli.find_task(task_id)[1] == "REVIEW":
             cli.move(task_id, "STAGING", yes=FLAGS["yes"])
         elif target == "main":
