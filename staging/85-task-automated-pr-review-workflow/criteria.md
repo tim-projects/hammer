@@ -1,1 +1,0 @@
-- [ ] - [ ] Condensed diff view shows file headers with +/- line counts\n- [ ] Agent must confirm on each file before regression check passes\n- [ ] Review progress logged in task progress\n- [ ] Regression check flag reset also clears review progress\n- [ ] Test completes in --dev environment
