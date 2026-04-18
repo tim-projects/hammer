@@ -13,3 +13,13 @@
 ## Mitigations
 - Manually fixed syntax and linting errors to satisfy `check.py all`.
 - Updated `check.py` to dynamically set `PYTHONPATH` for sub-processes.
+
+## Progress Update
+- Resolved  by dynamically setting  in  for test runs.
+- Implemented  logic in  with the extracted code.
+- Verified that linting passes and most tests pass; investigating remaining test failure.
+
+## Progress Update
+- Resolved `ModuleNotFoundError` by dynamically setting `PYTHONPATH` in `check.py` for test runs.
+- Implemented `doctor` logic in `tasks_ai/commands.py` with the extracted code.
+- Verified that linting passes and most tests pass; investigating remaining test failure.
