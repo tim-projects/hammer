@@ -448,7 +448,7 @@ def cmd_promote(src_input, original_task_id=None):
                         f"Task {task_id} is in TESTING. Moving to REVIEW to generate audit diff..."
                     )
                     try:
-                        cli.move(task_id, "REVIEW", sync=False)
+                        cli.move(task_id, "REVIEW")
                     except SystemExit:
                         pass
                     error(
