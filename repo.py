@@ -337,7 +337,7 @@ def cmd_merge(src_input, target):
         # Check for uncommitted changes and auto-commit if needed
         st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
         if st:
-            warn(f"Uncommitted changes on {current}. Auto-committing...")
+            warn(f"Uncommitted changes on {current.upper()}. Auto-committing...")
             run(["git", "add", "."])
             run(["git", "commit", "-m", f"WIP: Auto-commit before promote to {src}"])
 
@@ -352,7 +352,7 @@ def cmd_merge(src_input, target):
     # Check clean
     st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
     if st:
-        warn(f"Uncommitted changes on {src}. Auto-committing...")
+        warn(f"Uncommitted changes on {src.upper()}. Auto-committing...")
         run(["git", "add", "."])
         run(["git", "commit", "-m", f"WIP: {src}"])
 
