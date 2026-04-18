@@ -157,7 +157,7 @@ def resolve_branch(name):
     if name == "current":
         return get_current_branch()
     if name.isdigit() and TasksCLI:
-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
         path, _ = cli.find_task(name)
         if path:
             branch_name = os.path.basename(path)
@@ -203,6 +203,24 @@ def cmd_merge(src_input, target):
     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
 
 
+def cmd_commit(message):
+    if not message:
+        error("commit: message required")
+    current = get_current_branch()
+    st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
+    if st:
+        run(["git", "add", "."])
+        if not ToolRunner().run_validation(fix=True, dev=FLAGS["dev"]):
+            error("Compliance failed.")
+        run(["git", "commit", "-m", message])
+        info(f"Committed on {current.upper()}")
+        if FLAGS["yes"] or prompt_yes_no(f"Push {current}?"):
+            run(["git", "push", "origin", current])
+        log("✅ Commit successful")
+    else:
+        warn("No changes to commit")
+
+
 def cmd_promote(src_input, original_task_id=None):
     src = resolve_branch(src_input)
     task_id = original_task_id or (
@@ -215,7 +233,7 @@ def cmd_promote(src_input, original_task_id=None):
     )
 
     if task_id and TasksCLI:
-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
         path, status = cli.find_task(task_id)
         if path:
             if target in ("staging", "main"):
@@ -238,7 +256,7 @@ def cmd_promote(src_input, original_task_id=None):
 
     cmd_merge(src, target)
     if task_id and TasksCLI:
-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
         if target == "testing" and cli.find_task(task_id)[1] == "PROGRESSING":
             cli.move(task_id, "TESTING")
         elif target == "staging" and cli.find_task(task_id)[1] == "REVIEW":
@@ -255,7 +273,7 @@ def cmd_demote(task_id_input, target_state):
     from tasks_ai.file_manager import FM
 
     task_id = task_id_input.split("-")[0]
-    cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+    cli = TasksCLI(quiet=True, dev=FLAGS["dev"])  # type: ignore[reportOptionalCall]
     path, _ = cli.find_task(task_id)
     task = FM.load(path)
     branch = task.metadata.get("Br")
@@ -286,10 +304,15 @@ def main():
             FLAGS["yes"] = True
         elif arg == "--dev":
             FLAGS["dev"] = True
+        elif arg in ["-j", "--json"]:
+            FLAGS["json"] = True
+        elif arg in ["-q", "--quiet"]:
+            FLAGS["quiet"] = True
         else:
             args.append(arg)
 
     if not args:
+        print(__doc__)
         return
     cmd = args[0]
     if cmd == "merge":
@@ -301,6 +324,29 @@ def main():
     elif cmd == "sync":
         cmd_merge("testing", "staging")
         cmd_merge("staging", "main")
+    elif cmd == "commit":
+        cmd_commit(" ".join(args[1:]))
+    elif cmd == "git":
+        result = run(["git"] + args[1:], capture=True)
+        if result.stdout:
+            print(result.stdout)
+    elif cmd == "status":
+        result = run(["git", "status"], capture=True)
+        print(result.stdout)
+    elif cmd == "branch":
+        if len(args) < 2:
+            error("branch: specify list, create, or delete")
+        elif args[1] == "list":
+            result = run(["git", "branch"], capture=True)
+            print(result.stdout)
+        elif args[1] == "create" and len(args) > 2:
+            run(["git", "checkout", "-b", args[2]])
+        elif args[1] == "delete" and len(args) > 2:
+            run(["git", "branch", "-d", args[2]])
+        elif args[1] == "exists" and len(args) > 2:
+            sys.exit(0 if branch_exists(args[2]) else 1)
+        else:
+            error("branch: unknown subcommand")
     else:
         error(f"Unknown: {cmd}")
 
