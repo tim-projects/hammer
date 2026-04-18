@@ -1340,7 +1340,7 @@ class TasksCLI:
         self._append_log(new_filepath, f"{current_state}->{new_status}")
         return task
 
-    def _move_logic(self, filename, new_status, force=False, yes=False):
+    def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         new_status = new_status.upper()
         filepath, current_state = self.find_task(filename)
         if not filepath:
@@ -1713,6 +1713,55 @@ class TasksCLI:
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
                     hint="If this is a code change, please move to REVIEW, audit the diff at .tasks/review/<task_id>/diff.patch, then run 'tasks modify <id> --regression-check' to confirm.",
+                )
+
+                # Sync and Reset for regression states
+        if new_status in ("PROGRESSING", "TESTING", "REVIEW"):
+            task.metadata["Rc"] = ""
+            fname = os.path.basename(filepath_str)
+            _, feature_branch = self._parse_filename(fname)
+
+            # Sync
+            current_branch = self._run_git(
+                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.root
+            ).stdout.strip()
+            if current_branch != feature_branch:
+                self._run_git(["checkout", feature_branch], cwd=self.root)
+
+            has_staging = (
+                self._run_git(["rev-parse", "--verify", "staging"]).returncode == 0
+            )
+            has_testing = (
+                self._run_git(["rev-parse", "--verify", "testing"]).returncode == 0
+            )
+            if has_staging:
+                self._run_git(
+                    ["merge", "staging", "-m", f"Sync: staging -> {feature_branch}"],
+                    cwd=self.root,
+                )
+            elif has_testing:
+                self._run_git(
+                    ["merge", "testing", "-m", f"Sync: testing -> {feature_branch}"],
+                    cwd=self.root,
+                )
+
+        # Trigger automatic promotion for TESTING
+        if new_status == "TESTING":
+            self.log("Automatically promoting to testing branch...")
+            from repo import cmd_promote
+
+            try:
+                cmd_promote(branch)
+            except Exception as e:
+                self.error(f"Promotion failed: {e}")
+
+        # Regression check enforcement for ARCHIVED
+        if new_status == "ARCHIVED":
+            task = FM.load(filepath_str)
+            if not task.metadata.get("Rc"):
+                self.error(
+                    "Cannot move to ARCHIVED: regression check not passed (Rc flag not set).",
+                    hint="Ensure you have performed a regression review and run 'tasks modify <id> --regression-check' before archiving.",
                 )
 
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
