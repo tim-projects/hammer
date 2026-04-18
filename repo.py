@@ -259,7 +259,7 @@ def resolve_branch(name):
 
     # Check if task ID
     if name.isdigit() and TasksCLI:
-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"]) if TasksCLI is not None else None
         path, _ = cli.find_task(name)
         if path:
             branch_name = os.path.basename(path)
@@ -308,7 +308,9 @@ def ensure_pipeline_branch(name):
         base = PIPELINE[idx + 1]
 
     if not branch_exists(base):
-        if base == "main" and branch_exists("master"):
+        if branch_exists("main"):
+            base = "main"
+        elif branch_exists("master"):
             base = "master"
         else:
             error(f"Cannot create {name}: base branch {base} not found.")
@@ -434,50 +436,69 @@ def cmd_promote(src_input, original_task_id=None):
         # It's a feature branch, promote to testing
         target = "testing"
 
-    # Review Gate: Stop before merging testing → staging if task hasn't passed review
-    if target == "staging" and task_id:
-        if TasksCLI:
-            cli = TasksCLI(quiet=True, dev=FLAGS["dev"])
-            path, status = cli.find_task(task_id)
-            if path:
-                if status != "REVIEW":
-                    # If it's in TESTING, we can auto-move to REVIEW to generate diff
-                    if status == "TESTING":
-                        info(
-                            f"Task {task_id} is in TESTING. Moving to REVIEW to generate diff..."
-                        )
-                        try:
-                            cli.move(task_id, "REVIEW")
-                            log(f"✅ Task {task_id} moved to REVIEW.")
-                        except SystemExit:
-                            pass
-
-                        error(
-                            f"Task {task_id} has been moved to REVIEW.",
-                            hint=f"Please review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to staging.",
-                        )
-                    else:
-                        error(
-                            f"Task {task_id} is in '{status}' state, not 'REVIEW'.",
-                            hint=f"Move task to REVIEW first: 'tasks move {task_id} REVIEW'",
-                        )
-
-                # Verify Regression Check (Rc)
-                from tasks_ai.file_manager import FM
-
-                task = FM.load(path)
-                if not task.metadata.get("Rc"):
+    # Task State and Review Gate Enforcement
+    if task_id and TasksCLI:
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"]) if TasksCLI is not None else None
+        path, status = cli.find_task(task_id)
+        if path:
+            # If target is staging or main, we require Rc flag to be set
+            if target in ("staging", "main"):
+                if status == "TESTING":
+                    info(
+                        f"Task {task_id} is in TESTING. Moving to REVIEW to generate audit diff..."
+                    )
+                    try:
+                        cli.move(task_id, "REVIEW", sync=False)
+                    except SystemExit:
+                        pass
                     error(
-                        f"Task {task_id} has not passed regression check (Rc flag not set).",
-                        hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm.",
+                        f"Task {task_id} moved to REVIEW for audit.",
+                        hint=f"Review the diff at .tasks/review/{task_id}-...patch and run 'tasks modify {task_id} --regression-check' before promoting to {target}.",
                     )
 
+                if status == "REVIEW":
+                    from tasks_ai.file_manager import FM
+
+                    task = FM.load(path)
+                    if not task.metadata.get("Rc"):
+                        error(
+                            f"Task {task_id} has not passed regression check (Rc flag not set).",
+                            hint=f"Review the diff at .tasks/review/{task_id}-...patch. If clean, run 'tasks modify {task_id} --regression-check' to confirm promotion to {target}.",
+                        )
+                    # If Rc is present, we proceed automatically.
+
     cmd_merge(src, target)
+
+    # Post-merge Task State Enforcement
+    if task_id and TasksCLI:
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"]) if TasksCLI is not None else None
+        if target == "testing":
+            _, status = cli.find_task(task_id)
+            if status == "PROGRESSING":
+                try:
+                    cli.move(task_id, "TESTING", sync=False)
+                except SystemExit:
+                    pass
+        elif target == "staging":
+            _, status = cli.find_task(task_id)
+            if status == "REVIEW":
+                try:
+                    cli.move(task_id, "STAGING", sync=False)
+                except SystemExit:
+                    pass
+        elif target == "main":
+            try:
+                cli.move(task_id, "DONE", sync=False)
+            except SystemExit:
+                pass
 
     # If it was a feature branch promoted to testing, ask to promote testing to staging etc.
     if target != "main":
         if prompt_yes_no(f"Continue promotion from {target} to next stage?"):
             cmd_promote(target, original_task_id=task_id)
+        else:
+            info(f"Promotion stopped after merge to {target}.")
+            sys.exit(0)
 
 
 def cmd_status():
@@ -520,6 +541,10 @@ def main():
     elif cmd == "sync":
         cmd_merge("testing", "staging")
         cmd_merge("staging", "main")
+    elif cmd == "demote":
+        if len(args) < 3:
+            error("Usage: repo demote <task_id> <target_state>")
+        cmd_demote(args[1], args[2])
     elif cmd == "status":
         cmd_status()
     elif cmd == "commit":
@@ -554,3 +579,65 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def cmd_demote(task_id_input, target_state):
+    """
+    Demote a task from current pipeline stage to target stage/branch.
+    Pushes code changes back from target branch to task feature branch.
+    """
+    from tasks_ai.file_manager import FM
+
+    task_id = (
+        task_id_input.split("-")[0]
+        if task_id_input.split("-")[0].isdigit()
+        else task_id_input
+    )
+    if not TasksCLI:
+        error("TasksCLI not available.")
+
+    cli = TasksCLI(quiet=True, dev=FLAGS["dev"]) if TasksCLI is not None else None
+    path, _ = cli.find_task(task_id)
+    if not path:
+        error(f"Task {task_id} not found.")
+
+    task = FM.load(path)
+    branch = task.metadata.get("Br")
+    if not branch:
+        error(f"Task {task_id} has no associated branch.")
+
+    info(f"Demoting {task_id} ({branch}) to {target_state}...")
+
+    # Sync changes back
+    branches_to_sync = []
+    if target_state == "PROGRESSING":
+        branches_to_sync = ["staging", "testing"]
+    elif target_state == "TESTING":
+        branches_to_sync = ["staging"]
+
+    for b in branches_to_sync:
+        if branch_exists(b):
+            run(["git", "checkout", branch])
+            log(f"Merging {b} back into {branch}...")
+            merge_res = run(
+                ["git", "merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
+                check=False,
+            )
+            if merge_res.returncode != 0:
+                warn(
+                    f"Merge conflict syncing {b} back to {branch}. Please resolve manually."
+                )
+
+    # Move task status
+    cli.move(task_id, target_state)
+
+    # Reset Rc flag
+    from tasks_ai.file_manager import FM
+
+    task = FM.load(path)
+    task.metadata["Rc"] = ""
+    FM.dump(task, path)
+
+    log(
+        f"✅ Successfully demoted {task_id} to {target_state}, synced branches, and reset regression flag."
+    )
