@@ -49,7 +49,7 @@ YELLOW = "\033[1;33m"
 CYAN = "\033[0;36m"
 NC = "\033[0m"
 
-FLAGS = {"yes": False, "quiet": False, "json": False, "dev": os.path.exists("/tmp/.tasks")}
+FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
 
 PIPELINE = ["testing", "staging", "main"]
 
@@ -197,6 +197,16 @@ class ToolRunner:
             warn("check.py not found, skipping tool validation")
             return True
 
+        tools = ["format", "lint", "typecheck", "test"]
+        all_passed = True
+        for t in tools:
+            # We still need to know if it's configured.
+            # check.py handles the config check itself and returns 1 if not configured.
+            # But we only want to fail if it IS configured and FAILS.
+            # Wait, if it's NOT configured, check.py prints an error and returns 1.
+            # We should probably only run 'all' if we want to check everything.
+            pass
+
         # Simpler: just run 'check all'
         log("Running codebase validation (check all)...")
         # Prefer local check.py over system check
@@ -291,27 +301,23 @@ def ensure_pipeline_branch(name):
     if name not in PIPELINE:
         error(f"Branch {name} does not exist and is not a pipeline branch.")
 
-    # Create from next in pipeline or main, or fallback to main
-    # Identify the base branch
-    base = "main"
-    if branch_exists("master"):
-        base = "master"
-    
-    # Try to find the next available pipeline branch
-    # PIPELINE = ["testing", "staging", "main"]
-    # If creating "testing", try "staging", then "main"
-    # If creating "staging", try "main"
+    # Create from next in pipeline or main
     idx = PIPELINE.index(name)
-    for b in PIPELINE[idx+1:]:
-        if branch_exists(b):
-            base = b
-            break
-            
+    base = "main"
+    if idx + 1 < len(PIPELINE):
+        base = PIPELINE[idx + 1]
+
     if not branch_exists(base):
-        error(f"Cannot create {name}: base branch {base} not found.")
+        if branch_exists("main"):
+            base = "main"
+        elif branch_exists("master"):
+            base = "master"
+        else:
+            error(f"Cannot create {name}: base branch {base} not found.")
 
     log(f"Creating pipeline branch {name} from {base}...")
     run(["git", "checkout", "-b", name, base])
+    run(["git", "checkout", "-"])  # Return
 
 
 def cmd_merge(src_input, target):
