@@ -45,10 +45,18 @@ class TestTasksAI(unittest.TestCase):
                 "test": "/bin/true",
                 "type_check": "/bin/true",
                 "format": "/bin/true",
+                "remote": "origin",
             }
         }
         with open(os.path.join(config_dir, "config.yaml"), "w") as f:
             json.dump(config_data, f)
+
+        # Setup a dummy origin remote for tests that expect remote to exist
+        subprocess.run(
+            ["git", "remote", "add", "origin", "/dev/null"],
+            cwd=self.repo_dir,
+            capture_output=True,
+        )
 
     def tearDown(self):
         print(os.listdir(self.repo_dir))
@@ -60,8 +68,14 @@ class TestTasksAI(unittest.TestCase):
         shutil.copy(os.path.join(base_dir, "check.py"), self.repo_dir)
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         shutil.copy(os.path.join(base_dir, "repo.py"), self.repo_dir)
+        # Auto-confirm prompts for test stability (only add -y to move commands)
+        all_args = [sys.executable, self.script_path, "-j", "--dev"] + args
+        # Inject -y flag after 'move' in args if move command present
+        if "move" in args:
+            idx = args.index("move")
+            all_args = all_args[: idx + 2] + ["-y"] + all_args[idx + 2 :]
         result = subprocess.run(
-            [sys.executable, self.script_path, "-j", "--dev"] + args,
+            all_args,
             cwd=self.repo_dir,
             env={**os.environ, "TASKS_TESTING": "1"},
             capture_output=True,

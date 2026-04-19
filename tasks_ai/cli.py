@@ -235,7 +235,26 @@ class TasksCLI:
         return result
 
     def _get_remote(self, cwd=None):
-        """Identify the primary git remote name (prefers 'origin', then any available)."""
+        """Identify the primary git remote name (prefers config, then 'origin', then any available)."""
+        # Check for configured remote in .tasks/config.yaml
+        config_path = os.path.join(self.root, ".tasks", "config.yaml")
+        if os.path.exists(config_path):
+            try:
+                import yaml
+
+                with open(config_path) as f:
+                    config = yaml.safe_load(f) or {}
+                remote = config.get("repo", {}).get("remote")
+                if remote:
+                    # Verify remote exists
+                    res = self._run_git(["remote", "get-url", remote], cwd=cwd)
+                    if res.returncode == 0:
+                        return remote
+            except ImportError:
+                pass
+            except Exception:
+                pass
+
         # Check if 'origin' exists
         res = self._run_git(["remote", "get-url", "origin"], cwd=cwd)
         if res.returncode == 0:
@@ -249,7 +268,7 @@ class TasksCLI:
                 return "github"
             return remotes[0]
 
-        return "origin"  # Final fallback if no remotes found
+        return "origin"  # Final fallback
 
     def _generate_review_diff(self, task_path, branch):
         """Generate a unified diff patch for the task branch against main including unstaged changes."""
@@ -973,7 +992,10 @@ class TasksCLI:
             )
             tt, branch = self._parse_filename(os.path.basename(filepath))  # type: ignore[arg-type]
             remote = self._get_remote()
-            if not self._run_git(["ls-remote", "--heads", remote, branch]).stdout:
+            if (
+                remote
+                and not self._run_git(["ls-remote", "--heads", remote, branch]).stdout
+            ):
                 self._run_git(["checkout", "-b", branch], cwd=self.root)
             if not task.parts.get("story"):
                 self.log("Tip: Consider adding --story to document the user context.")

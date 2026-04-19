@@ -115,7 +115,31 @@ def get_current_branch():
 
 
 def get_remote():
-    """Identify the primary git remote name (prefers 'origin', then any available)."""
+    """Identify the primary git remote name (prefers config, then 'origin', then any available)."""
+    # Check for configured remote in .tasks/config.yaml
+    cfg_root = find_project_root()
+    if not cfg_root:
+        cfg_root = os.getcwd()
+    config_path = os.path.join(cfg_root, ".tasks", "config.yaml")
+    if os.path.exists(config_path):
+        try:
+            import yaml
+
+            with open(config_path) as f:
+                config = yaml.safe_load(f) or {}
+            remote = config.get("repo", {}).get("remote")
+            if remote:
+                # Verify remote exists
+                try:
+                    run(["git", "remote", "get-url", remote], capture=True)
+                    return remote
+                except Exception:
+                    pass
+        except ImportError:
+            pass
+        except Exception:
+            pass
+
     # Check if 'origin' exists
     try:
         run(["git", "remote", "get-url", "origin"], capture=True)
@@ -134,7 +158,7 @@ def get_remote():
     except Exception:
         pass
 
-    return "origin"  # Final fallback
+    return None  # No remote found
 
 
 def prompt_yes_no(prompt):
@@ -161,9 +185,14 @@ class ToolRunner:
         if dev:
             cmd.append("--dev")
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)
-        print(f"DEBUG: cmd={cmd}, stdout={result.stdout}, stderr={result.stderr}", file=sys.stderr)
+        print(
+            f"DEBUG: cmd={cmd}, stdout={result.stdout}, stderr={result.stderr}",
+            file=sys.stderr,
+        )
         if result.returncode != 0:
-            warn(f"Validation failed. STDOUT: {result.stdout} | STDERR: {result.stderr}")
+            warn(
+                f"Validation failed. STDOUT: {result.stdout} | STDERR: {result.stderr}"
+            )
             return False
         log("✅ Validation passed")
         return True
@@ -233,10 +262,13 @@ def cmd_merge(src_input, target):
     log(f"⚒️ HAMMER MERGE {src} into {target}... 🔨")
     run(["git", "checkout", target])
     remote = get_remote()
-    run(["git", "pull", remote, target], check=False)
+    if remote:
+        run(["git", "pull", remote, target], check=False)
     run(["git", "merge", src, "-m", f"merge: {src} into {target}"])
-    if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+    if remote and (FLAGS["yes"] or prompt_yes_no(f"Push {target}?")):
         run(["git", "push", remote, target])
+    else:
+        warn("No remote configured - skipping push")
     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
 
 
@@ -251,9 +283,11 @@ def cmd_commit(message):
             error("❌ COMPLIANCE FAIL! 🔨")
         run(["git", "commit", "-m", message])
         info(f"Committed on {current.upper()}")
-        if FLAGS["yes"] or prompt_yes_no(f"Push {current}?"):
-            remote = get_remote()
+        remote = get_remote()
+        if remote and (FLAGS["yes"] or prompt_yes_no(f"Push {current}?")):
             run(["git", "push", remote, current])
+        else:
+            warn("No remote configured - skipping push")
         log("✅ Commit successful")
     else:
         warn("No changes to commit")
