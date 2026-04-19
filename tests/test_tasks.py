@@ -58,6 +58,7 @@ class TestTasksAI(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, self.script_path, "-j"] + args,
             cwd=self.repo_dir,
+            env={**os.environ, "TASKS_TESTING": "1"},
             capture_output=True,
             text=True,
         )

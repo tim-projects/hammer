@@ -45,6 +45,15 @@ def find_project_root(start_path=None):
         start_path = os.getcwd()
 
     current = os.path.abspath(start_path)
+    
+    # Priority: Does the current directory contain .tasks?
+    if os.path.isdir(os.path.join(current, ".tasks")):
+        return current
+        
+    # If we are in a test environment, do not allow searching upwards.
+    if os.environ.get("TASKS_TESTING") == "1":
+        return None
+
     while True:
         if os.path.isdir(os.path.join(current, ".tasks")) or os.path.isdir(
             os.path.join(current, ".git")
