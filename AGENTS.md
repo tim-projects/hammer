@@ -22,6 +22,9 @@ python tasks.py -j list
 When testing the tool itself or performing "dry runs" of task operations without affecting the project's real `.tasks` worktree, use the `--dev` flag. This will use `/tmp/.tasks` as an isolated storage directory. Note that the `--dev` flag is strictly for testing tool behavior and operational workflows in an isolated environment; it should NOT be used to create tasks meant for real project progress.
 
 ```bash
+# Reset dev environment (if corrupted or needs fresh start)
+./scripts/reset-dev.sh
+
 # Initialize dev environment
 python tasks.py --dev init
 
@@ -96,6 +99,7 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
 | `python tasks.py show <id> plan` | Show only the plan section |
 | `python tasks.py show <id> repro` | Show only the reproduction steps (for issues) |
 | `python tasks.py show <id> progress` | Show active progress notes |
+| `./scripts/reset-dev.sh` | Reset dev environment (clear /tmp/.tasks) |
 | `python tasks.py --dev init` | Initialize isolated dev environment |
 | `python tasks.py --dev <cmd>` | Run any task command in isolated /tmp/.tasks |
 | `python tasks.py move <id> <state>` | Move task to new state (use comma-separated for multi-step) |
