@@ -97,7 +97,7 @@ def load_config(dev=False):
 
     # Fallback: use cwd-relative lookup from original check.py location (even if copied to temp)
     if not real_project_root:
-        print(f"DEBUG: Using __file__ fallback", file=sys.stderr)
+        print("DEBUG: Using __file__ fallback", file=sys.stderr)
         potential_root = Path(__file__).resolve().parent
         while potential_root != potential_root.parent:
             if (potential_root / ".tasks").exists():

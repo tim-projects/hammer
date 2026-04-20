@@ -1743,7 +1743,8 @@ class TasksCLI:
                     # Keep branch for potential restoration if rejected or archived before DONE
                     if current_state == "DONE":
                         remote = self._get_remote()
-                        self._run_git(["push", remote, branch], cwd=self.root)
+                        if remote:
+                            self._run_git(["push", remote, branch], cwd=self.root)
                         self._run_git(["branch", "-d", branch], cwd=self.root)
                 else:
                     if not self.as_json:
