@@ -50,12 +50,12 @@ PIPELINE = ["testing", "staging", "main"]
 
 
 def log(msg):
-    if not FLAGS["quiet"]:
+    if not FLAGS["quiet"] and not FLAGS["json"]:
         print(f"{GREEN}[repo]{NC} {msg}")
 
 
 def warn(msg):
-    if not FLAGS["quiet"]:
+    if not FLAGS["quiet"] and not FLAGS["json"]:
         print(f"{YELLOW}[repo] WARN:{NC} {msg}")
 
 
@@ -70,7 +70,7 @@ def error(msg, hint=None):
 
 
 def info(msg):
-    if not FLAGS["quiet"]:
+    if not FLAGS["quiet"] and not FLAGS["json"]:
         print(f"{CYAN}[repo]{NC} {msg}")
 
 
@@ -90,8 +90,9 @@ def find_project_root(start_path=None):
     return Path(__file__).parent.resolve()
 
 
-def run(cmd, check=True, capture=False, env=None, cwd=None):
+def run(cmd, check=True, capture=False, env=None, cwd=None, quiet=False):
     project_root = find_project_root()
+    capture = capture or quiet or FLAGS["json"]
     try:
         return subprocess.run(
             cmd,
@@ -185,8 +186,10 @@ def ensure_pipeline_branch(name):
         error(f"Branch {name} not in pipeline.")
     idx = PIPELINE.index(name)
     base = PIPELINE[idx + 1] if idx + 1 < len(PIPELINE) else "main"
-    run(["git", "checkout", "-b", name, base])
-    run(["git", "checkout", "-"])
+    if not branch_exists(base):
+        base = get_current_branch()
+    run(["git", "checkout", "-b", name, base], quiet=True)
+    run(["git", "checkout", "-"], quiet=True)
 
 
 def cmd_merge(src_input, target):

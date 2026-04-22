@@ -1796,6 +1796,7 @@ class TasksCLI:
 
                 FLAGS["yes"] = yes
                 FLAGS["quiet"] = self.quiet
+                FLAGS["json"] = True
                 FLAGS["dev"] = self.dev
 
                 try:

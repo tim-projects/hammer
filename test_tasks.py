@@ -72,7 +72,6 @@ class TestTasksAI(unittest.TestCase):
                 "stderr": result.stderr,
             }
 
-    @unittest.skip("Skipping failing test_full_lifecycle")
     def test_full_lifecycle(self):
         res = self.run_cmd(["init"])
         self.assertTrue(res["success"], res)
@@ -231,7 +230,6 @@ class TestTasksAI(unittest.TestCase):
         res = self.run_cmd(["move", task_file, "READY,PROGRESSING"])
         self.assertTrue(res["success"], res)
 
-    @unittest.skip("Skipping failing test_auto_archival")
     def test_auto_archival(self):
         self.run_cmd(["init"])
         res = self.run_cmd(
@@ -602,7 +600,6 @@ class TestTasksAI(unittest.TestCase):
         res = self.run_cmd(["move", task_file, "STAGING"])
         self.assertTrue(res["success"], f"STAGING should succeed after Rc set: {res}")
 
-    @unittest.skip("Skipping failing test_regression_check_flag_sets_rc_metadata")
     def test_regression_check_flag_sets_rc_metadata(self):
         """Test that --regression-check correctly sets Rc metadata field."""
         self.run_cmd(["init"])
@@ -670,7 +667,6 @@ class TestTasksAI(unittest.TestCase):
         task = FM.load(review_task_path)
         self.assertTrue(task.metadata.get("Rc"), "Rc should be True after modify")
 
-    @unittest.skip("Skipping failing test_regression_workflow_move_back_to_progressing")
     def test_regression_workflow_move_back_to_progressing(self):
         """Test full regression workflow: REVIEW -> PROGRESSING (fix) -> TESTING -> REVIEW."""
         self.run_cmd(["init"])
