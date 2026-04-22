@@ -5,5 +5,8 @@
   "Bl": [],
   "Pr": 2,
   "Br": "95-task-test-move-now",
-  "Vp": true
+  "Vp": true,
+  "Rc": true,
+  "Tp": true,
+  "Ar": "true"
 }
