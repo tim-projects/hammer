@@ -639,12 +639,10 @@ class TasksCLI:
         task_id = name.rsplit(".", 1)[0]
 
         matches = []
-        for state, folder in STATE_FOLDERS.items():
-            dir_path = os.path.join(self.tasks_path, folder, task_id)
-            if os.path.isdir(dir_path):
-                matches.append((dir_path, state))
 
-        if not matches and task_id.isdigit():
+        # When searching by numeric ID, prioritize metadata Id match over directory name
+        # This prevents finding corrupted directories with just numeric names
+        if task_id.isdigit():
             for state, folder in STATE_FOLDERS.items():
                 fp = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(fp):
@@ -655,6 +653,13 @@ class TasksCLI:
                         task = FM.load(path)
                         if str(task.metadata.get("Id")) == task_id:
                             matches.append((path, state))
+
+        # Fallback: look for directory named exactly as task_id
+        if not matches:
+            for state, folder in STATE_FOLDERS.items():
+                dir_path = os.path.join(self.tasks_path, folder, task_id)
+                if os.path.isdir(dir_path):
+                    matches.append((dir_path, state))
 
         if not matches:
             return None, None
