@@ -265,17 +265,34 @@ class TasksCLI:
         diff_content = ""
 
         if main_sha:
-            # Get log with patches for commits on branch not in default branch: git log --patch <main_sha>..<branch>
+            # Get commits on branch not in main (if any)
             result = self._run_git(
                 ["log", "--patch", f"{main_sha}..{branch}"], cwd=self.root
             )
             self.log(
                 f"[DEBUG] log-patch cmd returncode={result.returncode}, stdout len={len(result.stdout)}"
             )
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout.strip():
                 diff_content += result.stdout
-            else:
-                self.log(f"[DEBUG] log-patch cmd stderr: {result.stderr}")
+
+            # Also get diff of changes introduced by this branch (using merge-base)
+            # This handles cases where branch was merged into testing/main
+            merge_base_result = self._run_git(
+                ["merge-base", main_sha, branch], cwd=self.root
+            )
+            if merge_base_result.returncode == 0 and merge_base_result.stdout.strip():
+                merge_base = merge_base_result.stdout.strip()
+                result = self._run_git(
+                    ["diff", merge_base, branch, "--patch"], cwd=self.root
+                )
+                self.log(
+                    f"[DEBUG] branch diff (from merge-base) returncode={result.returncode}, stdout len={len(result.stdout)}"
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    if diff_content and not diff_content.endswith("\n"):
+                        diff_content += "\n"
+                    diff_content += f"# Changes on {branch} since merge-base:\n"
+                    diff_content += result.stdout
 
         # Get unstaged working tree changes
         result = self._run_git(["diff", "--patch"], cwd=self.root)
@@ -286,6 +303,13 @@ class TasksCLI:
             if diff_content and not diff_content.endswith("\n"):
                 diff_content += "\n"
             diff_content += result.stdout
+
+        # Get staged changes
+        result = self._run_git(["diff", "--cached", "--patch"], cwd=self.root)
+        if result.returncode == 0 and result.stdout:
+            if diff_content and not diff_content.endswith("\n"):
+                diff_content += "\n"
+            diff_content += f"# Staged changes:\n{result.stdout}"
 
         # Write diff file
         with open(diff_path, "w", encoding="utf-8") as f:
