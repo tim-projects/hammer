@@ -5,5 +5,8 @@
   "Bl": [],
   "Pr": 2,
   "Br": "92-task-review-diff-test",
-  "Vp": true
+  "Vp": true,
+  "Rc": true,
+  "Tp": true,
+  "Ar": "true"
 }

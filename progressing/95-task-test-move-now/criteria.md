@@ -1,1 +1,1 @@
-- [ ] Test criteria for move testing
+- [x] Test criteria for move testing

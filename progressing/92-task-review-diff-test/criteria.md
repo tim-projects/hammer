@@ -1,1 +1,0 @@
-- [ ] Criteria description is also long enough
