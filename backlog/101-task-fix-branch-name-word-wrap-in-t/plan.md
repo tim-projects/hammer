@@ -1,0 +1,1 @@
+1. 1. Find the list formatting code\n2. Identify word-wrap logic\n3. Fix to use full column width\n4. Test with various branch name lengths

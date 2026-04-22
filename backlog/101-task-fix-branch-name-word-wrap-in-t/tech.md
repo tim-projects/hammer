@@ -1,0 +1,1 @@
+Need to investigate the list formatting logic - likely in cli.py list command or a formatting function. The branch column should use available space efficiently.

@@ -1,0 +1,1 @@
+The tasks list command word-wraps branch names incorrectly. Instead of using the full available column width for branch names, it creates unnecessary line breaks that make the display harder to read.
