@@ -167,6 +167,26 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     sys.stderr.flush()
 
     if not tool or tool not in commands:
+        # Try auto-detecting once if tool is missing
+        project_root = find_project_root()
+        tasks_py = os.path.join(project_root, "tasks.py")
+        if os.path.exists(tasks_py):
+            if not as_json:
+                print(
+                    f"⚠️ NO {tool_type.upper()} CONFIGURED! ATTEMPTING AUTO-DETECTION... 🔨"
+                )
+
+            subprocess.run(
+                [sys.executable, tasks_py, "config", "detect", "--save"],
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+            )
+            # Reload config and try again
+            config = load_config(dev)
+            tool = config.get(config_key)
+
+    if not tool or tool not in commands:
         msg = f"❌ NO {tool_type} TOOL CONFIGURED! (EXPECTED KEY: {config_key})! RUN 'tasks config detect' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
         if as_json:
             print(
@@ -231,7 +251,8 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stdout_file,
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stderr_file,
             ):
-                result = subprocess.run(print(cmd),
+                result = subprocess.run(
+                    print(cmd),
                     cmd_to_run,
                     cwd=project_root,
                     stdout=stdout_file,
