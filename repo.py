@@ -298,9 +298,12 @@ def cmd_promote(src_input, original_task_id=None):
             if status != new_status:
                 cli.move(task_id, new_status)
 
-    if target != "main" and src not in PIPELINE:
-        if prompt_yes_no(f"Continue promotion from {target.upper()} to next stage?"):
-            cmd_promote(target, original_task_id=task_id)
+
+if target != "main" and original_task_id is None:
+    if FLAGS.get("yes", False) or prompt_yes_no(
+        f"Continue promotion from {target.upper()} to next stage?"
+    ):
+        cmd_promote(target, original_task_id=task_id)
 
 
 def cmd_demote(task_id_input, target_state):
