@@ -251,11 +251,11 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
         # Also exclude known-failing tests that have pre-existing issues unrelated to task changes
         cmd_to_run.extend(
             [
-                "test_cli_robustness.py",
-                "test_repo.py",
-                "test_security.py",
-                "--ignore=test_tasks.py",
-                "--ignore=test_robustness.py",
+                "tests/test_cli_robustness.py",
+                "tests/test_repo.py",
+                "tests/test_security.py",
+                "--ignore=tests/test_tasks.py",
+                "--ignore=tests/test_robustness.py",
             ]
         )
         # Add PYTHONPATH so tests can import tasks_ai modules
