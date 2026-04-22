@@ -1,1 +1,0 @@
-- [ ] Branch names display on single line with full column width usage
