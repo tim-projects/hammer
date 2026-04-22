@@ -1,1 +1,0 @@
-1. 1. List all branches modified in last 24h. 2. Diff these branches against main. 3. Catalog missing files/changes. 4. Create restoration task.

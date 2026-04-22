@@ -1,0 +1,1 @@
+1. 1. Audit README.md and AGENTS.md for branding. 2. Scan all files for 'tasks-ai' vs 'hammer' branding discrepancies. 3. Systematically restore rebranded content across the repo.
