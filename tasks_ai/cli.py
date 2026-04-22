@@ -1396,10 +1396,64 @@ class TasksCLI:
 
         if current_state == new_status:
             return
-        if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and not force:
+
+        # Check if transitioning to ARCHIVED from a non-standard state
+        # If branch is merged to main, allow direct ARCHIVED transition
+        is_merged_branch = False
+        task = FM.load(filepath_str)
+        if new_status == "ARCHIVED" and current_state not in [
+            "DONE",
+            "STAGING",
+            "REJECTED",
+        ]:
+            _, branch = self._parse_filename(os.path.basename(filepath_str))
+            branch_commit = None
+
+            # Try to get local branch commit
+            if self._run_git(["rev-parse", "--verify", branch]).returncode == 0:
+                branch_commit = self._run_git(["rev-parse", branch]).stdout.strip()
+
+            # Try to get origin branch commit
+            if not branch_commit:
+                origin_check = self._run_git(
+                    ["ls-remote", "--heads", "origin", branch]
+                ).stdout.strip()
+                if origin_check:
+                    self._run_git(["fetch", "origin", branch], cwd=self.root)
+                    branch_commit = self._run_git(
+                        ["rev-parse", f"origin/{branch}"]
+                    ).stdout.strip()
+
+            # Check if branch is merged to main
+            if branch_commit:
+                is_merged_branch = (
+                    self._run_git(
+                        ["merge-base", "--is-ancestor", branch_commit, "main"]
+                    ).returncode
+                    == 0
+                )
+
+            if is_merged_branch:
+                # Auto-set missing flags for merged branch
+                if not task.metadata.get("Rc"):
+                    task.metadata["Rc"] = True
+                if not task.metadata.get("Tp"):
+                    task.metadata["Tp"] = True
+                if not task.metadata.get("Vp"):
+                    task.metadata["Vp"] = True
+                task.metadata["Ar"] = "true"
+                FM.dump(task, filepath_str)
+
+        if (
+            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
+            and not force
+            and not is_merged_branch
+        ):
             hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
             if current_state == "REJECTED" and new_status == "ARCHIVED":
                 hint += " Use 'tasks delete <id>' to permanently remove the task."
+            if is_merged_branch:
+                hint += "\nNote: Branch is merged to main. You can archive this task directly."
             self.error(
                 f"Forbidden transition: {current_state} -> {new_status}",
                 hint=hint,
