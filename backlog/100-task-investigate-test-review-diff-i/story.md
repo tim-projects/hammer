@@ -1,0 +1,1 @@
+The test test_review_diff_in_dev_mode in tests/test_dev_mode.py is skipped because it fails: the diff generation returns '# no changes detected' instead of actual code changes in dev mode.
