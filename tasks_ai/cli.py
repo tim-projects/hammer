@@ -333,7 +333,7 @@ class TasksCLI:
         if result.returncode != 0:
             self.error(
                 "Validation failed. Fix errors before proceeding.",
-                hint="Run 'check lint' to see errors. Do not bypass this tool.",
+                hint="Run 'hammer check lint' to see errors. Do not bypass this tool.",
             )
 
     def _run_tests(self, fail_safe=False):
@@ -352,7 +352,7 @@ class TasksCLI:
                 return result
             self.error(
                 "Tests failed. Fix test failures before proceeding.",
-                hint="Run 'check test' to see failures. Do not bypass this tool.",
+                hint="Run 'hammer check test' to see failures. Do not bypass this tool.",
             )
         return result
 
@@ -595,7 +595,7 @@ class TasksCLI:
 
     def save(self, branch="tasks"):
         if not os.path.exists(self.tasks_path):
-            self.error("Tasks not initialized. Run 'tasks init' first.")
+            self.error("Tasks not initialized. Run 'hammer tasks init' first.")
         remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
         if not remotes.stdout.strip():
             if self.dev or self.yes:
@@ -697,9 +697,9 @@ class TasksCLI:
     def _get_next_id(self):
         counter_file = os.path.join(self.tasks_path, ".task_counter")
         if not os.path.exists(counter_file):
-            hint = "Run 'tasks init' first."
+            hint = "Run 'hammer tasks init' first."
             if self.dev:
-                hint = "Dev tasks not initialized. Run 'tasks --dev init' first."
+                hint = "Dev tasks not initialized. Run 'hammer tasks --dev init' first."
             self.error("Tasks not initialized.", hint=hint)
         with open(counter_file, "r+") as f:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
@@ -887,7 +887,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see all available task filenames/IDs.",
+                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
         fname = os.path.basename(filepath)  # type: ignore[arg-type]
@@ -1033,7 +1033,7 @@ class TasksCLI:
         if current_state != "REJECTED":
             self.error(
                 f"Task must be in REJECTED state to delete. Currently in {current_state}.",
-                hint="Use 'tasks delete <id>' first to move to REJECTED, then confirm.",
+                hint="Use 'hammer tasks delete <id>' first to move to REJECTED, then confirm.",
             )
 
         try:
@@ -1257,7 +1257,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see all available task filenames/IDs.",
+                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -1376,7 +1376,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see all available task filenames/IDs.",
+                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
             )
         filepath_str = cast(str, filepath)
 
@@ -1437,7 +1437,7 @@ class TasksCLI:
         ):
             hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
             if current_state == "REJECTED" and new_status == "ARCHIVED":
-                hint += " Use 'tasks delete <id>' to permanently remove the task."
+                hint += " Use 'hammer tasks delete <id>' to permanently remove the task."
             if is_merged_branch:
                 hint += "\nNote: Branch is merged to main. You can archive this task directly."
             self.error(
@@ -1451,7 +1451,7 @@ class TasksCLI:
             if not task.metadata.get("Tp", False):
                 self.error(
                     "Tests must be passed before moving to REVIEW.",
-                    hint="Run 'tasks modify <id> --tests-passed' to mark tests as passed. Do not bypass this tool.",
+                    hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed. Do not bypass this tool.",
                 )
             self._run_validation()
             self._run_tests()
@@ -1542,7 +1542,7 @@ class TasksCLI:
                         missing.append("repro")
                 self.error(
                     f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro. Do not bypass this tool.',
+                    hint='Use \'hammer tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro. Do not bypass this tool.',
                 )
 
         if new_status == "PROGRESSING":
@@ -1589,7 +1589,7 @@ class TasksCLI:
             if missing:
                 self.error(
                     f"Task lacks sufficient detail to move to PROGRESSING. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'tasks show <id>\' to see current content, then \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'tasks modify --help\' for syntax help. Do not bypass this tool.',
+                    hint='Use \'hammer tasks show <id>\' to see current content, then \'hammer tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'hammer tasks modify --help\' for syntax help. Do not bypass this tool.',
                 )
 
         tt, branch = self._parse_filename(fname)
@@ -1796,7 +1796,7 @@ class TasksCLI:
             if not task.metadata.get("Rc"):
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
-                    hint="If this is a code change, please move to REVIEW, audit the diff at .tasks/review/<task_id>/diff.patch, then run 'tasks modify <id> --regression-check' to confirm.",
+                    hint="If this is a code change, please move to REVIEW, audit the diff at .tasks/review/<task_id>/diff.patch, then run 'hammer tasks modify <id> --regression-check' to confirm.",
                 )
 
                 # Sync and Reset for regression states
@@ -1840,7 +1840,7 @@ class TasksCLI:
             if not task.metadata.get("Rc"):
                 self.error(
                     "Cannot move to ARCHIVED: regression check not passed (Rc flag not set).",
-                    hint="Ensure you have performed a regression review and run 'tasks modify <id> --regression-check' before archiving.",
+                    hint="Ensure you have performed a regression review and run 'hammer tasks modify <id> --regression-check' before archiving.",
                 )
 
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
@@ -1917,7 +1917,7 @@ class TasksCLI:
                 self.log(
                     "REVIEW entered: Diff generated. Check .tasks/review/<task_id>/diff.patch for regressions. "
                     "If issues found, move task back to PROGRESSING/TESTING to fix. "
-                    "Once clean, run 'tasks modify <id> --regression-check' to enable STAGING."
+                    "Once clean, run 'hammer tasks modify <id> --regression-check' to enable STAGING."
                 )
         except Exception as e:
             self.error(str(e))
@@ -1970,7 +1970,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see available task Ids.",
+                hint="Use 'hammer tasks list' to see available task Ids.",
             )
 
         # filepath is definitely not None here for pyright
@@ -2312,7 +2312,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see available task Ids and filenames.",
+                hint="Use 'hammer tasks list' to see available task Ids and filenames.",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -2567,7 +2567,7 @@ class TasksCLI:
             if key not in ALLOWED_CONFIG_KEYS:
                 self.error(
                     f"Invalid config key '{key}'.",
-                    hint=f"Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}. Use 'tasks config detect' to auto-detect tools.",
+                    hint=f"Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}. Use 'hammer tasks config detect' to auto-detect tools.",
                 )
             cfg[key] = value
             save_config(cfg)
@@ -2764,7 +2764,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see all available task filenames/IDs.",
+                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
             )
 
         filepath_str = cast(str, filepath)
@@ -2827,7 +2827,7 @@ class TasksCLI:
         if last_commit_msg.startswith("Undo:"):
             self.error(
                 "Cannot undo twice in a row. Already at previous state.",
-                hint="Use 'tasks list' to see current state, or 'git log' in .tasks to see history.",
+                hint="Use 'hammer tasks list' to see current state, or 'git log' in .tasks to see history.",
             )
 
         tree_res = self._run_git(
@@ -3289,7 +3289,7 @@ class TasksCLI:
 
         if not os.path.exists(install_script):
             self.error(
-                f"install.sh not found at {install_path}. Run 'tasks init' first or install manually."
+                f"install.sh not found at {install_path}. Run 'hammer tasks init' first or install manually."
             )
 
         self.log(f"Detected installation: {mode} at {install_path}")
