@@ -168,12 +168,16 @@ def check_origin_exists():
 def resolve_branch(name):
     if name == "current":
         return get_current_branch()
-    if name.isdigit() and TasksCLI:
+
+    # Extract numeric ID if present (e.g., "89-task-xxx" -> "89")
+    numeric_id = name.split("-")[0] if name else None
+    if numeric_id and numeric_id.isdigit() and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])  # type: ignore[reportOptionalCall]
-        path, _ = cli.find_task(name)
+        path, _ = cli.find_task(numeric_id)
         if path:
             branch_name = os.path.basename(path)
             return branch_name
+
     if branch_exists(name):
         return name
     error(f"Could not resolve branch: {name}")
@@ -192,10 +196,20 @@ def ensure_pipeline_branch(name):
     run(["git", "checkout", "-"], quiet=True)
 
 
-def cmd_merge(src_input, target):
+def cmd_merge(src_input, target_input):
     src = resolve_branch(src_input)
+    target = resolve_branch(target_input)
+
+    # Cross-branch merge confirmation (outside pipeline)
+    if target not in PIPELINE:
+        if not FLAGS["yes"]:
+            msg = f"Merging between task branches (outside pipeline: {src} -> {target}). Continue?"
+            if not prompt_yes_no(msg):
+                log("Merge cancelled.")
+                return
+
     ensure_pipeline_branch(target)
-    info(f"Merging {src.upper()} → {target.upper()}")
+    info(f"Merging {src.upper()} \u2192 {target.upper()}")
     current = get_current_branch()
     if current != src:
         st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
