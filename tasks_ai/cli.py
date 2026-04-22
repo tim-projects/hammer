@@ -2078,8 +2078,14 @@ class TasksCLI:
             pass
         else:
             term_width = get_terminal_width()
-            summary_width = max(30, term_width - 45)
-            branch_width = max(15, term_width - summary_width - 30)
+            fixed_cols = 3 + 2 + 6 + 3  # id(3) + priority(2) + type(6) + spaces(3) = 14
+            branch_min = 25
+            summary_min = 30
+            # Available for summary + branch
+            available = term_width - fixed_cols
+            # Give at least branch_min to branch, rest to summary
+            branch_width = max(branch_min, available // 3)
+            summary_width = max(summary_min, available - branch_width)
 
             for state, tasks in all_data.items():
                 print(f"\n{state}")
