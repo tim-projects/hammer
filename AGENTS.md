@@ -2,12 +2,11 @@
 
 ## ⚠️ Error Handling
 
-<<<<<<< HEAD
 When using any tool (`tasks.py`, `repo.py`, `check.py`) and it errors or fails:
 1. **STOP immediately** - Do not continue with further commands
 2. **Report the error** - Tell the user what happened and the error message
 3. **Wait for instruction** - Do not try to fix or work around the error without asking
-=======
+
 ## ⚠️ Important: Use Local tasks
 
 This repo has a local `tasks.py` that should be used instead of the system-installed `tasks` binary. The local version may be newer or has modifications.
@@ -69,16 +68,13 @@ Run `python tasks.py --help` to discover the interface, JSON schemas, and operat
 - **Priority First**: Always pick the task with the lowest `P` (Priority) value first.
 - **Blockers**: If stuck, move the task to `BLOCKED` immediately and document the reason in `current-task.md` before checkpointing.
 - **Dependencies**: Use `python tasks.py -j link <task-id> <blocker-id>` to link a task to a blocker.
->>>>>>> 19-task-atomic-file-operations
 
 ## 🔑 Task References
 
 - **Use Numeric Ids**: All commands accept the numeric task Id (e.g., `17`) instead of the filename. Run `python tasks.py list` to see Ids.
-<<<<<<< HEAD
 - **Show Task Details**: Show full task details with `python tasks.py show <id>`
 - **Show Only Specific Sections**: Use `python tasks.py show <id> story|tech|criteria|plan|progress|repro`
 - **Use `--dev` for testing**: Always use `--dev` flag when testing or doing dry runs
-=======
 - **Multi-Step Moves**: Push a task through multiple states in ONE command:
   ```bash
   python tasks.py -j move <id> READY,PROGRESSING,TESTING
@@ -119,4 +115,3 @@ If validation fails:
 1. **Fix the actual issue** - Not the validation tool
 2. **Create a new task** for pre-existing issues  
 3. **Ask the user** what to do instead of bypassing
->>>>>>> 19-task-atomic-file-operations

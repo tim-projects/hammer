@@ -140,6 +140,10 @@ class ToolRunner:
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)
         if result.returncode != 0:
             warn("Validation failed")
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
             return False
         log("✅ Validation passed")
         return True
@@ -168,15 +172,19 @@ def check_origin_exists():
 def resolve_branch(name):
     if name == "current":
         return get_current_branch()
-    if name.isdigit() and TasksCLI:
+
+    # Extract numeric ID if present (e.g., "89", "89-task-xxx", or just digits)
+    numeric_id = name.split("-")[0] if name else None
+    if numeric_id and numeric_id.isdigit() and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])  # type: ignore[reportOptionalCall]
-        path, _ = cli.find_task(name)
+        path, _ = cli.find_task(numeric_id)
         if path:
             branch_name = os.path.basename(path)
             return branch_name
+
     if branch_exists(name):
         return name
-    error(f"Could not resolve branch: {name}")
+    error(f"COULD NOT RESOLVE BRANCH: {name}!")
 
 
 def ensure_pipeline_branch(name):

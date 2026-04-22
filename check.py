@@ -168,8 +168,31 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
 
     tool_basename = os.path.basename(tool) if tool else None
     lookup_key = tool_basename if (tool and tool_basename in commands) else tool
+
     if not tool or lookup_key not in commands:
-        msg = f"No {tool_type} tool configured (expected key: {config_key}). Run 'tasks config detect' or set manually: tasks config set {config_key} <tool>"
+        # Try auto-detecting once if tool is missing
+        project_root = find_project_root()
+        tasks_py = os.path.join(project_root, "tasks.py")
+        if os.path.exists(tasks_py):
+            if not as_json:
+                print(
+                    f"⚠️ NO {tool_type.upper()} CONFIGURED! ATTEMPTING AUTO-DETECTION... 🔨"
+                )
+
+            subprocess.run(
+                [sys.executable, tasks_py, "config", "detect", "--save"],
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+            )
+            # Reload config and try again
+            config = load_config(dev)
+            tool = config.get(config_key)
+            tool_basename = os.path.basename(tool) if tool else None
+            lookup_key = tool_basename if (tool and tool_basename in commands) else tool
+
+    if not tool or lookup_key not in commands:
+        msg = f"❌ NO {tool_type.upper()} TOOL CONFIGURED! (EXPECTED KEY: {config_key})! RUN 'tasks config detect' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
         if as_json:
             print(
                 json.dumps(

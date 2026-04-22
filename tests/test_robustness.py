@@ -36,10 +36,7 @@ class TestRobustness(unittest.TestCase):
                 "test": "/bin/true",
                 "type_check": "/bin/true",
                 "format": "/bin/true",
-<<<<<<< HEAD:tests/test_robustness.py
                 "skip_push": True,
-=======
->>>>>>> testing:test_robustness.py
             }
         }
         with open(os.path.join(config_dir, "config.yaml"), "w") as f:

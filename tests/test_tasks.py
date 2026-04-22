@@ -36,11 +36,7 @@ class TestTasksAI(unittest.TestCase):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hammer"
         )
 
-<<<<<<< HEAD:tests/test_tasks.py
         # Setup config - use skip_push to avoid remote operations
-=======
-        # Setup config
->>>>>>> testing:test_tasks.py
         config_dir = os.path.join(self.repo_dir, ".tasks")
         os.makedirs(config_dir, exist_ok=True)
         config_data = {
@@ -49,10 +45,7 @@ class TestTasksAI(unittest.TestCase):
                 "test": "/bin/true",
                 "type_check": "/bin/true",
                 "format": "/bin/true",
-<<<<<<< HEAD:tests/test_tasks.py
                 "skip_push": True,
-=======
->>>>>>> testing:test_tasks.py
             }
         }
         with open(os.path.join(config_dir, "config.yaml"), "w") as f:
