@@ -1,0 +1,309 @@
+commit ffbdf850abec7d87aad64008962027bb1cbc17eb
+Merge: 9a2e627 1f785ed
+Author: Test User <test@example.com>
+Date:   Wed Apr 22 15:14:10 2026 +0100
+
+    merge: 101-task-fix-branch-name-word-wrap-in-t into testing
+
+commit 9a2e6274bcf15a01ed039fc8a73c4e8aebe057fe
+Author: Test User <test@example.com>
+Date:   Wed Apr 22 15:13:57 2026 +0100
+
+    fix: increase branch column width in tasks list
+
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 69a5db6..bcf5c72 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -2078,8 +2078,14 @@ class TasksCLI:
+             pass
+         else:
+             term_width = get_terminal_width()
+-            summary_width = max(30, term_width - 45)
+-            branch_width = max(15, term_width - summary_width - 30)
++            fixed_cols = 3 + 2 + 6 + 3  # id(3) + priority(2) + type(6) + spaces(3) = 14
++            branch_min = 25
++            summary_min = 30
++            # Available for summary + branch
++            available = term_width - fixed_cols
++            # Give at least branch_min to branch, rest to summary
++            branch_width = max(branch_min, available // 3)
++            summary_width = max(summary_min, available - branch_width)
+ 
+             for state, tasks in all_data.items():
+                 print(f"\n{state}")
+
+commit 1f785eded5fb502a55c11cf5a0992f65a62a359a
+Author: Test User <test@example.com>
+Date:   Wed Apr 22 14:57:46 2026 +0100
+
+    Format code
+
+diff --git a/fix_test_tasks.py b/fix_test_tasks.py
+index 15ea467..c9196b0 100644
+--- a/fix_test_tasks.py
++++ b/fix_test_tasks.py
+@@ -4,15 +4,23 @@ with open("tests/test_tasks.py", "r") as f:
+ new_lines = []
+ for line in lines:
+     new_lines.append(line)
+-    if "shutil.copy(os.path.join(self.base_dir, \"repo.py\"), self.repo_dir)" in line:
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"venv\"), os.path.join(self.repo_dir, \"venv\"))\n")
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"tasks_ai\"), os.path.join(self.repo_dir, \"tasks_ai\"))\n")
+-        new_lines.append("        tests_dir = os.path.join(self.repo_dir, \"tests\")\n")
++    if 'shutil.copy(os.path.join(self.base_dir, "repo.py"), self.repo_dir)' in line:
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "venv"), os.path.join(self.repo_dir, "venv"))\n'
++        )
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "tasks_ai"), os.path.join(self.repo_dir, "tasks_ai"))\n'
++        )
++        new_lines.append('        tests_dir = os.path.join(self.repo_dir, "tests")\n')
+         new_lines.append("        os.makedirs(tests_dir, exist_ok=True)\n")
+-        new_lines.append("        with open(os.path.join(tests_dir, \"test_dummy.py\"), \"w\") as f:\n")
+-        new_lines.append("            f.write(\"def test_dummy(): pass\\n\")\n")
+-        new_lines.append("        with open(os.path.join(self.repo_dir, \"pyrightconfig.json\"), \"w\") as f:\n")
+-        new_lines.append("            json.dump({\"exclude\": [\"tasks_ai\"]}, f)\n")
++        new_lines.append(
++            '        with open(os.path.join(tests_dir, "test_dummy.py"), "w") as f:\n'
++        )
++        new_lines.append('            f.write("def test_dummy(): pass\\n")\n')
++        new_lines.append(
++            '        with open(os.path.join(self.repo_dir, "pyrightconfig.json"), "w") as f:\n'
++        )
++        new_lines.append('            json.dump({"exclude": ["tasks_ai"]}, f)\n')
+ 
+ with open("tests/test_tasks.py", "w") as f:
+     f.writelines(new_lines)
+diff --git a/fix_test_tasks_final.py b/fix_test_tasks_final.py
+index e4d4ff3..2ef644d 100644
+--- a/fix_test_tasks_final.py
++++ b/fix_test_tasks_final.py
+@@ -1,4 +1,3 @@
+-
+ repo_file = "tests/test_tasks.py"
+ with open(repo_file, "r") as f:
+     lines = f.readlines()
+@@ -6,11 +5,19 @@ with open(repo_file, "r") as f:
+ new_lines = []
+ for line in lines:
+     new_lines.append(line)
+-    if "self.script_path = os.path.join(self.base_dir, \"tasks.py\")" in line:
+-        new_lines.append("        shutil.copy(os.path.join(self.base_dir, \"check.py\"), self.repo_dir)\n")
+-        new_lines.append("        shutil.copy(os.path.join(self.base_dir, \"repo.py\"), self.repo_dir)\n")
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"venv\"), os.path.join(self.repo_dir, \"venv\"))\n")
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"tasks_ai\"), os.path.join(self.repo_dir, \"tasks_ai\"))\n")
++    if 'self.script_path = os.path.join(self.base_dir, "tasks.py")' in line:
++        new_lines.append(
++            '        shutil.copy(os.path.join(self.base_dir, "check.py"), self.repo_dir)\n'
++        )
++        new_lines.append(
++            '        shutil.copy(os.path.join(self.base_dir, "repo.py"), self.repo_dir)\n'
++        )
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "venv"), os.path.join(self.repo_dir, "venv"))\n'
++        )
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "tasks_ai"), os.path.join(self.repo_dir, "tasks_ai"))\n'
++        )
+ 
+ with open(repo_file, "w") as f:
+     f.writelines(new_lines)
+diff --git a/setup_test_env.py b/setup_test_env.py
+index 4a23bf8..b7b6eb0 100644
+--- a/setup_test_env.py
++++ b/setup_test_env.py
+@@ -1,19 +1,21 @@
+ import os
+ import shutil
+ 
++
+ def setup_test_repo(repo_dir):
+     base_dir = os.path.dirname(os.path.abspath(__file__))
+-    
++
+     # 1. Copy check.py
+     check_py = os.path.join(base_dir, "check.py")
+     if os.path.exists(check_py):
+         shutil.copy(check_py, repo_dir)
+-    
++
+     # 2. Setup .tasks/config.yaml
+     config_dir = os.path.join(repo_dir, ".tasks")
+     os.makedirs(config_dir, exist_ok=True)
+-    
++
+     import yaml
++
+     config_data = {
+         "repo": {
+             "lint": shutil.which("ruff"),
+diff --git a/tasks_ai/commands.py b/tasks_ai/commands.py
+index b88cddd..270c1d1 100644
+--- a/tasks_ai/commands.py
++++ b/tasks_ai/commands.py
+@@ -2,6 +2,7 @@ import os
+ import yaml
+ from .constants import ALLOWED_CONFIG_KEYS
+ 
++
+ class Commands:
+     def __init__(self, cli):
+         self.cli = cli
+diff --git a/tests/tasks_ai/commands.py b/tests/tasks_ai/commands.py
+index b88cddd..270c1d1 100644
+--- a/tests/tasks_ai/commands.py
++++ b/tests/tasks_ai/commands.py
+@@ -2,6 +2,7 @@ import os
+ import yaml
+ from .constants import ALLOWED_CONFIG_KEYS
+ 
++
+ class Commands:
+     def __init__(self, cli):
+         self.cli = cli
+# Changes on 101-task-fix-branch-name-word-wrap-in-t since merge-base:
+diff --git a/fix_test_tasks.py b/fix_test_tasks.py
+index 15ea467..c9196b0 100644
+--- a/fix_test_tasks.py
++++ b/fix_test_tasks.py
+@@ -4,15 +4,23 @@ with open("tests/test_tasks.py", "r") as f:
+ new_lines = []
+ for line in lines:
+     new_lines.append(line)
+-    if "shutil.copy(os.path.join(self.base_dir, \"repo.py\"), self.repo_dir)" in line:
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"venv\"), os.path.join(self.repo_dir, \"venv\"))\n")
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"tasks_ai\"), os.path.join(self.repo_dir, \"tasks_ai\"))\n")
+-        new_lines.append("        tests_dir = os.path.join(self.repo_dir, \"tests\")\n")
++    if 'shutil.copy(os.path.join(self.base_dir, "repo.py"), self.repo_dir)' in line:
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "venv"), os.path.join(self.repo_dir, "venv"))\n'
++        )
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "tasks_ai"), os.path.join(self.repo_dir, "tasks_ai"))\n'
++        )
++        new_lines.append('        tests_dir = os.path.join(self.repo_dir, "tests")\n')
+         new_lines.append("        os.makedirs(tests_dir, exist_ok=True)\n")
+-        new_lines.append("        with open(os.path.join(tests_dir, \"test_dummy.py\"), \"w\") as f:\n")
+-        new_lines.append("            f.write(\"def test_dummy(): pass\\n\")\n")
+-        new_lines.append("        with open(os.path.join(self.repo_dir, \"pyrightconfig.json\"), \"w\") as f:\n")
+-        new_lines.append("            json.dump({\"exclude\": [\"tasks_ai\"]}, f)\n")
++        new_lines.append(
++            '        with open(os.path.join(tests_dir, "test_dummy.py"), "w") as f:\n'
++        )
++        new_lines.append('            f.write("def test_dummy(): pass\\n")\n')
++        new_lines.append(
++            '        with open(os.path.join(self.repo_dir, "pyrightconfig.json"), "w") as f:\n'
++        )
++        new_lines.append('            json.dump({"exclude": ["tasks_ai"]}, f)\n')
+ 
+ with open("tests/test_tasks.py", "w") as f:
+     f.writelines(new_lines)
+diff --git a/fix_test_tasks_final.py b/fix_test_tasks_final.py
+index e4d4ff3..2ef644d 100644
+--- a/fix_test_tasks_final.py
++++ b/fix_test_tasks_final.py
+@@ -1,4 +1,3 @@
+-
+ repo_file = "tests/test_tasks.py"
+ with open(repo_file, "r") as f:
+     lines = f.readlines()
+@@ -6,11 +5,19 @@ with open(repo_file, "r") as f:
+ new_lines = []
+ for line in lines:
+     new_lines.append(line)
+-    if "self.script_path = os.path.join(self.base_dir, \"tasks.py\")" in line:
+-        new_lines.append("        shutil.copy(os.path.join(self.base_dir, \"check.py\"), self.repo_dir)\n")
+-        new_lines.append("        shutil.copy(os.path.join(self.base_dir, \"repo.py\"), self.repo_dir)\n")
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"venv\"), os.path.join(self.repo_dir, \"venv\"))\n")
+-        new_lines.append("        os.symlink(os.path.join(self.base_dir, \"tasks_ai\"), os.path.join(self.repo_dir, \"tasks_ai\"))\n")
++    if 'self.script_path = os.path.join(self.base_dir, "tasks.py")' in line:
++        new_lines.append(
++            '        shutil.copy(os.path.join(self.base_dir, "check.py"), self.repo_dir)\n'
++        )
++        new_lines.append(
++            '        shutil.copy(os.path.join(self.base_dir, "repo.py"), self.repo_dir)\n'
++        )
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "venv"), os.path.join(self.repo_dir, "venv"))\n'
++        )
++        new_lines.append(
++            '        os.symlink(os.path.join(self.base_dir, "tasks_ai"), os.path.join(self.repo_dir, "tasks_ai"))\n'
++        )
+ 
+ with open(repo_file, "w") as f:
+     f.writelines(new_lines)
+diff --git a/setup_test_env.py b/setup_test_env.py
+index 4a23bf8..b7b6eb0 100644
+--- a/setup_test_env.py
++++ b/setup_test_env.py
+@@ -1,19 +1,21 @@
+ import os
+ import shutil
+ 
++
+ def setup_test_repo(repo_dir):
+     base_dir = os.path.dirname(os.path.abspath(__file__))
+-    
++
+     # 1. Copy check.py
+     check_py = os.path.join(base_dir, "check.py")
+     if os.path.exists(check_py):
+         shutil.copy(check_py, repo_dir)
+-    
++
+     # 2. Setup .tasks/config.yaml
+     config_dir = os.path.join(repo_dir, ".tasks")
+     os.makedirs(config_dir, exist_ok=True)
+-    
++
+     import yaml
++
+     config_data = {
+         "repo": {
+             "lint": shutil.which("ruff"),
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 69a5db6..bcf5c72 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -2078,8 +2078,14 @@ class TasksCLI:
+             pass
+         else:
+             term_width = get_terminal_width()
+-            summary_width = max(30, term_width - 45)
+-            branch_width = max(15, term_width - summary_width - 30)
++            fixed_cols = 3 + 2 + 6 + 3  # id(3) + priority(2) + type(6) + spaces(3) = 14
++            branch_min = 25
++            summary_min = 30
++            # Available for summary + branch
++            available = term_width - fixed_cols
++            # Give at least branch_min to branch, rest to summary
++            branch_width = max(branch_min, available // 3)
++            summary_width = max(summary_min, available - branch_width)
+ 
+             for state, tasks in all_data.items():
+                 print(f"\n{state}")
+diff --git a/tasks_ai/commands.py b/tasks_ai/commands.py
+index b88cddd..270c1d1 100644
+--- a/tasks_ai/commands.py
++++ b/tasks_ai/commands.py
+@@ -2,6 +2,7 @@ import os
+ import yaml
+ from .constants import ALLOWED_CONFIG_KEYS
+ 
++
+ class Commands:
+     def __init__(self, cli):
+         self.cli = cli
+diff --git a/tests/tasks_ai/commands.py b/tests/tasks_ai/commands.py
+index b88cddd..270c1d1 100644
+--- a/tests/tasks_ai/commands.py
++++ b/tests/tasks_ai/commands.py
+@@ -2,6 +2,7 @@ import os
+ import yaml
+ from .constants import ALLOWED_CONFIG_KEYS
+ 
++
+ class Commands:
+     def __init__(self, cli):
+         self.cli = cli
