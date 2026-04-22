@@ -1,5 +1,5 @@
-repo.format: /home/vscode/git/tasks-ai/venv/bin/ruff
-repo.lint: /home/vscode/git/tasks-ai/venv/bin/ruff
-repo.test: /home/vscode/git/tasks-ai/venv/bin/pytest
-repo.type_check: /home/vscode/git/tasks-ai/venv/bin/pyright
+repo.format: ruff
+repo.lint: ruff
 repo.skip_push: true
+repo.test: pytest
+repo.type_check: pyright
