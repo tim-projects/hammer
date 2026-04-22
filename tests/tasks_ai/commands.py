@@ -2,6 +2,7 @@ import os
 import yaml
 from .constants import ALLOWED_CONFIG_KEYS
 
+
 class Commands:
     def __init__(self, cli):
         self.cli = cli
