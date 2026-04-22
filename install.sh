@@ -2,16 +2,16 @@
 
 # Default values
 MODE="local"
-DEST_DIR="$HOME/.local/tasks-ai"
+DEST_DIR="$HOME/.local/hammer"
 SYMLINK_DIR="$HOME/.local/bin"
-OTHER_DEST_DIR="/opt/tasks-ai"
+OTHER_DEST_DIR="/opt/hammer"
 OTHER_SYMLINK_DIR="/usr/local/bin"
 UNINSTALL=false
 FORCE=false
 UPGRADE=false
 INTERACTIVE=false
 
-# Detect if running from a local tasks-ai repo
+# Detect if running from a local hammer repo
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IS_LOCAL_REPO=false
 
@@ -27,9 +27,9 @@ for arg in "$@"; do
       ;;
     --system)
       MODE="system"
-      DEST_DIR="/opt/tasks-ai"
+      DEST_DIR="/opt/hammer"
       SYMLINK_DIR="/usr/local/bin"
-      OTHER_DEST_DIR="$HOME/.local/tasks-ai"
+      OTHER_DEST_DIR="$HOME/.local/hammer"
       OTHER_SYMLINK_DIR="$HOME/.local/bin"
       ;;
     --uninstall)
@@ -48,7 +48,7 @@ for arg in "$@"; do
       echo ""
       echo "Commands:"
       echo "  upgrade         Download and install latest from GitHub"
-      echo "  --system        Install to /opt/tasks-ai (requires sudo)"
+      echo "  --system        Install to /opt/hammer (requires sudo)"
       echo ""
       echo "Options:"
       echo "  -i, --interactive  Run interactive installer"
@@ -151,8 +151,8 @@ else
         echo ""
         echo "Tasks AI Installer"
         echo "=================="
-        echo "1) Install (user mode - ~/.local/tasks-ai)"
-        echo "2) Install (system mode - /opt/tasks-ai - requires sudo)"
+        echo "1) Install (user mode - ~/.local/hammer)"
+        echo "2) Install (system mode - /opt/hammer - requires sudo)"
         echo "3) Upgrade (download latest from GitHub)"
         echo "4) Uninstall"
         echo "5) Quit"
@@ -162,9 +162,9 @@ else
         case "$choice" in
             2)
                 MODE="system"
-                DEST_DIR="/opt/tasks-ai"
+                DEST_DIR="/opt/hammer"
                 SYMLINK_DIR="/usr/local/bin"
-                OTHER_DEST_DIR="$HOME/.local/tasks-ai"
+                OTHER_DEST_DIR="$HOME/.local/hammer"
                 OTHER_SYMLINK_DIR="$HOME/.local/bin"
                 ;;
             3)
@@ -211,14 +211,14 @@ echo "Installing Tasks AI in $MODE mode..."
 
 if [ "$UPGRADE" == "true" ]; then
     echo "Upgrading (downloading from GitHub)..."
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/tasks.py" -o "$DEST_DIR/tasks.py"
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/check.py" -o "$DEST_DIR/check.py"
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/repo.py" -o "$DEST_DIR/repo.py"
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh" -o "$DEST_DIR/install.sh"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks.py" -o "$DEST_DIR/tasks.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/check.py" -o "$DEST_DIR/check.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/repo.py" -o "$DEST_DIR/repo.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh" -o "$DEST_DIR/install.sh"
     
     mkdir -p "$DEST_DIR/tasks_ai"
     for module in cli.py help_text.py constants.py file_task.py task.py; do
-        curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/tasks_ai/$module" -o "$DEST_DIR/tasks_ai/$module"
+        curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks_ai/$module" -o "$DEST_DIR/tasks_ai/$module"
     done
 elif [ "$IS_LOCAL_REPO" == "true" ]; then
     echo "Using local files from $SCRIPT_DIR"
@@ -233,14 +233,14 @@ elif [ "$IS_LOCAL_REPO" == "true" ]; then
     fi
 else
     echo "Downloading from GitHub..."
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/tasks.py" -o "$DEST_DIR/tasks.py"
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/check.py" -o "$DEST_DIR/check.py"
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/repo.py" -o "$DEST_DIR/repo.py"
-    curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh" -o "$DEST_DIR/install.sh"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks.py" -o "$DEST_DIR/tasks.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/check.py" -o "$DEST_DIR/check.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/repo.py" -o "$DEST_DIR/repo.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh" -o "$DEST_DIR/install.sh"
     
     mkdir -p "$DEST_DIR/tasks_ai"
     for module in cli.py help_text.py constants.py file_task.py task.py; do
-        curl -sSL "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/tasks_ai/$module" -o "$DEST_DIR/tasks_ai/$module"
+        curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks_ai/$module" -o "$DEST_DIR/tasks_ai/$module"
     done
 fi
 

@@ -18,13 +18,13 @@ State machines + quality gates + audit trails + git worktrees.
 
 **HAMMER SMASH INSTALL!**
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh | bash
 ```
 Installs `hammer` to `~/.local/bin/hammer`. No sudo.
 
 **Global HAMMER:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | sudo bash -s -- -g
+curl -sSL https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh | sudo bash -s -- -g
 ```
 
 ## 🛠️ Getting Started
@@ -137,3 +137,4 @@ hammer tasks config set repo.test pytest
 - **Full lifecycle** - Backlog → DONE → ARCHIVED
 
 **HAMMER IS BOSS. WEAK LLM SUBMIT. STRONG TEAM SHIP!** 🔨⚔️
+```
