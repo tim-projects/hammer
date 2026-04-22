@@ -1,0 +1,1 @@
+- [ ] Test criteria for auto promo

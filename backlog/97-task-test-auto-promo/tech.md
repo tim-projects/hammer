@@ -1,0 +1,1 @@
+Test tech for auto promo
