@@ -321,6 +321,14 @@ def cmd_promote(src_input, original_task_id=None):
 
     log(f"✅ Successfully promoted {src.upper()} → {target.upper()}")
 
+    if target == "main" and task_id and TasksCLI:
+        log(
+            f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
+        )
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=True)
+        cli.move(task_id, "ARCHIVED")
+        subprocess.run(["git", "branch", "-d", src], capture_output=True)
+
     if target != "main" and original_task_id is not None:
         log(
             f"Task {task_id} moved to {target.upper()}. Run 'repo promote {src}' to continue to next stage."
