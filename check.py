@@ -166,7 +166,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     commands = get_commands(fix).get(tool_type, {})
     sys.stderr.flush()
 
-    if not tool or tool not in commands:
+    tool_basename = os.path.basename(tool) if tool else None
+    lookup_key = tool_basename if (tool and tool_basename in commands) else tool
+    if not tool or lookup_key not in commands:
         msg = f"No {tool_type} tool configured (expected key: {config_key}). Run 'tasks config detect' or set manually: tasks config set {config_key} <tool>"
         if as_json:
             print(
@@ -183,7 +185,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             print(f"Error: {msg}")
         return 1
 
-    cmd = commands[tool].copy()
+    cmd = commands[lookup_key].copy()
 
     # Path discovery
     project_root = find_project_root()
