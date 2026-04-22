@@ -529,7 +529,7 @@ class TasksCLI:
                     capture_output=True,
                 )
 
-            self.log(f"Dev tasks initialized at {self.tasks_path}")
+            self.log(f"Dev hammer tasks initialized at {self.tasks_path}")
             self.finish()
             return
 
@@ -594,14 +594,14 @@ class TasksCLI:
                 f.write(f"{ignore_line}\n")
         self.log("Tasks initialized.")
         self.log(
-            'Tip: Create a task with: tasks create "Your task title" --story "As a user..." --tech "..." --criteria "..." --plan "1. ..."'
+            'Tip: Create a task with: hammer tasks create "Your task title" --story "As a user..." --tech "..." --criteria "..." --plan "1. ..."'
         )
         self.log("Use -j for JSON output. Run 'list' to see all tasks with their Ids.")
         self.finish()
 
     def save(self, branch="tasks"):
         if not os.path.exists(self.tasks_path):
-            self.error("❌ TASKS NOT INIT! RUN 'tasks init' FIRST! 🔨")
+            self.error("❌ TASKS NOT INIT! RUN 'hammer tasks init' FIRST! 🔨")
         remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
         if not remotes.stdout.strip():
             self.error("❌ NO REMOTE! ADD REMOTE TO .tasks FIRST! 🔨")
@@ -685,7 +685,7 @@ class TasksCLI:
     def _get_next_id(self):
         counter_file = os.path.join(self.tasks_path, ".task_counter")
         if not os.path.exists(counter_file):
-            hint = "RUN 'tasks init' FIRST!"
+            hint = "RUN 'hammer tasks init' FIRST!"
             if self.dev:
                 hint = "DEV NOT INIT! RUN 'tasks --dev init' FIRST!"
             self.error("❌ TASKS NOT INIT! 🔨", hint=hint)
@@ -875,7 +875,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
-                hint="Use 'tasks list' to see all available task filenames/IDs.",
+                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
             )
         task = FM.load(filepath)
         fname = os.path.basename(filepath)  # type: ignore[arg-type]
@@ -1022,7 +1022,7 @@ class TasksCLI:
         if current_state != "REJECTED":
             self.error(
                 f"❌ MUST BE REJECTED TO DELETE! CURRENT: {current_state}! 🔨",
-                hint="RUN 'tasks delete <id>' MOVE TO REJECTED, THEN CONFIRM!",
+                hint="RUN 'hammer tasks delete <id>' MOVE TO REJECTED, THEN CONFIRM!",
             )
 
         try:
@@ -1246,7 +1246,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"❌ TASK '{filename}' NOT FOUND! 🔨",
-                hint="RUN 'tasks list' TO SEE ALL TASK FILENAMES/IDS!",
+                hint="RUN 'hammer tasks list' TO SEE ALL TASK FILENAMES/IDS!",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -1365,7 +1365,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"❌ TASK '{filename}' NOT FOUND! 🔨",
-                hint="RUN 'tasks list' TO SEE ALL TASK FILENAMES/IDS!",
+                hint="RUN 'hammer tasks list' TO SEE ALL TASK FILENAMES/IDS!",
             )
         filepath_str = cast(str, filepath)
 
@@ -1374,7 +1374,7 @@ class TasksCLI:
         if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and not force:
             hint = f"ALLOWED FROM {current_state}: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. HAMMER NO BYPASS TOOL!"
             if current_state == "REJECTED" and new_status == "ARCHIVED":
-                hint += " RUN 'tasks delete <id>' PERMANENT REMOVE!"
+                hint += " RUN 'hammer tasks delete <id>' PERMANENT REMOVE!"
             self.error(
                 f"❌ FORBIDDEN! {current_state} -> {new_status} NOT ALLOWED! 🔨",
                 hint=hint,
@@ -1386,7 +1386,7 @@ class TasksCLI:
             if not task.metadata.get("Tp", False):
                 self.error(
                     "❌ TESTS NOT PASSED! HAMMER SAY NO! 🔨",
-                    hint="RUN 'tasks modify <id> --tests-passed' MARK TESTS PASSED! HAMMER NO BYPASS TOOL!",
+                    hint="RUN 'hammer tasks modify <id> --tests-passed' MARK TESTS PASSED! HAMMER NO BYPASS TOOL!",
                 )
             self._run_validation()
             self._run_tests()
@@ -1477,7 +1477,7 @@ class TasksCLI:
                         missing.append("repro")
                 self.error(
                     f"❌ TASK LACKS CONTENT TO LEAVE BACKLOG! MISSING: {', '.join(missing)}! 🔨",
-                    hint='RUN \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' ADD DETAILS! FOR ISSUES, ADD --repro! HAMMER NO BYPASS TOOL!',
+                    hint='RUN \'hammer tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' ADD DETAILS! FOR ISSUES, ADD --repro! HAMMER NO BYPASS TOOL!',
                 )
 
         if new_status == "PROGRESSING":
@@ -1524,7 +1524,7 @@ class TasksCLI:
             if missing:
                 self.error(
                     f"❌ TASK LACKS DETAIL FOR PROGRESSING! MISSING: {', '.join(missing)}! 🔨",
-                    hint='RUN \'tasks show <id>\' SEE CONTENT, THEN \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' ADD PROPER DETAILS! FOR ISSUES, ADD --repro! RUN \'tasks modify --help\' FOR SYNTAX! HAMMER NO BYPASS TOOL!',
+                    hint='RUN \'tasks show <id>\' SEE CONTENT, THEN \'hammer tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' ADD PROPER DETAILS! FOR ISSUES, ADD --repro! RUN \'hammer tasks modify --help\' FOR SYNTAX! HAMMER NO BYPASS TOOL!',
                 )
 
         tt, branch = self._parse_filename(fname)
@@ -1735,7 +1735,7 @@ class TasksCLI:
             if not task.metadata.get("Rc"):
                 self.error(
                     f"❌ CANNOT MOVE TO {new_status}! REGRESSION CHECK NOT PASSED (Rc FLAG NOT SET)! 🔨",
-                    hint="IF CODE CHANGE, MOVE TO REVIEW, AUDIT diff.patch AT .tasks/review/<task_id>/diff.patch, THEN RUN 'tasks modify <id> --regression-check' TO CONFIRM!",
+                    hint="IF CODE CHANGE, MOVE TO REVIEW, AUDIT diff.patch AT .tasks/review/<task_id>/diff.patch, THEN RUN 'hammer tasks modify <id> --regression-check' TO CONFIRM!",
                 )
 
                 # Sync and Reset for regression states
@@ -1784,7 +1784,7 @@ class TasksCLI:
             if not task.metadata.get("Rc"):
                 self.error(
                     "❌ CANNOT MOVE TO ARCHIVED! REGRESSION CHECK NOT PASSED (Rc FLAG NOT SET)! 🔨",
-                    hint="PERFORM REGRESSION REVIEW AND RUN 'tasks modify <id> --regression-check' BEFORE ARCHIVING!",
+                    hint="PERFORM REGRESSION REVIEW AND RUN 'hammer tasks modify <id> --regression-check' BEFORE ARCHIVING!",
                 )
 
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
@@ -1847,7 +1847,7 @@ class TasksCLI:
                 self.log(
                     "REVIEW entered: Diff generated. Check .tasks/review/<task_id>/diff.patch for regressions. "
                     "If issues found, move task back to PROGRESSING/TESTING to fix. "
-                    "Once clean, run 'tasks modify <id> --regression-check' to enable STAGING."
+                    "Once clean, run 'hammer tasks modify <id> --regression-check' to enable STAGING."
                 )
         except Exception as e:
             self.error(str(e))
@@ -1900,7 +1900,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"❌ TASK '{filename}' NOT FOUND! 🔨",
-                hint="RUN 'tasks list' TO SEE AVAILABLE TASK IDS!",
+                hint="RUN 'hammer tasks list' TO SEE AVAILABLE TASK IDS!",
             )
 
         # filepath is definitely not None here for pyright
@@ -1970,7 +1970,7 @@ class TasksCLI:
 
     def list(self, show_all=False):
         if not os.path.exists(self.tasks_path):
-            self.error("❌ TASKS NOT INIT! RUN 'tasks init' FIRST! 🔨")
+            self.error("❌ TASKS NOT INIT! RUN 'hammer tasks init' FIRST! 🔨")
         all_data = {}
         seen = set()
         for state, folder in STATE_FOLDERS.items():
@@ -2237,7 +2237,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"❌ TASK '{filename}' NOT FOUND! 🔨",
-                hint="RUN 'tasks list' TO SEE AVAILABLE TASK IDS AND FILENAMES!",
+                hint="RUN 'hammer tasks list' TO SEE AVAILABLE TASK IDS AND FILENAMES!",
             )
         task = FM.load(filepath)
         task_id = os.path.basename(filepath).rsplit(".", 1)[0]
@@ -2691,7 +2691,7 @@ class TasksCLI:
         if not filepath:
             self.error(
                 f"❌ TASK '{filename}' NOT FOUND! 🔨",
-                hint="RUN 'tasks list' TO SEE ALL TASK FILENAMES/IDS!",
+                hint="RUN 'hammer tasks list' TO SEE ALL TASK FILENAMES/IDS!",
             )
 
         filepath_str = cast(str, filepath)
@@ -2754,7 +2754,7 @@ class TasksCLI:
         if last_commit_msg.startswith("Undo:"):
             self.error(
                 "Cannot undo twice in a row. Already at previous state.",
-                hint="Use 'tasks list' to see current state, or 'git log' in .tasks to see history.",
+                hint="Use 'hammer tasks list' to see current state, or 'git log' in .tasks to see history.",
             )
 
         tree_res = self._run_git(
@@ -2833,7 +2833,7 @@ class TasksCLI:
             return re.sub(r"[^a-z0-9\-]", "-", name.lower())
 
         def create_bug_report(bug_id, title, repro, expected, actual):
-            bug_filename = f"tasks-ai-bug-{sanitize_filename(bug_id)}.md"
+            bug_filename = f"hammer-bug-{sanitize_filename(bug_id)}.md"
             bug_path = os.path.join(self.tasks_path, bug_filename)
             content = f"""# Bug Report: {title}
 
@@ -3194,8 +3194,8 @@ class TasksCLI:
         """Upgrade tasks to latest version by running install.sh."""
         import shutil
 
-        user_dir = os.path.expanduser("~/.local/tasks-ai")
-        system_dir = "/opt/tasks-ai"
+        user_dir = os.path.expanduser("~/.local/hammer")
+        system_dir = "/opt/hammer"
 
         can_write_user = os.access(user_dir, os.W_OK)
         can_write_system = os.access(system_dir, os.W_OK)
@@ -3210,13 +3210,13 @@ class TasksCLI:
             install_path = system_dir
             mode = "system"
         else:
-            self.error("❌ CANNOT WRITE TO ~/.local/tasks-ai OR /opt/tasks-ai! 🔨")
+            self.error("❌ CANNOT WRITE TO ~/.local/hammer OR /opt/hammer! 🔨")
 
         install_script = os.path.join(install_path, "install.sh")
 
         if not os.path.exists(install_script):
             self.error(
-                f"❌ install.sh NOT FOUND AT {install_path}! RUN 'tasks init' FIRST OR INSTALL MANUALLY! 🔨"
+                f"❌ install.sh NOT FOUND AT {install_path}! RUN 'hammer tasks init' FIRST OR INSTALL MANUALLY! 🔨"
             )
 
         self.log(f"Detected installation: {mode} at {install_path}")
@@ -3234,7 +3234,7 @@ class TasksCLI:
                 [
                     "curl",
                     "-sSL",
-                    "https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh",
+                    "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh",
                     "-o",
                     install_script,
                 ],

@@ -10,7 +10,7 @@ Agents can't skip steps. Result: shippable code that doesn't explode in producti
 
 ## Ship BETTER and CHEAPER with HAMMER: AI-Powered Git-Backed Project Management 🔨⚔️
 
-`tasks` = complete system IN your repo.  
+`hammer tasks` = complete system IN your repo.  
 State machines + quality gates + audit trails + git worktrees.  
 **Built for AI agents.**
 
@@ -18,13 +18,13 @@ State machines + quality gates + audit trails + git worktrees.
 
 **HAMMER SMASH INSTALL!**
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/tim-projects/hammer tasks-ai/main/install.sh | bash
 ```
 Installs `hammer` to `~/.local/bin/hammer`. No sudo.
 
 **Global HAMMER:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.sh | sudo bash -s -- -g
+curl -sSL https://raw.githubusercontent.com/tim-projects/hammer tasks-ai/main/install.sh | sudo bash -s -- -g
 ```
 
 ## 🛠️ Getting Started
@@ -32,13 +32,13 @@ curl -sSL https://raw.githubusercontent.com/tim-projects/tasks-ai/main/install.s
 Add this to the top of your AGENTS.md:
 
 ```
-Directive: "Manage project tasks using the tasks command. Run hammer tasks -h to discover the interface and operational protocol."
+Directive: "Manage project hammer tasks using the hammer tasks command. Run hammer hammer tasks -h to discover the interface and operational protocol."
 ```
 
 Agent autonomously runs:
-1. `hammer tasks init` - Initialize system
-2. `hammer tasks list` / `hammer tasks create` - Discover/create tasks
-3. `hammer tasks move` - Move through Git-native state machine
+1. `hammer hammer tasks init` - Initialize system
+2. `hammer hammer tasks list` / `hammer hammer tasks create` - Discover/create hammer tasks
+3. `hammer hammer tasks move` - Move through Git-native state machine
 
 ## 🔨 HAMMER STATE MACHINE
 
@@ -72,37 +72,37 @@ BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE �
 
 ### Task Management
 ```bash
-hammer tasks init                    # HAMMER BUILD SYSTEM!
-hammer tasks list                     # SHOW ALL!
-hammer tasks create "SMASH BUG"       # NEW METAL!
-hammer tasks show 42                  # METAL DETAIL!
-hammer tasks current                  # ACTIVE METAL!
+hammer hammer tasks init                    # HAMMER BUILD SYSTEM!
+hammer hammer tasks list                     # SHOW ALL!
+hammer hammer tasks create "SMASH BUG"       # NEW METAL!
+hammer hammer tasks show 42                  # METAL DETAIL!
+hammer hammer tasks current                  # ACTIVE METAL!
 ```
 
 ### POUND THROUGH GATES
 ```bash
-hammer tasks move 42 PROGRESSING     # START SMASH! (Creates branch)
-hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨
-hammer tasks move 42 DONE            # 🔨 HAMMER SMASH GOOD! DONE! ⚔️🔨
+hammer hammer tasks move 42 PROGRESSING     # START SMASH! (Creates branch)
+hammer hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨
+hammer hammer tasks move 42 DONE            # 🔨 HAMMER SMASH GOOD! DONE! ⚔️🔨
 ```
 
 ### QUALITY SMASH
 ```bash
 hammer check all                     # SMASH ALL CHECKS!
 hammer check lint --fix              # FIX WEAK CODE!
-hammer tasks run all                 # HAMMER VALIDATE EVERYTHING!
+hammer hammer tasks run all                 # HAMMER VALIDATE EVERYTHING!
 ```
 
 ## 🎯 REAL HAMMER FLOW
 
 ```bash
-hammer tasks init                    # ✅ HAMMER LIKE! SYSTEM READY! ⚔️🔨
-hammer tasks create "SMASH LOGIN"    # NEW METAL 42!
-hammer tasks move 42 PROGRESSING     # BRANCH CREATE!
+hammer hammer tasks init                    # ✅ HAMMER LIKE! SYSTEM READY! ⚔️🔨
+hammer hammer tasks create "SMASH LOGIN"    # NEW METAL 42!
+hammer hammer tasks move 42 PROGRESSING     # BRANCH CREATE!
 hammer check all                     # ❌ TEST BREAK! HAMMER SAY NO! FIX! 🔨
 # LLM FIXES...
-hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨
-hammer tasks move 42 DONE            # 🔨 HAMMER SMASH GOOD! DONE! ⚔️🔨
+hammer hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨
+hammer hammer tasks move 42 DONE            # 🔨 HAMMER SMASH GOOD! DONE! ⚔️🔨
 ```
 
 ## ⚙️ Task File (Git-Backed)
@@ -124,8 +124,8 @@ User cannot login with special characters in password.
 
 ## 🔧 HAMMER CONFIG
 ```bash
-hammer tasks config detect           # HAMMER FIND TOOLS!
-hammer tasks config set repo.test pytest
+hammer hammer tasks config detect           # HAMMER FIND TOOLS!
+hammer hammer tasks config set repo.test pytest
 ```
 
 ## 🎉 Why HAMMER RULES?
