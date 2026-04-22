@@ -6,6 +6,6 @@
   "Pr": 2,
   "Br": "100-task-investigate-test-review-diff-i",
   "Vp": true,
-  "Tp": true,
-  "Rc": ""
+  "Tp": false,
+  "Rc": true
 }
