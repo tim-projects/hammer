@@ -270,6 +270,10 @@ def cmd_promote(src_input, original_task_id=None):
         else ("staging" if src == "testing" else "main")
     )
 
+    if src == target:
+        info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
+        return
+
     current_status = None
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])  # type: ignore[reportOptionalCall]
