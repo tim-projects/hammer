@@ -1,0 +1,1 @@
+As a developer, I want 'tasks move' to correctly detect merged branches so I can progress tasks.
