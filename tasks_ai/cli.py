@@ -158,11 +158,14 @@ class TasksCLI:
                 if item == ".gitkeep":
                     continue
                 path = os.path.join(dir_path, item)
-                task = FM.load(path)
-                if task and task.metadata and "DeleteCode" in task.metadata:
-                    del task.metadata["DeleteCode"]
-                    self._atomic_write(path, task)
-                    updated = True
+                try:
+                    task = FM.load(path)
+                    if task and task.metadata and "DeleteCode" in task.metadata:
+                        del task.metadata["DeleteCode"]
+                        self._atomic_write(path, task)
+                        updated = True
+                except Exception as e:
+                    self.log(f"Warning: Failed to load task at {path}: {e}")
         if updated:
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
@@ -3090,6 +3093,28 @@ class TasksCLI:
                 counter_value = int(f.read().strip())
 
             max_id = 0
+            # Scan all local branches for additional meta.json files
+            branches = (
+                subprocess.check_output(
+                    ["git", "branch", "-a", "--format=%(refname:short)"],
+                    cwd=self.tasks_path,
+                )
+                .decode()
+                .splitlines()
+            )
+            for branch in branches:
+                branch = branch.replace("remotes/", "").split("/")[-1]
+                try:
+                    content = subprocess.check_output(
+                        ["git", "show", f"{branch}:.tasks/progressing/meta.json"],
+                        cwd=self.tasks_path,
+                        stderr=subprocess.DEVNULL,
+                    ).decode()
+                    meta = json.loads(content)
+                    if "Id" in meta:
+                        max_id = max(max_id, int(meta["Id"]))
+                except Exception:
+                    pass
             for state, folder in STATE_FOLDERS.items():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):

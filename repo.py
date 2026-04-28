@@ -270,6 +270,10 @@ def cmd_promote(src_input, original_task_id=None):
         else ("staging" if src == "testing" else "main")
     )
 
+    if src == target:
+        info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
+        return
+
     current_status = None
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])  # type: ignore[reportOptionalCall]
@@ -320,6 +324,18 @@ def cmd_promote(src_input, original_task_id=None):
                 cli.move(task_id, new_status)
 
     log(f"✅ Successfully promoted {src.upper()} → {target.upper()}")
+    if target == "main":
+        log(
+            f"Merged to main complete. Current branch: {subprocess.check_output(['git', 'branch', '--show-current']).decode().strip()}"
+        )
+
+    if target == "main" and task_id and TasksCLI:
+        log(
+            f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
+        )
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=True)
+        cli.move(task_id, "ARCHIVED")
+        subprocess.run(["git", "branch", "-d", src], capture_output=True)
 
     if target != "main" and original_task_id is not None:
         log(

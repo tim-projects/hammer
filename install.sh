@@ -251,7 +251,9 @@ chmod +x "$DEST_DIR/repo.py"
 
 # Create symlinks
 rm -f "$SYMLINK_DIR/tasks"
+rm -f "$SYMLINK_DIR/hammer"
 ln -s "$DEST_DIR/tasks.py" "$SYMLINK_DIR/tasks"
+ln -s "$DEST_DIR/tasks.py" "$SYMLINK_DIR/hammer"
 
 rm -f "$SYMLINK_DIR/repo"
 ln -s "$DEST_DIR/repo.py" "$SYMLINK_DIR/repo"

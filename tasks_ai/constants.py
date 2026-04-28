@@ -1,6 +1,6 @@
 # hammer tasks_ai/constants.py
 
-TASKS_DIR = ".hammer tasks"
+TASKS_DIR = ".tasks"
 TASKS_BRANCH = "hammer tasks"
 CURRENT_TASK_FILENAME = "current-task.md"
 
