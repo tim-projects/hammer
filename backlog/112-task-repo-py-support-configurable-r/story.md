@@ -1,0 +1,1 @@
+As a developer, I want to use custom remote names (e.g., 'github') with the 'repo.py' pipeline tool, so that it doesn't fail when 'origin' is not used or present.

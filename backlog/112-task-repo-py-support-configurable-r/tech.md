@@ -1,0 +1,1 @@
+The 'repo.py' script currently hardcodes 'origin' for 'git push', 'git pull', and remote checks. We need to detect the primary remote or make it configurable via the config system.
