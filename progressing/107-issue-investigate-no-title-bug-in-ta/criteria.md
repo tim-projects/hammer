@@ -1,3 +1,2 @@
-- [ ] Identify root cause of 'No Title' bug
-- [ ] Ensure title validation is enforced
-- [ ] Fix listing logic if it is misinterpreting titles
+- [ ] Fixed bug
+- [ ] Verified fix

@@ -1,1 +1,0 @@
-1. Create task with spaces as title.

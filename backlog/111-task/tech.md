@@ -1,1 +1,0 @@
-Technical background for empty title test. Long enough tech.
