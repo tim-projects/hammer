@@ -1,0 +1,1 @@
+- [ ] 1. FM.load should handle corrupted meta.json gracefully. 2. FM.load should only try to list directories if it is a directory. 3. _clear_delete_marks should handle exceptions from FM.load.

@@ -1,0 +1,1 @@
+1. Create a task directory with an empty meta.json and run any tasks command.

@@ -1,0 +1,1 @@
+1. 1. Reproduce crash with corrupted meta.json. 2. Update FM.load to catch JSONDecodeError. 3. Update FM.load to check os.path.isdir. 4. Update _clear_delete_marks to catch exceptions.

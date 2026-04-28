@@ -1,0 +1,8 @@
+{
+  "Id": 106,
+  "Ti": "Fix crash when task files are corrupted",
+  "Cr": "260428 14:47",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "106-issue-fix-crash-when-task-files-are"
+}

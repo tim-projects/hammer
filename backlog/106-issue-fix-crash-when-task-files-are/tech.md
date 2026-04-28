@@ -1,0 +1,1 @@
+FM.load crashes when meta.json is corrupted or empty. _clear_delete_marks in TasksCLI.__init__ scans all tasks, so any corrupted task file crashes every command.
