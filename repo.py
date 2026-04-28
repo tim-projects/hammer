@@ -169,7 +169,7 @@ def branch_exists(name):
     )
 
 
-def check_origin_exists():
+def check_remote_exists():
     result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)
     if result.returncode != 0:
         if FLAGS["yes"]:
@@ -236,12 +236,12 @@ def cmd_merge(src_input, target_input):
 
     log(f"Merging {src} into {target}...")
     run(["git", "checkout", target])
-    if check_origin_exists():
+    if check_remote_exists():
         run(["git", "pull", PRIMARY_REMOTE, target], check=False)
     else:
         warn("No remote - skipping pull")
     run(["git", "merge", src, "-m", f"merge: {src} into {target}"])
-    if check_origin_exists():
+    if check_remote_exists():
         if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
             run(["git", "push", PRIMARY_REMOTE, target])
     else:
@@ -261,7 +261,7 @@ def cmd_commit(message):
         run(["git", "commit", "-m", message])
         info(f"Committed on {current.upper()}")
         if FLAGS["yes"] or prompt_yes_no(f"Push {current}?"):
-            if not check_origin_exists():
+            if not check_remote_exists():
                 pass  # continue locally
             else:
                 run(["git", "push", PRIMARY_REMOTE, current])
