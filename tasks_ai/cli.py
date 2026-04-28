@@ -1692,8 +1692,8 @@ class TasksCLI:
                         f"Make some progress before moving to testing. Do not bypass this tool."
                     )
 
-            if new_status in ("REVIEW", "STAGING"):
-                # Delegate merge verification to repo.py
+            # Gate for STAGING: must be merged to testing
+            if new_status == "STAGING":
                 try:
                     subprocess.run(
                         [sys.executable, "repo.py", "check-merged-testing", branch],
@@ -1704,6 +1704,7 @@ class TasksCLI:
                         f"Branch '{branch}' not merged to testing. Merge to testing first. Do not bypass this tool.",
                     )
 
+            # Gate for DONE/ARCHIVED: must be merged to main
             if new_status in ("DONE", "ARCHIVED") and not force:
                 # Use repo.py as authority for merge-to-main verification
                 try:
