@@ -1,0 +1,129 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index b73edef..9ad9a2b 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -158,11 +158,14 @@ class TasksCLI:
+                 if item == ".gitkeep":
+                     continue
+                 path = os.path.join(dir_path, item)
+-                task = FM.load(path)
+-                if task and task.metadata and "DeleteCode" in task.metadata:
+-                    del task.metadata["DeleteCode"]
+-                    self._atomic_write(path, task)
+-                    updated = True
++                try:
++                    task = FM.load(path)
++                    if task and task.metadata and "DeleteCode" in task.metadata:
++                        del task.metadata["DeleteCode"]
++                        self._atomic_write(path, task)
++                        updated = True
++                except Exception as e:
++                    self.log(f"Warning: Failed to load task at {path}: {e}")
+         if updated:
+             self._run_git(["add", "--all"], cwd=self.tasks_path)
+             self._run_git(
+@@ -1437,7 +1440,9 @@ class TasksCLI:
+         ):
+             hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
+             if current_state == "REJECTED" and new_status == "ARCHIVED":
+-                hint += " Use 'hammer tasks delete <id>' to permanently remove the task."
++                hint += (
++                    " Use 'hammer tasks delete <id>' to permanently remove the task."
++                )
+             if is_merged_branch:
+                 hint += "\nNote: Branch is merged to main. You can archive this task directly."
+             self.error(
+diff --git a/tasks_ai/file_manager.py b/tasks_ai/file_manager.py
+index d9a32e7..b19c3e4 100644
+--- a/tasks_ai/file_manager.py
++++ b/tasks_ai/file_manager.py
+@@ -60,8 +60,15 @@ class FM:
+         meta = {}
+         meta_path = os.path.join(path, "meta.json")
+         if os.path.exists(meta_path):
+-            with open(meta_path, "r") as f:
+-                meta = json.load(f)
++            try:
++                with open(meta_path, "r") as f:
++                    meta = json.load(f)
++            except (json.JSONDecodeError, ValueError):
++                # Robustness: ignore corrupted meta.json
++                pass
++
++        if not os.path.isdir(path):
++            return Task(metadata=meta, parts={})
+ 
+         parts = {}
+         for f in os.listdir(path):
+diff --git a/tests/test_robustness_bugfix.py b/tests/test_robustness_bugfix.py
+new file mode 100644
+index 0000000..7214443
+--- /dev/null
++++ b/tests/test_robustness_bugfix.py
+@@ -0,0 +1,66 @@
++
++import os
++import subprocess
++import shutil
++import tempfile
++import unittest
++import json
++
++class TestRobustnessBugfix(unittest.TestCase):
++    def setUp(self):
++        self.test_dir = tempfile.mkdtemp()
++        self.repo_dir = os.path.join(self.test_dir, "repo")
++        os.makedirs(self.repo_dir)
++        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
++        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir)
++        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)
++        
++        # Initialize tasks
++        self.tasks_py = os.path.join(os.getcwd(), "tasks.py")
++        subprocess.run([ "python", self.tasks_py, "init"], cwd=self.repo_dir, capture_output=True)
++
++    def tearDown(self):
++        shutil.rmtree(self.test_dir)
++
++    def test_corrupted_meta_json_does_not_crash_cli(self):
++        # Create a task
++        res = subprocess.run([ "python", self.tasks_py, "-j", "create", "Valid Task Title", "--type", "task", "--story", "As a user I want to have a robust task manager", "--tech", "Technical details about robustness and error handling", "--criteria", "Acceptance criteria 1 must be satisfied by implementation", "--plan", "1. Implementation step one should be executed first"], 
++                             cwd=self.repo_dir, capture_output=True, text=True)
++        self.assertEqual(res.returncode, 0, res.stderr)
++        
++        # Corrupt the meta.json of the new task
++        task_folder = json.loads(res.stdout)["data"]["path"]
++        meta_path = os.path.join(self.repo_dir, task_folder, "meta.json")
++        
++        with open(meta_path, "w") as f:
++            f.write("{ invalid json")
++            
++        # Run any tasks command, e.g., list
++        res = subprocess.run([ "python", self.tasks_py, "-j", "list"], 
++                             cwd=self.repo_dir, capture_output=True, text=True)
++        
++        # Should NOT crash (returncode 0)
++        self.assertEqual(res.returncode, 0, f"CLI crashed with corrupted meta.json: {res.stderr}")
++        
++    def test_empty_meta_json_does_not_crash_cli(self):
++        # Create a task
++        res = subprocess.run([ "python", self.tasks_py, "-j", "create", "Another Task Title", "--type", "task", "--story", "As a user I want to have a robust task manager", "--tech", "Technical details about robustness and error handling", "--criteria", "Acceptance criteria 1 must be satisfied by implementation", "--plan", "1. Implementation step one should be executed first"], 
++                             cwd=self.repo_dir, capture_output=True, text=True)
++        self.assertEqual(res.returncode, 0, res.stderr)
++        
++        # Corrupt the meta.json of the new task (make it empty)
++        task_folder = json.loads(res.stdout)["data"]["path"]
++        meta_path = os.path.join(self.repo_dir, task_folder, "meta.json")
++        
++        with open(meta_path, "w") as f:
++            f.write("")
++            
++        # Run any tasks command, e.g., list
++        res = subprocess.run([ "python", self.tasks_py, "-j", "list"], 
++                             cwd=self.repo_dir, capture_output=True, text=True)
++        
++        # Should NOT crash
++        self.assertEqual(res.returncode, 0, f"CLI crashed with empty meta.json: {res.stderr}")
++
++if __name__ == "__main__":
++    unittest.main()

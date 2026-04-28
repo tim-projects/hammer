@@ -6,6 +6,6 @@
   "Pr": 1,
   "Br": "106-issue-fix-crash-when-task-files-are",
   "Vp": true,
-  "Rc": "",
-  "Tp": true
+  "Rc": true,
+  "Tp": false
 }
