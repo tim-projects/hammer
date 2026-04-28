@@ -2065,7 +2065,9 @@ class TasksCLI:
                     continue
                 task = FM.load(path)
                 if task.corrupted:
-                    self.log(f"WARNING: Task at {path} is corrupted. Skipping automatic repair.")
+                    self.log(
+                        f"WARNING: Task at {path} is corrupted. Skipping automatic repair."
+                    )
                     summary = "CORRUPTED TASK"
                 else:
                     summary = (task.metadata.get("Ti") or "No Title")[:60]
@@ -2086,7 +2088,7 @@ class TasksCLI:
                         ],
                         cwd=self.tasks_path,
                     )
-                
+
                 # If still no task_id (because corrupted), use filename as fallback for sorting/display
                 if not task_id:
                     task_id = item.split("-")[0] if "-" in item else "???"
