@@ -1283,7 +1283,7 @@ class TasksCLI:
             self.log(f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py...")
             try:
                 subprocess.run(
-                    [sys.executable, "repo.py", "promote", str(task_id_num)],
+                    [sys.executable, "repo.py", "promote", str(task_id_num), "-y"],
                     capture_output=True, text=True, check=True
                 )
                 # Refresh state after promotion
