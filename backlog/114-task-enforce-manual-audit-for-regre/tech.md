@@ -1,0 +1,1 @@
+The current regression check is a manual command 'tasks modify --regression-check' that an agent can call. We need a 'repo audit --ack' process that creates a cryptographically or metadata-verified sign-off.

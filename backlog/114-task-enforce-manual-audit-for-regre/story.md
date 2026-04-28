@@ -1,0 +1,1 @@
+As an administrator, I want to ensure that code audits are performed manually before regression checks are marked as passed, so that agents cannot bypass the review gate.
