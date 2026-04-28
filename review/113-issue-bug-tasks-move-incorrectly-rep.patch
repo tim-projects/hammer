@@ -1,0 +1,431 @@
+diff --git a/README.md b/README.md
+index b65eab1..63407dc 100644
+--- a/README.md
++++ b/README.md
+@@ -138,3 +138,4 @@ hammer tasks config set repo.test pytest
+ 
+ **HAMMER IS BOSS. WEAK LLM SUBMIT. STRONG TEAM SHIP!** 🔨⚔️
+ ```
++# Update
+diff --git a/diff_debug.log b/diff_debug.log
+index 074690e..c28d8be 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -6,3 +6,4 @@ branch=80-task-fix-promote-tool-workflow-gate, main_sha=abba63f074ec92d70ff9d838
+ branch=83-task-verify-refactored-review-gate, main_sha=abba63f074ec92d70ff9d8386c625af1ca3df8fb, diff_len=79906
+ branch=100-task-investigate-test-review-diff-i, main_sha=cccf72de32809911b5f7d51094f6e02db989c6e9, diff_len=8969
+ branch=101-task-fix-branch-name-word-wrap-in-t, main_sha=f74b7f64f201eb2bb4c859b6e50f1399c37ea647, diff_len=12569
++branch=106-issue-fix-crash-when-task-files-are, main_sha=52d0549e4d6ef8213fc1f82e309fd80a856b5b16, diff_len=6082
+diff --git a/remote_helper.py b/remote_helper.py
+new file mode 100644
+index 0000000..ea0ac84
+--- /dev/null
++++ b/remote_helper.py
+@@ -0,0 +1,9 @@
++import subprocess
++
++
++def get_remote():
++    res = subprocess.run(["git", "remote"], capture_output=True, text=True)
++    remotes = res.stdout.split()
++    if "origin" in remotes:
++        return "origin"
++    return remotes[0] if remotes else "origin"
+diff --git a/repo.py b/repo.py
+index 96ea16b..922822f 100755
+--- a/repo.py
++++ b/repo.py
+@@ -49,6 +49,22 @@ FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
+ PIPELINE = ["testing", "staging", "main"]
+ 
+ 
++
++def get_primary_remote():
++    try:
++        result = subprocess.run(["git", "remote"], capture_output=True, text=True, check=True)
++        remotes = result.stdout.split()
++        if not remotes:
++            return "origin"
++        # If 'origin' exists, use it; otherwise use the first detected remote (e.g., 'github')
++        return "origin" if "origin" in remotes else remotes[0]
++    except Exception:
++        return "origin"
++
++
++PRIMARY_REMOTE = get_primary_remote()
++
++
+ def log(msg):
+     if not FLAGS["quiet"] and not FLAGS["json"]:
+         print(f"{GREEN}[repo]{NC} {msg}")
+@@ -90,7 +106,7 @@ def find_project_root(start_path=None):
+     return Path(__file__).parent.resolve()
+ 
+ 
+-def run(cmd, check=True, capture=False, env=None, cwd=None, quiet=False):
++def run(cmd, check=True, capture=True, env=None, cwd=None, quiet=False):
+     project_root = find_project_root()
+     capture = capture or quiet or FLAGS["json"]
+     try:
+@@ -158,13 +174,14 @@ def branch_exists(name):
+     )
+ 
+ 
+-def check_origin_exists():
+-    result = run(["git", "remote", "get-url", "origin"], check=False, capture=True)
++def check_remote_exists():
++    print(f"DEBUG: PRIMARY_REMOTE={PRIMARY_REMOTE}")
++    result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)
+     if result.returncode != 0:
+         if FLAGS["yes"]:
+-            warn("No 'origin' remote - continuing in local-only mode")
++            warn(f"No '{PRIMARY_REMOTE}' remote - continuing in local-only mode")
+             return False
+-        warn("No 'origin' remote - continuing in local-only mode")
++        warn(f"No '{PRIMARY_REMOTE}' remote - continuing in local-only mode")
+         return False
+     return True
+ 
+@@ -225,14 +242,14 @@ def cmd_merge(src_input, target_input):
+ 
+     log(f"Merging {src} into {target}...")
+     run(["git", "checkout", target])
+-    if check_origin_exists():
+-        run(["git", "pull", "origin", target], check=False)
++    if check_remote_exists():
++        run(["git", "pull", PRIMARY_REMOTE, target], check=False)
+     else:
+         warn("No remote - skipping pull")
+     run(["git", "merge", src, "-m", f"merge: {src} into {target}"])
+-    if check_origin_exists():
++    if check_remote_exists():
+         if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+-            run(["git", "push", "origin", target])
++            run(["git", "push", PRIMARY_REMOTE, target])
+     else:
+         warn("No remote - skipping push")
+     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
+@@ -250,10 +267,10 @@ def cmd_commit(message):
+         run(["git", "commit", "-m", message])
+         info(f"Committed on {current.upper()}")
+         if FLAGS["yes"] or prompt_yes_no(f"Push {current}?"):
+-            if not check_origin_exists():
++            if not check_remote_exists():
+                 pass  # continue locally
+             else:
+-                run(["git", "push", "origin", current])
++                run(["git", "push", PRIMARY_REMOTE, current])
+         log("✅ Commit successful")
+     else:
+         warn("No changes to commit")
+diff --git a/repo_fix.py b/repo_fix.py
+new file mode 100644
+index 0000000..6ef218e
+--- /dev/null
++++ b/repo_fix.py
+@@ -0,0 +1,20 @@
++lines = open('repo.py', 'r').readlines()
++new_lines = []
++skip = False
++for i, line in enumerate(lines):
++    if 'def check_remote_exists():' in line:
++        new_lines.append(line)
++        new_lines.append('    result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)\n')
++        new_lines.append('    if result.returncode != 0:\n')
++        skip = True
++        continue
++    if skip and ('if FLAGS["yes"]:' in line or 'warn(f"No' in line or 'return False' in line):
++        new_lines.append(line)
++    elif skip and ('    return True' in line or 'def' in line):
++        skip = False
++        new_lines.append(line)
++    elif not skip:
++        new_lines.append(line)
++
++with open('repo.py', 'w') as f:
++    f.writelines(new_lines)
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 9ad9a2b..b690042 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -734,6 +734,7 @@ class TasksCLI:
+         plan=None,
+         repro=None,
+     ):
++        title = title.strip()
+         if len(title) < 10:
+             self.error("Task title is too vague. Min 10 chars.")
+         missing = []
+@@ -898,6 +899,7 @@ class TasksCLI:
+         tt, _ = self._parse_filename(fname)
+         updated = False
+         if title:
++            title = title.strip()
+             if len(title) < 10:
+                 self.error("Title too vague.")
+             task.metadata["Ti"] = title
+@@ -2062,9 +2064,17 @@ class TasksCLI:
+                 if not os.path.isdir(path):
+                     continue
+                 task = FM.load(path)
++                if task.corrupted:
++                    self.log(
++                        f"WARNING: Task at {path} is corrupted. Skipping automatic repair."
++                    )
++                    summary = "CORRUPTED TASK"
++                else:
++                    summary = (task.metadata.get("Ti") or "No Title")[:60]
++
+                 tt, tb = self._parse_filename(item)
+                 task_id = task.metadata.get("Id")
+-                if not task_id:
++                if not task_id and not task.corrupted:
+                     task_id = self._get_next_id()
+                     task.metadata["Id"] = task_id
+                     self._atomic_write(path, task)
+@@ -2078,16 +2088,21 @@ class TasksCLI:
+                         ],
+                         cwd=self.tasks_path,
+                     )
++
++                # If still no task_id (because corrupted), use filename as fallback for sorting/display
++                if not task_id:
++                    task_id = item.split("-")[0] if "-" in item else "???"
++
+                 seen.add(item)
+                 tasks.append(
+                     {
+                         "id": task_id,
+-                        "p": task.get("Pr", 9),
++                        "p": task.get("Pr") or 9,
+                         "file": item,
+                         "type": tt,
+                         "branch": tb,
+-                        "summary": task.metadata.get("Ti", "No Title")[:60],
+-                        "blocked_by": task.get("Bl", []),
++                        "summary": summary,
++                        "blocked_by": task.get("Bl") or [],
+                     }
+                 )
+             if tasks:
+diff --git a/tasks_ai/file_manager.py b/tasks_ai/file_manager.py
+index b19c3e4..c532a79 100644
+--- a/tasks_ai/file_manager.py
++++ b/tasks_ai/file_manager.py
+@@ -59,24 +59,28 @@ class FM:
+ 
+         meta = {}
+         meta_path = os.path.join(path, "meta.json")
++        corrupted = False
+         if os.path.exists(meta_path):
+             try:
+                 with open(meta_path, "r") as f:
+                     meta = json.load(f)
+             except (json.JSONDecodeError, ValueError):
+-                # Robustness: ignore corrupted meta.json
+-                pass
++                # Robustness: ignore corrupted meta.json but mark as corrupted
++                corrupted = True
+ 
+         if not os.path.isdir(path):
+-            return Task(metadata=meta, parts={})
++            return Task(metadata=meta, parts={}, corrupted=corrupted)
+ 
+         parts = {}
+         for f in os.listdir(path):
+             if f.endswith(".md"):
+                 part_name = f[:-3]
+-                with open(os.path.join(path, f), "r") as file:
+-                    parts[part_name] = file.read()
+-        return Task(metadata=meta, parts=parts)
++                try:
++                    with open(os.path.join(path, f), "r") as file:
++                        parts[part_name] = file.read()
++                except Exception:
++                    corrupted = True
++        return Task(metadata=meta, parts=parts, corrupted=corrupted)
+ 
+     @staticmethod
+     def dump(task, path):
+diff --git a/tasks_ai/models.py b/tasks_ai/models.py
+index a073308..8f75b23 100644
+--- a/tasks_ai/models.py
++++ b/tasks_ai/models.py
+@@ -2,9 +2,10 @@
+ 
+ 
+ class Task:
+-    def __init__(self, metadata=None, parts=None):
++    def __init__(self, metadata=None, parts=None, corrupted=False):
+         self.metadata = metadata or {}
+         self.parts = parts or {}
++        self.corrupted = corrupted
+ 
+     def __getitem__(self, key):
+         return self.metadata.get(key)
+diff --git a/tests/test_robustness_bugfix.py b/tests/test_robustness_bugfix.py
+index 7214443..f095e8e 100644
+--- a/tests/test_robustness_bugfix.py
++++ b/tests/test_robustness_bugfix.py
+@@ -1,4 +1,3 @@
+-
+ import os
+ import subprocess
+ import shutil
+@@ -6,61 +5,119 @@ import tempfile
+ import unittest
+ import json
+ 
++
+ class TestRobustnessBugfix(unittest.TestCase):
+     def setUp(self):
+         self.test_dir = tempfile.mkdtemp()
+         self.repo_dir = os.path.join(self.test_dir, "repo")
+         os.makedirs(self.repo_dir)
+         subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
+-        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir)
++        subprocess.run(
++            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
++        )
+         subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)
+-        
++
+         # Initialize tasks
+         self.tasks_py = os.path.join(os.getcwd(), "tasks.py")
+-        subprocess.run([ "python", self.tasks_py, "init"], cwd=self.repo_dir, capture_output=True)
++        subprocess.run(
++            ["python", self.tasks_py, "init"], cwd=self.repo_dir, capture_output=True
++        )
+ 
+     def tearDown(self):
+         shutil.rmtree(self.test_dir)
+ 
+     def test_corrupted_meta_json_does_not_crash_cli(self):
+         # Create a task
+-        res = subprocess.run([ "python", self.tasks_py, "-j", "create", "Valid Task Title", "--type", "task", "--story", "As a user I want to have a robust task manager", "--tech", "Technical details about robustness and error handling", "--criteria", "Acceptance criteria 1 must be satisfied by implementation", "--plan", "1. Implementation step one should be executed first"], 
+-                             cwd=self.repo_dir, capture_output=True, text=True)
++        res = subprocess.run(
++            [
++                "python",
++                self.tasks_py,
++                "-j",
++                "create",
++                "Valid Task Title",
++                "--type",
++                "task",
++                "--story",
++                "As a user I want to have a robust task manager",
++                "--tech",
++                "Technical details about robustness and error handling",
++                "--criteria",
++                "Acceptance criteria 1 must be satisfied by implementation",
++                "--plan",
++                "1. Implementation step one should be executed first",
++            ],
++            cwd=self.repo_dir,
++            capture_output=True,
++            text=True,
++        )
+         self.assertEqual(res.returncode, 0, res.stderr)
+-        
++
+         # Corrupt the meta.json of the new task
+         task_folder = json.loads(res.stdout)["data"]["path"]
+         meta_path = os.path.join(self.repo_dir, task_folder, "meta.json")
+-        
++
+         with open(meta_path, "w") as f:
+             f.write("{ invalid json")
+-            
++
+         # Run any tasks command, e.g., list
+-        res = subprocess.run([ "python", self.tasks_py, "-j", "list"], 
+-                             cwd=self.repo_dir, capture_output=True, text=True)
+-        
++        res = subprocess.run(
++            ["python", self.tasks_py, "-j", "list"],
++            cwd=self.repo_dir,
++            capture_output=True,
++            text=True,
++        )
++
+         # Should NOT crash (returncode 0)
+-        self.assertEqual(res.returncode, 0, f"CLI crashed with corrupted meta.json: {res.stderr}")
+-        
++        self.assertEqual(
++            res.returncode, 0, f"CLI crashed with corrupted meta.json: {res.stderr}"
++        )
++
+     def test_empty_meta_json_does_not_crash_cli(self):
+         # Create a task
+-        res = subprocess.run([ "python", self.tasks_py, "-j", "create", "Another Task Title", "--type", "task", "--story", "As a user I want to have a robust task manager", "--tech", "Technical details about robustness and error handling", "--criteria", "Acceptance criteria 1 must be satisfied by implementation", "--plan", "1. Implementation step one should be executed first"], 
+-                             cwd=self.repo_dir, capture_output=True, text=True)
++        res = subprocess.run(
++            [
++                "python",
++                self.tasks_py,
++                "-j",
++                "create",
++                "Another Task Title",
++                "--type",
++                "task",
++                "--story",
++                "As a user I want to have a robust task manager",
++                "--tech",
++                "Technical details about robustness and error handling",
++                "--criteria",
++                "Acceptance criteria 1 must be satisfied by implementation",
++                "--plan",
++                "1. Implementation step one should be executed first",
++            ],
++            cwd=self.repo_dir,
++            capture_output=True,
++            text=True,
++        )
+         self.assertEqual(res.returncode, 0, res.stderr)
+-        
++
+         # Corrupt the meta.json of the new task (make it empty)
+         task_folder = json.loads(res.stdout)["data"]["path"]
+         meta_path = os.path.join(self.repo_dir, task_folder, "meta.json")
+-        
++
+         with open(meta_path, "w") as f:
+             f.write("")
+-            
++
+         # Run any tasks command, e.g., list
+-        res = subprocess.run([ "python", self.tasks_py, "-j", "list"], 
+-                             cwd=self.repo_dir, capture_output=True, text=True)
+-        
++        res = subprocess.run(
++            ["python", self.tasks_py, "-j", "list"],
++            cwd=self.repo_dir,
++            capture_output=True,
++            text=True,
++        )
++
+         # Should NOT crash
+-        self.assertEqual(res.returncode, 0, f"CLI crashed with empty meta.json: {res.stderr}")
++        self.assertEqual(
++            res.returncode, 0, f"CLI crashed with empty meta.json: {res.stderr}"
++        )
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/tmp.py b/tmp.py
+new file mode 100644
+index 0000000..a364309
+--- /dev/null
++++ b/tmp.py
+@@ -0,0 +1,9 @@
++with open('repo.py', 'r') as f:
++    lines = f.readlines()
++
++new_lines = []
++for line in lines:
++    if "if result.returncode != 0:" in line and "check_remote_exists" in "".join(new_lines[-5:]):
++        new_lines.append(line.replace("if result.returncode != 0:", "print(f'DEBUG: result.returncode={result.returncode}, PRIMARY_REMOTE={PRIMARY_REMOTE}'); if result.returncode != 0:"))
++    else:
++        new_lines.append(line)

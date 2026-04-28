@@ -6,6 +6,6 @@
   "Pr": 1,
   "Br": "113-issue-bug-tasks-move-incorrectly-rep",
   "Vp": true,
-  "Rc": "",
-  "Tp": true
+  "Rc": true,
+  "Tp": false
 }
