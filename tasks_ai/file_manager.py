@@ -60,8 +60,15 @@ class FM:
         meta = {}
         meta_path = os.path.join(path, "meta.json")
         if os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
-                meta = json.load(f)
+            try:
+                with open(meta_path, "r") as f:
+                    meta = json.load(f)
+            except (json.JSONDecodeError, ValueError):
+                # Robustness: ignore corrupted meta.json
+                pass
+
+        if not os.path.isdir(path):
+            return Task(metadata=meta, parts={})
 
         parts = {}
         for f in os.listdir(path):

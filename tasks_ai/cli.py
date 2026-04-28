@@ -158,11 +158,14 @@ class TasksCLI:
                 if item == ".gitkeep":
                     continue
                 path = os.path.join(dir_path, item)
-                task = FM.load(path)
-                if task and task.metadata and "DeleteCode" in task.metadata:
-                    del task.metadata["DeleteCode"]
-                    self._atomic_write(path, task)
-                    updated = True
+                try:
+                    task = FM.load(path)
+                    if task and task.metadata and "DeleteCode" in task.metadata:
+                        del task.metadata["DeleteCode"]
+                        self._atomic_write(path, task)
+                        updated = True
+                except Exception as e:
+                    self.log(f"Warning: Failed to load task at {path}: {e}")
         if updated:
             self._run_git(["add", "--all"], cwd=self.tasks_path)
             self._run_git(
@@ -1437,7 +1440,9 @@ class TasksCLI:
         ):
             hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
             if current_state == "REJECTED" and new_status == "ARCHIVED":
-                hint += " Use 'hammer tasks delete <id>' to permanently remove the task."
+                hint += (
+                    " Use 'hammer tasks delete <id>' to permanently remove the task."
+                )
             if is_merged_branch:
                 hint += "\nNote: Branch is merged to main. You can archive this task directly."
             self.error(
