@@ -1,4 +1,3 @@
-import sys
 with open('repo.py', 'r') as f:
     lines = f.readlines()
 

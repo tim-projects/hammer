@@ -49,15 +49,6 @@ FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
 PIPELINE = ["testing", "staging", "main"]
 
 
-def get_primary_remote():
-    try:
-        remotes = run(["git", "remote"], capture=True).stdout.split()
-        if "github" in remotes:
-            return "github"
-        return "origin"
-    except Exception:
-        return "origin"
-
 
 def get_primary_remote():
     try:
@@ -69,6 +60,7 @@ def get_primary_remote():
         return "origin" if "origin" in remotes else remotes[0]
     except Exception:
         return "origin"
+
 
 PRIMARY_REMOTE = get_primary_remote()
 
