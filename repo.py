@@ -48,6 +48,17 @@ NC = "\033[0m"
 FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
 PIPELINE = ["testing", "staging", "main"]
 
+def get_primary_remote():
+    try:
+        remotes = run(["git", "remote"], capture=True).stdout.split()
+        if "origin" in remotes:
+            return "origin"
+        return remotes[0] if remotes else "origin"
+    except Exception:
+        return "origin"
+
+PRIMARY_REMOTE = get_primary_remote()
+
 
 def log(msg):
     if not FLAGS["quiet"] and not FLAGS["json"]:
@@ -159,12 +170,12 @@ def branch_exists(name):
 
 
 def check_origin_exists():
-    result = run(["git", "remote", "get-url", "origin"], check=False, capture=True)
+    result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)
     if result.returncode != 0:
         if FLAGS["yes"]:
-            warn("No 'origin' remote - continuing in local-only mode")
+            warn(f"No '{PRIMARY_REMOTE}' remote - continuing in local-only mode")
             return False
-        warn("No 'origin' remote - continuing in local-only mode")
+        warn(f"No '{PRIMARY_REMOTE}' remote - continuing in local-only mode")
         return False
     return True
 
@@ -226,13 +237,13 @@ def cmd_merge(src_input, target_input):
     log(f"Merging {src} into {target}...")
     run(["git", "checkout", target])
     if check_origin_exists():
-        run(["git", "pull", "origin", target], check=False)
+        run(["git", "pull", PRIMARY_REMOTE, target], check=False)
     else:
         warn("No remote - skipping pull")
     run(["git", "merge", src, "-m", f"merge: {src} into {target}"])
     if check_origin_exists():
         if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
-            run(["git", "push", "origin", target])
+            run(["git", "push", PRIMARY_REMOTE, target])
     else:
         warn("No remote - skipping push")
     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
@@ -253,7 +264,7 @@ def cmd_commit(message):
             if not check_origin_exists():
                 pass  # continue locally
             else:
-                run(["git", "push", "origin", current])
+                run(["git", "push", PRIMARY_REMOTE, current])
         log("✅ Commit successful")
     else:
         warn("No changes to commit")
