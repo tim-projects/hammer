@@ -1,0 +1,2 @@
+ - [x] repo.py detects non-standard remote names correctly
+ - [x] repo.py operations like 'sync', 'merge', and 'promote' work regardless of the remote name
