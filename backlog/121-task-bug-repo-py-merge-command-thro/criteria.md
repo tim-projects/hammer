@@ -1,0 +1,1 @@
+- [ ] 1. Update repo.py to correctly parse merge arguments. 2. Verify merge command functions with standard 'merge <src> <dest>' syntax.

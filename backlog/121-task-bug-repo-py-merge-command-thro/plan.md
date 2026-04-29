@@ -1,0 +1,1 @@
+1. 1. Inspect cmd_merge logic in repo.py. 2. Fix the argument indexing. 3. Verify fix.

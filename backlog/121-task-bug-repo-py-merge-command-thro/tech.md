@@ -1,0 +1,1 @@
+The CLI argument parsing in repo.py expects exactly 4 arguments for the merge command, but only uses two. This makes the merge command fragile and unusable in standard workflows.

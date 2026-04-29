@@ -1,0 +1,1 @@
+The 'repo.py merge' command attempts to access args[3] even when fewer arguments are provided, causing an IndexError.
