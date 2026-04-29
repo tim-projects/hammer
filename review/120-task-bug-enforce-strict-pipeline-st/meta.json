@@ -6,6 +6,6 @@
   "Pr": 2,
   "Br": "120-task-bug-enforce-strict-pipeline-st",
   "Tp": false,
-  "Rc": "",
+  "Rc": true,
   "Vp": true
 }
