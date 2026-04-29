@@ -9,5 +9,9 @@ branch=101-task-fix-branch-name-word-wrap-in-t, main_sha=f74b7f64f201eb2bb4c859b
 branch=106-issue-fix-crash-when-task-files-are, main_sha=52d0549e4d6ef8213fc1f82e309fd80a856b5b16, diff_len=6082
 branch=113-issue-bug-tasks-move-incorrectly-rep, main_sha=49d9dccf0d7b85b81659411db26844b6144b38ea, diff_len=16514
 branch=113-issue-bug-tasks-move-incorrectly-rep, main_sha=49d9dccf0d7b85b81659411db26844b6144b38ea, diff_len=38732
+<<<<<<< HEAD
 branch=114-task-enforce-manual-audit-for-regre, main_sha=af6476541091f091d98e9c526a8f56fee9b5df2d, diff_len=0
 branch=114-task-enforce-manual-audit-for-regre, main_sha=af6476541091f091d98e9c526a8f56fee9b5df2d, diff_len=671
+=======
+branch=119-task-bug-fix-test-dev-mode-py-failu, main_sha=af6476541091f091d98e9c526a8f56fee9b5df2d, diff_len=0
+>>>>>>> 120-task-bug-enforce-strict-pipeline-st
