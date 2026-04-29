@@ -850,6 +850,7 @@ class TasksCLI:
                 ["commit", "--allow-empty", "-m", f"Add {task_type}: {title}"],
                 cwd=self.tasks_path,
             )
+            self._run_git(["checkout", self._get_default_branch()], cwd=self.root)
             self._run_git(["checkout", "-b", task_id], cwd=self.root)
             current_branch = self._run_git(
                 ["rev-parse", "--abbrev-ref", "HEAD"]
