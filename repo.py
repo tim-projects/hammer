@@ -197,29 +197,47 @@ def cmd_promote(src_input, original_task_id=None):
     task_id = original_task_id or (
         src.split("-")[0] if src.split("-")[0].isdigit() else None
     )
-    target = (
-        "testing"
-        if src not in PIPELINE
-        else ("staging" if src == "testing" else "main")
-    )
-    if src == target:
-        info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
-        return
+    
     current_status = None
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
         path, current_status = cli.find_task(task_id)
-        if path:
-            if target in ("staging", "main"):
-                if current_status == "TESTING":
-                    info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
-                    cli.move(task_id, "REVIEW")
-                    error(f"Task {task_id} moved to REVIEW for audit.", hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.")
-                if current_status == "REVIEW":
-                    from tasks_ai.file_manager import FM
-                    task = FM.load(path)
-                    if not task.metadata.get("Rc"):
-                        error("Regression check not passed.", hint=f"Run 'tasks modify {task_id} --regression-check'.")
+    
+    target = None
+    if task_id and TasksCLI and current_status:
+        if current_status in ["PROGRESSING"]:
+            target = "testing"
+        elif current_status == "TESTING":
+            target = "staging"
+        elif current_status == "REVIEW":
+            target = "staging"
+        elif current_status == "STAGING":
+            target = "main"
+
+    # Fallback to existing logic if no target found
+    if not target:
+        target = (
+            "testing"
+            if src not in PIPELINE
+            else ("staging" if src == "testing" else "main")
+        )
+    
+    if src == target:
+        info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
+        return
+        
+    # Perform gate checks
+    if task_id and TasksCLI and path:
+        if target in ("staging", "main"):
+            if current_status == "TESTING":
+                info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
+                cli.move(task_id, "REVIEW")
+                error(f"Task {task_id} moved to REVIEW for audit.", hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.")
+            if current_status == "REVIEW":
+                from tasks_ai.file_manager import FM
+                task = FM.load(path)
+                if not task.metadata.get("Rc"):
+                    error("Regression check not passed.", hint=f"Run 'tasks modify {task_id} --regression-check'.")
     needs_move = False
     if task_id and TasksCLI and current_status:
         if target == "testing" and current_status == "PROGRESSING":
