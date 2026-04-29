@@ -6,6 +6,6 @@
   "Pr": 1,
   "Br": "114-task-enforce-manual-audit-for-regre",
   "Tp": false,
-  "Rc": "",
+  "Rc": true,
   "Vp": true
 }
