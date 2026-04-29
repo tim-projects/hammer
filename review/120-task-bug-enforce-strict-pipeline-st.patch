@@ -7,3 +7,123 @@ index 665c2b0..df23e6d 100644
  branch=113-issue-bug-tasks-move-incorrectly-rep, main_sha=49d9dccf0d7b85b81659411db26844b6144b38ea, diff_len=16514
  branch=113-issue-bug-tasks-move-incorrectly-rep, main_sha=49d9dccf0d7b85b81659411db26844b6144b38ea, diff_len=38732
 +branch=119-task-bug-fix-test-dev-mode-py-failu, main_sha=af6476541091f091d98e9c526a8f56fee9b5df2d, diff_len=0
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 7b40927..7db1fcd 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -316,6 +316,17 @@ class TasksCLI:
+         self.log(f"Regression diff generated at {diff_path}")
+         return diff_path
+ 
++
++    def _check_transition(self, filename, new_status):
++        filepath, current_state = self.find_task(filename)
++        if not filepath or current_state is None:
++            return
++        if "," in new_status:
++            return
++        if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and current_state != new_status:
++            self.error(f"Forbidden transition: {current_state} -> {new_status}")
++
++
+     def _run_repo(self, args, cwd=None):
+         cwd = cwd or self.root
+         repo_path = os.path.join(self.root, "repo")
+@@ -1258,6 +1269,7 @@ class TasksCLI:
+         )
+ 
+     def move(self, filename, new_status, yes=False):
++        self._check_transition(filename, new_status)
+         filepath, current_state_from_folder = self.find_task(filename)
+         if not filepath:
+             self.error(
+diff --git a/tests/hammer_test_base.py b/tests/hammer_test_base.py
+new file mode 100644
+index 0000000..ffc3ae3
+--- /dev/null
++++ b/tests/hammer_test_base.py
+@@ -0,0 +1,30 @@
++import unittest
++import subprocess
++import os
++import shutil
++import tempfile
++import sys
++import json
++
++class HammerTestBase(unittest.TestCase):
++    def setUp(self):
++        self.test_root = tempfile.mkdtemp(prefix="hammer_test_")
++        self.repo_path = os.path.join(self.test_root, "repo")
++        # Use full local clone
++        subprocess.run(["git", "clone", os.getcwd(), self.repo_path], check=True, capture_output=True)
++        self.script_path = os.path.join(self.repo_path, "tasks.py")
++        
++        # Configure isolated dev environment
++        os.makedirs(os.path.join(self.repo_path, ".tasks"), exist_ok=True)
++        with open(os.path.join(self.repo_path, ".tasks", "config.yaml"), "w") as f:
++            json.dump({"repo": {"lint": "/bin/true", "test": "/bin/true", "type_check": "/bin/true", "format": "/bin/true"}}, f)
++        
++        subprocess.run([sys.executable, self.script_path, "--dev", "init"], 
++                       cwd=self.repo_path, check=True, capture_output=True)
++
++    def tearDown(self):
++        shutil.rmtree(self.test_root)
++
++    def run_tasks(self, args):
++        return subprocess.run([sys.executable, self.script_path, "-j", "--dev"] + args, 
++                              cwd=self.repo_path, capture_output=True, text=True)
+diff --git a/tests/test_all_transitions.py b/tests/test_all_transitions.py
+new file mode 100644
+index 0000000..63b2414
+--- /dev/null
++++ b/tests/test_all_transitions.py
+@@ -0,0 +1,48 @@
++import unittest
++import json
++from hammer_test_base import HammerTestBase
++from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
++
++class TestAllTransitions(HammerTestBase):
++    def test_transitions(self):
++        res = self.run_tasks(["create", "Comprehensive Test Task", 
++             "--story", "Sufficiently long story content here...", 
++             "--tech", "Sufficiently long technical description here...", 
++             "--criteria", "Sufficiently long acceptance criteria here...", 
++             "--plan", "Sufficiently long planning details here..."])
++        task_id = json.loads(res.stdout)["data"]["id"]
++        
++        self.run_tasks(["move", str(task_id), "READY"])
++        current = "READY"
++        
++        states_to_test = [s for s in STATE_FOLDERS.keys() if s not in ["BACKLOG"]]
++        
++        for target in states_to_test:
++            if target == current: continue
++            
++            res = self.run_tasks(["move", str(task_id), target])
++            output = json.loads(res.stdout)
++            
++            success = output.get("success", False)
++            error = output.get("error", "")
++            
++            is_allowed = target in ALLOWED_TRANSITIONS.get(current, [])
++            is_validation_error = any(msg in error for msg in ["Validation failed", "regression check", "lint"])
++            is_gate_error = any(msg in error for msg in ["Forbidden transition", "Auto-promotion failed"])
++            
++            if is_allowed:
++                is_pass = success or is_validation_error
++                status = "ACCEPTED" if success else "REJECTED"
++                reason = "Valid move successful" if success else error
++            else:
++                is_pass = not success and is_gate_error
++                status = "REJECTED"
++                reason = error if not success else "Unexpectedly allowed"
++            
++            print(f"DEBUG: Testing {current}->{target} ... <{status}> {'PASS' if is_pass else 'FAIL'} (Reason: {reason})")
++            self.assertTrue(is_pass, f"Transition {current}->{target} resulted in unexpected state: {output}")
++            if is_allowed and success:
++                current = target
++
++if __name__ == "__main__":
++    unittest.main()
