@@ -1,0 +1,3 @@
+- [x] Require a 'repo audit --ack' command
+- [x] Block 'tasks move' to STAGING unless 'repo audit --ack' has been performed
+- [x] Disable automated agent calls to --regression-check
