@@ -1,0 +1,3 @@
+- [x] Branches are created from a stable base
+- [x] Task index/counter is globally tracked
+- [x] Atomic operations prevent state corruption
