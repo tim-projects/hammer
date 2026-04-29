@@ -239,6 +239,7 @@ def cmd_promote(src_input, original_task_id=None):
                 if not task.metadata.get("Rc"):
                     error("Regression check not passed.", hint=f"Run 'tasks modify {task_id} --regression-check'.")
     needs_move = False
+    print(f"DEBUG: needs_move={needs_move}, target={target}")
     if task_id and TasksCLI and current_status:
         if target == "testing" and current_status == "PROGRESSING":
             needs_move = True

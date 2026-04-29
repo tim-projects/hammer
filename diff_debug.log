@@ -8,3 +8,4 @@ branch=100-task-investigate-test-review-diff-i, main_sha=cccf72de32809911b5f7d51
 branch=101-task-fix-branch-name-word-wrap-in-t, main_sha=f74b7f64f201eb2bb4c859b6e50f1399c37ea647, diff_len=12569
 branch=106-issue-fix-crash-when-task-files-are, main_sha=52d0549e4d6ef8213fc1f82e309fd80a856b5b16, diff_len=6082
 branch=113-issue-bug-tasks-move-incorrectly-rep, main_sha=49d9dccf0d7b85b81659411db26844b6144b38ea, diff_len=16514
+branch=113-issue-bug-tasks-move-incorrectly-rep, main_sha=49d9dccf0d7b85b81659411db26844b6144b38ea, diff_len=38732
