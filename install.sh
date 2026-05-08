@@ -79,14 +79,14 @@ remove_installation() {
         if [ "$EUID" -ne 0 ]; then
             echo "Warning: Root privileges required to remove system-wide installation."
             sudo rm -rf "$dest"
-            sudo rm -f "$symlink_dir/tasks" "$symlink_dir/repo" "$symlink_dir/r" "$symlink_dir/check"
+            sudo rm -f "$symlink_dir/tasks" "$symlink_dir/repo" "$symlink_dir/r" "$symlink_dir/check" "$symlink_dir/hammer"
         else
             rm -rf "$dest"
-            rm -f "$symlink_dir/tasks" "$symlink_dir/repo" "$symlink_dir/r" "$symlink_dir/check"
+            rm -f "$symlink_dir/tasks" "$symlink_dir/repo" "$symlink_dir/r" "$symlink_dir/check" "$symlink_dir/hammer"
         fi
     else
         rm -rf "$dest"
-        rm -f "$symlink_dir/tasks" "$symlink_dir/repo" "$symlink_dir/r" "$symlink_dir/check"
+        rm -f "$symlink_dir/tasks" "$symlink_dir/repo" "$symlink_dir/r" "$symlink_dir/check" "$symlink_dir/hammer"
     fi
 }
 
@@ -102,7 +102,16 @@ prompt_yes_no() {
 
 # Handle uninstall
 if [ "$UNINSTALL" == "true" ]; then
-  remove_installation "$DEST_DIR" "$SYMLINK_DIR"
+  # Uninstall from both possible locations
+  if [ -d "$DEST_DIR" ] || [ -L "$SYMLINK_DIR/tasks" ] || [ -L "$SYMLINK_DIR/hammer" ]; then
+    remove_installation "$DEST_DIR" "$SYMLINK_DIR" "false"
+  fi
+  # Also check the other mode location
+  if [ -d "$OTHER_DEST_DIR" ] || [ -L "$OTHER_SYMLINK_DIR/tasks" ] || [ -L "$OTHER_SYMLINK_DIR/hammer" ]; then
+    if [ "$FORCE" == "true" ] || prompt_yes_no "Also remove installation from $OTHER_DEST_DIR?"; then
+      remove_installation "$OTHER_DEST_DIR" "$OTHER_SYMLINK_DIR" "false"
+    fi
+  fi
   echo "Uninstallation complete!"
   exit 0
 fi
@@ -117,13 +126,18 @@ fi
 if [ -z "$1" ]; then
     echo "Tasks AI Installer - Use --help for full options"
     echo ""
-    echo "Quick usage:"
-    echo "  ./install.sh              # Show this help"
-    echo "  ./install.sh -i           # Interactive installer"
-    echo "  ./install.sh upgrade      # Download latest from GitHub"
-    echo "  sudo ./install.sh --system # Install system-wide"
-    echo ""
-    read -p "Run interactive installer? [y/N]: " yn
+echo "Quick usage:"
+echo "  ./install.sh              # Show this help"
+echo "  ./install.sh -i           # Interactive installer"
+echo "  ./install.sh upgrade      # Download latest from GitHub"
+echo "  sudo ./install.sh --system # Install system-wide"
+echo ""
+echo "After install:"
+echo "  hammer -h                 # Show all commands"
+echo "  hammer tasks list         # List tasks"
+echo "  hammer check all          # Run all checks"
+echo ""
+read -p "Run interactive installer? [y/N]: " yn
     case "$yn" in
         [yY])
             INTERACTIVE=true
@@ -214,6 +228,7 @@ if [ "$UPGRADE" == "true" ]; then
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks.py" -o "$DEST_DIR/tasks.py"
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/check.py" -o "$DEST_DIR/check.py"
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/repo.py" -o "$DEST_DIR/repo.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/hammer" -o "$DEST_DIR/hammer"
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh" -o "$DEST_DIR/install.sh"
     
     mkdir -p "$DEST_DIR/tasks_ai"
@@ -225,6 +240,7 @@ elif [ "$IS_LOCAL_REPO" == "true" ]; then
     cp "$SCRIPT_DIR/tasks.py" "$DEST_DIR/"
     cp "$SCRIPT_DIR/check.py" "$DEST_DIR/"
     cp "$SCRIPT_DIR/repo.py" "$DEST_DIR/"
+    cp "$SCRIPT_DIR/hammer" "$DEST_DIR/"
     cp "$SCRIPT_DIR/install.sh" "$DEST_DIR/"
     
     if [ -d "$SCRIPT_DIR/tasks_ai" ]; then
@@ -236,6 +252,7 @@ else
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks.py" -o "$DEST_DIR/tasks.py"
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/check.py" -o "$DEST_DIR/check.py"
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/repo.py" -o "$DEST_DIR/repo.py"
+    curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/hammer" -o "$DEST_DIR/hammer"
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh" -o "$DEST_DIR/install.sh"
     
     mkdir -p "$DEST_DIR/tasks_ai"
@@ -245,33 +262,36 @@ else
 fi
 
 # Set executable permissions
+chmod +x "$DEST_DIR/hammer"
 chmod +x "$DEST_DIR/tasks.py"
 chmod +x "$DEST_DIR/check.py"
 chmod +x "$DEST_DIR/repo.py"
 
-# Create symlinks
-rm -f "$SYMLINK_DIR/tasks"
+# Create symlinks - all commands route through hammer wrapper
 rm -f "$SYMLINK_DIR/hammer"
-ln -s "$DEST_DIR/tasks.py" "$SYMLINK_DIR/tasks"
-ln -s "$DEST_DIR/tasks.py" "$SYMLINK_DIR/hammer"
+ln -s "$DEST_DIR/hammer" "$SYMLINK_DIR/hammer"
 
-rm -f "$SYMLINK_DIR/repo"
-ln -s "$DEST_DIR/repo.py" "$SYMLINK_DIR/repo"
-
-rm -f "$SYMLINK_DIR/r"
-ln -s "$DEST_DIR/repo.py" "$SYMLINK_DIR/r"
+rm -f "$SYMLINK_DIR/tasks"
+ln -s "$DEST_DIR/hammer" "$SYMLINK_DIR/tasks"
 
 rm -f "$SYMLINK_DIR/check"
-ln -s "$DEST_DIR/check.py" "$SYMLINK_DIR/check"
+ln -s "$DEST_DIR/hammer" "$SYMLINK_DIR/check"
+
+rm -f "$SYMLINK_DIR/repo"
+ln -s "$DEST_DIR/hammer" "$SYMLINK_DIR/repo"
+
+rm -f "$SYMLINK_DIR/r"
+ln -s "$DEST_DIR/hammer" "$SYMLINK_DIR/r"
 
 echo "--------------------------------------------------"
 echo "Installation complete!"
 echo "Installed to: $DEST_DIR"
-echo "Symlinks: $SYMLINK_DIR"
+echo "Symlinks in: $SYMLINK_DIR"
 if [ "$MODE" == "local" ]; then
     if [[ ":$PATH:" != *":$SYMLINK_DIR:"* ]]; then
         echo "Warning: $SYMLINK_DIR is not in your PATH."
     fi
 fi
-echo "You can now run: tasks -h"
+echo "You can now run: hammer -h"
+echo "Commands (all route through hammer): tasks, check, repo, r"
 echo "--------------------------------------------------"

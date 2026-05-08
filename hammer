@@ -2,10 +2,11 @@
 """
 HAMMER - Main wrapper for all tools
 Usage: hammer <tool> <command> [args]
+   or: hammer <command> [args] (auto-detects tool)
 
 Tools:
   tasks <command>     - Task management (list, create, move, etc.)
-  check <command>      - Quality checks (lint, test, all, etc.)
+  check <command>     - Quality checks (lint, test, all, etc.)
   repo <command>      - Repo management (promote, merge, sync, etc.)
 
 Examples:
@@ -15,6 +16,12 @@ Examples:
   hammer check lint --fix
   hammer repo promote 42
   hammer repo sync
+  # Auto-detected examples:
+  hammer list
+  hammer move 42 PROGRESSING
+  hammer all
+  hammer lint --fix
+  hammer promote 42
 """
 
 import sys
@@ -22,7 +29,7 @@ import subprocess
 import os
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).parent.resolve()
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 TOOLS = {
     "tasks": SCRIPT_DIR / "tasks.py",
@@ -30,25 +37,78 @@ TOOLS = {
     "repo": SCRIPT_DIR / "repo.py",
 }
 
+# Mapping of all known commands to their owning tool
+# Ensures comprehensive coverage for auto-detection
+COMMAND_TO_TOOL = {
+    # tasks commands
+    "init": "tasks",
+    "save": "tasks",
+    "list": "tasks",
+    "current": "tasks",
+    "show": "tasks",
+    "checkpoint": "tasks",
+    "link": "tasks",
+    "create": "tasks",
+    "modify": "tasks",
+    "move": "tasks",
+    "delete": "tasks",
+    "reconcile": "tasks",
+    "cleanup": "tasks",
+    "config": "tasks",
+    "upgrade": "tasks",
+    "run": "tasks",
+    "undo": "tasks",
+    "doctor": "tasks",
+    # check commands
+    "lint": "check",
+    "test": "check",
+    "typecheck": "check",
+    "format": "check",
+    "all": "check",
+    # repo commands
+    "merge": "repo",
+    "promote": "repo",
+    "demote": "repo",
+    "sync": "repo",
+    "commit": "repo",
+    "git": "repo",
+    "status": "repo",
+    "check-merged": "repo",
+    "check-merged-testing": "repo",
+    "branch": "repo",
+}
+
+def error(msg):
+    print(f"❌ HAMMER SAY NO! {msg} 🔨", file=sys.stderr)
+    sys.exit(1)
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
 
-    tool = sys.argv[1]
+    first_arg = sys.argv[1]
 
-    if tool not in TOOLS:
-        print(f"❌ HAMMER SAY NO! Unknown tool: {tool} 🔨")
-        print(f"Valid tools: {', '.join(TOOLS.keys())}")
-        sys.exit(1)
-
-    tool_path = TOOLS[tool]
-    args = sys.argv[2:]
+    # Check if first arg is an explicit tool
+    if first_arg in TOOLS:
+        tool = first_arg
+        args = sys.argv[2:]
+    # Check if first arg is a known command (auto-detect tool)
+    elif first_arg in COMMAND_TO_TOOL:
+        tool = COMMAND_TO_TOOL[first_arg]
+        args = sys.argv[1:]  # Keep all original args (including the command)
+    else:
+        error(
+            f"Unknown tool or command: '{first_arg}'. "
+            f"Valid tools: {', '.join(TOOLS.keys())}. "
+            f"Known commands: {', '.join(sorted(COMMAND_TO_TOOL.keys()))}"
+        )
 
     if not args:
         print(f"HAMMER DEMAND: Specify command for {tool}")
         sys.exit(1)
 
+    tool_path = TOOLS[tool]
     cmd = [sys.executable, str(tool_path)] + args
     result = subprocess.run(cmd)
     sys.exit(result.returncode)

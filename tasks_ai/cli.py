@@ -198,7 +198,7 @@ class TasksCLI:
                 .strip()
             )
         except subprocess.CalledProcessError:
-            self.error("Not a git repository.")
+            self.error("Not a git repository. Run 'git init' to start.")
             sys.exit(1)
 
     def _run_git(self, args, cwd=None):
