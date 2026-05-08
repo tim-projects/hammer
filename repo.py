@@ -2,6 +2,28 @@
 """
 repo - Repository management wrapper script
 Usage: repo <command> [args]
+
+Commands:
+  merge <src> <dest>    - Merge src branch into dest
+  promote <branch>      - Promote branch through pipeline (testing -> staging -> main)
+  demote <task_id> <state> - Demote task to earlier state
+  sync                  - Run full sync (testing -> staging -> main)
+  commit <message>      - Commit changes and optionally push
+  git <args>            - Pass through to git
+  status                - Show git status
+  check-merged <branch> - Check if branch is merged to main
+  check-merged-testing <branch> - Check if branch is merged to testing
+  branch list           - List git branches
+  branch create <name>  - Create new branch
+  branch delete <name>  - Delete branch
+  branch exists <name>  - Check if branch exists
+
+Options:
+  -y, --yes       - Auto-confirm prompts
+  --dev           - Use /tmp/.tasks for dev mode
+  -j, --json      - JSON output
+  -q, --quiet     - Suppress output
+  -h, --help      - Show this help
 """
 import subprocess
 import sys
@@ -329,6 +351,9 @@ def main():
             FLAGS["json"] = True
         elif arg in ["-q", "--quiet"]:
             FLAGS["quiet"] = True
+        elif arg in ["-h", "--help"]:
+            print(__doc__)
+            return
         else:
             args.append(arg)
     if not args:
