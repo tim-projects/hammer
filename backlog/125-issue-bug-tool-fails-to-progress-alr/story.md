@@ -1,0 +1,1 @@
+When a branch is already merged to testing/main via git directly, the task tool cannot progress it. It checks for unstaged changes and newer commits, but doesn't detect that the branch is already merged.

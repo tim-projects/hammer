@@ -1,0 +1,1 @@
+The _move_logic() in cli.py checks has_unstaged and newer_than_testing to block TESTING transition. It should also check if the branch is already merged to testing/main and skip those gates.

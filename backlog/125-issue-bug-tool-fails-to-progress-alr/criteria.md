@@ -1,0 +1,2 @@
+- [ ] Detect merged branch and skip TESTING gate
+- [ ] Detect merged branch and skip validation gate
