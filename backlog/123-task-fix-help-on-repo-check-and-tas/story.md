@@ -1,0 +1,1 @@
+When running 'hammer repo --help', 'hammer check --help', or 'hammer tasks --help', the commands should display help text. Currently repo.py shows 'Unknown: --help' error. check.py and tasks.py use argparse and work correctly with --help.

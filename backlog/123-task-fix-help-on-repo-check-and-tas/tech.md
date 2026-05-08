@@ -1,0 +1,1 @@
+The repo.py script uses a custom argument parser that doesn't handle --help flag. It needs to check for --help and -h flags and print the docstring. check.py and tasks.py already use argparse which handles --help automatically.
