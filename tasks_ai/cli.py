@@ -198,7 +198,7 @@ class TasksCLI:
                 .strip()
             )
         except subprocess.CalledProcessError:
-            self.error("Not a git repository.")
+            self.error("Not a git repository. Run 'git init' to start.")
             sys.exit(1)
 
     def _run_git(self, args, cwd=None):
@@ -315,6 +315,17 @@ class TasksCLI:
 
         self.log(f"Regression diff generated at {diff_path}")
         return diff_path
+
+
+    def _check_transition(self, filename, new_status):
+        filepath, current_state = self.find_task(filename)
+        if not filepath or current_state is None:
+            return
+        if "," in new_status:
+            return
+        if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and current_state != new_status:
+            self.error(f"Forbidden transition: {current_state} -> {new_status}")
+
 
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
@@ -1258,6 +1269,7 @@ class TasksCLI:
         )
 
     def move(self, filename, new_status, yes=False):
+        self._check_transition(filename, new_status)
         filepath, current_state_from_folder = self.find_task(filename)
         if not filepath:
             self.error(

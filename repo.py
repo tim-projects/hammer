@@ -422,7 +422,10 @@ def main():
         return
     cmd = args[0]
     if cmd == "merge":
-        cmd_merge(args[1], args[3])
+        if len(args) < 3:
+            print("Usage: repo.py merge <src> <dest>")
+            return
+        cmd_merge(args[1], args[2])
     elif cmd == "promote":
         cmd_promote(args[1])
     elif cmd == "demote":
