@@ -1,29 +1,36 @@
 #!/usr/bin/env python3
 """
-repo - Repository management wrapper script
+Repo - Repository management wrapper
+
 Usage: repo <command> [args]
+       repo [options]
 
 Commands:
-  merge <src> <dest>    - Merge src branch into dest
-  promote <branch>      - Promote branch through pipeline (testing -> staging -> main)
-  demote <task_id> <state> - Demote task to earlier state
-  sync                  - Run full sync (testing -> staging -> main)
-  commit <message>      - Commit changes and optionally push
-  git <args>            - Pass through to git
-  status                - Show git status
-  check-merged <branch> - Check if branch is merged to main
-  check-merged-testing <branch> - Check if branch is merged to testing
-  branch list           - List git branches
-  branch create <name>  - Create new branch
-  branch delete <name>  - Delete branch
-  branch exists <name>  - Check if branch exists
+  merge <src> <dest>          Merge src branch into dest
+  promote <branch>            Promote branch through pipeline (testing -> staging -> main)
+  demote <task_id> <state>    Demote task to earlier state
+  sync                        Run full sync (testing -> staging -> main)
+  commit <message>            Commit changes and optionally push
+  git <args>                  Pass through to git
+  status                      Show git status
+  check-merged <branch>       Check if branch is merged to main
+  check-merged-testing <branch>  Check if branch is merged to testing
+  branch list                 List git branches
+  branch create <name>        Create new branch
+  branch delete <name>        Delete branch
+  branch exists <name>        Check if branch exists
 
 Options:
-  -y, --yes       - Auto-confirm prompts
-  --dev           - Use /tmp/.tasks for dev mode
-  -j, --json      - JSON output
-  -q, --quiet     - Suppress output
-  -h, --help      - Show this help
+  -y, --yes                   Auto-confirm prompts
+  --dev                       Use /tmp/.tasks for dev mode
+  -j, --json                  JSON output (not yet implemented)
+  -q, --quiet                 Suppress output
+
+Global Flags:
+  -h, --help                  Show this help
+
+Subcommand Help:
+  repo <command> --help       Show help for a specific command
 """
 import subprocess
 import sys
@@ -339,10 +346,131 @@ def ensure_pipeline_branch(name):
         base = get_current_branch()
     run(["git", "checkout", "-b", name, base], quiet=True)
     run(["git", "checkout", "-"], quiet=True)
+HELP_DOCS = {
+    "merge": """
+Usage: repo merge <src> <dest>
+
+Merge src branch into dest branch.
+
+Arguments:
+  src       - Source branch to merge from
+  dest      - Destination branch to merge into
+
+If src is a task branch, dest must be a pipeline branch (testing, staging, main).
+If both src and dest are task branches, a confirmation prompt is shown unless -y is used.
+
+Options:
+  -y, --yes  - Auto-confirm prompts
+""",
+    "promote": """
+Usage: repo promote <branch>
+
+Promote a branch through the pipeline (testing -> staging -> main).
+Also moves the associated task through its workflow states.
+
+Arguments:
+  branch    - Branch name (task branch, e.g. 123-task-name)
+
+Pipeline: task -> testing -> staging -> main
+Tasks are auto-archived after merging to main.
+
+Options:
+  -y, --yes  - Auto-confirm prompts
+""",
+    "demote": """
+Usage: repo demote <task_id> <state>
+
+Demote a task to an earlier state and sync branches accordingly.
+
+Arguments:
+  task_id   - Task numeric ID (e.g. 123)
+  state     - Target state: PROGRESSING or REVIEW
+
+When demoting to PROGRESSING, both staging and testing branches are synced.
+When demoting to REVIEW, only the staging branch is synced.
+
+Options:
+  -y, --yes  - Auto-confirm prompts
+""",
+    "sync": """
+Usage: repo sync
+
+Run full sync: merge testing into staging, then staging into main.
+Equivalent to running 'repo merge testing staging' followed by
+'repo merge staging main'.
+
+Options:
+  -y, --yes  - Auto-confirm prompts
+""",
+    "commit": """
+Usage: repo commit <message>
+
+Commit all changes on the current branch and optionally push.
+Runs validation checks before committing.
+
+Arguments:
+  message   - Commit message
+
+Options:
+  -y, --yes  - Auto-confirm push prompt
+""",
+    "status": """
+Usage: repo status
+
+Show current git status (short format).
+""",
+    "check-merged": """
+Usage: repo check-merged <branch>
+
+Check if a branch has been merged into main.
+
+Arguments:
+  branch    - Branch name to check
+
+Exit codes:
+  0 - Branch is merged to main
+  1 - Branch is NOT merged to main
+""",
+    "check-merged-testing": """
+Usage: repo check-merged-testing <branch>
+
+Check if a branch has been merged into testing.
+
+Arguments:
+  branch    - Branch name to check
+
+Exit codes:
+  0 - Branch is merged to testing
+  1 - Branch is NOT merged to testing
+""",
+    "branch": """
+Usage: repo branch <subcommand> [args]
+
+Subcommands:
+  list              - List all branches
+  create <name>     - Create and checkout a new branch
+  delete <name>     - Delete a branch
+  exists <name>     - Check if a branch exists (exit code 0/1)
+""",
+}
+
+
 def main():
     global FLAGS
+    raw_args = sys.argv[1:]
+
+    # Check for subcommand-specific help: `repo <cmd> --help` or `repo <cmd> -h`
+    if raw_args:
+        cmd_candidate = raw_args[0]
+        if cmd_candidate in HELP_DOCS:
+            for arg in raw_args[1:]:
+                if arg in ("-h", "--help"):
+                    print(HELP_DOCS[cmd_candidate].strip())
+                    return
+
+    # Parse global flags
     args = []
-    for arg in sys.argv[1:]:
+    for arg in raw_args:
         if arg in ["-y", "--yes"]:
             FLAGS["yes"] = True
         elif arg == "--dev":
@@ -351,51 +479,72 @@ def main():
             FLAGS["json"] = True
         elif arg in ["-q", "--quiet"]:
             FLAGS["quiet"] = True
-        elif arg in ["-h", "--help"]:
+        elif arg in ("-h", "--help"):
             print(__doc__)
             return
         else:
             args.append(arg)
+
     if not args:
         print(__doc__)
         return
+
     cmd = args[0]
+    args = args[1:]
+
     if cmd == "merge":
-        cmd_merge(args[1], args[2])
+        if len(args) < 2:
+            print(HELP_DOCS["merge"].strip())
+            return
+        cmd_merge(args[0], args[1])
     elif cmd == "promote":
-        cmd_promote(args[1])
+        if len(args) < 1:
+            print(HELP_DOCS["promote"].strip())
+            return
+        cmd_promote(args[0])
     elif cmd == "demote":
-        cmd_demote(args[1], args[2])
+        if len(args) < 2:
+            print(HELP_DOCS["demote"].strip())
+            return
+        cmd_demote(args[0], args[1])
     elif cmd == "sync":
         cmd_merge("testing", "staging")
         cmd_merge("staging", "main")
     elif cmd == "commit":
-        cmd_commit(" ".join(args[1:]))
+        if len(args) < 1:
+            print(HELP_DOCS["commit"].strip())
+            return
+        cmd_commit(" ".join(args))
     elif cmd == "git":
-        run(["git"] + args[1:])
+        if len(args) < 1:
+            error("git: specify git command")
+        run(["git"] + args)
     elif cmd == "status":
         run(["git", "status"])
     elif cmd == "check-merged":
-        if len(args) < 2:
-            error("check-merged: specify branch")
-        sys.exit(0 if check_merged_to_main(args[1]) else 1)
+        if len(args) < 1:
+            print(HELP_DOCS["check-merged"].strip())
+            return
+        sys.exit(0 if check_merged_to_main(args[0]) else 1)
     elif cmd == "check-merged-testing":
-        if len(args) < 2:
-            error("check-merged-testing: specify branch")
-        sys.exit(0 if check_merged_to_testing(args[1]) else 1)
+        if len(args) < 1:
+            print(HELP_DOCS["check-merged-testing"].strip())
+            return
+        sys.exit(0 if check_merged_to_testing(args[0]) else 1)
     elif cmd == "branch":
-        if len(args) < 2:
-            error("branch: specify list, create, or delete")
-        elif args[1] == "list":
+        if len(args) < 1:
+            print(HELP_DOCS["branch"].strip())
+            return
+        elif args[0] == "list":
             run(["git", "branch"])
-        elif args[1] == "create" and len(args) > 2:
-            run(["git", "checkout", "-b", args[2]])
-        elif args[1] == "delete" and len(args) > 2:
-            run(["git", "branch", "-d", args[2]])
-        elif args[1] == "exists" and len(args) > 2:
-            sys.exit(0 if branch_exists(args[2]) else 1)
+        elif args[0] == "create" and len(args) > 1:
+            run(["git", "checkout", "-b", args[1]])
+        elif args[0] == "delete" and len(args) > 1:
+            run(["git", "branch", "-d", args[1]])
+        elif args[0] == "exists" and len(args) > 1:
+            sys.exit(0 if branch_exists(args[1]) else 1)
         else:
-            error("branch: unknown subcommand")
+            print(HELP_DOCS["branch"].strip())
     else:
         error(f"Unknown: {cmd}")
 if __name__ == "__main__":
