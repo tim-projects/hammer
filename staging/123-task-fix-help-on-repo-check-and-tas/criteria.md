@@ -1,3 +1,0 @@
-- [ ] hammer repo --help shows usage information
-- [ ] hammer repo -h works
-- [ ] All repo subcommands have help
