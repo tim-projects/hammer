@@ -5,7 +5,7 @@ from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
 
 class TestAllTransitions(HammerTestBase):
     def test_transitions(self):
-        res = self.run_tasks(["create", "Comprehensive Test Task", 
+        res = self.run_tasks(["create", "Comprehensive Test Title Task", 
              "--story", "Sufficiently long story content here...", 
              "--tech", "Sufficiently long technical description here...", 
              "--criteria", "Sufficiently long acceptance criteria here...", 
