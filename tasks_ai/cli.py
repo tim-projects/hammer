@@ -246,8 +246,12 @@ class TasksCLI:
 
         os.makedirs(review_dir, exist_ok=True)
         # early debug
-        with open("/tmp/kilo_early_debug.log", "a") as f:
-            f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        debug_log = f"/tmp/review_diff_debug_{os.getuid()}.log"
+        try:
+            with open(debug_log, "a") as f:
+                f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        except (PermissionError, OSError):
+            pass
         self.log(
             f"[DEBUG] Generating review diff: task_id={task_id}, branch='{branch}'"
         )
