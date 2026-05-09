@@ -264,10 +264,14 @@ class TasksCLI:
         self.log(
             f"[DEBUG] branch={branch}, default_branch={default_branch}, main_sha={main_sha}"
         )
-        with open("/tmp/debug_diff.log", "a") as f:
-            f.write(
-                f"DEBUG: branch={branch}, default_branch={default_branch}, main_sha={main_sha}, root={self.root}\n"
-            )
+        debug_log2 = f"/tmp/review_diff_debug_{os.getuid()}.log"
+        try:
+            with open(debug_log2, "a") as f:
+                f.write(
+                    f"DEBUG: branch={branch}, default_branch={default_branch}, main_sha={main_sha}, root={self.root}\n"
+                )
+        except (PermissionError, OSError):
+            pass
 
         diff_content = ""
 
