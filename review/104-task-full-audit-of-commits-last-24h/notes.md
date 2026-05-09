@@ -1,3 +1,4 @@
+
 # Audit Findings
 - Found "hammer tasks-ai" branding artifacts in `install.sh`, `hammer tasks_ai/cli.py`, `bug-report.md`, and `tests/hammer tasks_ai/cli.py`.
 - Found inconsistent "HAMMER" voice usage in CLI output vs. documentation.
