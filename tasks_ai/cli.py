@@ -1893,7 +1893,10 @@ class TasksCLI:
             if not task.metadata.get("Rc"):
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
-                    hint="If this is a code change, please move to REVIEW, audit the diff at .tasks/review/<task_id>/diff.patch, then run 'hammer tasks modify <id> --regression-check' to confirm.",
+                    hint="Regression check is required before moving to STAGING/DONE/ARCHIVED. Steps:\n"
+                    "  1. Review the diff patch at .tasks/review/<task_id>/diff.patch\n"
+                    "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
+                    "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
                 )
 
                 # Sync and Reset for regression states
@@ -1937,7 +1940,10 @@ class TasksCLI:
             if not task.metadata.get("Rc"):
                 self.error(
                     "Cannot move to ARCHIVED: regression check not passed (Rc flag not set).",
-                    hint="Ensure you have performed a regression review and run 'hammer tasks modify <id> --regression-check' before archiving.",
+                    hint="Regression check is required before archiving. Steps:\n"
+                    "  1. Review the diff patch at .tasks/review/<task_id>/diff.patch\n"
+                    "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
+                    "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
                 )
 
         self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))

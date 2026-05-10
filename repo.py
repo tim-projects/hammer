@@ -330,7 +330,10 @@ def cmd_promote(src_input, original_task_id=None):
                 cli.move(task_id, "REVIEW")
                 error(
                     f"Task {task_id} moved to REVIEW for audit.",
-                    hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.",
+                    hint="Regression check is required before promoting further. Steps:\n"
+                    "  1. Review the diff patch at .tasks/review/<task_id>/diff.patch\n"
+                    "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
+                    "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
                 )
             if current_status == "REVIEW":
                 from tasks_ai.file_manager import FM
@@ -339,7 +342,10 @@ def cmd_promote(src_input, original_task_id=None):
                 if not task.metadata.get("Rc"):
                     error(
                         "Regression check not passed.",
-                        hint=f"Run 'tasks modify {task_id} --regression-check'.",
+                        hint="Complete the regression check before promoting. Steps:\n"
+                        "  1. Review the diff patch at .tasks/review/<task_id>/diff.patch\n"
+                        "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
+                        "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
                     )
     needs_move = False
     print(f"DEBUG: needs_move={needs_move}, target={target}")
