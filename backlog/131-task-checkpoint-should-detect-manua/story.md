@@ -1,0 +1,1 @@
+As a developer using the tasks tool, I need the checkpoint command to detect and capture any unstaged manual edits to task part files (e.g., criteria.md, story.md, tech.md, plan.md) so that progress made by directly editing these files is not lost.

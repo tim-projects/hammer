@@ -1,0 +1,1 @@
+1. 1. Implement unstaged file detection in _sync_task_content. 2. Keep existing commit/notes syncing intact. 3. Run validation. 4. Manual test. 5. Commit on feature branch. 6. Promote task through states to archive.
