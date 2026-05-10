@@ -20,3 +20,4 @@ branch=121-task-bug-repo-py-merge-command-thro, main_sha=cff2b389446ef8f8c433be0
 branch=126-task-fix-hammer-command-path-hash-i, main_sha=b39efbb4c7600f79d61e31c7f81506c6badcb6ce, diff_len=5837
 branch=124-task-allow-setting-multiple-criteri, main_sha=8857e47150b69a926d9019fcb7961659e5c393e0, diff_len=132
 branch=127-task-fix-repo-sync-should-not-auto, main_sha=90af3960494400d40111be7e904541bfe3f29956, diff_len=1805
+branch=108-task-test-title-with-special-charac, main_sha=9b8d180cbe9e749422ca8a2d2d4922e803c504b8, diff_len=0
