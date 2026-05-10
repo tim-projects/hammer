@@ -246,8 +246,12 @@ class TasksCLI:
 
         os.makedirs(review_dir, exist_ok=True)
         # early debug
-        with open("/tmp/kilo_early_debug.log", "a") as f:
-            f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        debug_log = f"/tmp/review_diff_debug_{os.getuid()}.log"
+        try:
+            with open(debug_log, "a") as f:
+                f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        except (PermissionError, OSError):
+            pass
         self.log(
             f"[DEBUG] Generating review diff: task_id={task_id}, branch='{branch}'"
         )
@@ -320,16 +324,17 @@ class TasksCLI:
         self.log(f"Regression diff generated at {diff_path}")
         return diff_path
 
-
     def _check_transition(self, filename, new_status):
         filepath, current_state = self.find_task(filename)
         if not filepath or current_state is None:
             return
         if "," in new_status:
             return
-        if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and current_state != new_status:
+        if (
+            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
+            and current_state != new_status
+        ):
             self.error(f"Forbidden transition: {current_state} -> {new_status}")
-
 
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
@@ -1297,19 +1302,26 @@ class TasksCLI:
         # Check for non-sequential jumps and auto-promote if needed
         # Keep promoting until we reach the target or hit a limit to prevent infinite loops
         max_promotions = 5
-        while new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, []) and current_state_from_folder != new_status and max_promotions > 0:
-            self.log(f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py...")
+        while (
+            new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
+            and current_state_from_folder != new_status
+            and max_promotions > 0
+        ):
+            self.log(
+                f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py..."
+            )
             try:
                 subprocess.run(
                     [sys.executable, "repo.py", "promote", str(task_id_num), "-y"],
-                    capture_output=True, text=True, check=True
+                    capture_output=True,
+                    text=True,
+                    check=True,
                 )
                 # Refresh state after promotion
                 filepath, current_state_from_folder = self.find_task(filename)
                 max_promotions -= 1
             except subprocess.CalledProcessError as e:
                 self.error(f"Auto-promotion failed: {e.stderr}")
-
 
         if False and "," in new_status:
             statuses = [s.strip().upper() for s in new_status.split(",")]
@@ -1751,7 +1763,12 @@ class TasksCLI:
                     # No testing branch yet, any work is new
                     newer_than_testing = True
 
-                if not has_unstaged and not newer_than_testing and not already_merged_to_testing and not already_merged_to_main:
+                if (
+                    not has_unstaged
+                    and not newer_than_testing
+                    and not already_merged_to_testing
+                    and not already_merged_to_main
+                ):
                     self.error(
                         f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
                         f"Make some progress before moving to testing. Do not bypass this tool."
@@ -1762,14 +1779,18 @@ class TasksCLI:
                 try:
                     subprocess.run(
                         [sys.executable, "repo.py", "check-merged-testing", branch],
-                        capture_output=True, text=True, check=True,
+                        capture_output=True,
+                        text=True,
+                        check=True,
                     )
                 except subprocess.CalledProcessError:
                     # Also allow if branch is already merged to main
                     try:
                         subprocess.run(
                             [sys.executable, "repo.py", "check-merged", branch],
-                            capture_output=True, text=True, check=True,
+                            capture_output=True,
+                            text=True,
+                            check=True,
                         )
                     except subprocess.CalledProcessError:
                         self.error(
@@ -1782,7 +1803,9 @@ class TasksCLI:
                 try:
                     subprocess.run(
                         [sys.executable, "repo.py", "check-merged", branch],
-                        capture_output=True, text=True, check=True
+                        capture_output=True,
+                        text=True,
+                        check=True,
                     )
                 except subprocess.CalledProcessError:
                     self.error(
