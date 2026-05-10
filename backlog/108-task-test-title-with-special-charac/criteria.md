@@ -1,2 +1,3 @@
-- [ ] Test one
-- [ ] Test two
+- [ ] Alpha
+- [ ] Beta
+- [ ] Gamma
