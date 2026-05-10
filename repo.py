@@ -238,7 +238,7 @@ def cmd_merge(src_input, target_input, auto_commit=True):
                 run(["git", "commit", "-m", f"WIP: Auto-commit {current}"])
             else:
                 error(
-                    "Uncommitted changes on {current}. Please commit or stash them before running sync.",
+                    f"Uncommitted changes on {current}. Please commit or stash them before running sync.",
                     hint="Run 'git status' to see changes, then commit or run 'git stash'.",
                 )
         run(["git", "checkout", src])
