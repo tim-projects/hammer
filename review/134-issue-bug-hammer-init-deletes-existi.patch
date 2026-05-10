@@ -1,0 +1,84 @@
+diff --git a/tasks.py b/tasks.py
+index d2a1be4..9356bd3 100644
+--- a/tasks.py
++++ b/tasks.py
+@@ -30,7 +30,12 @@ if __name__ == "__main__":
+     )
+     subparsers = parser.add_subparsers(dest="command", required=True)
+ 
+-    subparsers.add_parser("init", help="Init tasks.")
++    init_p = subparsers.add_parser("init", help="Initialize tasks worktree.")
++    init_p.add_argument(
++        "--force",
++        action="store_true",
++        help="Force reinitialization (deletes existing .tasks if present). DANGEROUS: will lose all task data.",
++    )
+ 
+     save_p = subparsers.add_parser(
+         "save", help="Save and push .tasks worktree to remote."
+@@ -212,7 +217,7 @@ if __name__ == "__main__":
+     )
+ 
+     if args.command == "init":
+-        cli.init()
++        cli.init(force=getattr(args, "force", False))
+     elif args.command == "save":
+         cli.save(branch=args.branch)
+     elif args.command == "create":
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index df4d6e9..50cd4a5 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -515,7 +515,30 @@ class TasksCLI:
+                             self.log(f"Auto-archiving: {item}")
+                             self._move_logic(item, "ARCHIVED", force=True, yes=False)
+ 
+-    def init(self):
++    def _tasks_directory_has_data(self, path):
++        """Check if .tasks directory contains actual task data beyond infrastructure."""
++        if not os.path.exists(path):
++            return False
++        # .task_counter presence indicates tasks have been created
++        if os.path.exists(os.path.join(path, ".task_counter")):
++            return True
++        # Check each state folder for task directories (anything beyond .gitkeep)
++        for state_folder in STATE_FOLDERS.values():
++            folder_path = os.path.join(path, state_folder)
++            if not os.path.isdir(folder_path):
++                continue
++            for item in os.listdir(folder_path):
++                if item == ".gitkeep":
++                    continue
++                # Anything else in a state folder is a task directory or file
++                return True
++        # Check for logs directory with any content
++        logs_path = os.path.join(path, "logs")
++        if os.path.isdir(logs_path) and os.listdir(logs_path):
++            return True
++        return False
++
++    def init(self, force=False):
+         if self.dev:
+             for folder in list(STATE_FOLDERS.values()):
+                 p = os.path.join(self.tasks_path, folder)
+@@ -570,6 +593,20 @@ class TasksCLI:
+ 
+         if not is_worktree:
+             if os.path.exists(self.tasks_path):
++                # Safety check: prevent catastrophic data loss
++                if self._tasks_directory_has_data(self.tasks_path):
++                    if force:
++                        self.log(
++                            f"WARNING: {self.tasks_path} contains task data. "
++                            "--force specified, proceeding with deletion."
++                        )
++                    else:
++                        self.error(
++                            f"Found existing .tasks directory with data at '{self.tasks_path}'. "
++                            "Running 'hammer init' here would permanently delete all task history.\n"
++                            "Hint: Run 'hammer tasks doctor' to diagnose and repair issues without losing data. "
++                            "Use 'hammer init --force' only if you are certain you want to reset."
++                        )
+                 if os.path.isdir(self.tasks_path):
+                     shutil.rmtree(self.tasks_path)
+                 else:
