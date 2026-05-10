@@ -1,0 +1,1 @@
+1. 1. Modify constants.py. 2. Run check commands. 3. Check for any tests referencing this transition and adjust if needed. 4. Create a quick manual test: create dummy task, move through states. 5. Commit changes on feature branch. 6. Checkpoint, move to REVIEW, then STAGING, DONE, ARCHIVED.

@@ -1,0 +1,8 @@
+{
+  "Id": 130,
+  "Ti": "Fix ALLOWED_TRANSITIONS: prevent TESTING->STAGING skip of REVIEW gate",
+  "Cr": "260510 16:43",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "130-task-fix-allowed-transitions-preven"
+}

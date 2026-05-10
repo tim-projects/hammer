@@ -1,0 +1,1 @@
+- [ ] 1. Edit tasks_ai/constants.py line 23: remove 'STAGING' from TESTING transitions list. 2. Run full validation suite (pytest, pyright, ruff). 3. Verify that TESTING->STAGING move is forbidden with error. 4. Verify REVIEW->STAGING still works when Rc is set.

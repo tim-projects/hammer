@@ -1,0 +1,1 @@
+As a task manager user, I need the system to enforce the proper workflow gate between TESTING and STAGING, ensuring tasks cannot skip the REVIEW stage where regression checks are validated.
