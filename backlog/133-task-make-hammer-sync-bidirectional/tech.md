@@ -1,0 +1,1 @@
+Modify repo.py cmd_merge and sync logic; sync operation becomes: merge testing→staging, staging→main, then main→staging, staging→testing (full round-trip). Git handles merges; conflict resolution same as existing merge behavior.

@@ -1,0 +1,1 @@
+hammer sync should keep main, staging, and testing branches in sync bidirectionally. Currently sync only propagates upstream (testing→staging→main). After promoting a task to main, we need to sync changes back downstream (main→staging→testing) so all branches have the latest state.
