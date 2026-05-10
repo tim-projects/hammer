@@ -23,3 +23,4 @@ branch=127-task-fix-repo-sync-should-not-auto, main_sha=90af3960494400d40111be7e
 branch=108-task-test-title-with-special-charac, main_sha=9b8d180cbe9e749422ca8a2d2d4922e803c504b8, diff_len=0
 branch=128-task-fix-repo-merge-indexerror-cras, main_sha=9b8d180cbe9e749422ca8a2d2d4922e803c504b8, diff_len=667
 branch=128-task-fix-repo-merge-indexerror-cras, main_sha=9b8d180cbe9e749422ca8a2d2d4922e803c504b8, diff_len=1333
+branch=130-task-fix-allowed-transitions-preven, main_sha=7d7e349ca1b90944d61ad530b7fef116f55f7afe, diff_len=655
