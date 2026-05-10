@@ -217,7 +217,7 @@ def check_merged_to_testing(branch):
     return result.returncode == 0
 
 
-def cmd_merge(src_input, target_input):
+def cmd_merge(src_input, target_input, auto_commit=True):
     src = resolve_branch(src_input)
     target = resolve_branch(target_input)
     if target not in PIPELINE:
@@ -232,9 +232,15 @@ def cmd_merge(src_input, target_input):
     if current != src:
         st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
         if st:
-            warn(f"Uncommitted changes on {current.upper()}. Auto-committing...")
-            run(["git", "add", "."])
-            run(["git", "commit", "-m", f"WIP: Auto-commit {current}"])
+            if auto_commit:
+                warn(f"Uncommitted changes on {current.upper()}. Auto-committing...")
+                run(["git", "add", "."])
+                run(["git", "commit", "-m", f"WIP: Auto-commit {current}"])
+            else:
+                error(
+                    "Uncommitted changes on {current}. Please commit or stash them before running sync.",
+                    hint="Run 'git status' to see changes, then commit or run 'git stash'.",
+                )
         run(["git", "checkout", src])
     log(f"Merging {src} into {target}...")
     run(["git", "checkout", target])
@@ -582,8 +588,8 @@ def main():
             return
         cmd_demote(args[0], args[1])
     elif cmd == "sync":
-        cmd_merge("testing", "staging")
-        cmd_merge("staging", "main")
+        cmd_merge("testing", "staging", auto_commit=False)
+        cmd_merge("staging", "main", auto_commit=False)
     elif cmd == "commit":
         if len(args) < 1:
             print(HELP_DOCS["commit"].strip())
