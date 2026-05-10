@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "127-task-fix-repo-sync-should-not-auto",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
