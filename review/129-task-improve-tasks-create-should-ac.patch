@@ -1,0 +1,42 @@
+diff --git a/tasks.py b/tasks.py
+index 0d642a4..d2a1be4 100644
+--- a/tasks.py
++++ b/tasks.py
+@@ -93,6 +93,11 @@ if __name__ == "__main__":
+     cr_p.add_argument(
+         "--repro", nargs="+", help="Reproduction steps for issues (list)."
+     )
++    cr_p.add_argument(
++        "--branch",
++        action="store_true",
++        help="(ignored) Branch name is auto-generated from title.",
++    )
+ 
+     mod_p = subparsers.add_parser("modify", help="Update task.")
+     mod_p.add_argument("filename", help="Task Id (or filename).")
+@@ -220,6 +225,7 @@ if __name__ == "__main__":
+             criteria=args.criteria,
+             plan=args.plan,
+             repro=args.repro,
++            branch=args.branch,
+         )
+     elif args.command == "modify":
+         cli.modify(
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index de94701..229dc59 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -753,10 +753,13 @@ class TasksCLI:
+         criteria=None,
+         plan=None,
+         repro=None,
++        branch=False,
+     ):
+         title = title.strip()
+         if len(title) < 10:
+             self.error("Task title is too vague. Min 10 chars.")
++        if branch:
++            self.log("Note: --branch flag is ignored; branch names are auto-generated from title.")
+         missing = []
+         if not story:
+             missing.append("--story")
