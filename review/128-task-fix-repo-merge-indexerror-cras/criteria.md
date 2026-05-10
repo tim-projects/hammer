@@ -1,0 +1,2 @@
+- [x] Validates argument count before access
+- [x] Shows clear error message for incorrect usage
