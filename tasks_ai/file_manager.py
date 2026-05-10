@@ -63,23 +63,20 @@ class FM:
         if os.path.exists(meta_path):
             try:
                 with open(meta_path, "r") as f:
-                    meta = json.load(f)
-            except (json.JSONDecodeError, ValueError):
-                # Robustness: ignore corrupted meta.json but mark as corrupted
+                    content = f.read()
+                    if content.strip():
+                        meta = json.loads(content)
+                    else:
+                        corrupted = True
+            except (json.JSONDecodeError, OSError):
                 corrupted = True
-
-        if not os.path.isdir(path):
-            return Task(metadata=meta, parts={}, corrupted=corrupted)
 
         parts = {}
         for f in os.listdir(path):
             if f.endswith(".md"):
                 part_name = f[:-3]
-                try:
-                    with open(os.path.join(path, f), "r") as file:
-                        parts[part_name] = file.read()
-                except Exception:
-                    corrupted = True
+                with open(os.path.join(path, f), "r") as file:
+                    parts[part_name] = file.read()
         return Task(metadata=meta, parts=parts, corrupted=corrupted)
 
     @staticmethod

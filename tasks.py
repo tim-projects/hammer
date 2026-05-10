@@ -54,8 +54,14 @@ if __name__ == "__main__":
     cur_p = subparsers.add_parser("current", help="Show active task.")
     cur_p.add_argument("filename", nargs="?")
 
-    show_p = subparsers.add_parser("show", help="Show task details.")
-    show_p.add_argument("filename", help="Task Id or filename to show.")
+    show_p = subparsers.add_parser(
+        "show", help="Show task details or list all tasks when no ID provided."
+    )
+    show_p.add_argument(
+        "filename",
+        nargs="?",
+        help="Task Id or filename to show (optional, shows all tasks if omitted).",
+    )
     show_p.add_argument(
         "section",
         nargs="?",
@@ -241,7 +247,10 @@ if __name__ == "__main__":
     elif args.command == "current":
         cli.current(args.filename)
     elif args.command == "show":
-        cli.show(args.filename, args.section)
+        if args.filename:
+            cli.show(args.filename, args.section)
+        else:
+            cli.list(show_all=False)
     elif args.command == "checkpoint":
         cli.checkpoint(args.filename)
     elif args.command == "link":

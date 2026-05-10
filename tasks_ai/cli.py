@@ -246,8 +246,12 @@ class TasksCLI:
 
         os.makedirs(review_dir, exist_ok=True)
         # early debug
-        with open("/tmp/kilo_early_debug.log", "a") as f:
-            f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        debug_log = f"/tmp/review_diff_debug_{os.getuid()}.log"
+        try:
+            with open(debug_log, "a") as f:
+                f.write(f"ENTER: task_id={task_id}, branch={branch}\n")
+        except (PermissionError, OSError):
+            pass
         self.log(
             f"[DEBUG] Generating review diff: task_id={task_id}, branch='{branch}'"
         )
@@ -264,10 +268,14 @@ class TasksCLI:
         self.log(
             f"[DEBUG] branch={branch}, default_branch={default_branch}, main_sha={main_sha}"
         )
-        with open("/tmp/debug_diff.log", "a") as f:
-            f.write(
-                f"DEBUG: branch={branch}, default_branch={default_branch}, main_sha={main_sha}, root={self.root}\n"
-            )
+        debug_log2 = f"/tmp/review_diff_debug_{os.getuid()}.log"
+        try:
+            with open(debug_log2, "a") as f:
+                f.write(
+                    f"DEBUG: branch={branch}, default_branch={default_branch}, main_sha={main_sha}, root={self.root}\n"
+                )
+        except (PermissionError, OSError):
+            pass
 
         diff_content = ""
 
@@ -316,16 +324,17 @@ class TasksCLI:
         self.log(f"Regression diff generated at {diff_path}")
         return diff_path
 
-
     def _check_transition(self, filename, new_status):
         filepath, current_state = self.find_task(filename)
         if not filepath or current_state is None:
             return
         if "," in new_status:
             return
-        if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and current_state != new_status:
+        if (
+            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
+            and current_state != new_status
+        ):
             self.error(f"Forbidden transition: {current_state} -> {new_status}")
-
 
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
@@ -1293,19 +1302,26 @@ class TasksCLI:
         # Check for non-sequential jumps and auto-promote if needed
         # Keep promoting until we reach the target or hit a limit to prevent infinite loops
         max_promotions = 5
-        while new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, []) and current_state_from_folder != new_status and max_promotions > 0:
-            self.log(f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py...")
+        while (
+            new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
+            and current_state_from_folder != new_status
+            and max_promotions > 0
+        ):
+            self.log(
+                f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py..."
+            )
             try:
                 subprocess.run(
                     [sys.executable, "repo.py", "promote", str(task_id_num), "-y"],
-                    capture_output=True, text=True, check=True
+                    capture_output=True,
+                    text=True,
+                    check=True,
                 )
                 # Refresh state after promotion
                 filepath, current_state_from_folder = self.find_task(filename)
                 max_promotions -= 1
             except subprocess.CalledProcessError as e:
                 self.error(f"Auto-promotion failed: {e.stderr}")
-
 
         if False and "," in new_status:
             statuses = [s.strip().upper() for s in new_status.split(",")]
@@ -1709,6 +1725,8 @@ class TasksCLI:
                 # Determine if branch has new commits not in testing
                 # Use merge-base --is-ancestor: returns 0 if branch_tip is ancestor of testing (i.e., testing already contains it)
                 newer_than_testing = True  # assume new unless proven otherwise
+                already_merged_to_testing = False
+                already_merged_to_main = False
                 if testing_sha:
                     ancestor_res = self._run_git(
                         ["merge-base", "--is-ancestor", branch_tip_sha, testing_sha],
@@ -1719,11 +1737,38 @@ class TasksCLI:
                         newer_than_testing = False
                     else:
                         newer_than_testing = True
+                    # Also check if testing is ancestor of branch (i.e., branch is already merged to testing)
+                    merge_check_res = self._run_git(
+                        ["merge-base", "--is-ancestor", testing_sha, branch_tip_sha],
+                        cwd=self.root,
+                    )
+                    already_merged_to_testing = merge_check_res.returncode == 0
+
+                    # Check if merged to main as well (covers direct-to-main merges)
+                    main_sha = None
+                    main_verify = self._run_git(
+                        ["rev-parse", "--verify", "main"], cwd=self.root
+                    )
+                    if main_verify.returncode == 0:
+                        main_sha = self._run_git(
+                            ["rev-parse", "main"], cwd=self.root
+                        ).stdout.strip()
+                    if main_sha:
+                        main_merge_res = self._run_git(
+                            ["merge-base", "--is-ancestor", main_sha, branch_tip_sha],
+                            cwd=self.root,
+                        )
+                        already_merged_to_main = main_merge_res.returncode == 0
                 else:
                     # No testing branch yet, any work is new
                     newer_than_testing = True
 
-                if not has_unstaged and not newer_than_testing:
+                if (
+                    not has_unstaged
+                    and not newer_than_testing
+                    and not already_merged_to_testing
+                    and not already_merged_to_main
+                ):
                     self.error(
                         f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
                         f"Make some progress before moving to testing. Do not bypass this tool."
@@ -1734,12 +1779,23 @@ class TasksCLI:
                 try:
                     subprocess.run(
                         [sys.executable, "repo.py", "check-merged-testing", branch],
-                        capture_output=True, text=True, check=True
+                        capture_output=True,
+                        text=True,
+                        check=True,
                     )
                 except subprocess.CalledProcessError:
-                    self.error(
-                        f"Branch '{branch}' not merged to testing. Merge to testing first. Do not bypass this tool.",
-                    )
+                    # Also allow if branch is already merged to main
+                    try:
+                        subprocess.run(
+                            [sys.executable, "repo.py", "check-merged", branch],
+                            capture_output=True,
+                            text=True,
+                            check=True,
+                        )
+                    except subprocess.CalledProcessError:
+                        self.error(
+                            f"Branch '{branch}' not merged to testing or main. Merge to testing or main first. Do not bypass this tool.",
+                        )
 
             # Gate for DONE/ARCHIVED: must be merged to main
             if new_status in ("DONE", "ARCHIVED") and not force:
@@ -1747,7 +1803,9 @@ class TasksCLI:
                 try:
                     subprocess.run(
                         [sys.executable, "repo.py", "check-merged", branch],
-                        capture_output=True, text=True, check=True
+                        capture_output=True,
+                        text=True,
+                        check=True,
                     )
                 except subprocess.CalledProcessError:
                     self.error(
@@ -3219,6 +3277,92 @@ class TasksCLI:
                         }
                     )
 
+        def check_installation_health():
+            """Validate hammer installation: symlinks, file presence, and executability."""
+            import shutil
+
+            hammer_path = shutil.which("hammer")
+            if not hammer_path:
+                bugs.append(
+                    {
+                        "id": "hammer-not-in-path",
+                        "title": "hammer command not found in PATH",
+                        "repro": "Running 'which hammer'",
+                        "expected": "hammer should be installed and available in PATH",
+                        "actual": "hammer not found in PATH",
+                    }
+                )
+                return
+
+            # Resolve symlinks to get the real installation directory
+            try:
+                real_path = os.path.realpath(hammer_path)
+                if not os.path.exists(real_path):
+                    bugs.append(
+                        {
+                            "id": "hammer-broken-symlink",
+                            "title": "hammer symlink is broken",
+                            "repro": f"Checking hammer executable at {hammer_path}",
+                            "expected": "hammer executable should exist",
+                            "actual": f"Symlink target does not exist: {real_path}",
+                        }
+                    )
+                    return
+            except Exception:
+                # If realpath fails, still continue with hammer_path
+                real_path = hammer_path
+
+            install_dir = os.path.dirname(real_path)
+
+            # Required companion scripts
+            required_files = ["tasks.py", "check.py", "repo.py"]
+            for fname in required_files:
+                fpath = os.path.join(install_dir, fname)
+                if not os.path.exists(fpath):
+                    bugs.append(
+                        {
+                            "id": f"missing-{fname}",
+                            "title": f"Missing installation file: {fname}",
+                            "repro": f"Checking for {fname} in {install_dir}",
+                            "expected": f"{fname} should exist in the hammer installation directory",
+                            "actual": f"File not found at {fpath}",
+                        }
+                    )
+
+            # Check tasks_ai package exists
+            tasks_ai_dir = os.path.join(install_dir, "tasks_ai")
+            if not os.path.isdir(tasks_ai_dir):
+                bugs.append(
+                    {
+                        "id": "missing-tasks_ai-package",
+                        "title": "Missing tasks_ai package directory",
+                        "repro": f"Checking for tasks_ai in {install_dir}",
+                        "expected": "tasks_ai package directory should exist",
+                        "actual": f"Directory not found at {tasks_ai_dir}",
+                    }
+                )
+
+            # Check that commands (tasks, check, repo, r) resolve to the same hammer
+            for cmd in ["tasks", "check", "repo", "r"]:
+                cmd_path = shutil.which(cmd)
+                if cmd_path:
+                    try:
+                        cmd_real = os.path.realpath(cmd_path)
+                        if cmd_real != real_path:
+                            bugs.append(
+                                {
+                                    "id": f"mismatched-{cmd}-symlink",
+                                    "title": f"'{cmd}' command conflicts with hammer installation",
+                                    "repro": f"Checking symlink for '{cmd}': {cmd_path} -> {cmd_real}",
+                                    "expected": f"'{cmd}' should point to the same hammer wrapper",
+                                    "actual": f"Points to different location: {cmd_real} vs {real_path}",
+                                }
+                            )
+                    except Exception:
+                        pass  # If realpath fails, skip this command
+
+        check_installation_health()
+
         check_file_structure()
         check_yaml_metadata()
         check_markdown_content()
@@ -3283,6 +3427,7 @@ class TasksCLI:
         check_state_mismatch()
         check_task_counter()
         check_orphaned_tasks()
+        check_installation_health()
 
         for bug in bugs:
             filename = create_bug_report(
