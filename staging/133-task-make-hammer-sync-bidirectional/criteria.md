@@ -1,3 +1,0 @@
-- [ ] Update hammer sync to perform full 2-way cycle (test→stage→main→stage→test)
-- [ ] All three branches end up with identical content after sync
-- [ ] Merge conflicts are handled without data loss
