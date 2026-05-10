@@ -294,4 +294,20 @@ if [ "$MODE" == "local" ]; then
 fi
 echo "You can now run: hammer -h"
 echo "Commands (all route through hammer): tasks, check, repo, r"
+echo ""
+echo "IMPORTANT: If commands are not found, run 'hash -r' to refresh your"
+echo "shell's command cache, or open a new terminal window."
+echo ""
+
+# If script is sourced (running in current shell), auto-refresh hash
+# This only works when sourced (source install.sh or . install.sh), not when piped via curl
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+    echo "Script is sourced - refreshing command hash..."
+    hash -r 2>/dev/null || true
+    echo "Command hash refreshed. hammer commands should be available now."
+else
+    echo "Tip: To auto-refresh your shell's command cache, run:"
+    echo "  hash -r"
+    echo "Or simply open a new terminal."
+fi
 echo "--------------------------------------------------"

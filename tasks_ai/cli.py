@@ -3277,6 +3277,92 @@ class TasksCLI:
                         }
                     )
 
+        def check_installation_health():
+            """Validate hammer installation: symlinks, file presence, and executability."""
+            import shutil
+
+            hammer_path = shutil.which("hammer")
+            if not hammer_path:
+                bugs.append(
+                    {
+                        "id": "hammer-not-in-path",
+                        "title": "hammer command not found in PATH",
+                        "repro": "Running 'which hammer'",
+                        "expected": "hammer should be installed and available in PATH",
+                        "actual": "hammer not found in PATH",
+                    }
+                )
+                return
+
+            # Resolve symlinks to get the real installation directory
+            try:
+                real_path = os.path.realpath(hammer_path)
+                if not os.path.exists(real_path):
+                    bugs.append(
+                        {
+                            "id": "hammer-broken-symlink",
+                            "title": "hammer symlink is broken",
+                            "repro": f"Checking hammer executable at {hammer_path}",
+                            "expected": "hammer executable should exist",
+                            "actual": f"Symlink target does not exist: {real_path}",
+                        }
+                    )
+                    return
+            except Exception:
+                # If realpath fails, still continue with hammer_path
+                real_path = hammer_path
+
+            install_dir = os.path.dirname(real_path)
+
+            # Required companion scripts
+            required_files = ["tasks.py", "check.py", "repo.py"]
+            for fname in required_files:
+                fpath = os.path.join(install_dir, fname)
+                if not os.path.exists(fpath):
+                    bugs.append(
+                        {
+                            "id": f"missing-{fname}",
+                            "title": f"Missing installation file: {fname}",
+                            "repro": f"Checking for {fname} in {install_dir}",
+                            "expected": f"{fname} should exist in the hammer installation directory",
+                            "actual": f"File not found at {fpath}",
+                        }
+                    )
+
+            # Check tasks_ai package exists
+            tasks_ai_dir = os.path.join(install_dir, "tasks_ai")
+            if not os.path.isdir(tasks_ai_dir):
+                bugs.append(
+                    {
+                        "id": "missing-tasks_ai-package",
+                        "title": "Missing tasks_ai package directory",
+                        "repro": f"Checking for tasks_ai in {install_dir}",
+                        "expected": "tasks_ai package directory should exist",
+                        "actual": f"Directory not found at {tasks_ai_dir}",
+                    }
+                )
+
+            # Check that commands (tasks, check, repo, r) resolve to the same hammer
+            for cmd in ["tasks", "check", "repo", "r"]:
+                cmd_path = shutil.which(cmd)
+                if cmd_path:
+                    try:
+                        cmd_real = os.path.realpath(cmd_path)
+                        if cmd_real != real_path:
+                            bugs.append(
+                                {
+                                    "id": f"mismatched-{cmd}-symlink",
+                                    "title": f"'{cmd}' command conflicts with hammer installation",
+                                    "repro": f"Checking symlink for '{cmd}': {cmd_path} -> {cmd_real}",
+                                    "expected": f"'{cmd}' should point to the same hammer wrapper",
+                                    "actual": f"Points to different location: {cmd_real} vs {real_path}",
+                                }
+                            )
+                    except Exception:
+                        pass  # If realpath fails, skip this command
+
+        check_installation_health()
+
         check_file_structure()
         check_yaml_metadata()
         check_markdown_content()
@@ -3341,6 +3427,7 @@ class TasksCLI:
         check_state_mismatch()
         check_task_counter()
         check_orphaned_tasks()
+        check_installation_health()
 
         for bug in bugs:
             filename = create_bug_report(
