@@ -1,0 +1,4 @@
+- [ ] Local 'tasks' branch exists and is kept in sync with remote 'tasks' branch
+- [ ] Archiving any task automatically triggers a save to both branches
+- [ ] 'hammer tasks restore' command exists and recovers .tasks from the tasks branch
+- [ ] All operations are safe and preserve task history

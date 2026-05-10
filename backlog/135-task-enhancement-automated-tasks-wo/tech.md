@@ -1,0 +1,1 @@
+Extend repo.py or tasks.py with: (1) ensure local 'tasks' branch exists and tracks remote; (2) hook into task ARCHIVED state to trigger auto-save; (3) implement 'hammer tasks restore' command that fetches remote tasks branch and restores .tasks directory. Use git worktree or direct file operations. Handle merge conflicts by preferring save.
