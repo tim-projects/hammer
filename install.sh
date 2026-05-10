@@ -300,7 +300,6 @@ echo "shell's command cache, or open a new terminal window."
 echo ""
 
 # If script is sourced (running in current shell), auto-refresh hash
-# This only works when sourced (source install.sh or . install.sh), not when piped via curl
 if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
     echo "Script is sourced - refreshing command hash..."
     hash -r 2>/dev/null || true
@@ -310,4 +309,52 @@ else
     echo "  hash -r"
     echo "Or simply open a new terminal."
 fi
+
+# Check for conflicting aliases/functions in common shell config files
+# --------------------------------------------------
+# Determine user's home directory for conflict detection
+# When running with sudo, check the original user's home
+if [ "$EUID" -eq 0 ] && [ -n "$SUDO_USER" ]; then
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    if [ -z "$USER_HOME" ]; then
+        USER_HOME="/home/$SUDO_USER"
+    fi
+else
+    USER_HOME="$HOME"
+fi
+
+# Check for conflicting aliases/functions in common shell config files
+echo ""
+echo "Checking for conflicting aliases or functions in $USER_HOME..."
+conflict_found=0
+if [ -n "$USER_HOME" ] && [ -d "$USER_HOME" ]; then
+    shell_rc_files=("$USER_HOME/.bashrc" "$USER_HOME/.bash_profile" "$USER_HOME/.zshrc" "$USER_HOME/.profile" "$USER_HOME/.bash_login")
+    for rc in "${shell_rc_files[@]}"; do
+        if [ -f "$rc" ]; then
+            # Check for aliases that override hammer/tasks/check/repo
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^alias[[:space:]]+(hammer|tasks|check|repo)= ]]; then
+                    echo "WARNING: Found conflicting alias in $rc:"
+                    echo "  $line"
+                    echo "This will bypass the hammer wrapper and cause errors."
+                    echo "Please remove or comment out this line and restart your shell."
+                    conflict_found=1
+                fi
+                # Check for function definitions (simple heuristic)
+                if [[ "$line" =~ ^(hammer|tasks|check|repo)[[:space:]]*\(\) ]]; then
+                    echo "WARNING: Found function definition in $rc that may conflict:"
+                    echo "  $line"
+                    echo "Please rename or remove this function."
+                    conflict_found=1
+                fi
+            done < "$rc"
+        fi
+    done
+fi
+
+if [ "$conflict_found" -eq 0 ]; then
+    echo "No conflicting aliases or functions found in user shell configs."
+fi
+# --------------------------------------------------
+
 echo "--------------------------------------------------"
