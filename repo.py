@@ -475,9 +475,13 @@ Options:
     "sync": """
 Usage: repo sync
 
-Run full sync: merge testing into staging, then staging into main.
-Equivalent to running 'repo merge testing staging' followed by
-'repo merge staging main'.
+Run full 2-way sync: merge testing→staging→main→staging→testing.
+Keeps all three pipeline branches (testing, staging, main) in sync.
+Equivalent to running:
+  repo merge testing staging
+  repo merge staging main
+  repo merge main staging
+  repo merge staging testing
 
 Options:
   -y, --yes  - Auto-confirm prompts
@@ -588,8 +592,12 @@ def main():
             return
         cmd_demote(args[0], args[1])
     elif cmd == "sync":
+        # Upstream: testing → staging → main
         cmd_merge("testing", "staging", auto_commit=False)
         cmd_merge("staging", "main", auto_commit=False)
+        # Downstream: main → staging → testing (2-way sync keeps all branches aligned)
+        cmd_merge("main", "staging", auto_commit=False)
+        cmd_merge("staging", "testing", auto_commit=False)
     elif cmd == "commit":
         if len(args) < 1:
             print(HELP_DOCS["commit"].strip())
