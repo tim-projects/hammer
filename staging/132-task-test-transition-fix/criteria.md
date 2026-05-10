@@ -1,1 +1,1 @@
-- [ ] Verify TESTING->STAGING is blocked and REVIEW->STAGING works
+- [x] Verify TESTING->STAGING is blocked and REVIEW->STAGING works
