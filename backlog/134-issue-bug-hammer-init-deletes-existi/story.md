@@ -1,0 +1,1 @@
+Running hammer init on a project that already has a .tasks folder with existing tasks causes catastrophic data loss: the entire .tasks directory is deleted. This should never happen. hammer init should detect existing .tasks and either abort or run hammer doctor to repair/validate instead of wiping tasks.

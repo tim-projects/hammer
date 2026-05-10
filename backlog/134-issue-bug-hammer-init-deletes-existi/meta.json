@@ -1,0 +1,8 @@
+{
+  "Id": 134,
+  "Ti": "Bug: hammer init deletes existing .tasks folder and all tasks",
+  "Cr": "260510 23:32",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "134-issue-bug-hammer-init-deletes-existi"
+}

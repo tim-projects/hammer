@@ -1,0 +1,4 @@
+- [ ] hammer init must NOT delete or overwrite .tasks if it already exists and contains tasks
+- [ ] Add safety check: if .tasks exists and has content, abort init with clear error message
+- [ ] Suggest running 'hammer tasks doctor' to repair/fix issues instead
+- [ ] Preserve all existing task data
