@@ -1,0 +1,8 @@
+{
+  "Id": 126,
+  "Ti": "Fix hammer command PATH/hash issues after install",
+  "Cr": "260510 11:25",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "126-task-fix-hammer-command-path-hash-i"
+}

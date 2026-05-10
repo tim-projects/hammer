@@ -1,0 +1,1 @@
+1. 1. Update install.sh post-install message to include 'hash -r' instruction\n2. Add documentation note in INSTALL.md\n3. Optional: Add 'hammer doctor' check for installation health

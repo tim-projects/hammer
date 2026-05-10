@@ -1,0 +1,1 @@
+The shell caches command locations in a hash table. After install.sh replaces symlinks, the shell still points to the old cached location until 'hash -r' is run or a new shell is opened. This causes 'hammer tasks list' to fail with an argparse error.

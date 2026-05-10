@@ -1,0 +1,1 @@
+As a user installing hammer, I want the hammer commands to work immediately after running install.sh without needing to restart my shell or manually refresh the command hash.
