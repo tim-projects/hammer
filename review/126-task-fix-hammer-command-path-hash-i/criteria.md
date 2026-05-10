@@ -1,3 +1,4 @@
 - [ ] Post-install message mentions hash refresh
 - [ ] README/INSTALL docs include shell refresh note
-- [ ] hammer doctor command can detect stale symlinks
+- [ ] hammer doctor validates installation health
+- [ ] install.sh detects and warns about conflicting aliases
