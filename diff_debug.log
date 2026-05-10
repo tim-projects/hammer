@@ -27,3 +27,7 @@ branch=130-task-fix-allowed-transitions-preven, main_sha=7d7e349ca1b90944d61ad53
 branch=131-task-checkpoint-should-detect-manua, main_sha=1210ae6538ed2369ba14733293be32c0fbf6975a, diff_len=2000
 branch=133-task-make-hammer-sync-bidirectional, main_sha=1dd34188d02995ff21d70538130e5a0422998fdf, diff_len=0
 branch=133-task-make-hammer-sync-bidirectional, main_sha=1dd34188d02995ff21d70538130e5a0422998fdf, diff_len=1343
+branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9ebaa9bc4efa455a413f, diff_len=3636
+branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9ebaa9bc4efa455a413f, diff_len=4306
+branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9ebaa9bc4efa455a413f, diff_len=4421
+branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9ebaa9bc4efa455a413f, diff_len=4536
