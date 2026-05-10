@@ -1,3 +1,0 @@
-- [ ] Alpha - Title preserved in list
-- [ ] Beta - Title preserved in show
-- [ ] Gamma - Branch sanitization works correctly
