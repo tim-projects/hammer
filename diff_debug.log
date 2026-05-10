@@ -24,3 +24,4 @@ branch=108-task-test-title-with-special-charac, main_sha=9b8d180cbe9e749422ca8a2
 branch=128-task-fix-repo-merge-indexerror-cras, main_sha=9b8d180cbe9e749422ca8a2d2d4922e803c504b8, diff_len=667
 branch=128-task-fix-repo-merge-indexerror-cras, main_sha=9b8d180cbe9e749422ca8a2d2d4922e803c504b8, diff_len=1333
 branch=130-task-fix-allowed-transitions-preven, main_sha=7d7e349ca1b90944d61ad530b7fef116f55f7afe, diff_len=655
+branch=131-task-checkpoint-should-detect-manua, main_sha=1210ae6538ed2369ba14733293be32c0fbf6975a, diff_len=2000
