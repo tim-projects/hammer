@@ -93,6 +93,11 @@ if __name__ == "__main__":
     cr_p.add_argument(
         "--repro", nargs="+", help="Reproduction steps for issues (list)."
     )
+    cr_p.add_argument(
+        "--branch",
+        action="store_true",
+        help="(ignored) Branch name is auto-generated from title.",
+    )
 
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
@@ -220,6 +225,7 @@ if __name__ == "__main__":
             criteria=args.criteria,
             plan=args.plan,
             repro=args.repro,
+            branch=args.branch,
         )
     elif args.command == "modify":
         cli.modify(

@@ -753,10 +753,13 @@ class TasksCLI:
         criteria=None,
         plan=None,
         repro=None,
+        branch=False,
     ):
         title = title.strip()
         if len(title) < 10:
             self.error("Task title is too vague. Min 10 chars.")
+        if branch:
+            self.log("Note: --branch flag is ignored; branch names are auto-generated from title.")
         missing = []
         if not story:
             missing.append("--story")
