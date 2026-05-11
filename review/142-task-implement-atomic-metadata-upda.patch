@@ -1,0 +1,31 @@
+diff --git a/diff_debug.log b/diff_debug.log
+index 9e6707b..828fcf5 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -32,3 +32,5 @@ branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9e
+ branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9ebaa9bc4efa455a413f, diff_len=4421
+ branch=134-issue-bug-hammer-init-deletes-existi, main_sha=bd52807b57fea538df8a9ebaa9bc4efa455a413f, diff_len=4536
+ branch=135-task-enhancement-automated-tasks-wo, main_sha=593f16d664bcc70306fa8a466622fe49bd508e72, diff_len=11456
++branch=138-task-fix-inconsistent-diff-patch-fi, main_sha=4b362ca07762f07772245b17537be5bb56f56c51, diff_len=0
++branch=141-task-remediate-task-state-corruptio, main_sha=4b362ca07762f07772245b17537be5bb56f56c51, diff_len=672
+diff --git a/tasks_ai/file_manager.py b/tasks_ai/file_manager.py
+index 8c82527..bbc11bb 100644
+--- a/tasks_ai/file_manager.py
++++ b/tasks_ai/file_manager.py
+@@ -2,7 +2,6 @@
+ import os
+ import json
+ import tempfile
+-import shutil
+ from .models import Task
+ 
+ 
+@@ -14,7 +13,7 @@ def _atomic_write(path, content):
+     ) as tmp:
+         tmp.write(content)
+         tmp_path = tmp.name
+-    shutil.move(tmp_path, path)
++    os.replace(tmp_path, path)
+ 
+ 
+ class FM:
