@@ -260,7 +260,12 @@ def cmd_merge(src_input, target_input, auto_commit=True):
         context=f"merge {src}→{target}",
     )
     if check_remote_exists():
-        if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+        st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
+        if target == "main" or st:
+            if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+                run(["git", "push", PRIMARY_REMOTE, target], context=f"push {target}")
+        else:
+            log(f"No local changes found on {target}. Auto-pushing...")
             run(["git", "push", PRIMARY_REMOTE, target], context=f"push {target}")
     else:
         warn("No remote - skipping push")
