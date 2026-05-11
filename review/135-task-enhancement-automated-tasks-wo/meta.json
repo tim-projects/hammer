@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "135-task-enhancement-automated-tasks-wo",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }

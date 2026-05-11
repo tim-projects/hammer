@@ -1,0 +1,238 @@
+diff --git a/.gitignore b/.gitignore
+index 26a6d0d..062becb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -2,6 +2,7 @@ tasks/
+ venv/
+ 
+ .tasks/
++.tasks.bak/
+ 
+ __pycache__/
+ *.pyc
+diff --git a/tasks.py b/tasks.py
+index 9356bd3..80fc41c 100644
+--- a/tasks.py
++++ b/tasks.py
+@@ -53,6 +53,22 @@ if __name__ == "__main__":
+         help="Continue without remote (local-only mode).",
+     )
+ 
++    restore_p = subparsers.add_parser(
++        "restore", help="Restore .tasks worktree from remote backup."
++    )
++    restore_p.add_argument(
++        "--branch",
++        "-b",
++        default="tasks",
++        help="Backup branch name to restore from (default: 'tasks').",
++    )
++    restore_p.add_argument(
++        "--force",
++        "-f",
++        action="store_true",
++        help="Force restore even if .tasks already exists (will overwrite). DANGEROUS: may lose local changes.",
++    )
++
+     list_p = subparsers.add_parser("list", help="List tasks.")
+     list_p.add_argument("--all", action="store_true")
+ 
+@@ -220,6 +236,8 @@ if __name__ == "__main__":
+         cli.init(force=getattr(args, "force", False))
+     elif args.command == "save":
+         cli.save(branch=args.branch)
++    elif args.command == "restore":
++        cli.restore(branch=args.branch, force=args.force)
+     elif args.command == "create":
+         cli.create(
+             args.title,
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 50cd4a5..468f721 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -655,37 +655,96 @@ class TasksCLI:
+         self.log("Use -j for JSON output. Run 'list' to see all tasks with their Ids.")
+         self.finish()
+ 
+-    def save(self, branch="tasks"):
++    def _push_tasks_branch(self, branch="tasks", fatal=True):
++        """Internal: push current .tasks worktree branch to remote.
++        If fatal=False, returns result dict or None on failure; does not exit.
++        If fatal=True, calls self.error() on failure (exits)."""
+         if not os.path.exists(self.tasks_path):
+-            self.error("Tasks not initialized. Run 'hammer tasks init' first.")
++            msg = "Tasks not initialized. Run 'hammer tasks init' first."
++            if fatal:
++                self.error(msg)
++            return None
+         remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
+         if not remotes.stdout.strip():
+             if self.dev or self.yes:
+                 current = self._run_git(
+                     ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+                 ).stdout.strip()
+-                mode = "--dev" if self.dev else "-y"
+                 self.log(
+-                    f"No remote configured - continuing in local-only mode ({mode})"
++                    "No remote configured - skipping push (local-only mode)"
+                 )
+-                self.finish({"branch": branch, "remote": None, "from_branch": current})
++                return {"branch": branch, "remote": None, "from_branch": current}
++            else:
++                msg = "No remote configured in .tasks. Set up a remote or use --dev / -y flag."
++                if fatal:
++                    self.error(msg)
++                return None
++        current = self._run_git(
++            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
++        ).stdout.strip()
++        push_result = self._run_git(
++            ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
++            cwd=self.tasks_path,
++        )
++        if push_result.returncode != 0:
++            msg = f"Failed to push .tasks worktree to remote: {push_result.stderr}"
++            if fatal:
++                self.error(msg)
++            else:
++                self.log(f"Warning: {msg}")
++                return None
++        self.log(f"Pushed .tasks ({current}) to origin/{branch}")
++        return {"branch": branch, "remote": "origin", "from_branch": current}
++
++    def save(self, branch="tasks"):
++        """Command: save and push .tasks worktree to remote."""
++        result = self._push_tasks_branch(branch, fatal=True)
++        self.finish(result)
++
++    def restore(self, branch="tasks", force=False):
++        """Restore .tasks worktree from the specified backup branch."""
++        tasks_path = self.tasks_path
++        if os.path.exists(tasks_path):
++            if force:
++                self.log(f"WARNING: {tasks_path} exists. --force specified, will overwrite.")
++                # Remove existing .tasks
++                if os.path.isdir(tasks_path):
++                    shutil.rmtree(tasks_path)
++                else:
++                    os.remove(tasks_path)
+             else:
+                 self.error(
+-                    "No remote configured in .tasks.",
+-                    hint="Set up a remote or use --dev / -y flag for local-only mode.",
++                    f"The directory '{tasks_path}' already exists. Use --force to overwrite, or delete it first.",
++                    hint="If you need to recover a deleted .tasks, ensure it is completely removed before running restore.",
+                 )
++        # Ensure we are in the main git repository
++        # Fetch latest from remote to get backup branch
++        fetch_res = self._run_git(["fetch", "origin"], cwd=self.root)
++        if fetch_res.returncode != 0:
++            self.error(f"Failed to fetch from remote: {fetch_res.stderr}")
++        # Prune any stale worktree references
++        self._run_git(["worktree", "prune"], cwd=self.root, check=False)
++        # Check if local branch exists
++        branch_check = self._run_git(["branch", "--list", branch], cwd=self.root)
++        if branch_check.returncode == 0 and branch in branch_check.stdout:
++            # Local branch exists; use it
++            self._run_git(["worktree", "add", tasks_path, branch], cwd=self.root)
+         else:
+-            current = self._run_git(
+-                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
+-            ).stdout.strip()
+-            push_result = self._run_git(
+-                ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
+-                cwd=self.tasks_path,
++            # Check remote branch
++            remote_check = self._run_git(
++                ["ls-remote", "--heads", "origin", branch], cwd=self.root
++            )
++            if not remote_check.stdout.strip():
++                self.error(
++                    f"Branch '{branch}' not found locally or on remote. Cannot restore."
++                )
++            # Create local branch from remote and add worktree
++            self._run_git(
++                ["worktree", "add", "-b", branch, tasks_path, f"origin/{branch}"],
++                cwd=self.root,
+             )
+-            if push_result.returncode != 0:
+-                self.error(f"Failed to push to remote: {push_result.stderr}")
+-            self.log(f"Pushed {current} to origin/{branch}")
+-            self.finish({"branch": branch, "remote": "origin", "from_branch": current})
++        self.log(f"Restored .tasks worktree from branch '{branch}' at {tasks_path}")
++        self.finish({"restored": True, "branch": branch, "path": tasks_path})
+ 
+     def _append_log(self, task_path, entry):
+         if not task_path:
+@@ -2024,6 +2083,11 @@ class TasksCLI:
+                     ],
+                     cwd=self.tasks_path,
+                 )
++                # Auto-save .tasks worktree to remote backup branch (non-fatal)
++                try:
++                    self._push_tasks_branch("tasks", fatal=False)
++                except Exception as e:
++                    self.log(f"Warning: auto-save to tasks branch failed: {e}")
+             else:
+                 self._run_git(["add", "--all"], cwd=self.tasks_path)
+                 self._run_git(
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index 5b11056..52714a9 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -77,13 +77,18 @@ AGENT OPERATIONAL PROTOCOL:
+     - Use '.tasks/progressing/<task_id>/current-task.md' as primary scratchpad.
+  8. SYNC: Use 'checkpoint' to pull git commits and current-task.md into task file.
+     Use 'hammer sync' to keep testing, staging, and main branches aligned.
+- 9. ARCHIVING: When moving STAGING -> ARCHIVED:
+-    - Branch must be merged to main first (use 'hammer repo promote <branch>')
+-    - Use 'tasks move <id> ARCHIVED -y' to auto-push and delete branch
+-    - Or move to REJECTED if code was not merged
+- 10. RULES: 
+-    - All blockers (Bl) in metadata MUST be ARCHIVED before moving to PROGRESSING.
+-    - Use 'list' to find tasks and 'current' to see full metadata/logs.
+- 11. ERROR RECOVERY: If a command fails, read the 'error' field in the JSON response. 
+-    The 'hint' provides actionable next steps.
++  9. ARCHIVING: When moving STAGING -> ARCHIVED:
++     - Branch must be merged to main first (use 'hammer repo promote <branch>')
++     - Use 'tasks move <id> ARCHIVED -y' to auto-push and delete branch
++     - Or move to REJECTED if code was not merged
++ 10. BACKUP & RESTORE:
++     - The 'tasks' branch (local and remote) serves as a continuous backup of the .tasks worktree.
++     - Archiving a task automatically triggers a save to the remote 'tasks' branch.
++     - Use 'hammer tasks restore' to recover .tasks from backup if lost or corrupted.
++     - Use 'hammer tasks save' to manually create a backup at any time.
++ 11. RULES: 
++     - All blockers (Bl) in metadata MUST be ARCHIVED before moving to PROGRESSING.
++     - Use 'list' to find tasks and 'current' to see full metadata/logs.
++ 12. ERROR RECOVERY: If a command fails, read the 'error' field in the JSON response. 
++     The 'hint' provides actionable next steps.
+ """
+diff --git a/tasks_ai/help_text.py b/tasks_ai/help_text.py
+index 4d05218..cff9b7d 100644
+--- a/tasks_ai/help_text.py
++++ b/tasks_ai/help_text.py
+@@ -19,6 +19,8 @@ USEFUL COMMANDS:
+   tasks move <id> ARCHIVED -y  Archive and auto-push/delete branch (requires merged to main)
+   tasks modify <id> --plan "1. Step"  Update task fields
+   tasks modify <id> --regression-check  Mark regression check as passed (enables STAGING)
++  tasks save                   Manually backup .tasks worktree to remote 'tasks' branch
++  tasks restore                Restore .tasks worktree from remote backup (recover from loss)
+   tasks reconcile              Scan for tasks with merged branches (dry-run)
+   tasks reconcile --all        Clean up merged branches and archive tasks
+   tasks cleanup --dry-run      Preview what would be cleaned up
+@@ -42,8 +44,13 @@ Use 'tasks doctor --fix' to automatically fix:
+   - (Other issues generate bug reports for manual review)
+ 
+ REGRESSION CHECK: Moving to REVIEW auto-generates a diff at .tasks/review/<id>/diff.patch.
+-Review the diff carefully. If regressions found, move the task back to PROGRESSING or TESTING to fix.
++Review the diff carefully. If regressions found, move the task back to PROGRESSING/TESTING to fix.
+ Once clean, run 'tasks modify <id> --regression-check' to confirm and enable STAGING.
++
++BACKUP & RESTORE: The 'tasks' branch (local and remote) continuously backs up the .tasks worktree.
++- Every ARCHIVE automatically triggers 'tasks save' to push the latest .tasks state to the remote.
++- Use 'tasks save' to manually create a backup at any time.
++- If .tasks is lost, run 'tasks restore' to recover from the remote backup.
+ """
+ 
+ MISSION = """Mission: Identify and fix the highest priority test failures first."""
