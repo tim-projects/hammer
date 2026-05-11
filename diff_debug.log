@@ -4,3 +4,4 @@ branch=157-task-implement-verification-dialogu, main_sha=e840f18bb4c3c8423b6be3b
 branch=157-task-implement-verification-dialogu, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=8057
 branch=157-task-implement-verification-dialogu, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=8629
 branch=156-task-implement-90-day-retention-and, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=23454
+branch=159-task-add-status-column-to-tasks-lis, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=26545
