@@ -222,10 +222,10 @@ def check_merged_to_testing(branch):
     return result.returncode == 0
 
 
-def cmd_merge(src_input, target_input, auto_commit=True):
+def cmd_merge(src_input, target_input, auto_commit=True, force_pipeline=False):
     src = resolve_branch(src_input)
     target = resolve_branch(target_input)
-    if target in ["main", "staging"]:
+    if target in ["main", "staging"] and not force_pipeline:
         error(
             f"Cannot merge branch '{src}' directly into '{target}' using `repo merge`.\n"
             "Promotion to STAGING or MAIN must be performed via `hammer tasks move` to maintain state consistency."
@@ -635,8 +635,8 @@ def main():
         log("Syncing from main to pipeline...")
         # Sync from main to staging, then testing
         try:
-            cmd_merge("main", "staging", auto_commit=False)
-            cmd_merge("staging", "testing", auto_commit=False)
+            cmd_merge("main", "staging", auto_commit=False, force_pipeline=True)
+            cmd_merge("staging", "testing", auto_commit=False, force_pipeline=True)
         except SystemExit:
             error("SYNC FAILED: Resolve conflicts and re-run sync.")
     elif cmd == "commit":
