@@ -1,0 +1,1 @@
+- [x] 1. Error hint displays the correct file path. 2. Path is accurate for the current task. 3. Existing tests pass.
