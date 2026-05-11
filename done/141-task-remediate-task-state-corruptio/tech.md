@@ -1,1 +1,1 @@
-1. Analyze task directories for ID mismatches. 2. Correct metadata files. 3. Remove orphan directories and fix stale state.
+Implement atomic file-write patterns (temp+rename) for meta.json and implement folder-level locking during state transitions.
