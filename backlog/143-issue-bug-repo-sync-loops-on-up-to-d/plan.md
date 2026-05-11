@@ -1,0 +1,1 @@
+1. 1. Locate sync loop in repo.py. 2. Implement pre-push check. 3. Test sync flow.

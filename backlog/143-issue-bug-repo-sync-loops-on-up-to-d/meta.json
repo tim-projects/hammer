@@ -1,0 +1,8 @@
+{
+  "Id": 143,
+  "Ti": "Bug: repo sync loops on up-to-date branches",
+  "Cr": "260511 01:34",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "143-issue-bug-repo-sync-loops-on-up-to-d"
+}

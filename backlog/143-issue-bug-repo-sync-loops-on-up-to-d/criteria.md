@@ -1,0 +1,1 @@
+- [ ] 1. Sync command finishes without redundant prompts. 2. Push only occurs if there are new commits. 3. Repository state remains clean.

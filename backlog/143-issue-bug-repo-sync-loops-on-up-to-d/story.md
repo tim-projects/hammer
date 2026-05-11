@@ -1,0 +1,1 @@
+The 'hammer repo sync' command enters an infinite loop by repeatedly asking to push even when branches are already up to date. The sync logic should verify if a push is actually necessary before prompting.

@@ -1,0 +1,1 @@
+Modify repo.py to check 'git status' or 'git diff origin/<branch>' before prompting for a push during sync.
