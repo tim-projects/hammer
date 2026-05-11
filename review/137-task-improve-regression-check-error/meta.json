@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "137-task-improve-regression-check-error",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
