@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "156-task-implement-90-day-retention-and",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
