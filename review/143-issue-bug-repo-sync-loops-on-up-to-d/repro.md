@@ -1,1 +1,0 @@
-1. Run 'hammer repo sync' when branches are fully merged and up-to-date.
