@@ -1,3 +1,12 @@
+diff --git a/diff_debug.log b/diff_debug.log
+index 1a11086..ec78a2a 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -1,2 +1,4 @@
+ branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=196e3d376385f68b4ec33b18927df92846e49db0, diff_len=0
+ branch=149-task-audit-test, main_sha=e39271c3bf595c717dd0d80d44b3ddd6669d20b5, diff_len=0
++branch=157-task-implement-verification-dialogu, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=7607
++branch=157-task-implement-verification-dialogu, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=8057
 diff --git a/tasks.py b/tasks.py
 index 7c61cd8..7fa3630 100755
 --- a/tasks.py
@@ -21,7 +30,7 @@ index 7c61cd8..7fa3630 100755
      elif args.command == "doctor":
          cli.doctor(fix=args.fix)
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
-index acf1e95..7092319 100644
+index acf1e95..373ad40 100644
 --- a/tasks_ai/cli.py
 +++ b/tasks_ai/cli.py
 @@ -1449,6 +1449,8 @@ class TasksCLI:
@@ -33,34 +42,23 @@ index acf1e95..7092319 100644
          if new_status == "MAIN":
              new_status = "DONE"
  
-@@ -3694,3 +3696,81 @@ class TasksCLI:
+@@ -1670,6 +1672,11 @@ class TasksCLI:
+             self._run_tests()
+ 
+         # Re-validate when moving out of TESTING to any state
++        # Hardening: Run validation on all moves out of TESTING/PROGRESSING
++        if current_state in ["TESTING", "PROGRESSING"]:
++            self.log("Running pre-transition validation...")
++            self._run_validation()
++            self._run_tests()
+         if current_state == "TESTING" and new_status != "REVIEW":
+             self._run_validation()
+             task = FM.load(filepath_str)
+@@ -3694,3 +3701,111 @@ class TasksCLI:
          else:
              self.log("✅ Upgrade complete!")
              self.log(f"Installed to: {install_path}")
 +
-+    def verify(self, task_id):
-+        """Verify criteria and generate a cryptographic audit file."""
-+        import hashlib
-+        res = self._resolve_task(task_id)
-+        
-+        criteria_path = os.path.join(os.path.dirname(res["patch_path"]), "criteria.md")
-+        if not os.path.exists(criteria_path):
-+            self.error(f"No criteria found at {criteria_path}")
-+            
-+        with open(criteria_path, "r") as f:
-+            content = f.read()
-+            if "- [ ]" in content:
-+                self.error("Criteria not fully checked. Verify requirements first.")
-+        
-+        sha256 = hashlib.sha256()
-+        sha256.update(content.encode("utf-8"))
-+        criteria_hash = sha256.hexdigest()
-+        
-+        audit_path = criteria_path + ".audit"
-+        with open(audit_path, "w") as f:
-+            f.write(f"Criteria-Hash: {criteria_hash}\nVerified-By: {os.getlogin()}\nTime: {os.times()}\n")
-+            
-+        self.log(f"✅ Criteria verified and hashed: {criteria_hash[:8]}...")
 +
 +    def _check_audit_integrity(self, task_id):
 +        import hashlib
@@ -115,6 +113,59 @@ index acf1e95..7092319 100644
 +            f.write(hasher.hexdigest())
 +            
 +        self.log(f"✅ Proof verified and criteria hash locked: {hasher.hexdigest()[:8]}...")
++    def _resolve_task(self, task_id_or_filename):
++        """Standardized resolution: returns (filepath, task_id_num, filename)."""
++        # 1. Try exact match filename
++        for folder in STATE_FOLDERS.values():
++            path = os.path.join(self.tasks_path, folder)
++            if not os.path.exists(path):
++                    continue
++            for f in os.listdir(path):
++                if f == task_id_or_filename or f.startswith(f"{task_id_or_filename}-"):
++                    fp = os.path.join(path, f)
++                    task = FM.load(fp)
++                    return fp, task.metadata.get("Id"), f
++        
++        # 2. Try numeric ID
++        for folder in STATE_FOLDERS.values():
++            path = os.path.join(self.tasks_path, folder)
++            if not os.path.exists(path):
++                    continue
++            for f in os.listdir(path):
++                fp = os.path.join(path, f)
++                if not os.path.isdir(fp):
++                        continue
++                task = FM.load(fp)
++                if str(task.metadata.get("Id")) == str(task_id_or_filename):
++                    return fp, task_id_or_filename, f
++        
++        return None, None, None
++    def audit(self, task_id):
++        """Generate an audit log after reviewing the patch."""
++        import hashlib
++        filepath, _, filename = self._resolve_task(task_id)
++        if not filepath:
++            self.error(f"Task {task_id} not found.")
++        
++        patch_path = os.path.join(filepath, "diff.patch")
++        audit_path = os.path.join(filepath, f"{filename}.audit")
++        
++        if not os.path.exists(patch_path):
++            self.error(f"No patch file found at {patch_path}. Move to REVIEW first.")
++            
++        sha256 = hashlib.sha256()
++        with open(patch_path, "rb") as f:
++            while True:
++                data = f.read(65536)
++                if not data:
++                        break
++                sha256.update(data)
++        patch_hash = sha256.hexdigest()
++
++        with open(audit_path, "w") as f:
++            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\nPatch-Hash: {patch_hash}\n")
++            
++        self.log(f"✅ Audit log created for task {filename} at {audit_path} (Hash: {patch_hash[:8]}...)")
 diff --git a/tests/test_verification_dialogue.py b/tests/test_verification_dialogue.py
 new file mode 100644
 index 0000000..d983d48
@@ -158,45 +209,3 @@ index 0000000..d983d48
 +    move_res = run_hammer(["move", task_id, "STAGING"])
 +    
 +    assert "TAMPER ALERT" in move_res.stderr or "tamper" in move_res.stderr.lower()
-diff --git a/diff_debug.log b/diff_debug.log
-index 1a11086..3ae7d87 100644
---- a/diff_debug.log
-+++ b/diff_debug.log
-@@ -1,2 +1,3 @@
- branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=196e3d376385f68b4ec33b18927df92846e49db0, diff_len=0
- branch=149-task-audit-test, main_sha=e39271c3bf595c717dd0d80d44b3ddd6669d20b5, diff_len=0
-+branch=157-task-implement-verification-dialogu, main_sha=e840f18bb4c3c8423b6be3b1b69ec7c0bf269641, diff_len=7607
-diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
-index 7092319..899bf0f 100644
---- a/tasks_ai/cli.py
-+++ b/tasks_ai/cli.py
-@@ -3697,29 +3697,6 @@ class TasksCLI:
-             self.log("✅ Upgrade complete!")
-             self.log(f"Installed to: {install_path}")
- 
--    def verify(self, task_id):
--        """Verify criteria and generate a cryptographic audit file."""
--        import hashlib
--        res = self._resolve_task(task_id)
--        
--        criteria_path = os.path.join(os.path.dirname(res["patch_path"]), "criteria.md")
--        if not os.path.exists(criteria_path):
--            self.error(f"No criteria found at {criteria_path}")
--            
--        with open(criteria_path, "r") as f:
--            content = f.read()
--            if "- [ ]" in content:
--                self.error("Criteria not fully checked. Verify requirements first.")
--        
--        sha256 = hashlib.sha256()
--        sha256.update(content.encode("utf-8"))
--        criteria_hash = sha256.hexdigest()
--        
--        audit_path = criteria_path + ".audit"
--        with open(audit_path, "w") as f:
--            f.write(f"Criteria-Hash: {criteria_hash}\nVerified-By: {os.getlogin()}\nTime: {os.times()}\n")
--            
--        self.log(f"✅ Criteria verified and hashed: {criteria_hash[:8]}...")
- 
-     def _check_audit_integrity(self, task_id):
-         import hashlib
