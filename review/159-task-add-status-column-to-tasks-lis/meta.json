@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "159-task-add-status-column-to-tasks-lis",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
