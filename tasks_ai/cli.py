@@ -2357,7 +2357,7 @@ class TasksCLI:
             # Color constants with backgrounds
             C_HEADER = "\033[1;47;30m" # Bold Black on White
             C_STATE = "\033[1;44;37m"  # Bold White on Blue
-            C_ID = "\033[32m"        # Green
+            C_ID = "\033[1;32m"      # Bright Green
             C_PRIO = "\033[1;35m"    # Bright Magenta
             C_TYPE = "\033[36m"      # Cyan
             C_RESET = "\033[0m"
