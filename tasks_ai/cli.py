@@ -2354,13 +2354,19 @@ class TasksCLI:
             branch_width = 30
             summary_width = max(summary_min, available - branch_width)
 
+            # Color constants with backgrounds
+            C_HEADER = "\033[1;47;30m" # Bold Black on White
+            C_STATE = "\033[1;44;37m"  # Bold White on Blue
+            C_ID = "\033[1;32m"      # Bright Green
+            C_PRIO = "\033[1;35m"    # Bright Magenta
+            C_TYPE = "\033[36m"      # Cyan
+            C_RESET = "\033[0m"
+
             for state, tasks in all_data.items():
-                print(f"{state}")
-                print("=" * term_width)
+                print(f"\n{C_STATE} {state:<{term_width - 2}} {C_RESET}")
                 print(
-                    f"{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width}}"
+                    f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width - 1}}{C_RESET}"
                 )
-                print("-" * term_width)
                 for t in tasks:
                     summary_lines = textwrap.wrap(
                         t["summary"], width=summary_width
@@ -2382,12 +2388,9 @@ class TasksCLI:
                         s_line = summary_lines[i] if i < len(summary_lines) else ""
                         type_str = t["type"] if i == 0 else ""
                         b_line = branch_lines[i] if i < len(branch_lines) else ""
-                        b_line = b_line[:branch_width] # Truncate just in case
-
-                        id_f = f"{id_str:>3}" if i == 0 else "   "
-                        p_f = f"{p_str:>2}" if i == 0 else "  "
-                        t_f = f"{type_str:<6}" if i == 0 else "      "
-
+                        id_f = f"{C_ID}{id_str:>3}{C_RESET}" if i == 0 else "   "
+                        p_f = f"{C_PRIO}{p_str:>2}{C_RESET}" if i == 0 else "  "
+                        t_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
                         print(
                             f"{id_f} {p_f} {s_line:<{summary_width}} {t_f} {b_line:<{branch_width}}"
                         )
