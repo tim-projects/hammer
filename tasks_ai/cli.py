@@ -540,6 +540,19 @@ class TasksCLI:
         return False
 
     def init(self, force=False):
+        def install_hooks(self):
+            hook_dir = os.path.join(self.root, ".git", "hooks")
+            hook_path = os.path.join(hook_dir, "pre-merge")
+            
+            # Ensure hook directory exists
+            if not os.path.exists(hook_dir):
+                return
+
+            # Explicitly overwrite ONLY the pre-merge hook
+            with open(hook_path, "w") as f:
+                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"⚠️  Direct git merge to main detected. Pipeline governance requires './hammer repo merge'. Aborting.\"\n    exit 1\nfi")
+            os.chmod(hook_path, 0o755)
+            self.log("Git pipeline enforcement hook (pre-merge) installed/updated.")
         if self.dev:
             for folder in list(STATE_FOLDERS.values()):
                 p = os.path.join(self.tasks_path, folder)
@@ -847,9 +860,8 @@ class TasksCLI:
             self.error(f"Task {task_id} not found.")
         
         # Use filename as task_id (e.g., 152-task-harden-audit-test)
-        task_id = filename
+        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
         audit_path = f".tasks/review/{task_id}.audit"
-        patch_path = f".tasks/review/{task_id}.patch"
         with open(audit_path, "w") as f:
             f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\n")
             
@@ -2014,11 +2026,10 @@ class TasksCLI:
         ]:
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
-                patch_path = f".tasks/review/{task_id}.patch"
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
                     hint=f"Complete the regression check before promoting.\n"
-                    f"  1. Review the diff patch at {patch_path}\n"
+                    f"  1. Review the diff patch at .tasks/review/{task_id}.patch\n"
                     "  2. Audit for regressions and side-effects\n"
                     f"  3. Run: ./hammer tasks modify {task_id} --regression-check",
                 )
