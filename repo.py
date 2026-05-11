@@ -260,7 +260,11 @@ def cmd_merge(src_input, target_input, auto_commit=True):
         context=f"merge {src}→{target}",
     )
     if check_remote_exists():
-        if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+        # Check if push is actually necessary
+        result = run(["git", "log", f"{PRIMARY_REMOTE}/{target}..{target}", "--oneline"], capture=True)
+        if not result.stdout.strip():
+            info(f"Branch '{target}' is up-to-date with remote. Skipping push.")
+        elif FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
             run(["git", "push", PRIMARY_REMOTE, target], context=f"push {target}")
     else:
         warn("No remote - skipping push")

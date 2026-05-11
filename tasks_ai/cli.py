@@ -272,7 +272,6 @@ class TasksCLI:
         try:
             with open(debug_log2, "a") as f:
                 f.write(
-                    f"DEBUG: branch={branch}, default_branch={default_branch}, main_sha={main_sha}, root={self.root}\n"
                 )
         except (PermissionError, OSError):
             pass
@@ -2344,18 +2343,19 @@ class TasksCLI:
         elif self.quiet:
             pass
         else:
-            term_width = get_terminal_width()
-            fixed_cols = 3 + 2 + 6 + 3  # id(3) + priority(2) + type(6) + spaces(3) = 14
+            term_width = shutil.get_terminal_size(fallback=(180, 24)).columns
+            fixed_cols = 3 + 1 + 2 + 1 + 6 + 1 + 25  # id(3) + space + priority(2) + space + type(6) + space + space(for branch padding)
             branch_min = 25
             summary_min = 30
             # Available for summary + branch
-            available = term_width - fixed_cols
-            # Give at least branch_min to branch, rest to summary
-            branch_width = max(branch_min, available // 3)
+            # Available for summary + branch
+            available = max(term_width - fixed_cols, 10)
+            # Adjust branch_width to be at most half of available
+            branch_width = 30
             summary_width = max(summary_min, available - branch_width)
 
             for state, tasks in all_data.items():
-                print(f"\n{state}")
+                print(f"{state}")
                 print("=" * term_width)
                 print(
                     f"{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width}}"
@@ -2378,13 +2378,20 @@ class TasksCLI:
                     max_lines = max(len(summary_lines), len(branch_lines))
                     for i in range(max_lines):
                         id_str = str(t.get("id", "")) if i == 0 else ""
-                        p_str = str(t["p"]) if i == 0 else " "
+                        p_str = str(t["p"]) if i == 0 else ""
                         s_line = summary_lines[i] if i < len(summary_lines) else ""
                         type_str = t["type"] if i == 0 else ""
                         b_line = branch_lines[i] if i < len(branch_lines) else ""
+                        b_line = b_line[:branch_width] # Truncate just in case
+
+                        id_f = f"{id_str:>3}" if i == 0 else "   "
+                        p_f = f"{p_str:>2}" if i == 0 else "  "
+                        t_f = f"{type_str:<6}" if i == 0 else "      "
+
                         print(
-                            f"{id_str:>3} {p_str:>2} {s_line:<{summary_width}} {type_str:<6} {b_line:<{branch_width}}"
+                            f"{id_f} {p_f} {s_line:<{summary_width}} {t_f} {b_line:<{branch_width}}"
                         )
+
             self.finish()
 
     def reconcile(self, target=None, all=False):
