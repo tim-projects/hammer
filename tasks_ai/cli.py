@@ -1449,6 +1449,8 @@ class TasksCLI:
         task_id_num = task.metadata.get("Id", "")
         tt, _ = self._parse_filename(os.path.basename(filepath))
         # Treat 'DONE' and 'MAIN' as interchangeable
+        if new_status == "STAGING" and not self._check_audit_integrity(filename):
+            self.error("TAMPER ALERT: Criteria or proof files modified post-verification.")
         if new_status == "MAIN":
             new_status = "DONE"
 
@@ -3719,3 +3721,56 @@ class TasksCLI:
             
         self.log(f"✅ Criteria verified and hashed: {criteria_hash[:8]}...")
 
+    def _check_audit_integrity(self, task_id):
+        import hashlib
+        res = self._resolve_task(task_id)
+        filepath = os.path.dirname(res["patch_path"])
+        criteria_path = os.path.join(filepath, "criteria.md")
+        proof_path = os.path.join(filepath, "verification_proof.log")
+        hash_path = os.path.join(filepath, ".audit_hash")
+        
+        if not os.path.exists(hash_path):
+            return False
+            
+        hasher = hashlib.sha256()
+        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+            hasher.update(f1.read())
+            hasher.update(f2.read())
+        
+        with open(hash_path, "r") as f:
+            stored_hash = f.read().strip()
+            
+        return hasher.hexdigest() == stored_hash
+    def verify(self, task_id, proof):
+        """Verify criteria and submit proof."""
+        import hashlib
+        from datetime import datetime
+        filepath, _ = self.find_task(task_id)
+        if not filepath:
+            self.error(f"Task {task_id} not found.")
+
+        criteria_path = os.path.join(filepath, "criteria.md")
+        proof_path = os.path.join(filepath, "verification_proof.log")
+        hash_path = os.path.join(filepath, ".audit_hash")
+
+        if not proof:
+            self.error("Verification requires --proof 'Evidence text'.")
+
+        with open(proof_path, "a") as f:
+            f.write(f"Proof submitted at {datetime.now()}: {proof}\n")
+
+        with open(criteria_path, "r+") as f:
+            content = f.read().replace("- [ ]", "- [x]")
+            f.seek(0)
+            f.write(content)
+
+        # Generate Master Hash
+        hasher = hashlib.sha256()
+        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+            hasher.update(f1.read())
+            hasher.update(f2.read())
+        
+        with open(hash_path, "w") as f:
+            f.write(hasher.hexdigest())
+            
+        self.log(f"✅ Proof verified and criteria hash locked: {hasher.hexdigest()[:8]}...")
