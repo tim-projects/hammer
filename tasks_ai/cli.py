@@ -271,9 +271,7 @@ class TasksCLI:
         debug_log2 = f"/tmp/review_diff_debug_{os.getuid()}.log"
         try:
             with open(debug_log2, "a") as f:
-                f.write(
-                    f"DEBUG: branch={branch}, default_branch={default_branch}, main_sha={main_sha}, root={self.root}\n"
-                )
+                f.write(f"branch={branch}, default_branch={default_branch}, main_sha={main_sha}\n")
         except (PermissionError, OSError):
             pass
 
@@ -434,22 +432,21 @@ class TasksCLI:
             print(message)
 
     def error(self, message, hint=None):
-        if hint:
-            message = f"{message} | HINT: {hint}"
         if self.quiet:
             pass
         elif self.as_json:
-            print(
-                json.dumps(
-                    {
-                        "success": False,
-                        "error": message,
-                        "messages": self.output_messages,
-                    }
-                )
-            )
+            response = {
+                "success": False,
+                "error": message,
+                "messages": self.output_messages,
+            }
+            if hint:
+                response["hint"] = hint
+            print(json.dumps(response))
             sys.exit(1)
         else:
+            if hint:
+                message = f"{message} | HINT: {hint}"
             print(f"Error: {message}", file=sys.stderr)
             sys.exit(1)
 
@@ -2344,22 +2341,25 @@ class TasksCLI:
         elif self.quiet:
             pass
         else:
-            term_width = get_terminal_width()
-            fixed_cols = 3 + 2 + 6 + 3  # id(3) + priority(2) + type(6) + spaces(3) = 14
-            branch_min = 25
+            term_width = shutil.get_terminal_size(fallback=(180, 24)).columns
+            fixed_cols = (
+                3 + 1 + 2 + 1 + 6 + 1 + 25
+            )  # id(3) + space + priority(2) + space + type(6) + space + space(for branch padding)
+
             summary_min = 30
             # Available for summary + branch
-            available = term_width - fixed_cols
-            # Give at least branch_min to branch, rest to summary
-            branch_width = max(branch_min, available // 3)
+            # Available for summary + branch
+            available = max(term_width - fixed_cols, 10)
+            # Adjust branch_width to be at most half of available
+            branch_width = 30
             summary_width = max(summary_min, available - branch_width)
 
             # Color constants with backgrounds
-            C_HEADER = "\033[1;47;30m" # Bold Black on White
+            C_HEADER = "\033[1;47;30m"  # Bold Black on White
             C_STATE = "\033[1;44;37m"  # Bold White on Blue
-            C_ID = "\033[1;32m"      # Bright Green
-            C_PRIO = "\033[1;35m"    # Bright Magenta
-            C_TYPE = "\033[36m"      # Cyan
+            C_ID = "\033[1;32m"  # Bright Green
+            C_PRIO = "\033[1;35m"  # Bright Magenta
+            C_TYPE = "\033[36m"  # Cyan
             C_RESET = "\033[0m"
 
             for state, tasks in all_data.items():
@@ -2384,7 +2384,7 @@ class TasksCLI:
                     max_lines = max(len(summary_lines), len(branch_lines))
                     for i in range(max_lines):
                         id_str = str(t.get("id", "")) if i == 0 else ""
-                        p_str = str(t["p"]) if i == 0 else " "
+                        p_str = str(t["p"]) if i == 0 else ""
                         s_line = summary_lines[i] if i < len(summary_lines) else ""
                         type_str = t["type"] if i == 0 else ""
                         b_line = branch_lines[i] if i < len(branch_lines) else ""
@@ -2394,6 +2394,7 @@ class TasksCLI:
                         print(
                             f"{id_f} {p_f} {s_line:<{summary_width}} {t_f} {b_line:<{branch_width}}"
                         )
+
             self.finish()
 
     def reconcile(self, target=None, all=False):
