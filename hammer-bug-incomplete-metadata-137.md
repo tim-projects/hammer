@@ -1,7 +1,7 @@
 # Bug Report: Task '137' missing required fields
 
 ## What the user tried to do
-Checking metadata fields for review/137
+Checking metadata fields for done/137
 
 ## What it should have done
 Task should have all required fields: Id, Ti, Cr
