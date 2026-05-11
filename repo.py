@@ -353,10 +353,10 @@ def cmd_promote(src_input, original_task_id=None):
                     patch_path = f".tasks/review/{task_id}.patch"
                     error(
                         "Regression check not passed.",
-                        hint=f"Complete the regression check before promoting. Steps:\n"
+                        hint=f"Complete the regression check before promoting.\n"
                         f"  1. Review the diff patch at {patch_path}\n"
-                        "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
-                        "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
+                        "  2. Audit for regressions and side-effects\n"
+                        f"  3. Run: ./hammer tasks modify {task_id} --regression-check",
                     )
     needs_move = False
     print(f"DEBUG: needs_move={needs_move}, target={target}")
