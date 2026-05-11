@@ -1,0 +1,1 @@
+- [x] 1. Tasks correctly report IDs.\n- [x] 2. No orphan metadata files exist.\n- [x] 3. 'hammer tasks list' is clean.

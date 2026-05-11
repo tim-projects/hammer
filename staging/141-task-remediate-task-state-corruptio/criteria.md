@@ -1,1 +1,0 @@
-- [ ] 1. Tasks correctly report IDs. 2. No orphan metadata files exist. 3. 'hammer tasks list' is clean.
