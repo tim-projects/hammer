@@ -1,1 +1,1 @@
-1. 1. Identify all tasks with mismatched IDs. 2. Restore correct IDs in meta.json. 3. Cleanup unused/orphan folders.
+1. 1. Investigate race condition in task creation/promotion. 2. Document findings in meta.json. 3. Propose/implement atomic file system operations (rename-pattern) for metadata files.
