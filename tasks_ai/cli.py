@@ -2363,9 +2363,9 @@ class TasksCLI:
             C_RESET = "\033[0m"
 
             for state, tasks in all_data.items():
-                print(f"\n{C_STATE} {state:<{term_width - 1}} {C_RESET}")
+                print(f"\n{C_STATE} {state:<{term_width - 2}} {C_RESET}")
                 print(
-                    f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width}}{C_RESET}"
+                    f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width - 1}}{C_RESET}"
                 )
                 for t in tasks:
                     summary_lines = textwrap.wrap(
