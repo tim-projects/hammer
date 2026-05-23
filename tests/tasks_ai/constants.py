@@ -66,7 +66,7 @@ AGENT OPERATIONAL PROTOCOL:
    This bypasses the need for 3 separate move commands.
 4. CREATION: 'create' requires --story, --tech, --criteria, and --plan. 
    --repro is mandatory for --type issue. Titles must be >= 10 chars.
- 6. REVIEW: When moving to REVIEW, a diff is auto-generated at `.tasks/review/<task_id>/diff.patch`.
+ 6. REVIEW: When moving to REVIEW, a diff is auto-generated at `.tasks/review/<task_id>.patch`.
     - Review the diff for regressions. If regressions found, move task back to PROGRESSING/TESTING to fix.
     - Once clean, run `tasks modify <id> --regression-check` to mark as passed.
     - Cannot move to STAGING until regression check is passed (Rc metadata set).

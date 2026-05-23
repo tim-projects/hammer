@@ -30,7 +30,12 @@ if __name__ == "__main__":
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("init", help="Init tasks.")
+    init_p = subparsers.add_parser("init", help="Initialize tasks worktree.")
+    init_p.add_argument(
+        "--force",
+        action="store_true",
+        help="Force reinitialization (deletes existing .tasks if present). DANGEROUS: will lose all task data.",
+    )
 
     save_p = subparsers.add_parser(
         "save", help="Save and push .tasks worktree to remote."
@@ -48,14 +53,36 @@ if __name__ == "__main__":
         help="Continue without remote (local-only mode).",
     )
 
+    restore_p = subparsers.add_parser(
+        "restore", help="Restore .tasks worktree from remote backup."
+    )
+    restore_p.add_argument(
+        "--branch",
+        "-b",
+        default="tasks",
+        help="Backup branch name to restore from (default: 'tasks').",
+    )
+    restore_p.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        help="Force restore even if .tasks already exists (will overwrite). DANGEROUS: may lose local changes.",
+    )
+
     list_p = subparsers.add_parser("list", help="List tasks.")
     list_p.add_argument("--all", action="store_true")
 
     cur_p = subparsers.add_parser("current", help="Show active task.")
     cur_p.add_argument("filename", nargs="?")
 
-    show_p = subparsers.add_parser("show", help="Show task details.")
-    show_p.add_argument("filename", help="Task Id or filename to show.")
+    show_p = subparsers.add_parser(
+        "show", help="Show task details or list all tasks when no ID provided."
+    )
+    show_p.add_argument(
+        "filename",
+        nargs="?",
+        help="Task Id or filename to show (optional, shows all tasks if omitted).",
+    )
     show_p.add_argument(
         "section",
         nargs="?",
@@ -87,6 +114,14 @@ if __name__ == "__main__":
     cr_p.add_argument(
         "--repro", nargs="+", help="Reproduction steps for issues (list)."
     )
+    cr_p.add_argument(
+        "--branch",
+        action="store_true",
+        help="(ignored) Branch name is auto-generated from title.",
+    )
+
+    aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
+    aud_p.add_argument("id", help="Task ID.")
 
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
@@ -178,6 +213,9 @@ if __name__ == "__main__":
 
     undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
+    ver_p = subparsers.add_parser("verify", help="Verify task criteria and generate cryptographic audit.")
+    ver_p.add_argument("id", help="Task Id to verify.")
+    ver_p.add_argument("--proof", required=True, help="Evidence for criteria completion.")
 
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
@@ -201,9 +239,11 @@ if __name__ == "__main__":
     )
 
     if args.command == "init":
-        cli.init()
+        cli.init(force=getattr(args, "force", False))
     elif args.command == "save":
         cli.save(branch=args.branch)
+    elif args.command == "restore":
+        cli.restore(branch=args.branch, force=args.force)
     elif args.command == "create":
         cli.create(
             args.title,
@@ -214,6 +254,7 @@ if __name__ == "__main__":
             criteria=args.criteria,
             plan=args.plan,
             repro=args.repro,
+            branch=args.branch,
         )
     elif args.command == "modify":
         cli.modify(
@@ -241,7 +282,10 @@ if __name__ == "__main__":
     elif args.command == "current":
         cli.current(args.filename)
     elif args.command == "show":
-        cli.show(args.filename, args.section)
+        if args.filename:
+            cli.show(args.filename, args.section)
+        else:
+            cli.list(show_all=False)
     elif args.command == "checkpoint":
         cli.checkpoint(args.filename)
     elif args.command == "link":
@@ -254,9 +298,9 @@ if __name__ == "__main__":
         cli.config(args.action, args.key, args.value, save=args.save)
     elif args.command == "upgrade":
         cli.upgrade()
-    elif args.command == "run":
-        cli.run_tool(args.tool, fix=args.fix)
-    elif args.command == "undo":
+        cli.verify(args.id, args.proof)
+    elif args.command == "doctor":
+        cli.doctor(fix=args.fix)
         cli.undo(args.filename)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)

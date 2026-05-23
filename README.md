@@ -24,8 +24,10 @@ Installs `hammer` to `~/.local/bin/hammer`. No sudo.
 
 **Global HAMMER:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh | sudo bash -s -- -g
+curl -sSL https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh | sudo bash -s -- --system
 ```
+
+**Note:** After installation, if `hammer` commands are not found, run `hash -r` to refresh your shell's command cache, or open a new terminal window. This ensures the shell recognizes the newly created symlinks.
 
 ## 🛠️ Getting Started
 

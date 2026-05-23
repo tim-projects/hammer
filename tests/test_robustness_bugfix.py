@@ -19,8 +19,12 @@ class TestRobustnessBugfix(unittest.TestCase):
 
         # Initialize tasks
         self.tasks_py = os.path.join(os.getcwd(), "tasks.py")
+        import sys
+
         subprocess.run(
-            ["python", self.tasks_py, "init"], cwd=self.repo_dir, capture_output=True
+            [sys.executable, self.tasks_py, "init"],
+            cwd=self.repo_dir,
+            capture_output=True,
         )
 
     def tearDown(self):
@@ -28,9 +32,11 @@ class TestRobustnessBugfix(unittest.TestCase):
 
     def test_corrupted_meta_json_does_not_crash_cli(self):
         # Create a task
+        import sys
+
         res = subprocess.run(
             [
-                "python",
+                sys.executable,
                 self.tasks_py,
                 "-j",
                 "create",
@@ -60,8 +66,10 @@ class TestRobustnessBugfix(unittest.TestCase):
             f.write("{ invalid json")
 
         # Run any tasks command, e.g., list
+        import sys
+
         res = subprocess.run(
-            ["python", self.tasks_py, "-j", "list"],
+            [sys.executable, self.tasks_py, "-j", "list"],
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
@@ -74,9 +82,11 @@ class TestRobustnessBugfix(unittest.TestCase):
 
     def test_empty_meta_json_does_not_crash_cli(self):
         # Create a task
+        import sys
+
         res = subprocess.run(
             [
-                "python",
+                sys.executable,
                 self.tasks_py,
                 "-j",
                 "create",
@@ -106,8 +116,10 @@ class TestRobustnessBugfix(unittest.TestCase):
             f.write("")
 
         # Run any tasks command, e.g., list
+        import sys
+
         res = subprocess.run(
-            ["python", self.tasks_py, "-j", "list"],
+            [sys.executable, self.tasks_py, "-j", "list"],
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
