@@ -8,7 +8,6 @@ import textwrap
 import json
 import shutil
 import fcntl
-import hashlib
 from typing import cast
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -542,19 +541,6 @@ class TasksCLI:
         return False
 
     def init(self, force=False):
-        def install_hooks(self):
-            hook_dir = os.path.join(self.root, ".git", "hooks")
-            hook_path = os.path.join(hook_dir, "pre-merge")
-            
-            # Ensure hook directory exists
-            if not os.path.exists(hook_dir):
-                return
-
-            # Explicitly overwrite ONLY the pre-merge hook
-            with open(hook_path, "w") as f:
-                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"⚠️  Direct git merge to main detected. Pipeline governance requires './hammer repo merge'. Aborting.\"\n    exit 1\nfi")
-            os.chmod(hook_path, 0o755)
-            self.log("Git pipeline enforcement hook (pre-merge) installed/updated.")
         if self.dev:
             for folder in list(STATE_FOLDERS.values()):
                 p = os.path.join(self.tasks_path, folder)
@@ -1103,7 +1089,6 @@ class TasksCLI:
         if regression_check is not None:
             if regression_check:
                 # MANDATORY AUDIT ENFORCEMENT
-                # Find the patch and audit files
                 fname = os.path.basename(filepath)
                 tid = fname.rsplit(".", 1)[0]
                 patch_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.patch")
@@ -2303,7 +2288,7 @@ class TasksCLI:
 
         audit_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.audit")
         audit_mod.generate_audit(task_id, patch_path, audit_path)
-        self.log(f"Audit log generated for task {task_id}.")
+        self.log(f"✅ Audit log created for task {task_id} at {audit_path}")
         self.finish({"id": task_id, "audit_path": audit_path})
 
     def verify(self, task_id, proof):
