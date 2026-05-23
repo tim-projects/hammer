@@ -119,6 +119,9 @@ if __name__ == "__main__":
     aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
     aud_p.add_argument("id", help="Task ID.")
 
+    aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
+    aud_p.add_argument("id", help="Task ID.")
+
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
     mod_p.add_argument("--title", help="New title.")

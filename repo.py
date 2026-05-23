@@ -260,9 +260,13 @@ def cmd_merge(src_input, target_input, auto_commit=True, force_pipeline=False):
         run(["git", "pull", PRIMARY_REMOTE, target], check=False)
     else:
         warn("No remote - skipping pull")
+    # Set flag for Git hook bypass
+    env = os.environ.copy()
+    env["HAMMER_INTERNAL_MERGE"] = "1"
     run(
         ["git", "merge", src, "-m", f"merge: {src} into {target}"],
         context=f"merge {src}→{target}",
+        env=env,
     )
     if check_remote_exists():
         st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()

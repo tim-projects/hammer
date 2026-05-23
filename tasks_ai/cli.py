@@ -549,6 +549,19 @@ class TasksCLI:
         return False
 
     def init(self, force=False):
+        def install_hooks(self):
+            hook_dir = os.path.join(self.root, ".git", "hooks")
+            hook_path = os.path.join(hook_dir, "pre-merge")
+            
+            # Ensure hook directory exists
+            if not os.path.exists(hook_dir):
+                return
+
+            # Explicitly overwrite ONLY the pre-merge hook
+            with open(hook_path, "w") as f:
+                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"⚠️  Direct git merge to main detected. Pipeline governance requires './hammer repo merge'. Aborting.\"\n    exit 1\nfi")
+            os.chmod(hook_path, 0o755)
+            self.log("Git pipeline enforcement hook (pre-merge) installed/updated.")
         if self.dev:
             for folder in list(STATE_FOLDERS.values()):
                 p = os.path.join(self.tasks_path, folder)
