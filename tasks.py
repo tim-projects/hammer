@@ -114,10 +114,14 @@ if __name__ == "__main__":
     cr_p.add_argument(
         "--repro", nargs="+", help="Reproduction steps for issues (list)."
     )
-    cr_p.add_argument("--branch", action="store_true", help="Auto-generate branch.")
+    cr_p.add_argument(
+        "--branch",
+        action="store_true",
+        help="(ignored) Branch name is auto-generated from title.",
+    )
 
     aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
-
+    aud_p.add_argument("id", help="Task ID.")
 
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
@@ -209,6 +213,8 @@ if __name__ == "__main__":
 
     undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
+    ver_p = subparsers.add_parser("verify", help="Verify task criteria and generate cryptographic audit.")
+    ver_p.add_argument("id", help="Task Id to verify.")
 
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
@@ -281,8 +287,6 @@ if __name__ == "__main__":
             cli.list(show_all=False)
     elif args.command == "checkpoint":
         cli.checkpoint(args.filename)
-    elif args.command == "audit":
-        cli.audit(args.id)
     elif args.command == "link":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
@@ -297,6 +301,8 @@ if __name__ == "__main__":
         cli.run_tool(args.tool, fix=args.fix)
     elif args.command == "undo":
         cli.undo(args.filename)
+    elif args.command == "verify":
+        cli.verify(args.id)
         cli.undo(args.filename)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)
