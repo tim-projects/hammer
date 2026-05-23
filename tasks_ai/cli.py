@@ -559,7 +559,18 @@ class TasksCLI:
                 f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"Checking pipeline sync...\"\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n \"$staging_diff\" ] || [ -n \"$testing_diff\" ]; then\n        echo \"⚠️  Pipeline branches (staging/testing) are out of sync with main!\"\n        echo \"Run './hammer repo sync' to reconcile.\"\n    else\n        echo \"✅ Pipeline branches are in sync.\"\n    fi\nfi")
             os.chmod(post_merge_path, 0o755)
 
-            self.log("Git pipeline enforcement hooks (pre-merge, post-merge) installed/updated.")
+            # Install pre-receive hook to prevent deletion of critical branches
+            pre_receive_path = os.path.join(hook_dir, "pre-receive")
+            with open(pre_receive_path, "w") as f:
+                f.write("#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ \"$newrev\" == \"0000000000000000000000000000000000000000\" ]]; then\n        branch=$(basename \"$refname\")\n        if [[ \"$branch\" == \"main\" || \"$branch\" == \"staging\" || \"$branch\" == \"testing\" ]]; then\n            echo \"❌ Cannot delete critical pipeline branch: $branch\"\n            exit 1\n        fi\n    fi\ndone")
+            os.chmod(pre_receive_path, 0o755)
+
+            # Prevent local deletion via pre-commit (simulated)
+            pre_commit_path = os.path.join(hook_dir, "pre-commit")
+            with open(pre_commit_path, "w") as f:
+                f.write("#!/bin/bash\n\n# Prevent accidental branch deletion in git branch -d commands\n# Note: This is a best-effort local protection.\nif git rev-parse --verify HEAD >/dev/null 2>&1; then\n   # Logic to check for branch delete commands not easily done in pre-commit\n   : \nfi")
+            os.chmod(pre_commit_path, 0o755)
+
         
         if self.dev:
             for folder in list(STATE_FOLDERS.values()):
@@ -621,7 +632,7 @@ class TasksCLI:
                 f.write(f"{ignore_line}\n")
 
         # Ensure .tasks is not already tracked
-        self._run_git(["rm", "-rf", "--cached", TASKS_DIR], cwd=self.root, check=False)
+        self._run_git(["rm", "-rf", "--cached", TASKS_DIR], cwd=self.root)
 
         is_worktree = False
         if os.path.exists(self.tasks_path):
