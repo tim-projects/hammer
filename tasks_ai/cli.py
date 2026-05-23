@@ -23,7 +23,6 @@ from .constants import (
 )
 from .models import Task
 from .file_manager import FM
-from . import audit as audit_mod
 
 
 def get_terminal_width():
@@ -841,6 +840,7 @@ class TasksCLI:
         )
         return current
 
+
     def create(
         self,
         title,
@@ -1088,19 +1088,34 @@ class TasksCLI:
 
         if regression_check is not None:
             if regression_check:
-                # MANDATORY AUDIT ENFORCEMENT
-                fname = os.path.basename(filepath)
-                tid = fname.rsplit(".", 1)[0]
-                patch_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.patch")
-                audit_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.audit")
-
-                if not audit_mod.verify_audit(patch_path, audit_path):
+                res = self._resolve_task(filename)
+                
+                if not os.path.exists(res["audit_path"]):
                     self.error(
-                        f"Regression check failed: mandatory audit log missing or invalid for task {filename}.",
-                        hint=f"You must audit the patch before setting regression-check.\n"
-                        f"  1. Review the patch at {patch_path}\n"
-                        f"  2. Run: ./hammer tasks audit {filename}",
+                        "Cannot set regression check without audit log.",
+                        hint=f"Review the patch and run 'hammer tasks audit {res['task_id']}' first."
                     )
+                
+                # Verify checksum
+                import hashlib
+                with open(res["audit_path"], "r") as f:
+                    content = f.read()
+                    stored_hash = next((line.split(": ")[1].strip() for line in content.splitlines() if line.startswith("Patch-Hash:")), None)
+                
+                sha256 = hashlib.sha256()
+                with open(res["patch_path"], "rb") as f:
+                    while True:
+                        data = f.read(65536)
+                        if not data:
+                            break
+                        sha256.update(data)
+                
+                if stored_hash != sha256.hexdigest():
+                    self.error(
+                        "Audit log is invalid (patch content has changed).",
+                        hint=f"Please re-audit the patch and run 'hammer tasks audit {res['task_id']}' again."
+                    )
+                
                 task.metadata["Rc"] = True
             else:
                 task.metadata["Rc"] = ""
@@ -1142,6 +1157,30 @@ class TasksCLI:
                 "title": task.metadata.get("Ti", ""),
             }
         )
+
+    def _resolve_task(self, filename):
+        """Standardize task identification and path resolution."""
+        filepath, _ = self.find_task(filename)
+        if not filepath:
+            self.error(
+                f"Task '{filename}' not found.",
+                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
+            )
+        
+        fname = os.path.basename(filepath)
+        task_id = fname.rsplit(".", 1)[0]
+        
+        # Consistent patch and audit paths
+        patch_path = f".tasks/review/{task_id}.patch"
+        audit_path = f".tasks/review/{task_id}.audit"
+        
+        return {
+            "filepath": filepath,
+            "filename": fname,
+            "task_id": task_id,
+            "patch_path": patch_path,
+            "audit_path": audit_path
+        }
 
     def delete(self, filename, confirm=None):
         filepath, current_state = self.find_task(filename)
@@ -2260,48 +2299,6 @@ class TasksCLI:
                     print(f"\n## Active Progress\n{data['dump']['content']}")
 
         self.finish(data)
-
-    def audit(self, task_id):
-        """Generate an audit log for a task's patch."""
-        filepath, state = self.find_task(task_id)
-        if not filepath:
-            self.error(f"Task '{task_id}' not found.")
-
-        fname = os.path.basename(filepath)
-        tid = fname.rsplit(".", 1)[0]
-        patch_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.patch")
-
-        if not os.path.exists(patch_path):
-            # Try to generate it if we are in REVIEW state
-            if state == "REVIEW":
-                task = FM.load(filepath)
-                branch = task.metadata.get("Br")
-                if branch:
-                    self._generate_review_diff(filepath, branch)
-                else:
-                    self.error(f"No branch found for task {task_id}")
-            else:
-                self.error(
-                    f"Patch file not found for task {task_id} at {patch_path}.",
-                    hint="Task must be in REVIEW state to generate or verify an audit log.",
-                )
-
-        audit_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.audit")
-        audit_mod.generate_audit(task_id, patch_path, audit_path)
-        self.log(f"✅ Audit log created for task {task_id} at {audit_path}")
-        self.finish({"id": task_id, "audit_path": audit_path})
-
-    def verify(self, task_id, proof):
-        """Verify task criteria with provided proof."""
-        # Simple implementation for now: log the proof
-        filepath, _ = self.find_task(task_id)
-        if not filepath:
-            self.error(f"Task '{task_id}' not found.")
-
-        self.log(f"Verifying task {task_id} with proof: {proof[:50]}...")
-        # In a real implementation, this might check a cryptographic signature or hash
-        self._append_log(filepath, f"Verify: {proof[:100]}")
-        self.finish({"id": task_id, "verified": True})
 
     def list(self, show_all=False):
         if not os.path.exists(self.tasks_path):
@@ -3737,3 +3734,23 @@ class TasksCLI:
         else:
             self.log("✅ Upgrade complete!")
             self.log(f"Installed to: {install_path}")
+    def audit(self, task_id):
+        import hashlib
+        res = self._resolve_task(task_id)
+        
+        if not os.path.exists(res["patch_path"]):
+            self.error(f"No patch file found at {res['patch_path']}. Move to REVIEW first.")
+            
+        sha256 = hashlib.sha256()
+        with open(res["patch_path"], "rb") as f:
+            while True:
+                data = f.read(65536)
+                if not data:
+                    break
+                sha256.update(data)
+        patch_hash = sha256.hexdigest()
+
+        with open(res["audit_path"], "w") as f:
+            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\nPatch-Hash: {patch_hash}\n")
+            
+        self.log(f"✅ Audit log created for task {res['task_id']} at {res['audit_path']} (Hash: {patch_hash[:8]}...)")
