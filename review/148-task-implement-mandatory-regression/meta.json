@@ -5,7 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "148-task-implement-mandatory-regression",
-  "Rc": "",
-  "Tp": true,
+  "Rc": true,
+  "Tp": false,
   "Vp": true
 }
