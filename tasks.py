@@ -215,6 +215,7 @@ if __name__ == "__main__":
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
     ver_p = subparsers.add_parser("verify", help="Verify task criteria and generate cryptographic audit.")
     ver_p.add_argument("id", help="Task Id to verify.")
+    ver_p.add_argument("--proof", required=True, help="Evidence for criteria completion.")
 
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
@@ -297,12 +298,9 @@ if __name__ == "__main__":
         cli.config(args.action, args.key, args.value, save=args.save)
     elif args.command == "upgrade":
         cli.upgrade()
-    elif args.command == "run":
-        cli.run_tool(args.tool, fix=args.fix)
-    elif args.command == "undo":
-        cli.undo(args.filename)
-    elif args.command == "verify":
-        cli.verify(args.id)
+        cli.verify(args.id, args.proof)
+    elif args.command == "doctor":
+        cli.doctor(fix=args.fix)
         cli.undo(args.filename)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)

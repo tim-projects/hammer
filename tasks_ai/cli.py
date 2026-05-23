@@ -1449,10 +1449,6 @@ class TasksCLI:
         task_id_num = task.metadata.get("Id", "")
         tt, _ = self._parse_filename(os.path.basename(filepath))
         # Treat 'DONE' and 'MAIN' as interchangeable
-        if False:
-            self.error("TAMPER ALERT: Criteria or proof files modified post-verification.")
-        if new_status == "MAIN":
-            new_status = "DONE"
 
         # Check for non-sequential jumps and auto-promote if needed
         # Keep promoting until we reach the target or hit a limit to prevent infinite loops
@@ -1657,7 +1653,10 @@ class TasksCLI:
                 hint += "\nNote: Branch is merged to main. You can archive this task directly."
             self.error(
                 f"Forbidden transition: {current_state} -> {new_status}",
-                hint=hint,
+                hint=(
+                    hint if current_state != "REVIEW" or new_status != "DONE" else
+                    "To promote from REVIEW: 1) Run 'tasks audit <id>', 2) Run 'tasks modify <id> --regression-check', 3) Run 'tasks verify <id> --proof \"...\"', 4) Run 'tasks move <id> STAGING'. See 'tasks help' for command details."
+                ),
             )
 
         # Check tests_passed when moving from TESTING to REVIEW
@@ -2326,6 +2325,7 @@ class TasksCLI:
                         "branch": tb,
                         "summary": summary,
                         "blocked_by": task.get("Bl") or [],
+                        "state": state,
                     }
                 )
             if tasks:
@@ -2367,58 +2367,50 @@ class TasksCLI:
         else:
             term_width = shutil.get_terminal_size(fallback=(180, 24)).columns
             fixed_cols = (
-                3 + 1 + 2 + 1 + 6 + 1 + 25
-            )  # id(3) + space + priority(2) + space + type(6) + space + space(for branch padding)
+                3 + 1 + 2 + 1 + 7 + 1 + 6 + 1 + 30
+            )
 
             summary_min = 30
-            # Available for summary + branch
-            # Available for summary + branch
             available = max(term_width - fixed_cols, 10)
-            # Adjust branch_width to be at most half of available
             branch_width = 30
-            summary_width = max(summary_min, available - branch_width)
+            summary_width = max(summary_min, available)
 
-            # Color constants with backgrounds
-            C_HEADER = "\033[1;47;30m"  # Bold Black on White
-            C_STATE = "\033[1;44;37m"  # Bold White on Blue
-            C_ID = "\033[1;32m"  # Bright Green
-            C_PRIO = "\033[1;35m"  # Bright Magenta
-            C_TYPE = "\033[36m"  # Cyan
+            C_HEADER = "\033[1;47;30m"
+            C_ID = "\033[1;32m"
+            C_PRIO = "\033[1;35m"
+            C_TYPE = "\033[36m"
             C_RESET = "\033[0m"
 
+            print(f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Status':<7} {'Type':<6} {'Branch':<{branch_width}}{C_RESET}")
+            
             for state, tasks in all_data.items():
-                print(f"\n{C_STATE} {state:<{term_width - 2}} {C_RESET}")
-                print(
-                    f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width - 1}}{C_RESET}"
-                )
                 for t in tasks:
-                    summary_lines = textwrap.wrap(
-                        t["summary"], width=summary_width
-                    ) or [""]
-
+                    summary_lines = textwrap.wrap(t["summary"], width=summary_width) or [""]
                     def simple_wrap(text, width):
-                        result = []
+                        res = []
                         while len(text) > width:
-                            result.append(text[:width])
+                            res.append(text[:width])
                             text = text[width:]
-                        result.append(text)
-                        return result
-
+                        res.append(text)
+                        return res
+                    
                     branch_lines = simple_wrap(t["branch"], branch_width) or [""]
                     max_lines = max(len(summary_lines), len(branch_lines))
+                    
                     for i in range(max_lines):
-                        id_str = str(t.get("id", "")) if i == 0 else ""
+                        id_str = str(t["id"]) if i == 0 else ""
                         p_str = str(t["p"]) if i == 0 else ""
                         s_line = summary_lines[i] if i < len(summary_lines) else ""
+                        status_str = t["state"] if i == 0 else ""
                         type_str = t["type"] if i == 0 else ""
                         b_line = branch_lines[i] if i < len(branch_lines) else ""
+                        
                         id_f = f"{C_ID}{id_str:>3}{C_RESET}" if i == 0 else "   "
                         p_f = f"{C_PRIO}{p_str:>2}{C_RESET}" if i == 0 else "  "
-                        t_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
-                        print(
-                            f"{id_f} {p_f} {s_line:<{summary_width}} {t_f} {b_line:<{branch_width}}"
-                        )
-
+                        status_f = f"{C_TYPE}{status_str:<7}{C_RESET}" if i == 0 else "       "
+                        type_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
+                        
+                        print(f"{id_f} {p_f} {s_line:<{summary_width}} {status_f} {type_f} {b_line:<{branch_width}}")
             self.finish()
 
     def reconcile(self, target=None, all=False):
@@ -2473,7 +2465,6 @@ class TasksCLI:
                             "id": task_id,
                             "task_id": task_id,
                             "title": task.metadata.get("Ti", ""),
-                            "state": state,
                             "branch": branch,
                             "filepath": path,
                         }
@@ -2540,7 +2531,6 @@ class TasksCLI:
                             "id": task_id,
                             "task_id": task_id,
                             "title": task.metadata.get("Ti", ""),
-                            "state": state,
                             "branch": branch,
                             "filepath": path,
                         }
@@ -3705,8 +3695,8 @@ class TasksCLI:
 
     def _check_audit_integrity(self, task_id):
         import hashlib
-        res = self._resolve_task(task_id)
-        filepath = os.path.dirname(res[0])
+        filepath, _ = self.find_task(task_id)
+        # filepath is already correct from find_task
         criteria_path = os.path.join(filepath, "criteria.md")
         proof_path = os.path.join(filepath, "verification_proof.log")
         hash_path = os.path.join(filepath, ".audit_hash")
@@ -3722,6 +3712,7 @@ class TasksCLI:
         with open(hash_path, "r") as f:
             stored_hash = f.read().strip()
             
+        self.log(f"Current: {hasher.hexdigest()} | Stored: {stored_hash}")
         return hasher.hexdigest() == stored_hash
     def verify(self, task_id, proof):
         """Verify criteria and submit proof."""
