@@ -5,7 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "152-task-harden-audit-test",
-  "Rc": "",
+  "Rc": true,
   "Vp": true,
-  "Tp": true
+  "Tp": false
 }
