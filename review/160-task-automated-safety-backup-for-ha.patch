@@ -1,0 +1,22 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 8ffb8b8..26ed874 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -630,6 +630,17 @@ class TasksCLI:
+                 is_worktree = True
+ 
+         if not is_worktree:
++            # Create safety backup if .tasks exists and has data
++            if os.path.exists(self.tasks_path) and self._tasks_directory_has_data(self.tasks_path):
++                repo_name = os.path.basename(self.root)
++                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
++                backup_path = f"/tmp/{repo_name}/.tasks.bak_{timestamp}"
++                os.makedirs(os.path.dirname(backup_path), exist_ok=True)
++                
++                self.log(f"Backing up existing .tasks to {backup_path}...")
++                shutil.copytree(self.tasks_path, backup_path)
++                self.log("Backup complete.")
++
+             # Clean up non-worktree .tasks if exists
+             if os.path.exists(self.tasks_path):
+                 # Safety check

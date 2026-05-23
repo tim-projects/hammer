@@ -5,7 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "160-task-automated-safety-backup-for-ha",
-  "Rc": "",
-  "Tp": false,
+  "Rc": true,
+  "Tp": true,
   "Vp": true
 }
