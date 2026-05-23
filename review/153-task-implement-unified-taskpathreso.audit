@@ -1,3 +1,5 @@
-Audited by: vscode
-Time: posix.times_result(user=0.14, system=0.04, children_user=0.0, children_system=0.0, elapsed=17951344.5)
-Patch-Hash: 24114db496348f60dba8a346f7c981ed98974d77c609870f0f80e562a77343d2
+{
+    "task_id": "153",
+    "patch_hash": "24114db496348f60dba8a346f7c981ed98974d77c609870f0f80e562a77343d2",
+    "status": "verified"
+}
