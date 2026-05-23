@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "155-task-implement-30-day-cleanup-grace",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": true
 }
