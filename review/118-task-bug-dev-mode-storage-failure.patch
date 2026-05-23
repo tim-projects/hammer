@@ -1,0 +1,784 @@
+diff --git a/repo.py b/repo.py
+index 37d1073..81b2b2d 100755
+--- a/repo.py
++++ b/repo.py
+@@ -3,11 +3,13 @@
+ repo - Repository management wrapper script
+ Usage: repo <command> [args]
+ """
++
+ import subprocess
+ import sys
+ import os
+ import json
+ from pathlib import Path
++
+ sys.path.append(os.getcwd())
+ try:
+     from tasks_ai.cli import TasksCLI
+@@ -23,22 +25,34 @@ CYAN = "\033[0;36m"
+ NC = "\033[0m"
+ FLAGS = {"yes": False, "quiet": False, "json": False, "dev": False}
+ PIPELINE = ["testing", "staging", "main"]
++
++
+ def get_primary_remote():
+     try:
+-        result = subprocess.run(["git", "remote"], capture_output=True, text=True, check=True)
++        result = subprocess.run(
++            ["git", "remote"], capture_output=True, text=True, check=True
++        )
+         remotes = result.stdout.split()
+         if not remotes:
+             return "origin"
+         return "origin" if "origin" in remotes else remotes[0]
+     except Exception:
+         return "origin"
++
++
+ PRIMARY_REMOTE = get_primary_remote()
++
++
+ def log(msg):
+     if not FLAGS["quiet"] and not FLAGS["json"]:
+         print(f"{GREEN}[repo]{NC} {msg}")
++
++
+ def warn(msg):
+     if not FLAGS["quiet"] and not FLAGS["json"]:
+         print(f"{YELLOW}[repo] WARN:{NC} {msg}")
++
++
+ def error(msg, hint=None):
+     if hint:
+         msg = f"{msg} | HINT: {hint}"
+@@ -47,9 +61,13 @@ def error(msg, hint=None):
+     else:
+         print(f"{RED}[repo] ERROR:{NC} {msg}")
+     sys.exit(1)
++
++
+ def info(msg):
+     if not FLAGS["quiet"] and not FLAGS["json"]:
+         print(f"{CYAN}[repo]{NC} {msg}")
++
++
+ def find_project_root(start_path=None):
+     if start_path is None:
+         start_path = os.getcwd()
+@@ -64,6 +82,8 @@ def find_project_root(start_path=None):
+             break
+         current = parent
+     return Path(__file__).parent.resolve()
++
++
+ def run(cmd, check=True, capture=False, env=None, cwd=None, quiet=False):
+     project_root = find_project_root()
+     capture = capture or quiet or FLAGS["json"]
+@@ -80,10 +100,14 @@ def run(cmd, check=True, capture=False, env=None, cwd=None, quiet=False):
+         err_msg = e.stderr if capture else ""
+         error(f"Command failed: {' '.join(cmd)}\n{err_msg}")
+         raise
++
++
+ def get_current_branch():
+     return run(
+         ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture=True
+     ).stdout.strip()
++
++
+ def prompt_yes_no(prompt):
+     if FLAGS["yes"]:
+         return True
+@@ -96,6 +120,8 @@ def prompt_yes_no(prompt):
+                 return False
+     except EOFError:
+         error("EOFError: stdin closed. Use -y flag to auto-confirm.")
++
++
+ class ToolRunner:
+     def run_validation(self, fix=False, dev=False, cwd=None):
+         git_root = cwd or find_project_root()
+@@ -115,6 +141,8 @@ class ToolRunner:
+             return False
+         log("✅ Validation passed")
+         return True
++
++
+ def branch_exists(name):
+     return (
+         run(
+@@ -122,8 +150,12 @@ def branch_exists(name):
+         ).returncode
+         == 0
+     )
++
++
+ def check_remote_exists():
+-    result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)
++    result = run(
++        ["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True
++    )
+     if result.returncode != 0:
+         if FLAGS["yes"]:
+             warn(f"No '{PRIMARY_REMOTE}' remote - continuing in local-only mode")
+@@ -131,16 +163,30 @@ def check_remote_exists():
+         warn(f"No '{PRIMARY_REMOTE}' remote - continuing in local-only mode")
+         return False
+     return True
++
++
+ def check_merged_to_main(branch):
+     if not branch_exists(branch):
+         error(f"Branch {branch} does not exist.")
+-    result = run(["git", "merge-base", "--is-ancestor", branch, "main"], check=False, capture=True)
++    result = run(
++        ["git", "merge-base", "--is-ancestor", branch, "main"],
++        check=False,
++        capture=True,
++    )
+     return result.returncode == 0
++
++
+ def check_merged_to_testing(branch):
+     if not branch_exists(branch):
+         error(f"Branch {branch} does not exist.")
+-    result = run(["git", "merge-base", "--is-ancestor", branch, "testing"], check=False, capture=True)
++    result = run(
++        ["git", "merge-base", "--is-ancestor", branch, "testing"],
++        check=False,
++        capture=True,
++    )
+     return result.returncode == 0
++
++
+ def cmd_merge(src_input, target_input):
+     src = resolve_branch(src_input)
+     target = resolve_branch(target_input)
+@@ -173,6 +219,8 @@ def cmd_merge(src_input, target_input):
+     else:
+         warn("No remote - skipping push")
+     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
++
++
+ def cmd_commit(message):
+     if not message:
+         error("commit: message required")
+@@ -192,17 +240,23 @@ def cmd_commit(message):
+         log("✅ Commit successful")
+     else:
+         warn("No changes to commit")
++
++
+ def cmd_promote(src_input, original_task_id=None):
+     src = resolve_branch(src_input)
+     task_id = original_task_id or (
+         src.split("-")[0] if src.split("-")[0].isdigit() else None
+     )
+-    
++
+     current_status = None
+     if task_id and TasksCLI:
+-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++        cli = (
++            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++            if TasksCLI
++            else None
++        )
+         path, current_status = cli.find_task(task_id)
+-    
++
+     target = None
+     if task_id and TasksCLI and current_status:
+         if current_status in ["PROGRESSING"]:
+@@ -221,23 +275,31 @@ def cmd_promote(src_input, original_task_id=None):
+             if src not in PIPELINE
+             else ("staging" if src == "testing" else "main")
+         )
+-    
++
+     if src == target:
+         info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
+         return
+-        
++
+     # Perform gate checks
+     if task_id and TasksCLI and path:
+         if target in ("staging", "main"):
+             if current_status == "TESTING":
+                 info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
++                assert isinstance(cli, TasksCLI)
+                 cli.move(task_id, "REVIEW")
+-                error(f"Task {task_id} moved to REVIEW for audit.", hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.")
++                error(
++                    f"Task {task_id} moved to REVIEW for audit.",
++                    hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.",
++                )
+             if current_status == "REVIEW":
+                 from tasks_ai.file_manager import FM
++
+                 task = FM.load(path)
+                 if not task.metadata.get("Rc"):
+-                    error("Regression check not passed.", hint=f"Run 'tasks modify {task_id} --regression-check'.")
++                    error(
++                        "Regression check not passed.",
++                        hint=f"Run 'tasks modify {task_id} --regression-check'.",
++                    )
+     needs_move = False
+     print(f"DEBUG: needs_move={needs_move}, target={target}")
+     if task_id and TasksCLI and current_status:
+@@ -250,7 +312,11 @@ def cmd_promote(src_input, original_task_id=None):
+     if src not in PIPELINE or needs_move:
+         cmd_merge(src, target)
+     if task_id and TasksCLI and needs_move:
+-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++        cli = (
++            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++            if TasksCLI
++            else None
++        )
+         new_status = None
+         if target == "testing":
+             new_status = "TESTING"
+@@ -266,17 +332,27 @@ def cmd_promote(src_input, original_task_id=None):
+     if target == "main":
+         log(f"Merged to main complete. Current branch: {get_current_branch()}")
+     if target == "main" and task_id and TasksCLI:
+-        log(f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task.")
++        log(
++            f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
++        )
+         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=True)
+         cli.move(task_id, "ARCHIVED")
+         run(["git", "branch", "-d", src], check=False)
+     if target != "main" and original_task_id is not None:
+-        log(f"Task {task_id} moved to {target.upper()}. Run 'repo promote {src}' to continue.")
++        log(
++            f"Task {task_id} moved to {target.upper()}. Run 'repo promote {src}' to continue."
++        )
++
++
+ def cmd_demote(task_id_input, target_state):
+     from tasks_ai.file_manager import FM
++
+     task_id = task_id_input.split("-")[0]
+-    cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+-    path, _ = cli.find_task(task_id)
++    cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"]) if TasksCLI else None
++    if cli:
++        path, _ = cli.find_task(task_id)
++    else:
++        error("TasksCLI not initialized")
+     task = FM.load(path)
+     branch = task.metadata.get("Br")
+     info(f"Demoting {task_id} to {target_state}...")
+@@ -294,18 +370,26 @@ def cmd_demote(task_id_input, target_state):
+     task.metadata["Rc"] = ""
+     FM.dump(task, path)
+     log("✅ Successfully demoted.")
++
++
+ def resolve_branch(name):
+     if name == "current":
+         return get_current_branch()
+     numeric_id = name.split("-")[0] if name else None
+     if numeric_id and numeric_id.isdigit() and TasksCLI:
+-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++        cli = (
++            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++            if TasksCLI
++            else None
++        )
+         path, _ = cli.find_task(numeric_id)
+         if path:
+             return os.path.basename(path).rsplit(".", 1)[0]
+     if branch_exists(name):
+         return name
+     error(f"COULD NOT RESOLVE BRANCH: {name}!")
++
++
+ def ensure_pipeline_branch(name):
+     if branch_exists(name):
+         return
+@@ -317,6 +401,8 @@ def ensure_pipeline_branch(name):
+         base = get_current_branch()
+     run(["git", "checkout", "-b", name, base], quiet=True)
+     run(["git", "checkout", "-"], quiet=True)
++
++
+ def main():
+     global FLAGS
+     args = []
+@@ -376,5 +462,7 @@ def main():
+             error("branch: unknown subcommand")
+     else:
+         error(f"Unknown: {cmd}")
++
++
+ if __name__ == "__main__":
+     main()
+diff --git a/repo_fix.py b/repo_fix.py
+index 6ef218e..914a935 100644
+--- a/repo_fix.py
++++ b/repo_fix.py
+@@ -1,20 +1,24 @@
+-lines = open('repo.py', 'r').readlines()
++lines = open("repo.py", "r").readlines()
+ new_lines = []
+ skip = False
+ for i, line in enumerate(lines):
+-    if 'def check_remote_exists():' in line:
++    if "def check_remote_exists():" in line:
+         new_lines.append(line)
+-        new_lines.append('    result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)\n')
+-        new_lines.append('    if result.returncode != 0:\n')
++        new_lines.append(
++            '    result = run(["git", "remote", "get-url", PRIMARY_REMOTE], check=False, capture=True)\n'
++        )
++        new_lines.append("    if result.returncode != 0:\n")
+         skip = True
+         continue
+-    if skip and ('if FLAGS["yes"]:' in line or 'warn(f"No' in line or 'return False' in line):
++    if skip and (
++        'if FLAGS["yes"]:' in line or 'warn(f"No' in line or "return False" in line
++    ):
+         new_lines.append(line)
+-    elif skip and ('    return True' in line or 'def' in line):
++    elif skip and ("    return True" in line or "def" in line):
+         skip = False
+         new_lines.append(line)
+     elif not skip:
+         new_lines.append(line)
+ 
+-with open('repo.py', 'w') as f:
++with open("repo.py", "w") as f:
+     f.writelines(new_lines)
+diff --git a/tasks_ai/audit.py b/tasks_ai/audit.py
+new file mode 100644
+index 0000000..471e535
+--- /dev/null
++++ b/tasks_ai/audit.py
+@@ -0,0 +1,35 @@
++import json
++import hashlib
++import os
++
++
++def generate_audit(task_id, diff_path, output_path):
++    if not os.path.exists(diff_path):
++        return {"error": "Diff patch not found"}
++
++    with open(diff_path, "rb") as f:
++        diff_hash = hashlib.sha256(f.read()).hexdigest()
++
++    audit_data = {
++        "task_id": task_id,
++        "diff_hash": diff_hash,
++        "status": "audited",
++        "timestamp": os.path.getmtime(diff_path),
++    }
++
++    with open(output_path, "w") as f:
++        json.dump(audit_data, f, indent=4)
++
++    return audit_data
++
++
++def verify_audit(task_id, diff_path, audit_path):
++    if not os.path.exists(audit_path):
++        return False
++    with open(audit_path, "r") as f:
++        audit_data = json.load(f)
++    if audit_data.get("task_id") != task_id:
++        return False
++    with open(diff_path, "rb") as f:
++        current_hash = hashlib.sha256(f.read()).hexdigest()
++    return audit_data.get("diff_hash") == current_hash
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 81d2baa..bde0071 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -1288,12 +1288,20 @@ class TasksCLI:
+         # Check for non-sequential jumps and auto-promote if needed
+         # Keep promoting until we reach the target or hit a limit to prevent infinite loops
+         max_promotions = 5
+-        while new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, []) and current_state_from_folder != new_status and max_promotions > 0:
+-            self.log(f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py...")
++        while (
++            new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
++            and current_state_from_folder != new_status
++            and max_promotions > 0
++        ):
++            self.log(
++                f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py..."
++            )
+             try:
+                 subprocess.run(
+                     [sys.executable, "repo.py", "promote", str(task_id_num), "-y"],
+-                    capture_output=True, text=True, check=True
++                    capture_output=True,
++                    text=True,
++                    check=True,
+                 )
+                 # Refresh state after promotion
+                 filepath, current_state_from_folder = self.find_task(filename)
+@@ -1301,7 +1309,6 @@ class TasksCLI:
+             except subprocess.CalledProcessError as e:
+                 self.error(f"Auto-promotion failed: {e.stderr}")
+ 
+-
+         if False and "," in new_status:
+             statuses = [s.strip().upper() for s in new_status.split(",")]
+             for s in statuses:
+@@ -1729,7 +1736,9 @@ class TasksCLI:
+                 try:
+                     subprocess.run(
+                         [sys.executable, "repo.py", "check-merged-testing", branch],
+-                        capture_output=True, text=True, check=True
++                        capture_output=True,
++                        text=True,
++                        check=True,
+                     )
+                 except subprocess.CalledProcessError:
+                     self.error(
+@@ -1742,7 +1751,9 @@ class TasksCLI:
+                 try:
+                     subprocess.run(
+                         [sys.executable, "repo.py", "check-merged", branch],
+-                        capture_output=True, text=True, check=True
++                        capture_output=True,
++                        text=True,
++                        check=True,
+                     )
+                 except subprocess.CalledProcessError:
+                     self.error(
+diff --git a/hammer_test_base.py b/hammer_test_base.py
+index e494ae5..40f3350 100644
+--- a/hammer_test_base.py
++++ b/hammer_test_base.py
+@@ -1,28 +1,50 @@
+ import unittest
+ import subprocess
+ import os
+-import shutil
+ import tempfile
+ import sys
+ import json
+ 
++
+ class HammerTestBase(unittest.TestCase):
+     def setUp(self):
+         self.test_root = tempfile.mkdtemp(prefix="hammer_test_")
+         self.repo_path = os.path.join(self.test_root, "repo")
+-        subprocess.run(["git", "clone", os.getcwd(), self.repo_path], check=True, capture_output=True)
++        subprocess.run(
++            ["git", "clone", os.getcwd(), self.repo_path],
++            check=True,
++            capture_output=True,
++        )
+         self.script_path = os.path.join(self.repo_path, "tasks.py")
+-        
++
+         os.makedirs(os.path.join(self.repo_path, ".tasks"), exist_ok=True)
+         with open(os.path.join(self.repo_path, ".tasks", "config.yaml"), "w") as f:
+-            json.dump({"repo": {"lint": "/bin/true", "test": "/bin/true", "type_check": "/bin/true", "format": "/bin/true"}}, f)
+-        
+-        subprocess.run([sys.executable, self.script_path, "--dev", "init"], 
+-                       cwd=self.repo_path, check=True, capture_output=True)
++            json.dump(
++                {
++                    "repo": {
++                        "lint": "/bin/true",
++                        "test": "/bin/true",
++                        "type_check": "/bin/true",
++                        "format": "/bin/true",
++                    }
++                },
++                f,
++            )
++
++        subprocess.run(
++            [sys.executable, self.script_path, "--dev", "init"],
++            cwd=self.repo_path,
++            check=True,
++            capture_output=True,
++        )
+ 
+     def tearDown(self):
+         pass
+ 
+     def run_tasks(self, args):
+-        return subprocess.run([sys.executable, self.script_path, "-j", "--dev"] + args, 
+-                              cwd=self.repo_path, capture_output=True, text=True)
++        return subprocess.run(
++            [sys.executable, self.script_path, "-j", "--dev"] + args,
++            cwd=self.repo_path,
++            capture_output=True,
++            text=True,
++        )
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index bde0071..7fed32d 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -316,17 +316,18 @@ class TasksCLI:
+         self.log(f"Regression diff generated at {diff_path}")
+         return diff_path
+ 
+-
+     def _check_transition(self, filename, new_status):
+         filepath, current_state = self.find_task(filename)
+         if not filepath or current_state is None:
+             return
+         if "," in new_status:
+             return
+-        if new_status not in ALLOWED_TRANSITIONS.get(current_state, []) and current_state != new_status:
++        if (
++            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
++            and current_state != new_status
++        ):
+             self.error(f"Forbidden transition: {current_state} -> {new_status}")
+ 
+-
+     def _run_repo(self, args, cwd=None):
+         cwd = cwd or self.root
+         repo_path = os.path.join(self.root, "repo")
+diff --git a/tests/hammer_test_base.py b/tests/hammer_test_base.py
+index ffc3ae3..d24af5e 100644
+--- a/tests/hammer_test_base.py
++++ b/tests/hammer_test_base.py
+@@ -6,25 +6,48 @@ import tempfile
+ import sys
+ import json
+ 
++
+ class HammerTestBase(unittest.TestCase):
+     def setUp(self):
+         self.test_root = tempfile.mkdtemp(prefix="hammer_test_")
+         self.repo_path = os.path.join(self.test_root, "repo")
+         # Use full local clone
+-        subprocess.run(["git", "clone", os.getcwd(), self.repo_path], check=True, capture_output=True)
++        subprocess.run(
++            ["git", "clone", os.getcwd(), self.repo_path],
++            check=True,
++            capture_output=True,
++        )
+         self.script_path = os.path.join(self.repo_path, "tasks.py")
+-        
++
+         # Configure isolated dev environment
+         os.makedirs(os.path.join(self.repo_path, ".tasks"), exist_ok=True)
+         with open(os.path.join(self.repo_path, ".tasks", "config.yaml"), "w") as f:
+-            json.dump({"repo": {"lint": "/bin/true", "test": "/bin/true", "type_check": "/bin/true", "format": "/bin/true"}}, f)
+-        
+-        subprocess.run([sys.executable, self.script_path, "--dev", "init"], 
+-                       cwd=self.repo_path, check=True, capture_output=True)
++            json.dump(
++                {
++                    "repo": {
++                        "lint": "/bin/true",
++                        "test": "/bin/true",
++                        "type_check": "/bin/true",
++                        "format": "/bin/true",
++                    }
++                },
++                f,
++            )
++
++        subprocess.run(
++            [sys.executable, self.script_path, "--dev", "init"],
++            cwd=self.repo_path,
++            check=True,
++            capture_output=True,
++        )
+ 
+     def tearDown(self):
+         shutil.rmtree(self.test_root)
+ 
+     def run_tasks(self, args):
+-        return subprocess.run([sys.executable, self.script_path, "-j", "--dev"] + args, 
+-                              cwd=self.repo_path, capture_output=True, text=True)
++        return subprocess.run(
++            [sys.executable, self.script_path, "-j", "--dev"] + args,
++            cwd=self.repo_path,
++            capture_output=True,
++            text=True,
++        )
+diff --git a/tests/test_all_transitions.py b/tests/test_all_transitions.py
+index 63b2414..de93bd4 100644
+--- a/tests/test_all_transitions.py
++++ b/tests/test_all_transitions.py
+@@ -3,33 +3,50 @@ import json
+ from hammer_test_base import HammerTestBase
+ from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
+ 
++
+ class TestAllTransitions(HammerTestBase):
+     def test_transitions(self):
+-        res = self.run_tasks(["create", "Comprehensive Test Task", 
+-             "--story", "Sufficiently long story content here...", 
+-             "--tech", "Sufficiently long technical description here...", 
+-             "--criteria", "Sufficiently long acceptance criteria here...", 
+-             "--plan", "Sufficiently long planning details here..."])
++        res = self.run_tasks(
++            [
++                "create",
++                "Comprehensive Test Task",
++                "--story",
++                "Sufficiently long story content here...",
++                "--tech",
++                "Sufficiently long technical description here...",
++                "--criteria",
++                "Sufficiently long acceptance criteria here...",
++                "--plan",
++                "Sufficiently long planning details here...",
++            ]
++        )
+         task_id = json.loads(res.stdout)["data"]["id"]
+-        
++
+         self.run_tasks(["move", str(task_id), "READY"])
+         current = "READY"
+-        
++
+         states_to_test = [s for s in STATE_FOLDERS.keys() if s not in ["BACKLOG"]]
+-        
++
+         for target in states_to_test:
+-            if target == current: continue
+-            
++            if target == current:
++                continue
++
+             res = self.run_tasks(["move", str(task_id), target])
+             output = json.loads(res.stdout)
+-            
++
+             success = output.get("success", False)
+             error = output.get("error", "")
+-            
++
+             is_allowed = target in ALLOWED_TRANSITIONS.get(current, [])
+-            is_validation_error = any(msg in error for msg in ["Validation failed", "regression check", "lint"])
+-            is_gate_error = any(msg in error for msg in ["Forbidden transition", "Auto-promotion failed"])
+-            
++            is_validation_error = any(
++                msg in error
++                for msg in ["Validation failed", "regression check", "lint"]
++            )
++            is_gate_error = any(
++                msg in error
++                for msg in ["Forbidden transition", "Auto-promotion failed"]
++            )
++
+             if is_allowed:
+                 is_pass = success or is_validation_error
+                 status = "ACCEPTED" if success else "REJECTED"
+@@ -38,11 +55,17 @@ class TestAllTransitions(HammerTestBase):
+                 is_pass = not success and is_gate_error
+                 status = "REJECTED"
+                 reason = error if not success else "Unexpectedly allowed"
+-            
+-            print(f"DEBUG: Testing {current}->{target} ... <{status}> {'PASS' if is_pass else 'FAIL'} (Reason: {reason})")
+-            self.assertTrue(is_pass, f"Transition {current}->{target} resulted in unexpected state: {output}")
++
++            print(
++                f"DEBUG: Testing {current}->{target} ... <{status}> {'PASS' if is_pass else 'FAIL'} (Reason: {reason})"
++            )
++            self.assertTrue(
++                is_pass,
++                f"Transition {current}->{target} resulted in unexpected state: {output}",
++            )
+             if is_allowed and success:
+                 current = target
+ 
++
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/tests/test_dev_mode.py b/tests/test_dev_mode.py
+index a8e9125..e6f915c 100644
+--- a/tests/test_dev_mode.py
++++ b/tests/test_dev_mode.py
+@@ -1,44 +1,66 @@
+ import json
+ import os
+ import subprocess
+-import sys
+ import unittest
+ from hammer_test_base import HammerTestBase
+ 
++
+ class TestDevMode(HammerTestBase):
+     @unittest.skip("Diff generation needs debugging")
+     def test_review_diff_in_dev_mode(self):
+-        res = self.run_tasks(["create", "Dev Review Diff Title", 
+-             "--story", "Sufficiently long story content here...", 
+-             "--tech", "Sufficiently long technical description here...", 
+-             "--criteria", "Sufficiently long acceptance criteria here...", 
+-             "--plan", "1. Create task. 2. Move to PROGRESSING. 3. Make changes. 4. Verify diff."])
++        res = self.run_tasks(
++            [
++                "create",
++                "Dev Review Diff Title",
++                "--story",
++                "Sufficiently long story content here...",
++                "--tech",
++                "Sufficiently long technical description here...",
++                "--criteria",
++                "Sufficiently long acceptance criteria here...",
++                "--plan",
++                "1. Create task. 2. Move to PROGRESSING. 3. Make changes. 4. Verify diff.",
++            ]
++        )
+         data = json.loads(res.stdout)
+         task_id = data["data"]["id"]
+-        
++
+         self.run_tasks(["move", str(task_id), "READY"])
+         self.run_tasks(["move", str(task_id), "PROGRESSING"])
+-        
++
+         # Create branch and change
+-        subprocess.run(["git", "checkout", "-b", f"{task_id}-dev"], cwd=self.repo_path, check=True)
++        subprocess.run(
++            ["git", "checkout", "-b", f"{task_id}-dev"], cwd=self.repo_path, check=True
++        )
+         with open(os.path.join(self.repo_path, "dev_feature.py"), "w") as f:
+             f.write("def dev_feature():\n    return 'dev'\n")
+         subprocess.run(["git", "add", "dev_feature.py"], cwd=self.repo_path, check=True)
+-        subprocess.run(["git", "commit", "-m", "Add dev feature"], cwd=self.repo_path, check=True)
+-        
++        subprocess.run(
++            ["git", "commit", "-m", "Add dev feature"], cwd=self.repo_path, check=True
++        )
++
+         # Merge task branch into 'testing' branch (required for diff generation logic)
+         subprocess.run(["git", "branch", "testing"], cwd=self.repo_path, check=True)
+         subprocess.run(["git", "checkout", "testing"], cwd=self.repo_path, check=True)
+         subprocess.run(["git", "branch", "-a"], cwd=self.repo_path, check=True)
+-        subprocess.run(["git", "merge", f"{task_id}-dev"], cwd=self.repo_path, check=True)
+-        subprocess.run(["git", "checkout", f"{task_id}-dev"], cwd=self.repo_path, check=True)
+-        
++        subprocess.run(
++            ["git", "merge", f"{task_id}-dev"], cwd=self.repo_path, check=True
++        )
++        subprocess.run(
++            ["git", "checkout", f"{task_id}-dev"], cwd=self.repo_path, check=True
++        )
++
+         # Move to TESTING and REVIEW
+         self.run_tasks(["move", str(task_id), "TESTING"])
+         self.run_tasks(["move", str(task_id), "REVIEW"])
+-        
+-        diff_path = os.path.join(self.repo_path, ".tasks", "review", str(task_id), "diff.patch")
+-        self.assertTrue(os.path.exists(diff_path), f"Diff patch not found at {diff_path}")
++
++        diff_path = os.path.join(
++            self.repo_path, ".tasks", "review", str(task_id), "diff.patch"
++        )
++        self.assertTrue(
++            os.path.exists(diff_path), f"Diff patch not found at {diff_path}"
++        )
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
