@@ -117,6 +117,7 @@ if __name__ == "__main__":
     cr_p.add_argument("--branch", action="store_true", help="Auto-generate branch.")
 
     aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
+    aud_p.add_argument("id", help="Task ID.")
 
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
