@@ -123,6 +123,13 @@ if __name__ == "__main__":
     aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
     aud_p.add_argument("id", help="Task ID.")
 
+    ver_p = subparsers.add_parser("verify", help="Verify task criteria and generate cryptographic audit.")
+    ver_p.add_argument("id", help="Task ID to verify.")
+    ver_p.add_argument("--proof", required=True, help="Evidence for criteria completion.")
+
+    undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
+    undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
+
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
     mod_p.add_argument("--title", help="New title.")
@@ -211,9 +218,6 @@ if __name__ == "__main__":
     )
     run_p.add_argument("--fix", action="store_true", help="Apply fixes if supported.")
 
-    undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
-    undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
-
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
         "--fix",
@@ -276,6 +280,12 @@ if __name__ == "__main__":
         cli.delete(args.filename, confirm=args.confirm)
     elif args.command == "list":
         cli.list(show_all=args.all)
+    elif args.command == "audit":
+        cli.audit(args.id)
+    elif args.command == "verify":
+        cli.verify(args.id, args.proof)
+    elif args.command == "undo":
+        cli.undo(args.filename)
     elif args.command == "current":
         cli.current(args.filename)
     elif args.command == "show":
@@ -297,7 +307,5 @@ if __name__ == "__main__":
         cli.upgrade()
     elif args.command == "run":
         cli.run_tool(args.tool, fix=args.fix)
-    elif args.command == "undo":
-        cli.undo(args.filename)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)
