@@ -862,6 +862,22 @@ class TasksCLI:
         )
         return current
 
+<<<<<<< HEAD
+=======
+    def audit(self, task_id):
+        """Generate an audit log after reviewing the patch."""
+        filepath, _ = self.find_task(task_id)
+        if not filepath:
+            self.error(f"Task {task_id} not found.")
+        
+        # Use filename as task_id (e.g., 152-task-harden-audit-test)
+        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
+        audit_path = f".tasks/review/{task_id}.audit"
+        with open(audit_path, "w") as f:
+            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\n")
+            
+        self.log(f"✅ Audit log created for task {task_id} at {audit_path}")
+>>>>>>> 156-task-implement-90-day-retention-and
 
     def create(
         self,
@@ -2067,11 +2083,10 @@ class TasksCLI:
         ]:
             task = FM.load(filepath_str)
             if not task.metadata.get("Rc"):
-                patch_path = f".tasks/review/{task_id}.patch"
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
                     hint=f"Complete the regression check before promoting.\n"
-                    f"  1. Review the diff patch at {patch_path}\n"
+                    f"  1. Review the diff patch at .tasks/review/{task_id}.patch\n"
                     "  2. Audit for regressions and side-effects\n"
                     f"  3. Run: ./hammer tasks modify {task_id} --regression-check",
                 )
