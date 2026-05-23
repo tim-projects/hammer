@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "144-task-formatting-expand-branch-colum",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
