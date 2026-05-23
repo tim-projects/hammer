@@ -116,6 +116,8 @@ def find_project_root(start_path=None):
 
 def run(cmd, check=True, capture=False, env=None, cwd=None, quiet=False, context=None):
     project_root = find_project_root()
+    env = env or os.environ.copy()
+    env["GIT_MERGE_AUTOEDIT"] = "no"
     capture = capture or quiet or FLAGS["json"]
     try:
         return subprocess.run(

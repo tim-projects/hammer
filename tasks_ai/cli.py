@@ -552,7 +552,15 @@ class TasksCLI:
             with open(hook_path, "w") as f:
                 f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"⚠️  Direct git merge to main detected. Pipeline governance requires './hammer repo merge'. Aborting.\"\n    exit 1\nfi")
             os.chmod(hook_path, 0o755)
-            self.log("Git pipeline enforcement hook (pre-merge) installed/updated.")
+
+            # Install post-merge hook for pipeline sync monitoring
+            post_merge_path = os.path.join(hook_dir, "post-merge")
+            with open(post_merge_path, "w") as f:
+                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"Checking pipeline sync...\"\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n \"$staging_diff\" ] || [ -n \"$testing_diff\" ]; then\n        echo \"⚠️  Pipeline branches (staging/testing) are out of sync with main!\"\n        echo \"Run './hammer repo sync' to reconcile.\"\n    else\n        echo \"✅ Pipeline branches are in sync.\"\n    fi\nfi")
+            os.chmod(post_merge_path, 0o755)
+
+            self.log("Git pipeline enforcement hooks (pre-merge, post-merge) installed/updated.")
+        
         if self.dev:
             for folder in list(STATE_FOLDERS.values()):
                 p = os.path.join(self.tasks_path, folder)
@@ -599,6 +607,22 @@ class TasksCLI:
                 self._run_git(["checkout", original_branch])
             else:
                 self._run_git(["checkout", "-"])
+        # Ensure .tasks is in .gitignore
+        gitignore_path = os.path.join(self.root, ".gitignore")
+        ignore_line = f"/{TASKS_DIR}/"
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, "r") as f:
+                content = f.read()
+            if ignore_line not in content:
+                with open(gitignore_path, "a") as f:
+                    f.write(f"\n{ignore_line}\n")
+        else:
+            with open(gitignore_path, "w") as f:
+                f.write(f"{ignore_line}\n")
+
+        # Ensure .tasks is not already tracked
+        self._run_git(["rm", "-rf", "--cached", TASKS_DIR], cwd=self.root, check=False)
+
         is_worktree = False
         if os.path.exists(self.tasks_path):
             wt_res = self._run_git(["worktree", "list", "--porcelain"])
@@ -606,26 +630,24 @@ class TasksCLI:
                 is_worktree = True
 
         if not is_worktree:
+            # Clean up non-worktree .tasks if exists
             if os.path.exists(self.tasks_path):
-                # Safety check: prevent catastrophic data loss
+                # Safety check
                 if self._tasks_directory_has_data(self.tasks_path):
-                    if force:
-                        self.log(
-                            f"WARNING: {self.tasks_path} contains task data. "
-                            "--force specified, proceeding with deletion."
-                        )
-                    else:
+                    if not force:
                         self.error(
                             f"Found existing .tasks directory with data at '{self.tasks_path}'. "
                             "Running 'hammer init' here would permanently delete all task history.\n"
-                            "Hint: Run 'hammer tasks doctor' to diagnose and repair issues without losing data. "
+                            "Hint: Run 'hammer tasks doctor' to diagnose and repair issues. "
                             "Use 'hammer init --force' only if you are certain you want to reset."
                         )
                 if os.path.isdir(self.tasks_path):
                     shutil.rmtree(self.tasks_path)
                 else:
                     os.remove(self.tasks_path)
-            self._run_git(["worktree", "add", self.tasks_path, TASKS_BRANCH])
+            
+            # Re-create as worktree
+            self._run_git(["worktree", "add", self.tasks_path, TASKS_BRANCH], cwd=self.root)
         for folder in list(STATE_FOLDERS.values()):
             p = os.path.join(self.tasks_path, folder)
             if not os.path.exists(p):
@@ -663,6 +685,10 @@ class TasksCLI:
             with open(gitignore_path, "w") as f:
                 f.write(f"{ignore_line}\n")
         self.log("Tasks initialized.")
+        # Configure auto-merge settings
+        subprocess.run(["git", "config", "--global", "merge.message", "merge: auto-merge"], cwd=self.root)
+        os.environ["GIT_MERGE_AUTOEDIT"] = "no"
+        self.log("Git auto-merge configured.")
         self.log(
             'Tip: Create a task with: tasks create "Your task title" --story "As a user..." --tech "..." --criteria "..." --plan "1. ..."'
         )
@@ -3696,7 +3722,7 @@ class TasksCLI:
     def _check_audit_integrity(self, task_id):
         import hashlib
         filepath, _ = self.find_task(task_id)
-        # filepath is already correct from find_task
+
         criteria_path = os.path.join(filepath, "criteria.md")
         proof_path = os.path.join(filepath, "verification_proof.log")
         hash_path = os.path.join(filepath, ".audit_hash")
@@ -3714,6 +3740,21 @@ class TasksCLI:
             
         self.log(f"Current: {hasher.hexdigest()} | Stored: {stored_hash}")
         return hasher.hexdigest() == stored_hash
+    
+    def _update_audit_hash(self, task_id):
+        import hashlib
+        filepath, _ = self.find_task(task_id)
+        criteria_path = os.path.join(filepath, "criteria.md")
+        proof_path = os.path.join(filepath, "verification_proof.log")
+        hash_path = os.path.join(filepath, ".audit_hash")
+        
+        hasher = hashlib.sha256()
+        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+            hasher.update(f1.read())
+            hasher.update(f2.read())
+        
+        with open(hash_path, "w") as f:
+            f.write(hasher.hexdigest())
     def verify(self, task_id, proof):
         """Verify criteria and submit proof."""
         import hashlib
