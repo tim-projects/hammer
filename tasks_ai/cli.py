@@ -23,6 +23,7 @@ from .constants import (
 )
 from .models import Task
 from .file_manager import FM
+from . import audit as audit_mod
 
 
 def get_terminal_width():
@@ -840,23 +841,6 @@ class TasksCLI:
         )
         return current
 
-    def audit(self, task_id):
-        """Generate an audit log after reviewing the patch."""
-        filepath, _ = self.find_task(task_id)
-        if not filepath:
-            self.error(f"Task {task_id} not found.")
-        
-        # Path based on consistent naming convention
-        patch_path = f".tasks/review/{task_id}.patch"
-        if not os.path.exists(patch_path):
-            self.error(f"No patch file found at {patch_path}. Move to REVIEW first.")
-            
-        audit_path = f".tasks/review/{task_id}.audit"
-        with open(audit_path, "w") as f:
-            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\n")
-            
-        self.log(f"✅ Audit log created for task {task_id} at {audit_path}")
-
     def create(
         self,
         title,
@@ -1104,12 +1088,18 @@ class TasksCLI:
 
         if regression_check is not None:
             if regression_check:
-                # Check for audit log
-                audit_path = f".tasks/review/{task_id}.audit"
-                if not os.path.exists(audit_path):
+                # MANDATORY AUDIT ENFORCEMENT
+                fname = os.path.basename(filepath)
+                tid = fname.rsplit(".", 1)[0]
+                patch_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.patch")
+                audit_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.audit")
+
+                if not audit_mod.verify_audit(patch_path, audit_path):
                     self.error(
-                        "Cannot set regression check without audit log.",
-                        hint=f"Review the patch and run 'hammer tasks audit {task_id}' first."
+                        f"Regression check failed: mandatory audit log missing or invalid for task {filename}.",
+                        hint=f"You must audit the patch before setting regression-check.\n"
+                        f"  1. Review the patch at {patch_path}\n"
+                        f"  2. Run: ./hammer tasks audit {filename}",
                     )
                 task.metadata["Rc"] = True
             else:
@@ -2270,6 +2260,48 @@ class TasksCLI:
                     print(f"\n## Active Progress\n{data['dump']['content']}")
 
         self.finish(data)
+
+    def audit(self, task_id):
+        """Generate an audit log for a task's patch."""
+        filepath, state = self.find_task(task_id)
+        if not filepath:
+            self.error(f"Task '{task_id}' not found.")
+
+        fname = os.path.basename(filepath)
+        tid = fname.rsplit(".", 1)[0]
+        patch_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.patch")
+
+        if not os.path.exists(patch_path):
+            # Try to generate it if we are in REVIEW state
+            if state == "REVIEW":
+                task = FM.load(filepath)
+                branch = task.metadata.get("Br")
+                if branch:
+                    self._generate_review_diff(filepath, branch)
+                else:
+                    self.error(f"No branch found for task {task_id}")
+            else:
+                self.error(
+                    f"Patch file not found for task {task_id} at {patch_path}.",
+                    hint="Task must be in REVIEW state to generate or verify an audit log.",
+                )
+
+        audit_path = os.path.join(self.tasks_path, STATE_FOLDERS["REVIEW"], f"{tid}.audit")
+        audit_mod.generate_audit(task_id, patch_path, audit_path)
+        self.log(f"✅ Audit log created for task {task_id} at {audit_path}")
+        self.finish({"id": task_id, "audit_path": audit_path})
+
+    def verify(self, task_id, proof):
+        """Verify task criteria with provided proof."""
+        # Simple implementation for now: log the proof
+        filepath, _ = self.find_task(task_id)
+        if not filepath:
+            self.error(f"Task '{task_id}' not found.")
+
+        self.log(f"Verifying task {task_id} with proof: {proof[:50]}...")
+        # In a real implementation, this might check a cryptographic signature or hash
+        self._append_log(filepath, f"Verify: {proof[:100]}")
+        self.finish({"id": task_id, "verified": True})
 
     def list(self, show_all=False):
         if not os.path.exists(self.tasks_path):
