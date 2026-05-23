@@ -4,6 +4,14 @@ AGENT_GUIDANCE = """
 IMPORTANT: Always use -j for JSON output (machine-parseable for agents).
 For help on any command, use tasks <command> -h
 
+Pipeline Commands:
+  audit <id>        - Generate cryptographic SHA256 hash of the patch file.
+                      Required gate: TESTING -> REVIEW.
+  verify <id> --proof "..."
+                    - Validate criteria and bind proof to a SHA256 audit hash.
+                      Required gate: REVIEW -> STAGING.
+  reconcile --all   - Auto-sync pipeline state with Git main branch merges.
+
 TASK REFERENCES: Use the numeric Id (e.g., "17") instead of the filename for all operations. 
 Run 'tasks list' to see task Ids alongside titles.
 
@@ -13,48 +21,16 @@ Example: 'tasks move 1 READY,PROGRESSING,TESTING' moves from BACKLOG directly to
 USEFUL COMMANDS:
   tasks list                   List all tasks with Id, Priority, Summary, Type, Branch
   tasks show <id>              Show full task details
-  tasks show <id> story        Show only the story section  
-  tasks show <id> repro        Show only the reproduction steps (for issues)
   tasks move <id> <state>      Move task to new state (use comma-separated for multi-step)
-  tasks move <id> ARCHIVED -y  Archive and auto-push/delete branch (requires merged to main)
-  tasks modify <id> --plan "1. Step"  Update task fields
   tasks modify <id> --regression-check  Mark regression check as passed (enables STAGING)
-  tasks save                   Manually backup .tasks worktree to remote 'tasks' branch
-  tasks restore                Restore .tasks worktree from remote backup (recover from loss)
-  tasks reconcile              Scan for tasks with merged branches (dry-run)
   tasks reconcile --all        Clean up merged branches and archive tasks
-  tasks cleanup --dry-run      Preview what would be cleaned up
-  tasks cleanup               Clean up merged branches, push to remote, delete local, archive tasks
-  tasks doctor [--fix]         Diagnose repository health; auto-fix with --fix flag
+  tasks cleanup                Clean up merged branches, push to remote, delete local, archive tasks
+  tasks doctor [--fix]         Diagnose repository health
 
 STATE MACHINE: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED
-               (REJECTED also available from TESTING/STAGING)
 
-DOCTOR: Run 'tasks doctor' to diagnose repository health. Detects:
-  - Missing state folders
-  - Tasks with missing or incomplete metadata
-  - Invalid YAML in task files
-  - Orphaned git branches (branches without tasks)
-  - Stale task counter (counter less than highest task ID + 1)
-  - State folder mismatches (task's St field doesn't match its folder)
-Use 'tasks doctor --fix' to automatically fix:
-  - Create missing state folders
-  - Bump stale task counter
-  - Move tasks to correct state folders
-  - (Other issues generate bug reports for manual review)
-
-REGRESSION CHECK: Moving to REVIEW auto-generates a diff at .tasks/review/<id>/diff.patch.
-Review the diff carefully. If regressions found, move the task back to PROGRESSING/TESTING to fix.
-Once clean, run 'tasks modify <id> --regression-check' to confirm and enable STAGING.
-
-BACKUP & RESTORE: The 'tasks' branch (local and remote) continuously backs up the .tasks worktree.
-- Every ARCHIVE automatically triggers 'tasks save' to push the latest .tasks state to the remote.
-- Use 'tasks save' to manually create a backup at any time.
-- If .tasks is lost, run 'tasks restore' to recover from the remote backup.
+MISSION: Identify and fix the highest priority test failures first.
 """
 
-MISSION = """Mission: Identify and fix the highest priority test failures first."""
-
-
 def get_help_text():
-    return AGENT_GUIDANCE + "\n" + MISSION
+    return AGENT_GUIDANCE
