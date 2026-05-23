@@ -1,0 +1,78 @@
+diff --git a/diff_debug.log b/diff_debug.log
+index 7845b08..cee294e 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -1 +1,2 @@
+ branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=196e3d376385f68b4ec33b18927df92846e49db0, diff_len=0
++branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=e39271c3bf595c717dd0d80d44b3ddd6669d20b5, diff_len=0
+diff --git a/tasks.py b/tasks.py
+index 80fc41c..128940e 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -114,11 +114,10 @@ if __name__ == "__main__":
+     cr_p.add_argument(
+         "--repro", nargs="+", help="Reproduction steps for issues (list)."
+     )
+-    cr_p.add_argument(
+-        "--branch",
+-        action="store_true",
+-        help="(ignored) Branch name is auto-generated from title.",
+-    )
++    cr_p.add_argument("--branch", action="store_true", help="Auto-generate branch.")
++
++    aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
++    aud_p.add_argument("id", help="Task ID.")
+ 
+     mod_p = subparsers.add_parser("modify", help="Update task.")
+     mod_p.add_argument("filename", help="Task Id (or filename).")
+@@ -282,6 +281,8 @@ if __name__ == "__main__":
+             cli.list(show_all=False)
+     elif args.command == "checkpoint":
+         cli.checkpoint(args.filename)
++    elif args.command == "audit":
++        cli.audit(args.id)
+     elif args.command == "link":
+         cli.link(args.filename, args.blocked_by)
+     elif args.command == "reconcile":
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 48b3d40..8359064 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -840,6 +840,23 @@ class TasksCLI:
+         )
+         return current
+ 
++    def audit(self, task_id):
++        """Generate an audit log after reviewing the patch."""
++        filepath, _ = self.find_task(task_id)
++        if not filepath:
++            self.error(f"Task {task_id} not found.")
++        
++        # Path based on consistent naming convention
++        patch_path = f".tasks/review/{task_id}.patch"
++        if not os.path.exists(patch_path):
++            self.error(f"No patch file found at {patch_path}. Move to REVIEW first.")
++            
++        audit_path = f".tasks/review/{task_id}.audit"
++        with open(audit_path, "w") as f:
++            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\n")
++            
++        self.log(f"✅ Audit log created for task {task_id} at {audit_path}")
++
+     def create(
+         self,
+         title,
+@@ -1087,6 +1104,13 @@ class TasksCLI:
+ 
+         if regression_check is not None:
+             if regression_check:
++                # Check for audit log
++                audit_path = f".tasks/review/{task_id}.audit"
++                if not os.path.exists(audit_path):
++                    self.error(
++                        "Cannot set regression check without audit log.",
++                        hint=f"Review the patch and run 'hammer tasks audit {task_id}' first."
++                    )
+                 task.metadata["Rc"] = True
+             else:
+                 task.metadata["Rc"] = ""
