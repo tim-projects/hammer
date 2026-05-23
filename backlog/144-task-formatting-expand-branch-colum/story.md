@@ -1,1 +1,0 @@
-The branch column width was too narrow, causing excessive word-wrapping. Increased width to 30 characters.
