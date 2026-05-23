@@ -76,3 +76,11 @@ index 48b3d40..8359064 100644
                  task.metadata["Rc"] = True
              else:
                  task.metadata["Rc"] = ""
+diff --git a/diff_debug.log b/diff_debug.log
+index cee294e..23a38bf 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -1,2 +1,3 @@
+ branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=196e3d376385f68b4ec33b18927df92846e49db0, diff_len=0
+ branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=e39271c3bf595c717dd0d80d44b3ddd6669d20b5, diff_len=0
++branch=152-task-harden-audit-test, main_sha=4a95f6b225aec5ea77cd5670c835e798fc8da5ac, diff_len=3073
