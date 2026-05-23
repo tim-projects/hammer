@@ -336,7 +336,16 @@ class TasksCLI:
             new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
             and current_state != new_status
         ):
-            self.error(f"Forbidden transition: {current_state} -> {new_status}")
+            # Check if it was already merged
+            fname = os.path.basename(filepath)
+            _, branch = self._parse_filename(fname)
+            is_merged = self._run_git(["rev-parse", "--verify", branch]).returncode != 0
+            
+            hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}."
+            if is_merged:
+                hint += "\n\n⚠️  This branch appears to be already merged. Run 'hammer tasks reconcile' to clean up."
+            
+            self.error(f"Forbidden transition: {current_state} -> {new_status}", hint=hint)
 
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
