@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "157-task-implement-verification-dialogu",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": true
 }
