@@ -2,7 +2,9 @@
   "Id": 168,
   "Ti": "Implement safe, iterative auto-promotion logic",
   "Cr": "260524 10:05",
-  "Bl": [],
+  "Bl": [
+    "172-task-write-user-tests-for-168-imple"
+  ],
   "Pr": 2,
   "Br": "168-task-implement-safe-iterative-auto",
   "Tp": true,
