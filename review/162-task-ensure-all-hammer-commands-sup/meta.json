@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "162-task-ensure-all-hammer-commands-sup",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
