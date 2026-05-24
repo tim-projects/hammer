@@ -1,0 +1,8 @@
+{
+  "Id": 165,
+  "Ti": "Implement git hook to restrict direct commits to main",
+  "Cr": "260524 09:27",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "165-task-implement-git-hook-to-restrict"
+}
