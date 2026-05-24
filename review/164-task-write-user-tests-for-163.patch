@@ -1,0 +1,62 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 145edeb..5dc2d9e 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -1026,6 +1026,40 @@ class TasksCLI:
+                 ["commit", "--allow-empty", "-m", f"Add {task_type}: {title}"],
+                 cwd=self.tasks_path,
+             )
++
++            # Auto-create pair task for user tests
++            pair_title = f"Write user tests for {numeric_id}: {title}"
++            pair_numeric_id = self._get_next_id()
++            clean_pair_title = re.sub(r"[^a-zA-Z0-9]+", "-", pair_title.lower()).strip("-")
++            pair_task_id = f"{pair_numeric_id}-{task_type}-{clean_pair_title[:30]}".strip("-")
++            pair_task_dir = os.path.join(self.tasks_path, STATE_FOLDERS["BACKLOG"], pair_task_id)
++
++            pair_task = Task(
++                metadata={
++                    "Id": pair_numeric_id,
++                    "Ti": pair_title,
++                    "Cr": datetime.now().strftime("%y%m%d %H:%M"),
++                    "Bl": [numeric_id],
++                    "Pr": priority or (1 if task_type == "issue" else 2),
++                    "Br": pair_task_id,
++                },
++                parts={
++                    "story": f"As a user, I want automated tests for {numeric_id}: {title}.",
++                    "tech": "Python, pytest",
++                    "criteria": "- [ ] Write tests covering main functionality\n- [ ] Ensure tests pass",
++                    "plan": "1. Understand functionality of " + str(numeric_id) + "\n2. Implement tests\n3. Run tests",
++                },
++            )
++            self._atomic_write(pair_task_dir, pair_task)
++            self._append_log(pair_task_dir, "Cr")
++            self._run_git(
++                ["add", os.path.relpath(pair_task_dir, self.tasks_path)], cwd=self.tasks_path
++            )
++            self._run_git(
++                ["commit", "--allow-empty", "-m", f"Add {task_type}: {pair_title}"],
++                cwd=self.tasks_path,
++            )
++
+             original_branch = self._run_git(
+                 ["rev-parse", "--abbrev-ref", "HEAD"]
+             ).stdout.strip()
+@@ -1036,6 +1070,7 @@ class TasksCLI:
+                 ["rev-parse", "--abbrev-ref", "HEAD"]
+             ).stdout.strip()
+             self.log(f"Created: [{numeric_id}] {task_type} | {title}")
++            self.log(f"Created: [{pair_numeric_id}] {task_type} | {pair_title}")
+             self.log(f"Branch: {task_id} | Now on: {current_branch}")
+             self.finish(
+                 {
+@@ -1046,6 +1081,8 @@ class TasksCLI:
+                     "path": os.path.relpath(task_dir, self.root),
+                     "branch": task_id,
+                     "current_branch": current_branch,
++                    "pair_task_id": pair_task_id,
++                    "pair_numeric_id": pair_numeric_id,
+                 }
+             )
+         except Exception as e:
