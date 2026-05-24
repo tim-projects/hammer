@@ -1,0 +1,8 @@
+{
+  "Id": 167,
+  "Ti": "Implement stale-branch detection via git post-checkout hook",
+  "Cr": "260524 09:37",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "167-task-implement-stale-branch-detecti"
+}
