@@ -1617,6 +1617,19 @@ class TasksCLI:
         self._append_log(new_filepath, f"{current_state}->{new_status}")
         return task
 
+    def _verify_pipeline_state(self, task, target_state):
+        if target_state in ["DONE", "ARCHIVED"]:
+            branch = task.metadata.get("Br", "")
+            if not branch:
+                return
+            # Check if branch is merged into main
+            res = self._run_git(["branch", "--merged", "main"])
+            if branch not in res.stdout:
+                self.error(
+                    f"Task '{task.metadata.get('Id')}' cannot be moved to {target_state} as branch '{branch}' is not merged into 'main'.",
+                    hint="Run './hammer repo merge <branch> main' to finalize integration.",
+                )
+
     def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         new_status = new_status.upper()
         filepath, current_state = self.find_task(filename)
@@ -1626,6 +1639,8 @@ class TasksCLI:
                 hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
             )
         filepath_str = cast(str, filepath)
+        task = FM.load(filepath_str)
+        self._verify_pipeline_state(task, new_status)
 
         if current_state == new_status:
             return
