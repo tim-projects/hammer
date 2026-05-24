@@ -1,0 +1,73 @@
+diff --git a/diff_debug.log b/diff_debug.log
+new file mode 100644
+index 0000000..347f287
+--- /dev/null
++++ b/diff_debug.log
+@@ -0,0 +1,4 @@
++branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=227ef4ee996a060b94f121e9ac5a5001512b4a40, diff_len=0
++branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=227ef4ee996a060b94f121e9ac5a5001512b4a40, diff_len=0
++branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=227ef4ee996a060b94f121e9ac5a5001512b4a40, diff_len=0
++branch=143-issue-bug-repo-sync-loops-on-up-to-d, main_sha=227ef4ee996a060b94f121e9ac5a5001512b4a40, diff_len=527
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index b86a04b..a7d6d88 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -25,7 +25,7 @@ ALLOWED_TRANSITIONS = {
+     "STAGING": ["DONE", "ARCHIVED", "REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
+     "DONE": ["ARCHIVED", "STAGING", "TESTING", "BLOCKED"],
+     "BLOCKED": ["READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"],
+-    "ARCHIVED": ["PROGRESSING"],
++    "ARCHIVED": ["READY", "TESTING"],
+     "REJECTED": ["PROGRESSING"],
+ }
+ 
+diff --git a/tasks_ai/audit.py b/tasks_ai/audit.py
+index 9bcb8ef..f95ff3d 100644
+--- a/tasks_ai/audit.py
++++ b/tasks_ai/audit.py
+@@ -1,40 +1,3 @@
+-<<<<<<< HEAD
+-import json
+-import hashlib
+-import os
+-
+-
+-def generate_audit(task_id, diff_path, output_path):
+-    if not os.path.exists(diff_path):
+-        return {"error": "Diff patch not found"}
+-
+-    with open(diff_path, "rb") as f:
+-        diff_hash = hashlib.sha256(f.read()).hexdigest()
+-
+-    audit_data = {
+-        "task_id": task_id,
+-        "diff_hash": diff_hash,
+-        "status": "audited",
+-        "timestamp": os.path.getmtime(diff_path),
+-    }
+-
+-    with open(output_path, "w") as f:
+-        json.dump(audit_data, f, indent=4)
+-
+-    return audit_data
+-
+-
+-def verify_audit(task_id, diff_path, audit_path):
+-    if not os.path.exists(audit_path):
+-        return False
+-    with open(audit_path, "r") as f:
+-        audit_data = json.load(f)
+-    if audit_data.get("task_id") != task_id:
+-        return False
+-    with open(diff_path, "rb") as f:
+-        current_hash = hashlib.sha256(f.read()).hexdigest()
+-    return audit_data.get("diff_hash") == current_hash
+-=======
+ import hashlib
+ import json
+ import os
+@@ -60,4 +23,3 @@ def verify_audit(patch_path, audit_path):
+     with open(audit_path, "r") as f:
+         audit_data = json.load(f)
+     return audit_data["patch_hash"] == current_hash
+->>>>>>> testing
