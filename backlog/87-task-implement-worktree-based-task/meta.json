@@ -2,7 +2,9 @@
   "Id": 87,
   "Ti": "Implement Worktree-Based Task Management System",
   "Cr": "260418 12:33",
-  "Bl": [],
+  "Bl": [
+    "174-task-write-user-tests-for-87-implem"
+  ],
   "Pr": 2,
   "Br": "87-task-implement-worktree-based-task"
 }
