@@ -2050,15 +2050,11 @@ class TasksCLI:
                         }
                     )
 
-        if new_status == "ARCHIVED" and self._has_incomplete_checkboxes(filepath):
-            self.error(
-                "Cannot archive task: contains unfinished checkboxes (- [ ])",
-                hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
-            )
+        # Enforce criteria completion for DONE
         if new_status == "DONE" and self._has_incomplete_checkboxes(filepath):
             self.error(
                 f"Cannot move to {new_status}: contains unfinished checkboxes (- [ ])",
-                hint="Edit .tasks/staging/<task>/criteria.md and change '- [ ]' to '- [x]' for completed items, or use: sed -i 's/- \\[ \\]/- [x]/g' .tasks/staging/<task>/criteria.md",
+                hint="Edit criteria.md and change '- [ ]' to '- [x]' for completed items.",
             )
 
         # Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
