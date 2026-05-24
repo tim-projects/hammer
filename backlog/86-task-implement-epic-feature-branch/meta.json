@@ -2,7 +2,9 @@
   "Id": 86,
   "Ti": "Implement Epic/Feature Branch Workflow",
   "Cr": "260418 10:32",
-  "Bl": [],
+  "Bl": [
+    "173-task-write-user-tests-for-86-implem"
+  ],
   "Pr": 2,
   "Br": "86-task-implement-epic-feature-branch",
   "Tp": false,
