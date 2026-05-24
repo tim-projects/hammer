@@ -1706,6 +1706,11 @@ class TasksCLI:
                 )
             self._run_validation()
             self._run_tests()
+            self.log(
+                "--- ⚠️  REVIEW GATE ENTERED ⚠️ ---\n"
+                "Task is in REVIEW. This is NOT the final state.\n"
+                "Mandatory gates remaining: Cryptographic Audit, Regression Check (--regression-check), and Staging Promotion."
+            )
 
         # Re-validate when moving out of TESTING to any state
         # Hardening: Run validation on all moves out of TESTING/PROGRESSING
