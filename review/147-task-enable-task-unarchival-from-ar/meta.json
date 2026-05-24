@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "147-task-enable-task-unarchival-from-ar",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
