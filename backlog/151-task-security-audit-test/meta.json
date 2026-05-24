@@ -2,7 +2,9 @@
   "Id": 151,
   "Ti": "Security Audit Test",
   "Cr": "260511 12:57",
-  "Bl": [],
+  "Bl": [
+    "171-task-write-user-tests-for-151-secur"
+  ],
   "Pr": 2,
   "Br": "151-task-security-audit-test"
 }

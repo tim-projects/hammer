@@ -1,3 +1,12 @@
+diff --git a/diff_debug.log b/diff_debug.log
+index cb72cd4..ac1b92a 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -1,3 +1,4 @@
+ branch=150-task-harden-regression-audit-with-c, main_sha=7ba8f90dc9c4eb1ec195aa31fc7820bdc1ea6c26, diff_len=1810
+ branch=167-task-implement-stale-branch-detecti, main_sha=94131e9016ac551ca8dec8f878d43eb800682aba, diff_len=1237
+ branch=147-task-enable-task-unarchival-from-ar, main_sha=ffc24c7d3c3c7134c6a33317f7e48ba52dd30da8, diff_len=1853
++branch=164-task-write-user-tests-for-163, main_sha=3420efe15bbf6aeb4291f53db368fd987babe525, diff_len=2892
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
 index 145edeb..5dc2d9e 100644
 --- a/tasks_ai/cli.py
