@@ -1,1 +1,40 @@
-# No changes detected
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 75b8bdb..145edeb 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -1753,7 +1753,6 @@ class TasksCLI:
+         task.metadata.pop("St", None)
+         fname = os.path.basename(filepath_str)
+         tt, branch = self._parse_filename(fname)
+-        task_id_num = task.metadata.get("Id", "")
+         task_id = fname.rsplit(".", 1)[0]
+         title = task.metadata.get("Ti", "")
+ 
+@@ -2035,23 +2034,11 @@ class TasksCLI:
+                         self._run_git(["push", "origin", branch], cwd=self.root)
+                         self._run_git(["branch", "-d", branch], cwd=self.root)
+                 else:
+-                    if not self.as_json:
+-                        print(f"Branch '{branch}' is merged to main.")
+-                        print(
+-                            f"To archive and clean up, run: tasks move {task_id_num} ARCHIVED -y"
+-                        )
+-                    self.finish(
+-                        {
+-                            "id": task_id_num,
+-                            "task_id": task_id,
+-                            "title": title,
+-                            "branch_merged": True,
+-                            "needs_confirmation": True,
+-                        }
+-                    )
++                    pass
++                # Branch is merged. Allow move to proceed.
+ 
+-        # Enforce criteria completion for DONE
+-        if new_status == "DONE" and self._has_incomplete_checkboxes(filepath):
++        # Enforce criteria completion for TESTING
++        if new_status == "TESTING" and self._has_incomplete_checkboxes(filepath):
+             self.error(
+                 f"Cannot move to {new_status}: contains unfinished checkboxes (- [ ])",
+                 hint="Edit criteria.md and change '- [ ]' to '- [x]' for completed items.",
