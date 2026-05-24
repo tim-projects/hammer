@@ -58,15 +58,16 @@ index bc4c373..2e56e30 100644
          if False and "," in new_status:
              statuses = [s.strip().upper() for s in new_status.split(",")]
 diff --git a/diff_debug.log b/diff_debug.log
-index b1a0f42..d4c2d02 100644
+index b1a0f42..499c0ad 100644
 --- a/diff_debug.log
 +++ b/diff_debug.log
-@@ -1 +1,5 @@
+@@ -1 +1,6 @@
  branch=167-task-implement-stale-branch-detecti, main_sha=bad81d7638747564fbead7119563f51633e4ce49, diff_len=1392
 +branch=169-task-test-auto-promotion-gate-task, main_sha=99f3ca21732ecb9d6a57df17be098f7dc68ae0a9, diff_len=3524
 +branch=169-task-test-auto-promotion-gate-task, main_sha=99f3ca21732ecb9d6a57df17be098f7dc68ae0a9, diff_len=3882
 +branch=169-task-test-auto-promotion-gate-task, main_sha=99f3ca21732ecb9d6a57df17be098f7dc68ae0a9, diff_len=3995
 +branch=169-task-test-auto-promotion-gate-task, main_sha=99f3ca21732ecb9d6a57df17be098f7dc68ae0a9, diff_len=4108
++branch=169-task-test-auto-promotion-gate-task, main_sha=99f3ca21732ecb9d6a57df17be098f7dc68ae0a9, diff_len=4221
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
 index bc4c373..0a0612a 100644
 --- a/tasks_ai/cli.py
