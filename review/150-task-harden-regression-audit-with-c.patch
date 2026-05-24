@@ -1,0 +1,41 @@
+diff --git a/diff_debug.log b/diff_debug.log
+deleted file mode 100644
+index b02dc52..0000000
+--- a/diff_debug.log
++++ /dev/null
+@@ -1,2 +0,0 @@
+-branch=167-task-implement-stale-branch-detecti, main_sha=bad81d7638747564fbead7119563f51633e4ce49, diff_len=1392
+-branch=169-task-test-auto-promotion-gate-task, main_sha=bad81d7638747564fbead7119563f51633e4ce49, diff_len=4130
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 11ae8ab..39026e7 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -1617,6 +1617,19 @@ class TasksCLI:
+         self._append_log(new_filepath, f"{current_state}->{new_status}")
+         return task
+ 
++    def _verify_pipeline_state(self, task, target_state):
++        if target_state in ["DONE", "ARCHIVED"]:
++            branch = task.metadata.get("Br", "")
++            if not branch:
++                return
++            # Check if branch is merged into main
++            res = self._run_git(["branch", "--merged", "main"])
++            if branch not in res.stdout:
++                self.error(
++                    f"Task '{task.metadata.get('Id')}' cannot be moved to {target_state} as branch '{branch}' is not merged into 'main'.",
++                    hint="Run './hammer repo merge <branch> main' to finalize integration.",
++                )
++
+     def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
+         new_status = new_status.upper()
+         filepath, current_state = self.find_task(filename)
+@@ -1626,6 +1639,8 @@ class TasksCLI:
+                 hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
+             )
+         filepath_str = cast(str, filepath)
++        task = FM.load(filepath_str)
++        self._verify_pipeline_state(task, new_status)
+ 
+         if current_state == new_status:
+             return

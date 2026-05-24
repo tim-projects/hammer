@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "150-task-harden-regression-audit-with-c",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
