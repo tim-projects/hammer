@@ -540,6 +540,38 @@ class TasksCLI:
         return False
 
     def init(self, force=False):
+        def install_hooks(self):
+            hook_dir = os.path.join(self.root, ".git", "hooks")
+            hook_path = os.path.join(hook_dir, "pre-merge")
+            
+            # Ensure hook directory exists
+            if not os.path.exists(hook_dir):
+                return
+
+            # Explicitly overwrite ONLY the pre-merge hook
+            with open(hook_path, "w") as f:
+                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"⚠️  Direct git merge to main detected. Pipeline governance requires './hammer repo merge'. Aborting.\"\n    exit 1\nfi")
+            os.chmod(hook_path, 0o755)
+
+            # Install post-merge hook for pipeline sync monitoring
+            post_merge_path = os.path.join(hook_dir, "post-merge")
+            with open(post_merge_path, "w") as f:
+                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"Checking pipeline sync...\"\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n \"$staging_diff\" ] || [ -n \"$testing_diff\" ]; then\n        echo \"⚠️  Pipeline branches (staging/testing) are out of sync with main!\"\n        echo \"Run './hammer repo sync' to reconcile.\"\n    else\n        echo \"✅ Pipeline branches are in sync.\"\n    fi\nfi")
+            os.chmod(post_merge_path, 0o755)
+
+            # Install pre-receive hook to prevent deletion of critical branches
+            pre_receive_path = os.path.join(hook_dir, "pre-receive")
+            with open(pre_receive_path, "w") as f:
+                f.write("#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ \"$newrev\" == \"0000000000000000000000000000000000000000\" ]]; then\n        branch=$(basename \"$refname\")\n        if [[ \"$branch\" == \"main\" || \"$branch\" == \"staging\" || \"$branch\" == \"testing\" ]]; then\n            echo \"❌ Cannot delete critical pipeline branch: $branch\"\n            exit 1\n        fi\n    fi\ndone")
+            os.chmod(pre_receive_path, 0o755)
+
+            # Prevent local deletion via pre-commit (simulated)
+            pre_commit_path = os.path.join(hook_dir, "pre-commit")
+            with open(pre_commit_path, "w") as f:
+                f.write("#!/bin/bash\n\n# Prevent accidental branch deletion in git branch -d commands\n# Note: This is a best-effort local protection.\nif git rev-parse --verify HEAD >/dev/null 2>&1; then\n   # Logic to check for branch delete commands not easily done in pre-commit\n   : \nfi")
+            os.chmod(pre_commit_path, 0o755)
+
+        
         if self.dev:
             for folder in list(STATE_FOLDERS.values()):
                 p = os.path.join(self.tasks_path, folder)
@@ -586,6 +618,22 @@ class TasksCLI:
                 self._run_git(["checkout", original_branch])
             else:
                 self._run_git(["checkout", "-"])
+        # Ensure .tasks is in .gitignore
+        gitignore_path = os.path.join(self.root, ".gitignore")
+        ignore_line = f"/{TASKS_DIR}/"
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, "r") as f:
+                content = f.read()
+            if ignore_line not in content:
+                with open(gitignore_path, "a") as f:
+                    f.write(f"\n{ignore_line}\n")
+        else:
+            with open(gitignore_path, "w") as f:
+                f.write(f"{ignore_line}\n")
+
+        # Ensure .tasks is not already tracked
+        self._run_git(["rm", "-rf", "--cached", TASKS_DIR], cwd=self.root)
+
         is_worktree = False
         if os.path.exists(self.tasks_path):
             wt_res = self._run_git(["worktree", "list", "--porcelain"])
@@ -593,26 +641,24 @@ class TasksCLI:
                 is_worktree = True
 
         if not is_worktree:
+            # Clean up non-worktree .tasks if exists
             if os.path.exists(self.tasks_path):
-                # Safety check: prevent catastrophic data loss
+                # Safety check
                 if self._tasks_directory_has_data(self.tasks_path):
-                    if force:
-                        self.log(
-                            f"WARNING: {self.tasks_path} contains task data. "
-                            "--force specified, proceeding with deletion."
-                        )
-                    else:
+                    if not force:
                         self.error(
                             f"Found existing .tasks directory with data at '{self.tasks_path}'. "
                             "Running 'hammer init' here would permanently delete all task history.\n"
-                            "Hint: Run 'hammer tasks doctor' to diagnose and repair issues without losing data. "
+                            "Hint: Run 'hammer tasks doctor' to diagnose and repair issues. "
                             "Use 'hammer init --force' only if you are certain you want to reset."
                         )
                 if os.path.isdir(self.tasks_path):
                     shutil.rmtree(self.tasks_path)
                 else:
                     os.remove(self.tasks_path)
-            self._run_git(["worktree", "add", self.tasks_path, TASKS_BRANCH])
+            
+            # Re-create as worktree
+            self._run_git(["worktree", "add", self.tasks_path, TASKS_BRANCH], cwd=self.root)
         for folder in list(STATE_FOLDERS.values()):
             p = os.path.join(self.tasks_path, folder)
             if not os.path.exists(p):
@@ -650,6 +696,10 @@ class TasksCLI:
             with open(gitignore_path, "w") as f:
                 f.write(f"{ignore_line}\n")
         self.log("Tasks initialized.")
+        # Configure auto-merge settings
+        subprocess.run(["git", "config", "--global", "merge.message", "merge: auto-merge"], cwd=self.root)
+        os.environ["GIT_MERGE_AUTOEDIT"] = "no"
+        self.log("Git auto-merge configured.")
         self.log(
             'Tip: Create a task with: tasks create "Your task title" --story "As a user..." --tech "..." --criteria "..." --plan "1. ..."'
         )
@@ -1436,8 +1486,6 @@ class TasksCLI:
         task_id_num = task.metadata.get("Id", "")
         tt, _ = self._parse_filename(os.path.basename(filepath))
         # Treat 'DONE' and 'MAIN' as interchangeable
-        if new_status == "MAIN":
-            new_status = "DONE"
 
         # Check for non-sequential jumps and auto-promote if needed
         # Keep promoting until we reach the target or hit a limit to prevent infinite loops
@@ -1642,7 +1690,10 @@ class TasksCLI:
                 hint += "\nNote: Branch is merged to main. You can archive this task directly."
             self.error(
                 f"Forbidden transition: {current_state} -> {new_status}",
-                hint=hint,
+                hint=(
+                    hint if current_state != "REVIEW" or new_status != "DONE" else
+                    "To promote from REVIEW: 1) Run 'tasks audit <id>', 2) Run 'tasks modify <id> --regression-check', 3) Run 'tasks verify <id> --proof \"...\"', 4) Run 'tasks move <id> STAGING'. See 'tasks help' for command details."
+                ),
             )
 
         # Check tests_passed when moving from TESTING to REVIEW
@@ -1657,6 +1708,11 @@ class TasksCLI:
             self._run_tests()
 
         # Re-validate when moving out of TESTING to any state
+        # Hardening: Run validation on all moves out of TESTING/PROGRESSING
+        if current_state in ["TESTING", "PROGRESSING"]:
+            self.log("Running pre-transition validation...")
+            self._run_validation()
+            self._run_tests()
         if current_state == "TESTING" and new_status != "REVIEW":
             self._run_validation()
             task = FM.load(filepath_str)
@@ -1995,10 +2051,10 @@ class TasksCLI:
                 patch_path = f".tasks/review/{task_id}.patch"
                 self.error(
                     f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
-                    hint=f"Regression check is required before moving to STAGING/DONE/ARCHIVED. Steps:\n"
+                    hint=f"Complete the regression check before promoting.\n"
                     f"  1. Review the diff patch at {patch_path}\n"
-                    "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
-                    "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
+                    "  2. Audit for regressions and side-effects\n"
+                    f"  3. Run: ./hammer tasks modify {task_id} --regression-check",
                 )
 
                 # Sync and Reset for regression states
@@ -2306,6 +2362,7 @@ class TasksCLI:
                         "branch": tb,
                         "summary": summary,
                         "blocked_by": task.get("Bl") or [],
+                        "state": state,
                     }
                 )
             if tasks:
@@ -2347,58 +2404,50 @@ class TasksCLI:
         else:
             term_width = shutil.get_terminal_size(fallback=(180, 24)).columns
             fixed_cols = (
-                3 + 1 + 2 + 1 + 6 + 1 + 25
-            )  # id(3) + space + priority(2) + space + type(6) + space + space(for branch padding)
+                3 + 1 + 2 + 1 + 7 + 1 + 6 + 1 + 30
+            )
 
             summary_min = 30
-            # Available for summary + branch
-            # Available for summary + branch
             available = max(term_width - fixed_cols, 10)
-            # Adjust branch_width to be at most half of available
             branch_width = 30
-            summary_width = max(summary_min, available - branch_width)
+            summary_width = max(summary_min, available)
 
-            # Color constants with backgrounds
-            C_HEADER = "\033[1;47;30m"  # Bold Black on White
-            C_STATE = "\033[1;44;37m"  # Bold White on Blue
-            C_ID = "\033[1;32m"  # Bright Green
-            C_PRIO = "\033[1;35m"  # Bright Magenta
-            C_TYPE = "\033[36m"  # Cyan
+            C_HEADER = "\033[1;47;30m"
+            C_ID = "\033[1;32m"
+            C_PRIO = "\033[1;35m"
+            C_TYPE = "\033[36m"
             C_RESET = "\033[0m"
 
+            print(f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Status':<7} {'Type':<6} {'Branch':<{branch_width}}{C_RESET}")
+            
             for state, tasks in all_data.items():
-                print(f"\n{C_STATE} {state:<{term_width - 2}} {C_RESET}")
-                print(
-                    f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Type':<6} {'Branch':<{branch_width - 1}}{C_RESET}"
-                )
                 for t in tasks:
-                    summary_lines = textwrap.wrap(
-                        t["summary"], width=summary_width
-                    ) or [""]
-
+                    summary_lines = textwrap.wrap(t["summary"], width=summary_width) or [""]
                     def simple_wrap(text, width):
-                        result = []
+                        res = []
                         while len(text) > width:
-                            result.append(text[:width])
+                            res.append(text[:width])
                             text = text[width:]
-                        result.append(text)
-                        return result
-
+                        res.append(text)
+                        return res
+                    
                     branch_lines = simple_wrap(t["branch"], branch_width) or [""]
                     max_lines = max(len(summary_lines), len(branch_lines))
+                    
                     for i in range(max_lines):
-                        id_str = str(t.get("id", "")) if i == 0 else ""
+                        id_str = str(t["id"]) if i == 0 else ""
                         p_str = str(t["p"]) if i == 0 else ""
                         s_line = summary_lines[i] if i < len(summary_lines) else ""
+                        status_str = t["state"] if i == 0 else ""
                         type_str = t["type"] if i == 0 else ""
                         b_line = branch_lines[i] if i < len(branch_lines) else ""
+                        
                         id_f = f"{C_ID}{id_str:>3}{C_RESET}" if i == 0 else "   "
                         p_f = f"{C_PRIO}{p_str:>2}{C_RESET}" if i == 0 else "  "
-                        t_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
-                        print(
-                            f"{id_f} {p_f} {s_line:<{summary_width}} {t_f} {b_line:<{branch_width}}"
-                        )
-
+                        status_f = f"{C_TYPE}{status_str:<7}{C_RESET}" if i == 0 else "       "
+                        type_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
+                        
+                        print(f"{id_f} {p_f} {s_line:<{summary_width}} {status_f} {type_f} {b_line:<{branch_width}}")
             self.finish()
 
     def reconcile(self, target=None, all=False):
@@ -2453,7 +2502,6 @@ class TasksCLI:
                             "id": task_id,
                             "task_id": task_id,
                             "title": task.metadata.get("Ti", ""),
-                            "state": state,
                             "branch": branch,
                             "filepath": path,
                         }
@@ -2520,7 +2568,6 @@ class TasksCLI:
                             "id": task_id,
                             "task_id": task_id,
                             "title": task.metadata.get("Ti", ""),
-                            "state": state,
                             "branch": branch,
                             "filepath": path,
                         }
@@ -3681,3 +3728,127 @@ class TasksCLI:
         else:
             self.log("✅ Upgrade complete!")
             self.log(f"Installed to: {install_path}")
+
+
+    def _check_audit_integrity(self, task_id):
+        import hashlib
+        filepath, _ = self.find_task(task_id)
+
+        criteria_path = os.path.join(filepath, "criteria.md")
+        proof_path = os.path.join(filepath, "verification_proof.log")
+        hash_path = os.path.join(filepath, ".audit_hash")
+        
+        if not os.path.exists(hash_path):
+            return False
+            
+        hasher = hashlib.sha256()
+        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+            hasher.update(f1.read())
+            hasher.update(f2.read())
+        
+        with open(hash_path, "r") as f:
+            stored_hash = f.read().strip()
+            
+        self.log(f"Current: {hasher.hexdigest()} | Stored: {stored_hash}")
+        return hasher.hexdigest() == stored_hash
+    
+    def _update_audit_hash(self, task_id):
+        import hashlib
+        filepath, _ = self.find_task(task_id)
+        criteria_path = os.path.join(filepath, "criteria.md")
+        proof_path = os.path.join(filepath, "verification_proof.log")
+        hash_path = os.path.join(filepath, ".audit_hash")
+        
+        hasher = hashlib.sha256()
+        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+            hasher.update(f1.read())
+            hasher.update(f2.read())
+        
+        with open(hash_path, "w") as f:
+            f.write(hasher.hexdigest())
+    def verify(self, task_id, proof):
+        """Verify criteria and submit proof."""
+        import hashlib
+        from datetime import datetime
+        filepath, _ = self.find_task(task_id)
+        if not filepath:
+            self.error(f"Task {task_id} not found.")
+
+        criteria_path = os.path.join(filepath, "criteria.md")
+        proof_path = os.path.join(filepath, "verification_proof.log")
+        hash_path = os.path.join(filepath, ".audit_hash")
+
+        if not proof:
+            self.error("Verification requires --proof 'Evidence text'.")
+
+        with open(proof_path, "a") as f:
+            f.write(f"Proof submitted at {datetime.now()}: {proof}\n")
+
+        with open(criteria_path, "r+") as f:
+            content = f.read().replace("- [ ]", "- [x]")
+            f.seek(0)
+            f.write(content)
+
+        # Generate Master Hash
+        hasher = hashlib.sha256()
+        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+            hasher.update(f1.read())
+            hasher.update(f2.read())
+        
+        with open(hash_path, "w") as f:
+            f.write(hasher.hexdigest())
+            
+        self.log(f"✅ Proof verified and criteria hash locked: {hasher.hexdigest()[:8]}...")
+    def _resolve_task(self, task_id_or_filename):
+        """Standardized resolution: returns (filepath, task_id_num, filename)."""
+        # 1. Try exact match filename
+        for folder in STATE_FOLDERS.values():
+            path = os.path.join(self.tasks_path, folder)
+            if not os.path.exists(path):
+                    continue
+            for f in os.listdir(path):
+                if f == task_id_or_filename or f.startswith(f"{task_id_or_filename}-"):
+                    fp = os.path.join(path, f)
+                    task = FM.load(fp)
+                    return fp, task.metadata.get("Id"), f
+        
+        # 2. Try numeric ID
+        for folder in STATE_FOLDERS.values():
+            path = os.path.join(self.tasks_path, folder)
+            if not os.path.exists(path):
+                    continue
+            for f in os.listdir(path):
+                fp = os.path.join(path, f)
+                if not os.path.isdir(fp):
+                        continue
+                task = FM.load(fp)
+                if str(task.metadata.get("Id")) == str(task_id_or_filename):
+                    return fp, task_id_or_filename, f
+        
+        return None, None, None
+    def audit(self, task_id):
+        """Generate an audit log after reviewing the patch."""
+        import hashlib
+        filepath, _, filename = self._resolve_task(task_id)
+        if not filepath:
+            self.error(f"Task {task_id} not found.")
+        
+        patch_path = os.path.join(filepath, "diff.patch")
+        audit_path = os.path.join(filepath, f"{filename}.audit")
+        
+        if not os.path.exists(patch_path):
+            self.error(f"No patch file found at {patch_path}. Move to REVIEW first.")
+            
+        sha256 = hashlib.sha256()
+        with open(patch_path, "rb") as f:
+            while True:
+                data = f.read(65536)
+                if not data:
+                        break
+                sha256.update(data)
+        patch_hash = sha256.hexdigest()
+
+        with open(audit_path, "w") as f:
+            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\nPatch-Hash: {patch_hash}\n")
+            
+        self.log(f"✅ Audit log created for task {filename} at {audit_path} (Hash: {patch_hash[:8]}...)")

@@ -9,7 +9,7 @@ class TestAllTransitions(HammerTestBase):
         res = self.run_tasks(
             [
                 "create",
-                "Comprehensive Test Title Task",
+                "Comprehensive Test Task",
                 "--story",
                 "Sufficiently long story content here...",
                 "--tech",

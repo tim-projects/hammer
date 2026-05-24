@@ -92,3 +92,4 @@ AGENT OPERATIONAL PROTOCOL:
  12. ERROR RECOVERY: If a command fails, read the 'error' field in the JSON response. 
      The 'hint' provides actionable next steps.
 """
+RETENTION_DAYS = 90
