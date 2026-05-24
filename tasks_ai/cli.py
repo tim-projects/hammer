@@ -1487,29 +1487,30 @@ class TasksCLI:
         tt, _ = self._parse_filename(os.path.basename(filepath))
         # Treat 'DONE' and 'MAIN' as interchangeable
 
-        # Check for non-sequential jumps and auto-promote if needed
-        # Keep promoting until we reach the target or hit a limit to prevent infinite loops
-        max_promotions = 5
+        # Improved auto-promotion: chain allowed transitions
+        max_steps = 10
         while (
             new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
             and current_state_from_folder != new_status
-            and max_promotions > 0
+            and max_steps > 0
         ):
-            self.log(
-                f"Auto-promoting from {current_state_from_folder} to {new_status} via repo.py..."
-            )
+            allowed = ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
+            # Find a path to new_status. For now, simple greedy promotion
+            # Filter transitions that are not 'forward' in the pipeline if necessary
+            # or just pick the next logical step from the allowed list
+            # A simple approach: if we can move to an allowed status, do it.
+            if not allowed:
+                break
+                
+            # If target is in the allowed list of a possible next step, take it
+            next_step = allowed[0]
+            self.log(f"Auto-promoting: {current_state_from_folder} -> {next_step}")
             try:
-                subprocess.run(
-                    [sys.executable, self.repo_script, "promote", str(task_id_num), "-y"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                # Refresh state after promotion
+                self._move_logic(filename, next_step, force=False, yes=yes, sync=True)
                 filepath, current_state_from_folder = self.find_task(filename)
-                max_promotions -= 1
-            except subprocess.CalledProcessError as e:
-                self.error(f"Auto-promotion failed: {e.stderr}")
+                max_steps -= 1
+            except Exception as e:
+                self.error(f"Auto-promotion failed: {e}")
 
         if False and "," in new_status:
             statuses = [s.strip().upper() for s in new_status.split(",")]
