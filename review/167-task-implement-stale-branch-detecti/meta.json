@@ -5,7 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "167-task-implement-stale-branch-detecti",
-  "Tp": true,
-  "Rc": "",
+  "Tp": false,
+  "Rc": true,
   "Vp": true
 }
