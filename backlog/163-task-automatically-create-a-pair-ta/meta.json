@@ -2,7 +2,9 @@
   "Id": 163,
   "Ti": "Automatically create a pair task for user tests upon new task creation",
   "Cr": "260524 09:25",
-  "Bl": [],
+  "Bl": [
+    "164-task-write-user-tests-for-163"
+  ],
   "Pr": 2,
   "Br": "163-task-automatically-create-a-pair-ta"
 }
