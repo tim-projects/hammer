@@ -336,6 +336,12 @@ class TasksCLI:
             new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
             and current_state != new_status
         ):
+            if current_state == "BACKLOG" and new_status == "PROGRESSING":
+                self.success("Auto-promoting BACKLOG to READY before PROGRESSING.")
+                self.success("REMINDER: Ensure the task is fully populated with 'story', 'tech', 'criteria', and 'plan' fields to meet the READY gate.")
+                self.move_task(filepath, "READY")
+                self.move_task(filepath, "PROGRESSING")
+                return
             self.error(f"Forbidden transition: {current_state} -> {new_status}")
 
     def _run_repo(self, args, cwd=None):
@@ -1562,8 +1568,14 @@ class TasksCLI:
                     for b in bl:
                         _, bs = self.find_task(str(b))
                         if bs != "ARCHIVED":
+                            self.log(f"Displaying blocker {b} details:")
+                            self.show(str(b))
+                            blocking_task_branch = self.find_task(str(b))[0].metadata.get("Br")
+                            if blocking_task_branch:
+                                self._run_git(["checkout", blocking_task_branch], cwd=self.root)
+                                self.log(f"Switched to blocking task branch: {blocking_task_branch}")
                             self.error(
-                                f"Blocked by {b}. Blocker must be ARCHIVED first. Do not bypass this tool."
+                                f"Blocked by {b}. Blocker must be ARCHIVED first. You need to complete this task now, then try again."
                             )
                 try:
                     task = self._perform_move(task, current_state, target, filepath)
@@ -1828,8 +1840,14 @@ class TasksCLI:
             for b in bl:
                 _, bs = self.find_task(str(b))
                 if bs != "ARCHIVED":
+                    self.log(f"Displaying blocker {b} details:")
+                    self.show(str(b))
+                    blocking_task_branch = self.find_task(str(b))[0].metadata.get("Br")
+                    if blocking_task_branch:
+                        self._run_git(["checkout", blocking_task_branch], cwd=self.root)
+                        self.log(f"Switched to blocking task branch: {blocking_task_branch}")
                     self.error(
-                        f"Blocked by {b}. Blocker must be ARCHIVED first. Do not bypass this tool."
+                        f"Blocked by {b}. Blocker must be ARCHIVED first. You need to complete this task now, then try again."
                     )
 
             missing = []
