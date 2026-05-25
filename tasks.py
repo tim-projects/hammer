@@ -120,7 +120,9 @@ if __name__ == "__main__":
         help="(ignored) Branch name is auto-generated from title.",
     )
 
-    aud_p = subparsers.add_parser("audit", help="Generate an audit log after reviewing the patch.")
+    aud_p = subparsers.add_parser(
+        "audit", help="Generate an audit log after reviewing the patch."
+    )
     aud_p.add_argument("id", help="Task ID.")
 
     mod_p = subparsers.add_parser("modify", help="Update task.")
@@ -213,9 +215,13 @@ if __name__ == "__main__":
 
     undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
-    ver_p = subparsers.add_parser("verify", help="Verify task criteria and generate cryptographic audit.")
+    ver_p = subparsers.add_parser(
+        "verify", help="Verify task criteria and generate cryptographic audit."
+    )
     ver_p.add_argument("id", help="Task Id to verify.")
-    ver_p.add_argument("--proof", required=True, help="Evidence for criteria completion.")
+    ver_p.add_argument(
+        "--proof", required=True, help="Evidence for criteria completion."
+    )
 
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
