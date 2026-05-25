@@ -4,7 +4,6 @@ import sys  # type: ignore[attr-defined]
 import subprocess
 import tempfile
 import re
-import textwrap
 import json
 import shutil
 import fcntl
@@ -18,11 +17,12 @@ from .constants import (
     CURRENT_TASK_FILENAME,
     STATE_FOLDERS,
     ALLOWED_TRANSITIONS,
-    KEY_MAP,
     ALLOWED_CONFIG_KEYS,
 )
-from .models import Task
 from .file_manager import FM
+from .context import ProjectContext
+from .git_client import GitClient
+from .pipeline import PipelineService, PipelineError
 
 
 def get_terminal_width():
@@ -39,7 +39,14 @@ class TasksCLI:
         self.dev = dev
         self.yes = yes
         self.output_messages = []
-        self.root = self._get_git_root()
+        
+        # Phase 1: Context & Path Abstraction
+        self.context = ProjectContext(dev=dev)
+        self.root = self.context.repo_root
+
+        # Phase 2: Logic Extraction (Modularization)
+        self.git = GitClient(self.context, logger=self)
+        self.pipeline = PipelineService(self.context, self.git, logger=self)
 
         # Resolve absolute path to repo.py (works for both source checkout and system install)
         install_dir = Path(__file__).resolve().parent.parent
@@ -47,13 +54,9 @@ class TasksCLI:
 
         # Determine tasks directory
         self.tasks_dir = TASKS_DIR
-        if dev:
-            self.tasks_dir = "/tmp/.tasks"
-            if not os.path.exists(self.tasks_dir):
-                os.makedirs(self.tasks_dir, exist_ok=True)
-        else:
-            # Check pyproject.toml for override first
-            pyproject_path = os.path.join(self.root, "pyproject.toml")
+        if not dev:
+            # Check pyproject.toml for override first (project-wide)
+            pyproject_path = self.context.resolve_path("pyproject.toml")
             if os.path.exists(pyproject_path):
                 try:
                     import toml
@@ -70,10 +73,16 @@ class TasksCLI:
                 except Exception:
                     pass
 
-        if os.path.isabs(self.tasks_dir):
-            self.tasks_path = self.tasks_dir
-        else:
-            self.tasks_path = os.path.join(self.root, self.tasks_dir)
+        # Update context with potentially overridden tasks_dir
+        self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
+        if dev:
+             self.context.tasks_path = "/tmp/.tasks"
+             if not os.path.exists(self.context.tasks_path):
+                os.makedirs(self.context.tasks_path, exist_ok=True)
+        elif os.path.isabs(self.tasks_dir):
+            self.context.tasks_path = self.tasks_dir
+
+        self.tasks_path = self.context.tasks_path
 
         # Now that self.tasks_path is set, we can check .tasks/config.yaml if not in dev mode
         if not dev:
@@ -85,7 +94,9 @@ class TasksCLI:
                     if os.path.isabs(self.tasks_dir):
                         self.tasks_path = self.tasks_dir
                     else:
-                        self.tasks_path = os.path.join(self.root, self.tasks_dir)
+                        self.tasks_path = self.context.resolve_path(self.tasks_dir)
+                    self.context.tasks_path = self.tasks_path
+
         self.logs_path = os.path.join(self.tasks_path, "logs")
         if os.path.exists(self.tasks_path):
             self._migrate_live_to_done()
@@ -205,40 +216,29 @@ class TasksCLI:
             self.error("Not a git repository. Run 'git init' to start.")
             sys.exit(1)
 
+    def _git_merge_transition(self, task, target_state, yes=False):
+        try:
+            self.pipeline.git_merge_transition(task, target_state, yes=yes)
+        except RuntimeError as e:
+            self.error(str(e))
+
+    def _validate_pipeline_gate(self, task, target_state):
+        task_id = str(task.metadata.get("Id"))
+        filepath, _ = self.find_task(task_id)
+        if not filepath:
+            return
+
+        try:
+            self.pipeline.validate_gate(task, target_state, filepath)
+        except PipelineError as e:
+            self.error(str(e), hint=e.hint)
+
     def _run_git(self, args, cwd=None):
-        cwd = cwd or self.root
-        result = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True)
+        result = self.git.run(args, cwd=cwd)
 
         # If in dev mode and command fails in tasks_path, it might not be a git repo
-        if result.returncode != 0 and self.dev and cwd == self.tasks_path:
+        if result.returncode != 0 and self.dev and (cwd == self.tasks_path or cwd is None and self.git.context.repo_root == self.tasks_path):
             return result
-
-        if result.returncode == 0:
-            cmd = args[0]
-            if cmd == "checkout":
-                branch = args[-1]
-                if "-b" in args:
-                    self.log(f"Git: Created and switched to branch '{branch}'")
-                else:
-                    self.log(f"Git: Switched to branch '{branch}'")
-            elif cmd == "commit":
-                msg = ""
-                if "-m" in args:
-                    idx = args.index("-m")
-                    msg = f": {args[idx + 1]}"
-                self.log(f"Git: Committed changes{msg}")
-
-            elif cmd == "push":
-                remote = args[1] if len(args) > 1 else ""
-                branch = args[2] if len(args) > 2 else ""
-                self.log(f"Git: Pushed {branch} to {remote}")
-            elif cmd == "branch" and ("-d" in args or "-D" in args):
-                branch = args[-1]
-                self.log(f"Git: Deleted branch '{branch}'")
-            elif cmd == "merge":
-                self.log(f"Git: Merged '{args[-1]}'")
-            elif cmd == "worktree" and "add" in args:
-                self.log(f"Git: Added worktree at '{args[args.index('add') + 1]}'")
 
         return result
 
@@ -337,10 +337,9 @@ class TasksCLI:
             and current_state != new_status
         ):
             if current_state == "BACKLOG" and new_status == "PROGRESSING":
-                self.success("Auto-promoting BACKLOG to READY before PROGRESSING.")
-                self.success("REMINDER: Ensure the task is fully populated with 'story', 'tech', 'criteria', and 'plan' fields to meet the READY gate.")
-                self.move_task(filepath, "READY")
-                self.move_task(filepath, "PROGRESSING")
+                self.log("Auto-promoting BACKLOG to READY before PROGRESSING.")
+                self.log("REMINDER: Ensure the task is fully populated with 'story', 'tech', 'criteria', and 'plan' fields to meet the READY gate.")
+                self._move_logic(filename, "READY", yes=True)
                 return
             self.error(f"Forbidden transition: {current_state} -> {new_status}")
 
@@ -473,19 +472,6 @@ class TasksCLI:
         if not hasattr(sys, "_called_from_test"):
             sys.exit(0)
 
-    def _has_incomplete_checkboxes(self, task_path):
-        if not os.path.isdir(task_path):
-            return False
-        for filename in os.listdir(task_path):
-            if not filename.endswith(".md"):
-                continue
-            filepath = os.path.join(task_path, filename)
-            with open(filepath, "r", encoding="utf-8") as f:
-                content = f.read()
-            if re.search(r"^- \[ \]", content, re.MULTILINE):
-                return True
-        return False
-
     def _auto_archive(self):
         for state in ["DONE"]:
             folder = STATE_FOLDERS.get(state)
@@ -514,7 +500,7 @@ class TasksCLI:
                                     )
                                     break
                         if done_date and (now - done_date) > timedelta(days=7):
-                            if self._has_incomplete_checkboxes(path):
+                            if self.pipeline.has_incomplete_checkboxes(path):
                                 self.log(
                                     f"Skipping archive for {item}: incomplete checkboxes"
                                 )
@@ -579,6 +565,10 @@ class TasksCLI:
 
         
         if self.dev:
+            # Ensure the base directory exists first
+            if not os.path.exists(self.tasks_path):
+                os.makedirs(self.tasks_path, exist_ok=True)
+                
             for folder in list(STATE_FOLDERS.values()):
                 p = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(p):
@@ -649,8 +639,17 @@ class TasksCLI:
         if not is_worktree:
             # Clean up non-worktree .tasks if exists
             if os.path.exists(self.tasks_path):
-                # Safety check
+                # Safety check: create a backup
                 if self._tasks_directory_has_data(self.tasks_path):
+                    import shutil
+                    from datetime import datetime
+                    repo_name = os.path.basename(self.root.rstrip('/'))
+                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                    backup_path = f"/tmp/.tasks.bak_{timestamp}"
+                    os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+                    self.log(f"Backing up existing .tasks to {backup_path}...")
+                    shutil.copytree(self.tasks_path, backup_path)
+                    
                     if not force:
                         self.error(
                             f"Found existing .tasks directory with data at '{self.tasks_path}'. "
@@ -712,48 +711,10 @@ class TasksCLI:
         self.log("Use -j for JSON output. Run 'list' to see all tasks with their Ids.")
         self.finish()
 
-    def _push_tasks_branch(self, branch="tasks", fatal=True):
-        """Internal: push current .tasks worktree branch to remote.
-        If fatal=False, returns result dict or None on failure; does not exit.
-        If fatal=True, calls self.error() on failure (exits)."""
-        if not os.path.exists(self.tasks_path):
-            msg = "Tasks not initialized. Run 'hammer tasks init' first."
-            if fatal:
-                self.error(msg)
-            return None
-        remotes = self._run_git(["remote", "-v"], cwd=self.tasks_path)
-        if not remotes.stdout.strip():
-            if self.dev or self.yes:
-                current = self._run_git(
-                    ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
-                ).stdout.strip()
-                self.log("No remote configured - skipping push (local-only mode)")
-                return {"branch": branch, "remote": None, "from_branch": current}
-            else:
-                msg = "No remote configured in .tasks. Set up a remote or use --dev / -y flag."
-                if fatal:
-                    self.error(msg)
-                return None
-        current = self._run_git(
-            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.tasks_path
-        ).stdout.strip()
-        push_result = self._run_git(
-            ["push", "-u", "origin", f"{current}:refs/heads/{branch}"],
-            cwd=self.tasks_path,
-        )
-        if push_result.returncode != 0:
-            msg = f"Failed to push .tasks worktree to remote: {push_result.stderr}"
-            if fatal:
-                self.error(msg)
-            else:
-                self.log(f"Warning: {msg}")
-                return None
-        self.log(f"Pushed .tasks ({current}) to origin/{branch}")
-        return {"branch": branch, "remote": "origin", "from_branch": current}
 
     def save(self, branch="tasks"):
-        """Command: save and push .tasks worktree to remote."""
-        result = self._push_tasks_branch(branch, fatal=True)
+        from .commands import save as save_cmd
+        result = save_cmd.run(self, branch=branch, fatal=True)
         self.finish(result)
 
     def restore(self, branch="tasks", force=False):
@@ -908,154 +869,19 @@ class TasksCLI:
         repro=None,
         branch=False,
     ):
-        title = title.strip()
-        if len(title) < 10:
-            self.error("Task title is too vague. Min 10 chars.")
-        if branch:
-            self.log(
-                "Note: --branch flag is ignored; branch names are auto-generated from title."
-            )
-        missing = []
-        if not story:
-            missing.append("--story")
-        if not tech:
-            missing.append("--tech")
-        if not criteria:
-            missing.append("--criteria")
-        if not plan:
-            missing.append("--plan")
-        if task_type == "issue" and not repro:
-            missing.append("--repro")
-        if missing:
-            self.error(
-                f"MISSING PARTS: {', '.join(missing)}! HAMMER SAY NO! FIX! 🔨\n"
-                f"Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'"
-                f"{' --repro <repro>' if task_type == 'issue' else ''}"
-            )
-
-        MIN_LEN = 15
-        too_short = []
-        story_str = (
-            story if isinstance(story, str) else " ".join(story) if story else ""
+        from .commands import create as create_cmd
+        create_cmd.run(
+            self,
+            title,
+            task_type=task_type,
+            priority=priority,
+            story=story,
+            tech=tech,
+            criteria=criteria,
+            plan=plan,
+            repro=repro,
+            branch=branch,
         )
-        tech_str = tech if isinstance(tech, str) else " ".join(tech) if tech else ""
-        if story and len(story_str.strip()) < MIN_LEN:
-            too_short.append(f"--story (min {MIN_LEN} chars)")
-        if tech and len(tech_str.strip()) < MIN_LEN:
-            too_short.append(f"--tech (min {MIN_LEN} chars)")
-        if criteria:
-            crit_str = " ".join(criteria) if isinstance(criteria, list) else criteria
-            if len(crit_str.strip()) < MIN_LEN:
-                too_short.append(f"--criteria (min {MIN_LEN} chars)")
-        if plan:
-            plan_str = " ".join(plan) if isinstance(plan, list) else plan
-            if len(plan_str.strip()) < MIN_LEN:
-                too_short.append(f"--plan (min {MIN_LEN} chars)")
-        if task_type == "issue" and repro:
-            repro_str = " ".join(repro) if isinstance(repro, list) else repro
-            if len(repro_str.strip()) < MIN_LEN:
-                too_short.append(f"--repro (min {MIN_LEN} chars)")
-        if too_short:
-            self.error(f"TOO SHORT: {', '.join(too_short)}! HAMMER SAY NO! FIX! 🔨")
-
-        if priority is not None:
-            try:
-                p = int(priority)
-                if not (1 <= p <= 9):
-                    raise ValueError()
-            except (ValueError, TypeError):
-                self.error("Priority must be a number between 1 and 9.")
-
-        clean_title = re.sub(r"[^a-zA-Z0-9]+", "-", title.lower()).strip("-")
-        numeric_id = self._get_next_id()
-        task_id = f"{numeric_id}-{task_type}-{clean_title[:30]}".strip("-")
-        task_dir = os.path.join(self.tasks_path, STATE_FOLDERS["BACKLOG"], task_id)
-        if self.find_task(task_id)[0]:
-            self.error(f"Task {task_id} exists.")
-
-        for state, folder in STATE_FOLDERS.items():
-            fp = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(fp):
-                continue
-            for item in os.listdir(fp):
-                if item == ".gitkeep":
-                    continue
-                path = os.path.join(fp, item)
-                task = FM.load(path)
-                if task.metadata.get("Id") == numeric_id:
-                    self.error(
-                        f"Task with Id {numeric_id} already exists (in {state})."
-                    )
-
-        task = Task(
-            metadata={
-                "Id": numeric_id,
-                "Ti": title,
-                "Cr": datetime.now().strftime("%y%m%d %H:%M"),
-                "Bl": [],
-                "Pr": priority or (1 if task_type == "issue" else 2),
-                "Br": task_id,
-            },
-            parts={
-                "story": story or "",
-                "tech": tech or "",
-                "criteria": (
-                    "\n".join(f"- [ ] {c}" for c in criteria)
-                    if isinstance(criteria, list)
-                    else f"- [ ] {criteria}"
-                )
-                if criteria
-                else "",
-                "plan": (
-                    "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
-                    if isinstance(plan, list)
-                    else f"1. {plan}"
-                )
-                if plan
-                else "",
-                "repro": (
-                    "\n".join(f"{i}. {r}" for i, r in enumerate(repro, 1))
-                    if isinstance(repro, list)
-                    else f"1. {repro}"
-                )
-                if repro
-                else None,
-            },
-        )
-        try:
-            self._atomic_write(task_dir, task)
-            self._append_log(task_dir, "Cr")
-            self._run_git(
-                ["add", os.path.relpath(task_dir, self.tasks_path)], cwd=self.tasks_path
-            )
-            self._run_git(
-                ["commit", "--allow-empty", "-m", f"Add {task_type}: {title}"],
-                cwd=self.tasks_path,
-            )
-            original_branch = self._run_git(
-                ["rev-parse", "--abbrev-ref", "HEAD"]
-            ).stdout.strip()
-            self._run_git(["checkout", self._get_default_branch()], cwd=self.root)
-            self._run_git(["checkout", "-b", task_id], cwd=self.root)
-            self._run_git(["merge", original_branch], cwd=self.root)
-            current_branch = self._run_git(
-                ["rev-parse", "--abbrev-ref", "HEAD"]
-            ).stdout.strip()
-            self.log(f"Created: [{numeric_id}] {task_type} | {title}")
-            self.log(f"Branch: {task_id} | Now on: {current_branch}")
-            self.finish(
-                {
-                    "id": numeric_id,
-                    "task_id": task_id,
-                    "title": title,
-                    "file": task_id,
-                    "path": os.path.relpath(task_dir, self.root),
-                    "branch": task_id,
-                    "current_branch": current_branch,
-                }
-            )
-        except Exception as e:
-            self.error(str(e))
 
     def modify(
         self,
@@ -1074,183 +900,28 @@ class TasksCLI:
         priority=None,
         regression_check=None,
     ):
-        filepath, _ = self.find_task(filename)
-        if not filepath:
-            self.error(
-                f"Task '{filename}' not found.",
-                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
-            )
-        task = FM.load(filepath)
-        fname = os.path.basename(filepath)  # type: ignore[arg-type]
-        task_id = fname.rsplit(".", 1)[0]
-        tt, _ = self._parse_filename(fname)
-        updated = False
-        if title:
-            title = title.strip()
-            if len(title) < 10:
-                self.error("Title too vague.")
-            task.metadata["Ti"] = title
-            updated = True
-        if story:
-            task.parts["story"] = story
-            updated = True
-        if tech:
-            task.parts["tech"] = tech
-            updated = True
-        if criteria:
-            if isinstance(criteria, list):
-                task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
-            else:
-                task.parts["criteria"] = criteria
-            updated = True
-        if plan:
-            if isinstance(plan, list):
-                task.parts["plan"] = "\n".join(
-                    f"{i}. {p}" for i, p in enumerate(plan, 1)
-                )
-            else:
-                task.parts["plan"] = plan
-            updated = True
-        if repro:
-            if isinstance(repro, list):
-                task.parts["repro"] = "\n".join(
-                    f"{i}. {r}" for i, r in enumerate(repro, 1)
-                )
-            else:
-                task.parts["repro"] = repro
-            updated = True
-
-        if notes or progress or findings or mitigations:
-            n = task.parts.get("notes", "- Progress: \n- Findings: \n- Mitigations: \n")
-            if notes:
-                n = notes
-            if progress:
-                n = re.sub(r"- Progress:.*", f"- Progress: {progress}", n)
-            if findings:
-                n = re.sub(r"- Findings:.*", f"- Findings: {findings}", n)
-            if mitigations:
-                n = re.sub(r"- Mitigations:.*", f"- Mitigations: {mitigations}", n)
-            task.parts["notes"] = n
-            updated = True
-
-        if tests_passed is not None:
-            task.metadata["Tp"] = bool(tests_passed)
-            updated = True
-
-        if priority is not None:
-            task.metadata["P"] = priority
-            updated = True
-
-        if regression_check is not None:
-            if regression_check:
-                task.metadata["Rc"] = True
-            else:
-                task.metadata["Rc"] = ""
-            updated = True
-
-        if updated:
-            self._atomic_write(filepath, task)
-            dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)  # type: ignore[arg-type]
-            if os.path.exists(dump_path):
-                dump = FM.load(dump_path)
-                dump.parts["content"] = task.parts.get("notes", "")
-                self._atomic_write(dump_path, dump)
-            self._append_log(filepath, "Mod")
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"],  # type: ignore[arg-type]
-                cwd=self.tasks_path,
-            )
-            self.log(
-                f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
-            )
-            tt, branch = self._parse_filename(os.path.basename(filepath))  # type: ignore[arg-type]
-            if not self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
-                self._run_git(["checkout", "-b", branch], cwd=self.root)
-            if not task.parts.get("story"):
-                self.log("Tip: Consider adding --story to document the user context.")
-            elif not task.parts.get("tech"):
-                self.log("Tip: Consider adding --tech for technical background.")
-            elif not task.parts.get("criteria"):
-                self.log("Tip: Consider adding --criteria for acceptance criteria.")
-            elif not task.parts.get("plan"):
-                self.log("Tip: Consider adding --plan for implementation steps.")
-        else:
-            self.log("No changes.")
-        self.finish(
-            {
-                "id": task.metadata.get("Id"),
-                "task_id": task_id,
-                "title": task.metadata.get("Ti", ""),
-            }
+        from .commands import modify as modify_cmd
+        modify_cmd.run(
+            self,
+            filename,
+            title=title,
+            story=story,
+            tech=tech,
+            criteria=criteria,
+            plan=plan,
+            repro=repro,
+            notes=notes,
+            progress=progress,
+            findings=findings,
+            mitigations=mitigations,
+            tests_passed=tests_passed,
+            priority=priority,
+            regression_check=regression_check,
         )
 
     def delete(self, filename, confirm=None):
-        filepath, current_state = self.find_task(filename)
-        if not filepath:
-            self.error(f"Task '{filename}' not found.")
-
-        if not self._validate_path(filepath):
-            self.error(f"Invalid task path: {filepath}")
-
-        filepath_str = cast(str, filepath)
-        task = FM.load(filepath_str)
-        fname = os.path.basename(filepath_str)
-        task_id = fname.rsplit(".", 1)[0]
-        tt, _ = self._parse_filename(fname)
-
-        # If no confirm, move to REJECTED (respecting workflow gates)
-        if not confirm:
-            import secrets
-
-            delete_code = secrets.token_hex(8)
-            task.metadata["DeleteCode"] = delete_code
-            self._atomic_write(filepath_str, task)
-            self._move_logic(task_id, "REJECTED", force=True)
-            new_filepath = os.path.join(
-                self.tasks_path, STATE_FOLDERS["REJECTED"], fname
-            )
-            self._append_log(new_filepath, "Del")
-            self.finish(
-                {
-                    "id": task.metadata.get("Id"),
-                    "task_id": task_id,
-                    "title": task.metadata.get("Ti", ""),
-                    "state": "REJECTED",
-                    "delete_code": delete_code,
-                }
-            )
-
-        # If confirm provided, only delete if already in REJECTED state
-        if current_state != "REJECTED":
-            self.error(
-                f"Task must be in REJECTED state to delete. Currently in {current_state}.",
-                hint="Use 'hammer tasks delete <id>' first to move to REJECTED, then confirm.",
-            )
-
-        try:
-            self._append_log(filepath_str, "Del")
-            if os.path.isdir(filepath_str):
-                shutil.rmtree(filepath_str)
-            else:
-                os.remove(filepath_str)
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "--allow-empty", "-m", f"Del {task_id}"], cwd=self.tasks_path
-            )
-            self.log(
-                f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
-            )
-        except Exception as e:
-            self.error(str(e))
-        self.finish(
-            {
-                "id": task.metadata.get("Id"),
-                "task_id": task_id,
-                "title": task.metadata.get("Ti", ""),
-                "state": "DELETED",
-            }
-        )
+        from .commands import delete as delete_cmd
+        delete_cmd.run(self, filename, confirm=confirm)
 
     def get_active_task(self, filename=None):
         if filename:
@@ -1271,34 +942,8 @@ class TasksCLI:
         return None, None
 
     def checkpoint(self, filename=None):
-        filepath, task = self.get_active_task(filename)
-        if not filepath or not task:
-            self.error("No active task.")
-
-        # filepath is definitely not None here for pyright
-        filepath_str = cast(str, filepath)
-        fname = os.path.basename(filepath_str)
-        self.log(f"Checkpointing {fname}...")
-        if self._sync_task_content(filepath_str, task):
-            self._atomic_write(filepath_str, task)
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "--allow-empty", "-m", f"Cp: {fname}"],
-                cwd=self.tasks_path,
-            )
-            self._append_log(filepath_str, "Cp")
-            self.log("Done.")
-        else:
-            self._append_log(filepath_str, "Cp")
-            self.log("No changes.")
-        task_id = task.metadata.get("Id") if task else None
-        self.finish(
-            {
-                "id": task_id,
-                "task_id": fname,
-                "title": task.metadata.get("Ti", "") if task else "",  # type: ignore[union-attr]
-            }
-        )
+        from .commands import checkpoint as cp_cmd
+        cp_cmd.run(self, filename=filename)
 
     def _sync_task_content(self, filepath, task, is_final=False):
         if not filepath:
@@ -1360,74 +1005,12 @@ class TasksCLI:
         for b in ["main", "master"]:
             if self._run_git(["rev-parse", "--verify", b]).returncode == 0:
                 return b
+    def link(self, filename, blocked_by_filename):
+        from .commands import link as link_cmd
+        link_cmd.run(self, filename, blocked_by_filename)
+
         return "main"
 
-    def _has_path(self, start_id, target_id, visited=None):
-        """Check if there's a path from start_id to target_id via BlockedBy links."""
-        if visited is None:
-            visited = set()
-
-        if start_id in visited:
-            return False
-        visited.add(start_id)
-
-        # Find the task file for start_id
-        task_file = None
-        for state_folder in STATE_FOLDERS.values():
-            state_path = os.path.join(self.tasks_path, state_folder)
-            if not os.path.exists(state_path):
-                continue
-            for task_dir in os.listdir(state_path):
-                task_dir_path = os.path.join(state_path, task_dir)
-                if not os.path.isdir(task_dir_path):
-                    continue
-                meta_file = os.path.join(task_dir_path, "meta.json")
-                if os.path.exists(meta_file):
-                    try:
-                        with open(meta_file, "r") as f:
-                            meta = json.load(f)
-                        if str(meta.get("Id")) == str(start_id):
-                            task_file = task_dir_path
-                            break
-                    except (json.JSONDecodeError, IOError):
-                        pass
-            if task_file:
-                break
-
-        if not task_file:
-            return False
-
-        # Load the task and check its BlockedBy
-        try:
-            task = FM.load(task_file)
-            bl = task.metadata.get("Bl", [])
-            if not isinstance(bl, list):
-                bl = []
-
-            # Check direct links
-            for blocker_dir in bl:
-                # Extract task ID from directory name (format: {id}-{type}-{title})
-                blocker_id = (
-                    blocker_dir.split("-")[0] if "-" in blocker_dir else blocker_dir
-                )
-                if str(blocker_id) == str(target_id):
-                    return True
-                # Recursively check indirect paths
-                if self._has_path(blocker_id, target_id, visited.copy()):
-                    return True
-        except Exception:
-            pass
-
-        return False
-
-    def link(self, filename, blocked_by_filename):
-        f1, _ = self.find_task(filename)
-        f2, _ = self.find_task(blocked_by_filename)
-        if not f1 or not f2:
-            self.error("Not found.")
-
-        f1_str = cast(str, f1)
-        f2_str = cast(str, f2)
 
         if os.path.abspath(f1_str) == os.path.abspath(f2_str):
             self.error("Cannot link a task to itself.")
@@ -1479,998 +1062,25 @@ class TasksCLI:
         )
 
     def move(self, filename, new_status, yes=False):
-        self._check_transition(filename, new_status)
-        filepath, current_state_from_folder = self.find_task(filename)
-        if not filepath:
-            self.error(
-                f"Task '{filename}' not found.",
-                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
-            )
-        task = FM.load(filepath)
-        task_id = os.path.basename(filepath).rsplit(".", 1)[0]
-        title = task.metadata.get("Ti", "")
-        task_id_num = task.metadata.get("Id", "")
-        tt, _ = self._parse_filename(os.path.basename(filepath))
-        # Treat 'DONE' and 'MAIN' as interchangeable
-
-        # Improved auto-promotion: chain allowed transitions
-        max_steps = 10
-        while (
-            new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
-            and current_state_from_folder != new_status
-            and max_steps > 0
-        ):
-            allowed = ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
-            # Find a path to new_status. For now, simple greedy promotion
-            # Filter transitions that are not 'forward' in the pipeline if necessary
-            # or just pick the next logical step from the allowed list
-            # A simple approach: if we can move to an allowed status, do it.
-            if not allowed:
-                break
-                
-            # If target is in the allowed list of a possible next step, take it
-            next_step = allowed[0]
-            self.log(f"Auto-promoting: {current_state_from_folder} -> {next_step}")
-            try:
-                self._move_logic(filename, next_step, force=False, yes=yes, sync=True)
-                filepath, current_state_from_folder = self.find_task(filename)
-                max_steps -= 1
-            except Exception as e:
-                self.error(f"Auto-promotion failed: {e}")
-
-        if False and "," in new_status:
-            statuses = [s.strip().upper() for s in new_status.split(",")]
-            for s in statuses:
-                if s not in STATE_FOLDERS:
-                    self.error(
-                        f"Invalid status '{s}' in multi-move sequence.",
-                        hint=f"Valid statuses are: {', '.join(STATE_FOLDERS.keys())}",
-                    )
-            current_state = current_state_from_folder
-            for i, target in enumerate(statuses):
-                if (
-                    target not in ALLOWED_TRANSITIONS.get(current_state, [])
-                    and current_state != target
-                ):
-                    self.error(
-                        f"Forbidden transition: {current_state} -> {target}",
-                        hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool.",
-                    )
-                if target == "PROGRESSING":
-                    # Check if branch exists locally and restore from remote if needed
-                    fname = os.path.basename(filepath)
-                    _, branch = self._parse_filename(fname)
-                    branch_exists = self._run_git(["rev-parse", branch]).returncode == 0
-                    if not branch_exists:
-                        has_origin = (
-                            self._run_git(["remote", "get-url", "origin"]).returncode
-                            == 0
-                        )
-                        if has_origin:
-                            remote_check = self._run_git(
-                                ["ls-remote", "--heads", "origin", branch]
-                            )
-                            if remote_check.stdout.strip():
-                                self.log(
-                                    f"Branch '{branch}' not found locally. Restoring from remote..."
-                                )
-                                self._run_git(
-                                    ["checkout", "-b", branch, f"origin/{branch}"],
-                                    cwd=self.root,
-                                )
-                                self.log(
-                                    f"Restored branch '{branch}' from remote and switched to it"
-                                )
-
-                    bl = task.metadata.get("Bl", [])
-                    if not isinstance(bl, list):
-                        bl = []
-                    for b in bl:
-                        _, bs = self.find_task(str(b))
-                        if bs != "ARCHIVED":
-                            self.log(f"Displaying blocker {b} details:")
-                            self.show(str(b))
-                            blocking_task_branch = self.find_task(str(b))[0].metadata.get("Br")
-                            if blocking_task_branch:
-                                self._run_git(["checkout", blocking_task_branch], cwd=self.root)
-                                self.log(f"Switched to blocking task branch: {blocking_task_branch}")
-                            self.error(
-                                f"Blocked by {b}. Blocker must be ARCHIVED first. You need to complete this task now, then try again."
-                            )
-                try:
-                    task = self._perform_move(task, current_state, target, filepath)
-                    fname = os.path.basename(filepath)
-                    filepath = os.path.join(
-                        self.tasks_path,
-                        STATE_FOLDERS[target],
-                        fname,
-                    )
-                    current_state = target
-                except Exception as e:
-                    self.error(f"Move failed at step {target}: {e}")
-
-            final_status = statuses[-1]
-            self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {final_status}")
-            self.finish(
-                {
-                    "id": task_id_num,
-                    "task_id": task_id,
-                    "title": title,
-                    "status": final_status,
-                }
-            )
-        else:
-            self._move_logic(filename, new_status, yes=yes)
-            self.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
-            self.finish(
-                {
-                    "id": task_id_num,
-                    "task_id": task_id,
-                    "title": title,
-                    "status": new_status,
-                }
-            )
-
-    def _perform_move(self, task, current_state, new_status, filepath):
-        if not filepath:
-            self.error("Invalid task path.")
-        filepath_str = cast(str, filepath)
-        self._sync_task_content(filepath_str, task, is_final=(new_status == "ARCHIVED"))
-        task.metadata.pop("St", None)
-        fname = os.path.basename(filepath_str)
-        new_filepath = os.path.join(self.tasks_path, STATE_FOLDERS[new_status], fname)
-        if os.path.isdir(filepath_str):
-            shutil.move(filepath_str, new_filepath)
-        else:
-            self._atomic_write(new_filepath, task)
-            if os.path.exists(filepath_str):
-                os.remove(filepath_str)
-        self._atomic_write(new_filepath, task)
-        self._append_log(new_filepath, f"{current_state}->{new_status}")
-        return task
-
-    def _verify_pipeline_state(self, task, target_state):
-        if target_state in ["DONE", "ARCHIVED"]:
-            branch = task.metadata.get("Br", "")
-            if not branch:
-                return
-            # Check if branch is merged into main
-            res = self._run_git(["branch", "--merged", "main"])
-            if branch not in res.stdout:
-                self.error(
-                    f"Task '{task.metadata.get('Id')}' cannot be moved to {target_state} as branch '{branch}' is not merged into 'main'.",
-                    hint="Run './hammer repo merge <branch> main' to finalize integration.",
-                )
+        from .commands import move as move_cmd
+        move_cmd.run(self, filename, new_status, yes=yes)
 
     def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
-        new_status = new_status.upper()
-        filepath, current_state = self.find_task(filename)
-        if not filepath:
-            self.error(
-                f"Task '{filename}' not found.",
-                hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
-            )
-        filepath_str = cast(str, filepath)
-        task = FM.load(filepath_str)
-        self._verify_pipeline_state(task, new_status)
-
-        if current_state == new_status:
-            return
-
-        # Check if transitioning to ARCHIVED from a non-standard state
-        # If branch is merged to main, allow direct ARCHIVED transition
-        is_merged_branch = False
-        task = FM.load(filepath_str)
-        if new_status == "ARCHIVED" and current_state not in [
-            "DONE",
-            "STAGING",
-            "REJECTED",
-        ]:
-            _, branch = self._parse_filename(os.path.basename(filepath_str))
-            branch_commit = None
-
-            # Try to get local branch commit
-            if self._run_git(["rev-parse", "--verify", branch]).returncode == 0:
-                branch_commit = self._run_git(["rev-parse", branch]).stdout.strip()
-
-            # Try to get origin branch commit
-            if not branch_commit:
-                origin_check = self._run_git(
-                    ["ls-remote", "--heads", "origin", branch]
-                ).stdout.strip()
-                if origin_check:
-                    self._run_git(["fetch", "origin", branch], cwd=self.root)
-                    branch_commit = self._run_git(
-                        ["rev-parse", f"origin/{branch}"]
-                    ).stdout.strip()
-
-            # Check if branch is merged to main
-            if branch_commit:
-                is_merged_branch = (
-                    self._run_git(
-                        ["merge-base", "--is-ancestor", branch_commit, "main"]
-                    ).returncode
-                    == 0
-                )
-
-            if is_merged_branch:
-                # Auto-set missing flags for merged branch
-                if not task.metadata.get("Rc"):
-                    task.metadata["Rc"] = True
-                if not task.metadata.get("Tp"):
-                    task.metadata["Tp"] = True
-                if not task.metadata.get("Vp"):
-                    task.metadata["Vp"] = True
-                task.metadata["Ar"] = "true"
-                FM.dump(task, filepath_str)
-
-        if (
-            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
-            and not force
-            and not is_merged_branch
-        ):
-            hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
-            if current_state == "REJECTED" and new_status == "ARCHIVED":
-                hint += (
-                    " Use 'hammer tasks delete <id>' to permanently remove the task."
-                )
-            if is_merged_branch:
-                hint += "\nNote: Branch is merged to main. You can archive this task directly."
-            self.error(
-                f"Forbidden transition: {current_state} -> {new_status}",
-                hint=(
-                    hint if current_state != "REVIEW" or new_status != "DONE" else
-                    "To promote from REVIEW: 1) Run 'tasks audit <id>', 2) Run 'tasks modify <id> --regression-check', 3) Run 'tasks verify <id> --proof \"...\"', 4) Run 'tasks move <id> STAGING'. See 'tasks help' for command details."
-                ),
-            )
-
-        # Check tests_passed when moving from TESTING to REVIEW
-        if current_state == "TESTING" and new_status == "REVIEW":
-            task = FM.load(filepath_str)
-            if not task.metadata.get("Tp", False):
-                self.error(
-                    "Tests must be passed before moving to REVIEW.",
-                    hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed. Do not bypass this tool.",
-                )
-            self._run_validation()
-            self._run_tests()
-            self.log(
-                "--- ⚠️  REVIEW GATE ENTERED ⚠️ ---\n"
-                "Task is in REVIEW. This is NOT the final state.\n"
-                "Mandatory gates remaining: Cryptographic Audit, Regression Check (--regression-check), and Staging Promotion."
-            )
-
-        # Re-validate when moving out of TESTING to any state
-        # Hardening: Run validation on all moves out of TESTING/PROGRESSING
-        if current_state in ["TESTING", "PROGRESSING"]:
-            self.log("Running pre-transition validation...")
-            self._run_validation()
-            self._run_tests()
-        if current_state == "TESTING" and new_status != "REVIEW":
-            self._run_validation()
-            task = FM.load(filepath_str)
-            task.metadata["Vp"] = True
-            FM.dump(task, filepath_str)
-
-        # Auto-validate when moving from PROGRESSING to TESTING
-        if current_state == "PROGRESSING" and new_status == "TESTING":
-            self._run_validation()
-            self.log("Validation passed. Marking validation_passed...")
-            task = FM.load(filepath_str)
-            task.metadata["Vp"] = True
-            FM.dump(task, filepath_str)
-            new_status = "TESTING"
-
-        task = FM.load(filepath_str)
-        task.metadata.pop("St", None)
-        fname = os.path.basename(filepath_str)
-        tt, branch = self._parse_filename(fname)
-        task_id = fname.rsplit(".", 1)[0]
-        title = task.metadata.get("Ti", "")
-
-        def _has_complete_content(t, fn):
-            if (
-                not t.parts.get("story")
-                or len(str(t.parts.get("story", "")).strip()) < 10
-            ):
-                return False
-            if (
-                not t.parts.get("tech")
-                or len(str(t.parts.get("tech", "")).strip()) < 10
-            ):
-                return False
-            if (
-                not t.parts.get("criteria")
-                or len(str(t.parts.get("criteria", "")).strip()) < 10
-            ):
-                return False
-            if (
-                not t.parts.get("plan")
-                or len(str(t.parts.get("plan", "")).strip()) < 10
-            ):
-                return False
-            type_part, _ = self._parse_filename(fn)
-            if type_part == "issue":
-                if (
-                    not t.parts.get("repro")
-                    or len(str(t.parts.get("repro", "")).strip()) < 10
-                ):
-                    return False
-            return True
-
-        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
-            if not _has_complete_content(task, fname):
-                missing = []
-                if (
-                    not task.parts.get("story")
-                    or len(str(task.parts.get("story", "")).strip()) < 10
-                ):
-                    missing.append("story")
-                if (
-                    not task.parts.get("tech")
-                    or len(str(task.parts.get("tech", "")).strip()) < 10
-                ):
-                    missing.append("tech")
-                if (
-                    not task.parts.get("criteria")
-                    or len(str(task.parts.get("criteria", "")).strip()) < 10
-                ):
-                    missing.append("criteria")
-                if (
-                    not task.parts.get("plan")
-                    or len(str(task.parts.get("plan", "")).strip()) < 10
-                ):
-                    missing.append("plan")
-                tt, _ = self._parse_filename(fname)
-                if tt == "issue":
-                    if (
-                        not task.parts.get("repro")
-                        or len(str(task.parts.get("repro", "")).strip()) < 10
-                    ):
-                        missing.append("repro")
-                self.error(
-                    f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'hammer tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro. Do not bypass this tool.',
-                )
-
-        if new_status == "PROGRESSING":
-            bl = task.metadata.get("Bl", [])
-            if not isinstance(bl, list):
-                bl = []
-            for b in bl:
-                _, bs = self.find_task(str(b))
-                if bs != "ARCHIVED":
-                    self.log(f"Displaying blocker {b} details:")
-                    self.show(str(b))
-                    blocking_task_branch = self.find_task(str(b))[0].metadata.get("Br")
-                    if blocking_task_branch:
-                        self._run_git(["checkout", blocking_task_branch], cwd=self.root)
-                        self.log(f"Switched to blocking task branch: {blocking_task_branch}")
-                    self.error(
-                        f"Blocked by {b}. Blocker must be ARCHIVED first. You need to complete this task now, then try again."
-                    )
-
-            missing = []
-            if (
-                not task.parts.get("story")
-                or len(str(task.parts.get("story", "")).strip()) < 10
-            ):
-                missing.append("story")
-            if (
-                not task.parts.get("tech")
-                or len(str(task.parts.get("tech", "")).strip()) < 10
-            ):
-                missing.append("tech")
-            if (
-                not task.parts.get("criteria")
-                or len(str(task.parts.get("criteria", "")).strip()) < 10
-            ):
-                missing.append("criteria")
-            if (
-                not task.parts.get("plan")
-                or len(str(task.parts.get("plan", "")).strip()) < 10
-            ):
-                missing.append("plan")
-
-            tt, _ = self._parse_filename(fname)
-            if tt == "issue":
-                if (
-                    not task.parts.get("repro")
-                    or len(str(task.parts.get("repro", "")).strip()) < 10
-                ):
-                    missing.append("repro")
-
-            if missing:
-                self.error(
-                    f"Task lacks sufficient detail to move to PROGRESSING. Missing or incomplete: {', '.join(missing)}",
-                    hint='Use \'hammer tasks show <id>\' to see current content, then \'hammer tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add proper details. For issues, also add --repro. Run \'hammer tasks modify --help\' for syntax help. Do not bypass this tool.',
-                )
-
-        tt, branch = self._parse_filename(fname)
-        # Resolve branch to SHA if it exists
-        branch_sha_res = self._run_git(["rev-parse", branch])
-        branch_sha = (
-            branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
-        )
-        if not branch_sha:
-            # Try to find it in reflog or by name in commits
-            res = self._run_git(["log", "-1", "--format=%H", branch])
-            if res.returncode == 0:
-                branch_sha = res.stdout.strip()
-
-        # Auto-restore branch from remote if moving to PROGRESSING and branch is missing
-        if new_status == "PROGRESSING" and not branch_sha:
-            has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
-            if has_origin:
-                # Check if branch exists on remote
-                remote_check = self._run_git(["ls-remote", "--heads", "origin", branch])
-                if remote_check.stdout.strip():
-                    self.log(
-                        f"Branch '{branch}' not found locally. Restoring from remote..."
-                    )
-                    self._run_git(
-                        ["checkout", "-b", branch, f"origin/{branch}"], cwd=self.root
-                    )
-                    branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                    self.log(
-                        f"Restored branch '{branch}' from remote and switched to it"
-                    )
-
-        if not force:
-            has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
-            if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):
-                if has_origin:
-                    if not self._run_git(
-                        ["ls-remote", "--heads", "origin", branch]
-                    ).stdout:
-                        self.error(
-                            f"Branch '{branch}' not pushed to remote. Push and try again. Do not bypass this tool.",
-                        )
-
-            # Gate for TESTING: ensure branch has changes not yet in testing
-            # Only apply when moving from READY, BACKLOG, or PROGRESSING
-            if new_status == "TESTING" and current_state in (
-                "READY",
-                "BACKLOG",
-                "PROGRESSING",
-            ):
-                # Check for unstaged/uncommitted changes first
-                status_res = self._run_git(["status", "--porcelain"], cwd=self.root)
-                has_unstaged = bool(status_res.stdout.strip())
-
-                # Check if branch has commits not in testing
-                # Get testing commit if it exists
-                testing_sha = None
-                testing_verify = self._run_git(
-                    ["rev-parse", "--verify", "testing"], cwd=self.root
-                )
-                if testing_verify.returncode == 0:
-                    testing_sha = self._run_git(
-                        ["rev-parse", "testing"], cwd=self.root
-                    ).stdout.strip()
-
-                branch_tip_sha = (
-                    branch_sha
-                    or self._run_git(
-                        ["rev-parse", branch], cwd=self.root
-                    ).stdout.strip()
-                )
-
-                # Determine if branch has new commits not in testing
-                # Use merge-base --is-ancestor: returns 0 if branch_tip is ancestor of testing (i.e., testing already contains it)
-                newer_than_testing = True  # assume new unless proven otherwise
-                already_merged_to_testing = False
-                already_merged_to_main = False
-                if testing_sha:
-                    ancestor_res = self._run_git(
-                        ["merge-base", "--is-ancestor", branch_tip_sha, testing_sha],
-                        cwd=self.root,
-                    )
-                    # If branch is ancestor of testing (returncode 0), then no new commits
-                    if ancestor_res.returncode == 0:
-                        newer_than_testing = False
-                    else:
-                        newer_than_testing = True
-                    # Also check if testing is ancestor of branch (i.e., branch is already merged to testing)
-                    merge_check_res = self._run_git(
-                        ["merge-base", "--is-ancestor", testing_sha, branch_tip_sha],
-                        cwd=self.root,
-                    )
-                    already_merged_to_testing = merge_check_res.returncode == 0
-
-                    # Check if merged to main as well (covers direct-to-main merges)
-                    main_sha = None
-                    main_verify = self._run_git(
-                        ["rev-parse", "--verify", "main"], cwd=self.root
-                    )
-                    if main_verify.returncode == 0:
-                        main_sha = self._run_git(
-                            ["rev-parse", "main"], cwd=self.root
-                        ).stdout.strip()
-                    if main_sha:
-                        main_merge_res = self._run_git(
-                            ["merge-base", "--is-ancestor", main_sha, branch_tip_sha],
-                            cwd=self.root,
-                        )
-                        already_merged_to_main = main_merge_res.returncode == 0
-                else:
-                    # No testing branch yet, any work is new
-                    newer_than_testing = True
-
-                if (
-                    not has_unstaged
-                    and not newer_than_testing
-                    and not already_merged_to_testing
-                    and not already_merged_to_main
-                ):
-                    self.error(
-                        f"Branch '{branch}' has no unstaged file changes and no commits newer than testing. "
-                        f"Make some progress before moving to testing. Do not bypass this tool."
-                    )
-
-            # Gate for STAGING: must be merged to testing
-            if new_status == "STAGING":
-                try:
-                    subprocess.run(
-                        [sys.executable, self.repo_script, "check-merged-testing", branch],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                    )
-                except subprocess.CalledProcessError:
-                    # Also allow if branch is already merged to main
-                    try:
-                        subprocess.run(
-                            [sys.executable, self.repo_script, "check-merged", branch],
-                            capture_output=True,
-                            text=True,
-                            check=True,
-                        )
-                    except subprocess.CalledProcessError:
-                        self.error(
-                            f"Branch '{branch}' not merged to testing or main. Merge to testing or main first. Do not bypass this tool.",
-                        )
-
-            # Gate for DONE/ARCHIVED: must be merged to main
-            if new_status in ("DONE", "ARCHIVED") and not force:
-                # Use repo.py as authority for merge-to-main verification
-                try:
-                    subprocess.run(
-                        [sys.executable, self.repo_script, "check-merged", branch],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                    )
-                except subprocess.CalledProcessError:
-                    self.error(
-                        f"Branch '{branch}' not merged to main. Merge to main first. Do not bypass this tool.",
-                    )
-                if yes:
-                    # Only delete local branch if task was in DONE state (completed full pipeline)
-                    # Keep branch for potential restoration if rejected or archived before DONE
-                    if current_state == "DONE":
-                        self._run_git(["push", "origin", branch], cwd=self.root)
-                        self._run_git(["branch", "-d", branch], cwd=self.root)
-                else:
-                    pass
-                # Branch is merged. Allow move to proceed.
-
-        # Enforce criteria completion for TESTING
-        if new_status == "TESTING" and self._has_incomplete_checkboxes(filepath):
-            self.error(
-                f"Cannot move to {new_status}: contains unfinished checkboxes (- [ ])",
-                hint="Edit criteria.md and change '- [ ]' to '- [x]' for completed items.",
-            )
-
-        # Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
-        if current_state in ["REVIEW", "TESTING"] and new_status in [
-            "STAGING",
-            "DONE",
-            "ARCHIVED",
-        ]:
-            task = FM.load(filepath_str)
-            if not task.metadata.get("Rc"):
-                patch_path = f".tasks/review/{task_id}.patch"
-                self.error(
-                    f"Cannot move to {new_status}: regression check not passed (Rc flag not set).",
-                    hint=f"Complete the regression check before promoting.\n"
-                    f"  1. Review the diff patch at {patch_path}\n"
-                    "  2. Audit for regressions and side-effects\n"
-                    f"  3. Run: ./hammer tasks modify {task_id} --regression-check",
-                )
-
-                # Sync and Reset for regression states
-        if new_status in ("PROGRESSING", "TESTING", "REVIEW"):
-            task.metadata["Rc"] = ""
-            fname = os.path.basename(filepath_str)
-            _, feature_branch = self._parse_filename(fname)
-
-            # Sync
-            current_branch = self._run_git(
-                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=self.root
-            ).stdout.strip()
-            if current_branch != feature_branch:
-                self._run_git(["checkout", feature_branch], cwd=self.root)
-
-            has_staging = (
-                self._run_git(["rev-parse", "--verify", "staging"]).returncode == 0
-            )
-            has_testing = (
-                self._run_git(["rev-parse", "--verify", "testing"]).returncode == 0
-            )
-            if has_staging:
-                self._run_git(
-                    ["merge", "staging", "-m", f"Sync: staging -> {feature_branch}"],
-                    cwd=self.root,
-                )
-            elif has_testing:
-                self._run_git(
-                    ["merge", "testing", "-m", f"Sync: testing -> {feature_branch}"],
-                    cwd=self.root,
-                )
-
-        # Trigger automatic promotion for TESTING
-        # File must be moved FIRST so cmd_promote sees the task already in TESTING
-        if new_status == "TESTING" and current_state == "PROGRESSING":
-            self.log("Automatically promoting to testing branch...")
-
-        # Regression check enforcement for ARCHIVED
-        if new_status == "ARCHIVED":
-            task = FM.load(filepath_str)
-            if not task.metadata.get("Rc"):
-                self.error(
-                    "Cannot move to ARCHIVED: regression check not passed (Rc flag not set).",
-                    hint="Regression check is required before archiving. Steps:\n"
-                    "  1. Review the diff patch at .tasks/review/<task_id>.patch\n"
-                    "  2. Audit for regressions, breaking changes, or unexpected side-effects\n"
-                    "  3. If satisfied, run: hammer tasks modify <id> --regression-check",
-                )
-
-        self._sync_task_content(filepath, task, is_final=(new_status == "ARCHIVED"))
-        task.metadata.pop("St", None)
-        new_filepath = os.path.join(
-            self.tasks_path, STATE_FOLDERS[new_status], os.path.basename(filepath)
-        )
-        try:
-            if os.path.isdir(filepath):
-                shutil.move(filepath, new_filepath)
-            else:
-                self._atomic_write(new_filepath, task)
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-
-            self._atomic_write(new_filepath, task)
-            self._append_log(new_filepath, f"{current_state}->{new_status}")
-
-            # NOW call cmd_promote - task is already in TESTING so no recursive call
-            if new_status == "TESTING":
-                from repo import cmd_promote, FLAGS
-
-                FLAGS["yes"] = yes
-                FLAGS["quiet"] = self.quiet
-                FLAGS["json"] = True
-                FLAGS["dev"] = self.dev
-
-                try:
-                    cmd_promote(branch)
-                except Exception as e:
-                    self.error(f"Promotion failed: {e}")
-            if new_status == "ARCHIVED":
-                task_id = task.metadata.get("Id", "")
-                title = task.metadata.get("Ti", "")
-                self._run_git(["add", "--all"], cwd=self.tasks_path)
-                self._run_git(
-                    [
-                        "commit",
-                        "-m",
-                        f"Archive [{task_id}] {title}",
-                    ],
-                    cwd=self.tasks_path,
-                )
-                # Auto-save .tasks worktree to remote backup branch (non-fatal)
-                try:
-                    self._push_tasks_branch("tasks", fatal=False)
-                except Exception as e:
-                    self.log(f"Warning: auto-save to tasks branch failed: {e}")
-            else:
-                self._run_git(["add", "--all"], cwd=self.tasks_path)
-                self._run_git(
-                    [
-                        "commit",
-                        "--allow-empty",
-                        "-m",
-                        f"Mv {os.path.basename(filepath)} -> {new_status}",
-                    ],
-                    cwd=self.tasks_path,
-                )
-            if new_status == "PROGRESSING":
-                dump_path = os.path.join(new_filepath, CURRENT_TASK_FILENAME)
-                d = Task(
-                    metadata={"Task": os.path.basename(new_filepath)},
-                    parts={
-                        "content": task.parts.get(
-                            "notes", "- Progress: \n- Findings: \n- Mitigations: \n"
-                        )
-                    },
-                )
-                self._atomic_write(dump_path, d)
-
-            if new_status == "REVIEW":
-                # Generate regression diff patch
-                branch = task.metadata.get("Br", "")
-                self._generate_review_diff(new_filepath, branch)
-                # Reset regression check flag (must be explicitly set via --regression-check)
-                task.metadata["Rc"] = ""
-                self._atomic_write(new_filepath, task)
-                self.log(
-                    "REVIEW entered: Diff generated. Check .tasks/review/<task_id>.patch for regressions. "
-                    "If issues found, move task back to PROGRESSING/TESTING to fix. "
-                    "Once clean, run 'hammer tasks modify <id> --regression-check' to enable STAGING."
-                )
-        except Exception as e:
-            self.error(str(e))
+        from .commands import move as move_cmd
+        move_logic = getattr(move_cmd, "move_logic")
+        move_logic(self, filename, new_status, force=force, yes=yes, sync=sync)
 
     def current(self, filename=None):
-        filepath, task = self.get_active_task(filename)
-        if not filepath or not task:
-            self.error("No active task.")
-
-        # filepath is definitely not None here for pyright
-        filepath_str = cast(str, filepath)
-        tn = os.path.basename(filepath_str)
-        tt, br = self._parse_filename(tn)
-        data = {
-            "file": os.path.relpath(filepath_str, self.root),
-            "name": tn,
-            "type": tt,
-            "branch": br,
-            "metadata": {
-                str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()
-            },
-            "log_file": os.path.relpath(
-                os.path.join(filepath_str, "activity.log"), self.root
-            ),
-        }
-        dp = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
-        if os.path.exists(dp):
-            d = FM.load(dp)
-            data["dump"] = {
-                "file": os.path.relpath(dp, self.root),
-                "content": d.parts.get("content", "").strip(),
-            }
-
-        if not self.as_json:
-            print(
-                f"# TASK: {data['metadata'].get('Title', data['name'])}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`"
-            )
-            for k, v in data["metadata"].items():
-                if k != "Title":
-                    print(f"- **{k}**: {v}")
-            if "dump" in data:
-                print(f"\n## Active Progress\n{data['dump']['content']}")
-            else:
-                print(f"\n## Content\n{task.content}")
-
-        self.finish(data)
+        from .commands import current as current_cmd
+        current_cmd.run(self, filename=filename)
 
     def show(self, filename, section=None):
-        filepath, _ = self.find_task(filename)
-        if not filepath:
-            self.error(
-                f"Task '{filename}' not found.",
-                hint="Use 'hammer tasks list' to see available task Ids.",
-            )
-
-        # filepath is definitely not None here for pyright
-        filepath_str = cast(str, filepath)
-        task = FM.load(filepath_str)
-        tn = os.path.basename(filepath_str)
-        tt, br = self._parse_filename(tn)
-        data = {
-            "file": os.path.relpath(filepath_str, self.root),
-            "name": tn,
-            "type": tt,
-            "branch": br,
-            "metadata": {
-                str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()
-            },
-            "log_file": os.path.relpath(
-                os.path.join(filepath_str, "activity.log"), self.root
-            ),
-        }
-        dp = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
-        if os.path.exists(dp):
-            d = FM.load(dp)
-            data["dump"] = {
-                "file": os.path.relpath(dp, self.root),
-                "content": d.parts.get("content", "").strip(),
-            }
-
-        section_map = {
-            "story": ("Story", task.parts.get("story", "No story")),
-            "tech": ("Technical", task.parts.get("tech", "No technical details")),
-            "criteria": ("Criteria", task.parts.get("criteria", "No criteria")),
-            "plan": ("Plan", task.parts.get("plan", "No plan")),
-            "repro": ("Reproduction", task.parts.get("repro", "No reproduction steps")),
-            "notes": ("Notes", task.parts.get("notes", "No notes")),
-            "progress": (
-                "Active Progress",
-                data.get("dump", {}).get("content", "No active progress"),
-            ),
-        }
-
-        if not self.as_json:
-            if section:
-                if section in section_map:
-                    title, content = section_map[section]
-                    print(f"## {title}\n{content}")
-                else:
-                    self.error(
-                        f"Unknown section '{section}'. Valid sections: {', '.join(section_map.keys())}"
-                    )
-            else:
-                print(
-                    f"# TASK: {data['metadata'].get('Title', data['name'])}\n- **Id**: {data['metadata'].get('Id', '')} | **State**: {data['metadata'].get('State', '')} | **Priority**: {data['metadata'].get('Priority', '')}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`"
-                )
-                print(f"\n## Story\n{task.parts.get('story', 'No story')}")
-                print(
-                    f"\n## Technical\n{task.parts.get('tech', 'No technical details')}"
-                )
-                print(f"\n## Criteria\n{task.parts.get('criteria', 'No criteria')}")
-                print(f"\n## Plan\n{task.parts.get('plan', 'No plan')}")
-                if task.parts.get("repro"):
-                    print(f"\n## Reproduction\n{task.parts.get('repro')}")
-                if data.get("dump"):
-                    print(f"\n## Active Progress\n{data['dump']['content']}")
-
-        self.finish(data)
+        from .commands import show as show_cmd
+        show_cmd.run(self, filename, section=section)
 
     def list(self, show_all=False):
-        if not os.path.exists(self.tasks_path):
-            self.error("Init required.")
-        all_data = {}
-        seen = set()
-        for state, folder in STATE_FOLDERS.items():
-            if state == "ARCHIVED" and not show_all:
-                continue
-            fp = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(fp):
-                continue
-            items = os.listdir(fp)
-            tasks = []
-            for item in sorted(items):
-                if item == ".gitkeep" or item in seen:
-                    continue
-                path = os.path.join(fp, item)
-                if not os.path.isdir(path):
-                    continue
-                task = FM.load(path)
-                if task.corrupted:
-                    self.log(
-                        f"WARNING: Task at {path} is corrupted. Skipping automatic repair."
-                    )
-                    summary = "CORRUPTED TASK"
-                else:
-                    summary = (task.metadata.get("Ti") or "No Title")[:60]
-
-                tt, tb = self._parse_filename(item)
-                task_id = task.metadata.get("Id")
-                if not task_id and not task.corrupted:
-                    task_id = self._get_next_id()
-                    task.metadata["Id"] = task_id
-                    self._atomic_write(path, task)
-                    self._run_git(["add", "--all"], cwd=self.tasks_path)
-                    self._run_git(
-                        [
-                            "commit",
-                            "--allow-empty",
-                            "-m",
-                            f"Assign Id {task_id} to {item}",
-                        ],
-                        cwd=self.tasks_path,
-                    )
-
-                # If still no task_id (because corrupted), use filename as fallback for sorting/display
-                if not task_id:
-                    task_id = item.split("-")[0] if "-" in item else "???"
-
-                seen.add(item)
-                tasks.append(
-                    {
-                        "id": task_id,
-                        "p": task.get("Pr") or 9,
-                        "file": item,
-                        "type": tt,
-                        "branch": tb,
-                        "summary": summary,
-                        "blocked_by": task.get("Bl") or [],
-                        "state": state,
-                    }
-                )
-            if tasks:
-                tasks.sort(key=lambda x: (x["p"], x["file"]))
-                all_data[state] = tasks
-        # Check for circular blockers
-        circular_warnings = []
-        all_tasks = {}
-        for state, tasks in all_data.items():
-            for t in tasks:
-                all_tasks[str(t["id"])] = t
-
-        for task_id, t in all_tasks.items():
-            bl = t.get("blocked_by", [])
-            if bl:
-                for b in bl:
-                    b_id = b.split("-")[0] if "-" in b else b
-                    if b_id in all_tasks:
-                        if self._has_path(b_id, task_id):
-                            circular_warnings.append(
-                                f"Circular blocker: Task {task_id} ({t['summary'][:30]}) <-> Task {b_id}"
-                            )
-
-        if circular_warnings:
-            if self.as_json:
-                result = all_data.copy()
-                result["warnings"] = circular_warnings
-                self.finish(result)
-            elif self.quiet:
-                for w in circular_warnings:
-                    print(f"WARNING: {w}")
-            else:
-                pass
-
-        if self.as_json:
-            self.finish(all_data)
-        elif self.quiet:
-            pass
-        else:
-            term_width = shutil.get_terminal_size(fallback=(180, 24)).columns
-            fixed_cols = (
-                3 + 1 + 2 + 1 + 7 + 1 + 6 + 1 + 30
-            )
-
-            summary_min = 30
-            available = max(term_width - fixed_cols, 10)
-            branch_width = 30
-            summary_width = max(summary_min, available)
-
-            C_HEADER = "\033[1;47;30m"
-            C_ID = "\033[1;32m"
-            C_PRIO = "\033[1;35m"
-            C_TYPE = "\033[36m"
-            C_RESET = "\033[0m"
-
-            print(f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Status':<7} {'Type':<6} {'Branch':<{branch_width}}{C_RESET}")
-            
-            for state, tasks in all_data.items():
-                for t in tasks:
-                    summary_lines = textwrap.wrap(t["summary"], width=summary_width) or [""]
-                    def simple_wrap(text, width):
-                        res = []
-                        while len(text) > width:
-                            res.append(text[:width])
-                            text = text[width:]
-                        res.append(text)
-                        return res
-                    
-                    branch_lines = simple_wrap(t["branch"], branch_width) or [""]
-                    max_lines = max(len(summary_lines), len(branch_lines))
-                    
-                    for i in range(max_lines):
-                        id_str = str(t["id"]) if i == 0 else ""
-                        p_str = str(t["p"]) if i == 0 else ""
-                        s_line = summary_lines[i] if i < len(summary_lines) else ""
-                        status_str = t["state"] if i == 0 else ""
-                        type_str = t["type"] if i == 0 else ""
-                        b_line = branch_lines[i] if i < len(branch_lines) else ""
-                        
-                        id_f = f"{C_ID}{id_str:>3}{C_RESET}" if i == 0 else "   "
-                        p_f = f"{C_PRIO}{p_str:>2}{C_RESET}" if i == 0 else "  "
-                        status_f = f"{C_TYPE}{status_str:<7}{C_RESET}" if i == 0 else "       "
-                        type_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
-                        
-                        print(f"{id_f} {p_f} {s_line:<{summary_width}} {status_f} {type_f} {b_line:<{branch_width}}")
-            self.finish()
+        from .commands import list as list_cmd
+        list_cmd.run(self, show_all=show_all)
 
     def reconcile(self, target=None, all=False):
         if not target and not all:
@@ -2665,165 +1275,10 @@ class TasksCLI:
                 print("Cancelled.")
 
     def cleanup(self, dry_run=False, yes=False):
-        """Clean up branches merged to main and archive corresponding tasks."""
-        current_branch = self._run_git(
-            ["rev-parse", "--abbrev-ref", "HEAD"]
-        ).stdout.strip()
-
-        default_branch = self._get_default_branch()
-
-        if current_branch not in ("main", "master", "staging", "testing"):
-            if self.as_json:
-                self.finish(
-                    {
-                        "error": f"Cleanup must be run from {default_branch}, staging, or testing branch. Currently on '{current_branch}'."
-                    }
-                )
-            else:
-                print(
-                    f"Error: Cleanup must be run from {default_branch}, staging, or testing branch."
-                )
-                print(f"Currently on: {current_branch}")
-            return
-
-        main_sha = self._run_git(["rev-parse", default_branch]).stdout.strip()
-        if not main_sha:
-            if self.as_json:
-                self.finish({"cleaned": [], "archived": [], "count": 0})
-            else:
-                print(f"No {default_branch} branch found.")
-            return
-
-        branches = self._run_git(
-            ["branch", "--format", "%(refname:short)"]
-        ).stdout.strip()
-        if not branches:
-            if self.as_json:
-                self.finish({"cleaned": [], "archived": [], "count": 0})
-            else:
-                print("No local branches found.")
-            return
-
-        cleaned = []
-        archived = []
-        pending_archive = []
-        has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
-
-        for branch in branches.splitlines():
-            branch = branch.strip()
-            if not branch or branch in ("main", "master", "staging", "testing"):
-                continue
-
-            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-
-            is_ancestor = (
-                self._run_git(
-                    ["merge-base", "--is-ancestor", branch_sha, default_branch]
-                ).returncode
-                == 0
-            )
-
-            if not is_ancestor:
-                continue
-
-            # Find task first to check its state BEFORE deleting branch
-            res_find = self.find_task(branch)
-            _, state = res_find
-
-            # If task not found in any state folder but branch is merged to main, allow cleanup
-            # (task may have been deleted/archived manually, or is a test branch)
-            if state is None:
-                if is_ancestor:
-                    self.log(
-                        f"Branch '{branch}' merged to main but task not found - cleaning up"
-                    )
-                    if not dry_run:
-                        if has_origin:
-                            self._run_git(["push", "origin", branch], cwd=self.root)
-                        self._run_git(["branch", "-D", branch], cwd=self.root)
-                    cleaned.append(branch)
-                    continue
-                else:
-                    pending_archive.append(
-                        f"{branch} (task not found, not merged to main)"
-                    )
-                    continue
-
+        from .commands import cleanup as cleanup_cmd
+        cleanup_cmd.run(self, dry_run=dry_run, yes=yes)
             # Respect workflow gates: only clean up branches for DONE, DONE, or REJECTED tasks
             # (ARCHIVED tasks should also be cleaned up - they completed the pipeline)
-            if state not in ("DONE", "REJECTED", "ARCHIVED"):
-                pending_archive.append(branch)
-                continue
-
-            # Check branch was pushed to remote before cleaning up
-            if has_origin:
-                remote_check = self._run_git(["ls-remote", "--heads", "origin", branch])
-                if not remote_check.stdout.strip():
-                    pending_archive.append(f"{branch} (not pushed to remote)")
-                    continue
-
-            if not dry_run:
-                if has_origin:
-                    self._run_git(["push", "origin", branch], cwd=self.root)
-                self._run_git(["branch", "-D", branch], cwd=self.root)
-
-            cleaned.append(branch)
-
-            if state == "DONE":
-                if not dry_run:
-                    self._move_logic(branch, "ARCHIVED", force=True, yes=yes)
-                    archived.append(branch)
-                else:
-                    archived.append(branch)
-
-        if self.as_json:
-            self.finish(
-                {
-                    "cleaned": cleaned,
-                    "archived": archived,
-                    "pending": pending_archive,
-                    "count": len(cleaned),
-                }
-            )
-        else:
-            if dry_run:
-                print("Dry run - would clean up:")
-            else:
-                print("Cleaned up:")
-            for b in cleaned:
-                print(f"  - {b}")
-            if archived:
-                print("\nArchived tasks:")
-                for b in archived:
-                    print(f"  - {b}")
-            if pending_archive:
-                print("\nTasks not ready for cleanup (move to REVIEW/ARCHIVED first):")
-                for b in pending_archive:
-                    print(f"  - {b}")
-
-    def config(self, action=None, key=None, value=None, save=False):
-        """Manage configuration (get/set/list/detect)."""
-        config_path = os.path.join(self.tasks_path, "config.yaml")
-
-        def load_config():
-            if os.path.exists(config_path):
-                try:
-                    import yaml
-
-                    with open(config_path, "r") as f:
-                        return yaml.safe_load(f) or {}
-                except Exception:
-                    return {}
-            return {}
-
-        def save_config(cfg):
-            try:
-                import yaml
-
-                with open(config_path, "w") as f:
-                    yaml.safe_dump(cfg, f)
-            except Exception as e:
-                self.error(f"Failed to save config: {e}")
 
         if action == "detect":
             detected = self._detect_tools()
@@ -3204,673 +1659,5 @@ class TasksCLI:
         )
 
     def doctor(self, fix=False):
-        """Diagnose task data integrity and git state, create bug reports for issues."""
-        bugs = []
-
-        def sanitize_filename(name):
-            return re.sub(r"[^a-z0-9\-]", "-", name.lower())
-
-        def create_bug_report(bug_id, title, repro, expected, actual):
-            bug_filename = f"hammer-bug-{sanitize_filename(bug_id)}.md"
-            bug_path = os.path.join(self.tasks_path, bug_filename)
-            content = f"""# Bug Report: {title}
-
-## What the user tried to do
-{repro}
-
-## What it should have done
-{expected}
-
-## What actually happened
-{actual}
-
-## Auto-generated by 'tasks doctor'
-"""
-            self._atomic_write(bug_path, content)
-            return bug_filename
-
-        def check_file_structure():
-            missing = []
-            required = [
-                "backlog",
-                "ready",
-                "progressing",
-                "testing",
-                "review",
-                "staging",
-                "done",
-                "archived",
-            ]
-            for folder in required:
-                path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(path):
-                    missing.append(folder)
-            if missing:
-                bugs.append(
-                    {
-                        "id": "missing-state-folders",
-                        "title": "Missing state folders in .tasks directory",
-                        "repro": "Running 'tasks doctor' to check directory structure",
-                        "expected": f"All required state folders exist: {', '.join(required)}",
-                        "actual": f"Missing folders: {', '.join(missing)}",
-                    }
-                )
-                if fix:
-                    for folder in missing:
-                        os.makedirs(
-                            os.path.join(self.tasks_path, folder), exist_ok=True
-                        )
-                    self.log(f"Created missing folders: {', '.join(missing)}")
-
-        def check_yaml_metadata():
-            for state, folder in STATE_FOLDERS.items():
-                dir_path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(dir_path):
-                    continue
-                for item in os.listdir(dir_path):
-                    if item == ".gitkeep":
-                        continue
-                    task_path = os.path.join(dir_path, item)
-                    task = FM.load(task_path)
-                    if not task or not task.metadata:
-                        bugs.append(
-                            {
-                                "id": f"missing-metadata-{item}",
-                                "title": f"Task '{item}' missing metadata",
-                                "repro": f"Loading task from {folder}/{item}",
-                                "expected": "Task should have YAML metadata with Id, Ti, St, Cr fields",
-                                "actual": "Task metadata is empty or missing",
-                            }
-                        )
-                        continue
-                    required_fields = ["Id", "Ti", "Cr"]
-                    missing_fields = [
-                        f for f in required_fields if f not in task.metadata
-                    ]
-                    if missing_fields:
-                        bugs.append(
-                            {
-                                "id": f"incomplete-metadata-{item}",
-                                "title": f"Task '{item}' missing required fields",
-                                "repro": f"Checking metadata fields for {folder}/{item}",
-                                "expected": f"Task should have all required fields: {', '.join(required_fields)}",
-                                "actual": f"Missing fields: {', '.join(missing_fields)}",
-                            }
-                        )
-
-        def check_markdown_content():
-            for state, folder in STATE_FOLDERS.items():
-                dir_path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(dir_path):
-                    continue
-                for item in os.listdir(dir_path):
-                    if item == ".gitkeep":
-                        continue
-                    task_path = os.path.join(dir_path, item)
-                    if os.path.isdir(task_path):
-                        for md_file in os.listdir(task_path):
-                            if md_file.endswith(".md"):
-                                md_path = os.path.join(task_path, md_file)
-                                try:
-                                    with open(md_path, "r", encoding="utf-8") as f:
-                                        content = f.read()
-                                    if content.strip() and "---" in content:
-                                        import yaml
-
-                                        try:
-                                            yaml.safe_load(content.split("---")[1])
-                                        except yaml.YAMLError as e:
-                                            bugs.append(
-                                                {
-                                                    "id": f"invalid-yaml-{item}-{md_file}",
-                                                    "title": f"Invalid YAML in {md_file} for task '{item}'",
-                                                    "repro": f"Parsing YAML from {folder}/{item}/{md_file}",
-                                                    "expected": "Valid YAML frontmatter",
-                                                    "actual": f"YAML parse error: {str(e)}",
-                                                }
-                                            )
-                                except Exception as e:
-                                    bugs.append(
-                                        {
-                                            "id": f"read-error-{item}-{md_file}",
-                                            "title": f"Cannot read {md_file} for task '{item}'",
-                                            "repro": f"Attempting to read {folder}/{item}/{md_file}",
-                                            "expected": "File should be readable",
-                                            "actual": f"Error: {str(e)}",
-                                        }
-                                    )
-
-        def check_branch_sync():
-            branches = self._run_git(
-                ["branch", "--format", "%(refname:short)"]
-            ).stdout.strip()
-            if not branches:
-                return
-            for branch in branches.splitlines():
-                branch = branch.strip()
-                if not branch or branch in (
-                    "main",
-                    "master",
-                    "staging",
-                    "testing",
-                    TASKS_BRANCH,
-                ):
-                    continue
-                branch_state = None
-                for state, folder in STATE_FOLDERS.items():
-                    dir_path = os.path.join(self.tasks_path, folder)
-                    if os.path.exists(dir_path):
-                        for item in os.listdir(dir_path):
-                            if item.startswith(branch):
-                                branch_state = state
-                                break
-                if not branch_state:
-                    bugs.append(
-                        {
-                            "id": f"orphan-branch-{branch}",
-                            "title": f"Branch '{branch}' has no corresponding task",
-                            "repro": f"Checking for task matching branch '{branch}'",
-                            "expected": "Each branch should have a corresponding task in .tasks/",
-                            "actual": f"Branch '{branch}' exists but no task found",
-                        }
-                    )
-
-        def check_task_counter():
-            counter_file = os.path.join(self.tasks_path, ".task_counter")
-            if not os.path.exists(counter_file):
-                bugs.append(
-                    {
-                        "id": "missing-task-counter",
-                        "title": "Missing .task_counter file",
-                        "repro": "Checking for .task_counter file",
-                        "expected": ".task_counter file should exist",
-                        "actual": "File does not exist",
-                    }
-                )
-                return
-
-            with open(counter_file, "r") as f:
-                counter_value = int(f.read().strip())
-
-            max_id = 0
-            # Scan all local branches for additional meta.json files
-            branches = (
-                subprocess.check_output(
-                    ["git", "branch", "-a", "--format=%(refname:short)"],
-                    cwd=self.tasks_path,
-                )
-                .decode()
-                .splitlines()
-            )
-            for branch in branches:
-                branch = branch.replace("remotes/", "").split("/")[-1]
-                try:
-                    content = subprocess.check_output(
-                        ["git", "show", f"{branch}:.tasks/progressing/meta.json"],
-                        cwd=self.tasks_path,
-                        stderr=subprocess.DEVNULL,
-                    ).decode()
-                    meta = json.loads(content)
-                    if "Id" in meta:
-                        max_id = max(max_id, int(meta["Id"]))
-                except Exception:
-                    pass
-            for state, folder in STATE_FOLDERS.items():
-                dir_path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(dir_path):
-                    continue
-                for item in os.listdir(dir_path):
-                    if item == ".gitkeep":
-                        continue
-                    task_path = os.path.join(dir_path, item)
-                    if os.path.isdir(task_path):
-                        meta_path = os.path.join(task_path, "meta.json")
-                        if os.path.exists(meta_path):
-                            try:
-                                with open(meta_path, "r") as f:
-                                    meta = json.load(f)
-                                    if "Id" in meta:
-                                        max_id = max(max_id, int(meta["Id"]))
-                            except Exception:
-                                pass
-
-            expected_counter = max_id + 1
-            if counter_value < expected_counter:
-                bugs.append(
-                    {
-                        "id": "stale-task-counter",
-                        "title": "Stale task counter",
-                        "repro": f"Current counter is {counter_value}, highest task ID is {max_id}",
-                        "expected": f"Counter should be at least {expected_counter}",
-                        "actual": f"Counter is {counter_value}",
-                    }
-                )
-                if fix:
-                    with open(counter_file, "w") as f:
-                        f.write(str(expected_counter))
-                    self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
-                    self._run_git(
-                        [
-                            "commit",
-                            "-m",
-                            f"Fix: Bump stale counter from {counter_value} to {expected_counter}",
-                        ],
-                        cwd=self.tasks_path,
-                    )
-                    self.log(
-                        f"Fixed stale task counter: {counter_value} -> {expected_counter}"
-                    )
-
-        def check_orphaned_tasks():
-            task_branches = set()
-            for state, folder in STATE_FOLDERS.items():
-                dir_path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(dir_path):
-                    continue
-                for item in os.listdir(dir_path):
-                    if item == ".gitkeep":
-                        continue
-                    task_path = os.path.join(dir_path, item)
-                    if os.path.isdir(task_path):
-                        meta_path = os.path.join(task_path, "meta.json")
-                        if os.path.exists(meta_path):
-                            try:
-                                with open(meta_path, "r") as f:
-                                    meta = json.load(f)
-                                    if "Br" in meta and meta["Br"]:
-                                        task_branches.add(meta["Br"])
-                            except Exception:
-                                pass
-
-            branches = (
-                self._run_git(["branch", "--format", "%(refname:short)"])
-                .stdout.strip()
-                .splitlines()
-                if self.tasks_path
-                else []
-            )
-
-            for branch in branches:
-                branch = branch.strip()
-                if not branch or branch in (
-                    "main",
-                    "master",
-                    "staging",
-                    "testing",
-                    TASKS_BRANCH,
-                ):
-                    continue
-                if branch not in task_branches:
-                    bugs.append(
-                        {
-                            "id": f"orphan-branch-{branch}",
-                            "title": f"Branch '{branch}' has no corresponding task",
-                            "repro": f"Checking for task matching branch '{branch}'",
-                            "expected": "Each branch should have a corresponding task in .tasks/",
-                            "actual": f"Branch '{branch}' exists but no task found",
-                        }
-                    )
-
-        def check_installation_health():
-            """Validate hammer installation: symlinks, file presence, and executability."""
-            import shutil
-
-            hammer_path = shutil.which("hammer")
-            if not hammer_path:
-                bugs.append(
-                    {
-                        "id": "hammer-not-in-path",
-                        "title": "hammer command not found in PATH",
-                        "repro": "Running 'which hammer'",
-                        "expected": "hammer should be installed and available in PATH",
-                        "actual": "hammer not found in PATH",
-                    }
-                )
-                return
-
-            # Resolve symlinks to get the real installation directory
-            try:
-                real_path = os.path.realpath(hammer_path)
-                if not os.path.exists(real_path):
-                    bugs.append(
-                        {
-                            "id": "hammer-broken-symlink",
-                            "title": "hammer symlink is broken",
-                            "repro": f"Checking hammer executable at {hammer_path}",
-                            "expected": "hammer executable should exist",
-                            "actual": f"Symlink target does not exist: {real_path}",
-                        }
-                    )
-                    return
-            except Exception:
-                # If realpath fails, still continue with hammer_path
-                real_path = hammer_path
-
-            install_dir = os.path.dirname(real_path)
-
-            # Required companion scripts
-            required_files = ["tasks.py", "check.py", "repo.py"]
-            for fname in required_files:
-                fpath = os.path.join(install_dir, fname)
-                if not os.path.exists(fpath):
-                    bugs.append(
-                        {
-                            "id": f"missing-{fname}",
-                            "title": f"Missing installation file: {fname}",
-                            "repro": f"Checking for {fname} in {install_dir}",
-                            "expected": f"{fname} should exist in the hammer installation directory",
-                            "actual": f"File not found at {fpath}",
-                        }
-                    )
-
-            # Check tasks_ai package exists
-            tasks_ai_dir = os.path.join(install_dir, "tasks_ai")
-            if not os.path.isdir(tasks_ai_dir):
-                bugs.append(
-                    {
-                        "id": "missing-tasks_ai-package",
-                        "title": "Missing tasks_ai package directory",
-                        "repro": f"Checking for tasks_ai in {install_dir}",
-                        "expected": "tasks_ai package directory should exist",
-                        "actual": f"Directory not found at {tasks_ai_dir}",
-                    }
-                )
-
-            # Check that commands (tasks, check, repo, r) resolve to the same hammer
-            for cmd in ["tasks", "check", "repo", "r"]:
-                cmd_path = shutil.which(cmd)
-                if cmd_path:
-                    try:
-                        cmd_real = os.path.realpath(cmd_path)
-                        if cmd_real != real_path:
-                            bugs.append(
-                                {
-                                    "id": f"mismatched-{cmd}-symlink",
-                                    "title": f"'{cmd}' command conflicts with hammer installation",
-                                    "repro": f"Checking symlink for '{cmd}': {cmd_path} -> {cmd_real}",
-                                    "expected": f"'{cmd}' should point to the same hammer wrapper",
-                                    "actual": f"Points to different location: {cmd_real} vs {real_path}",
-                                }
-                            )
-                    except Exception:
-                        pass  # If realpath fails, skip this command
-
-        check_installation_health()
-
-        check_file_structure()
-        check_yaml_metadata()
-        check_markdown_content()
-        check_branch_sync()
-
-        def check_state_mismatch():
-            for state, folder in STATE_FOLDERS.items():
-                dir_path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(dir_path):
-                    continue
-                for item in os.listdir(dir_path):
-                    if item == ".gitkeep":
-                        continue
-                    task_path = os.path.join(dir_path, item)
-                    if not os.path.isdir(task_path):
-                        continue
-                    meta_path = os.path.join(task_path, "meta.json")
-                    if not os.path.exists(meta_path):
-                        continue
-                    try:
-                        with open(meta_path, "r") as f:
-                            meta = json.load(f)
-                        task_state = meta.get("St")
-                        if task_state and task_state != state:
-                            bugs.append(
-                                {
-                                    "id": f"state-mismatch-{item}",
-                                    "title": f"Task '{item}' state mismatch",
-                                    "repro": f"Task folder is '{folder}' but metadata state is '{task_state}'",
-                                    "expected": f"Task should be in '{task_state}/' folder",
-                                    "actual": f"Task is in '{folder}/' but metadata says '{task_state}'",
-                                }
-                            )
-                            if fix:
-                                target_folder = STATE_FOLDERS.get(task_state)
-                                if target_folder:
-                                    target_path = os.path.join(
-                                        self.tasks_path, target_folder, item
-                                    )
-                                    if not os.path.exists(target_path):
-                                        os.rename(task_path, target_path)
-                                        self._run_git(
-                                            ["add", folder], cwd=self.tasks_path
-                                        )
-                                        self._run_git(
-                                            ["add", target_folder], cwd=self.tasks_path
-                                        )
-                                        self._run_git(
-                                            [
-                                                "commit",
-                                                "-m",
-                                                f"Fix: Move task {item} from {folder} to {target_folder}",
-                                            ],
-                                            cwd=self.tasks_path,
-                                        )
-                                        self.log(
-                                            f"Fixed: Moved task {item} from {folder}/ to {target_folder}/"
-                                        )
-                    except Exception:
-                        pass
-
-        check_state_mismatch()
-        check_task_counter()
-        check_orphaned_tasks()
-        check_installation_health()
-
-        for bug in bugs:
-            filename = create_bug_report(
-                bug["id"], bug["title"], bug["repro"], bug["expected"], bug["actual"]
-            )
-            self.log(f"Created bug report: {filename}")
-
-        if not bugs:
-            self.log("No issues found. Tasks directory is healthy.")
-        else:
-            self.log(f"Found {len(bugs)} issue(s). Bug reports saved to .tasks/")
-
-        if self.as_json:
-            self.finish({"issues_found": len(bugs), "bugs": bugs})
-
-    def upgrade(self):
-        """Upgrade tasks to latest version by running install.sh."""
-        import shutil
-
-        user_dir = os.path.expanduser("~/.local/hammer")
-        system_dir = "/opt/hammer"
-
-        can_write_user = os.access(user_dir, os.W_OK)
-        can_write_system = os.access(system_dir, os.W_OK)
-
-        install_path = None
-        mode = None
-
-        if can_write_user:
-            install_path = user_dir
-            mode = "user"
-        elif can_write_system:
-            install_path = system_dir
-            mode = "system"
-        else:
-            self.error("Cannot write to either ~/.local/hammer or /opt/hammer")
-
-        install_script = os.path.join(install_path, "install.sh")
-
-        if not os.path.exists(install_script):
-            self.error(
-                f"install.sh not found at {install_path}. Run 'hammer tasks init' first or install manually."
-            )
-
-        self.log(f"Detected installation: {mode} at {install_path}")
-
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        local_install = os.path.join(os.path.dirname(this_dir), "install.sh")
-
-        if os.path.exists(local_install):
-            self.log("Using local install.sh...")
-            shutil.copy(local_install, install_script)
-            os.chmod(install_script, 0o755)
-        else:
-            self.log("Downloading install.sh from GitHub...")
-            result = subprocess.run(
-                [
-                    "curl",
-                    "-sSL",
-                    "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh",
-                    "-o",
-                    install_script,
-                ],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                self.error(f"Failed to download install.sh: {result.stderr}")
-            os.chmod(install_script, 0o755)
-
-        if mode == "system":
-            self.log("System-wide installation detected. Running with sudo...")
-            result = subprocess.run(
-                ["sudo", "bash", install_script, "-g"], capture_output=True, text=True
-            )
-        else:
-            result = subprocess.run(
-                ["bash", install_script, "-u"], capture_output=True, text=True
-            )
-
-        if result.returncode != 0:
-            self.error(f"Upgrade failed: {result.stderr}")
-
-        if self.as_json:
-            self.finish({"success": True, "mode": mode, "path": install_path})
-        else:
-            self.log("✅ Upgrade complete!")
-            self.log(f"Installed to: {install_path}")
-
-
-    def _check_audit_integrity(self, task_id):
-        import hashlib
-        filepath, _ = self.find_task(task_id)
-
-        criteria_path = os.path.join(filepath, "criteria.md")
-        proof_path = os.path.join(filepath, "verification_proof.log")
-        hash_path = os.path.join(filepath, ".audit_hash")
-        
-        if not os.path.exists(hash_path):
-            return False
-            
-        hasher = hashlib.sha256()
-        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
-            hasher.update(f1.read())
-            hasher.update(f2.read())
-        
-        with open(hash_path, "r") as f:
-            stored_hash = f.read().strip()
-            
-        self.log(f"Current: {hasher.hexdigest()} | Stored: {stored_hash}")
-        return hasher.hexdigest() == stored_hash
-    
-    def _update_audit_hash(self, task_id):
-        import hashlib
-        filepath, _ = self.find_task(task_id)
-        criteria_path = os.path.join(filepath, "criteria.md")
-        proof_path = os.path.join(filepath, "verification_proof.log")
-        hash_path = os.path.join(filepath, ".audit_hash")
-        
-        hasher = hashlib.sha256()
-        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
-            hasher.update(f1.read())
-            hasher.update(f2.read())
-        
-        with open(hash_path, "w") as f:
-            f.write(hasher.hexdigest())
-    def verify(self, task_id, proof):
-        """Verify criteria and submit proof."""
-        import hashlib
-        from datetime import datetime
-        filepath, _ = self.find_task(task_id)
-        if not filepath:
-            self.error(f"Task {task_id} not found.")
-
-        criteria_path = os.path.join(filepath, "criteria.md")
-        proof_path = os.path.join(filepath, "verification_proof.log")
-        hash_path = os.path.join(filepath, ".audit_hash")
-
-        if not proof:
-            self.error("Verification requires --proof 'Evidence text'.")
-
-        with open(proof_path, "a") as f:
-            f.write(f"Proof submitted at {datetime.now()}: {proof}\n")
-
-        with open(criteria_path, "r+") as f:
-            content = f.read().replace("- [ ]", "- [x]")
-            f.seek(0)
-            f.write(content)
-
-        # Generate Master Hash
-        hasher = hashlib.sha256()
-        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
-            hasher.update(f1.read())
-            hasher.update(f2.read())
-        
-        with open(hash_path, "w") as f:
-            f.write(hasher.hexdigest())
-            
-        self.log(f"✅ Proof verified and criteria hash locked: {hasher.hexdigest()[:8]}...")
-    def _resolve_task(self, task_id_or_filename):
-        """Standardized resolution: returns (filepath, task_id_num, filename)."""
-        # 1. Try exact match filename
-        for folder in STATE_FOLDERS.values():
-            path = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(path):
-                    continue
-            for f in os.listdir(path):
-                if f == task_id_or_filename or f.startswith(f"{task_id_or_filename}-"):
-                    fp = os.path.join(path, f)
-                    task = FM.load(fp)
-                    return fp, task.metadata.get("Id"), f
-        
-        # 2. Try numeric ID
-        for folder in STATE_FOLDERS.values():
-            path = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(path):
-                    continue
-            for f in os.listdir(path):
-                fp = os.path.join(path, f)
-                if not os.path.isdir(fp):
-                        continue
-                task = FM.load(fp)
-                if str(task.metadata.get("Id")) == str(task_id_or_filename):
-                    return fp, task_id_or_filename, f
-        
-        return None, None, None
-    def audit(self, task_id):
-        """Generate an audit log after reviewing the patch."""
-        import hashlib
-        filepath, _, filename = self._resolve_task(task_id)
-        if not filepath:
-            self.error(f"Task {task_id} not found.")
-        
-        patch_path = os.path.join(filepath, "diff.patch")
-        audit_path = os.path.join(filepath, f"{filename}.audit")
-        
-        if not os.path.exists(patch_path):
-            self.error(f"No patch file found at {patch_path}. Move to REVIEW first.")
-            
-        sha256 = hashlib.sha256()
-        with open(patch_path, "rb") as f:
-            while True:
-                data = f.read(65536)
-                if not data:
-                        break
-                sha256.update(data)
-        patch_hash = sha256.hexdigest()
-
-        with open(audit_path, "w") as f:
-            f.write(f"Audited by: {os.getlogin()}\nTime: {os.times()}\nPatch-Hash: {patch_hash}\n")
-            
-        self.log(f"✅ Audit log created for task {filename} at {audit_path} (Hash: {patch_hash[:8]}...)")
+        from .commands import doctor as doctor_cmd
+        doctor_cmd.run(self, fix=fix)

@@ -38,6 +38,7 @@ class TestRobustnessBugfix(unittest.TestCase):
             [
                 sys.executable,
                 self.tasks_py,
+                "--dev",
                 "-j",
                 "create",
                 "Valid Task Title",
@@ -69,7 +70,7 @@ class TestRobustnessBugfix(unittest.TestCase):
         import sys
 
         res = subprocess.run(
-            [sys.executable, self.tasks_py, "-j", "list"],
+            [sys.executable, self.tasks_py, "--dev", "-j", "list"],
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
@@ -88,6 +89,7 @@ class TestRobustnessBugfix(unittest.TestCase):
             [
                 sys.executable,
                 self.tasks_py,
+                "--dev",
                 "-j",
                 "create",
                 "Another Task Title",
@@ -119,7 +121,7 @@ class TestRobustnessBugfix(unittest.TestCase):
         import sys
 
         res = subprocess.run(
-            [sys.executable, self.tasks_py, "-j", "list"],
+            [sys.executable, self.tasks_py, "--dev", "-j", "list"],
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
@@ -129,7 +131,3 @@ class TestRobustnessBugfix(unittest.TestCase):
         self.assertEqual(
             res.returncode, 0, f"CLI crashed with empty meta.json: {res.stderr}"
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -63,11 +63,9 @@ class FM:
         if os.path.exists(meta_path):
             try:
                 with open(meta_path, "r") as f:
-                    content = f.read()
-                    if content.strip():
+                    content = f.read().strip()
+                    if content:
                         meta = json.loads(content)
-                    else:
-                        corrupted = True
             except (json.JSONDecodeError, OSError):
                 corrupted = True
 
