@@ -422,6 +422,8 @@ class TasksCLI:
                 raise e
             return
 
+        if path is None:
+            self.error("DEBUG: _atomic_write path is None!")
         temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
         try:
             shutil.rmtree(temp_dir)

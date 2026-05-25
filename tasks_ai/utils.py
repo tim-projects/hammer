@@ -63,7 +63,6 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
 def sync_task_content(cli, filepath, task, is_final=False) -> bool:
     """Sync task metadata with current branch commits and notes."""
     from .constants import CURRENT_TASK_FILENAME
-    from .file_manager import FM
     if not filepath:
         return False
     filepath_str = str(filepath)
@@ -122,6 +121,7 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
 
 def perform_move(cli, task, current_state, new_status, filepath):
     """Execute the physical move of task files on disk."""
+    from .file_manager import FM
     from .constants import STATE_FOLDERS
     if not filepath:
         cli.error("Invalid task path.")
@@ -131,15 +131,15 @@ def perform_move(cli, task, current_state, new_status, filepath):
     fname = os.path.basename(filepath_str)
     new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
     
-    if os.path.isdir(filepath_str):
-        shutil.move(filepath_str, new_filepath)
-    else:
-        atomic_write(new_filepath, task)
-        if os.path.exists(filepath_str):
+    # Move and cleanup
+    atomic_write(new_filepath, task, fm=FM)
+    if os.path.exists(filepath_str):
+        if os.path.isdir(filepath_str):
+            shutil.rmtree(filepath_str)
+        else:
             os.remove(filepath_str)
-            
-    atomic_write(new_filepath, task)
     cli._append_log(new_filepath, f"{current_state}->{new_status}")
+    return task
     return task
 
 def has_path(start_id: str, target_id: str, tasks_path: str, fm, visited=None) -> bool:

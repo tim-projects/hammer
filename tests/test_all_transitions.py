@@ -11,16 +11,16 @@ class TestAllTransitions(HammerTestBase):
                 "create",
                 "Comprehensive Test Task",
                 "--story",
-                "Sufficiently long story content here...",
+                "Sufficiently long story content here to pass validation",
                 "--tech",
-                "Sufficiently long technical description here...",
+                "Sufficiently long technical description here to pass validation",
                 "--criteria",
-                "Sufficiently long acceptance criteria here...",
+                "Sufficiently long acceptance criteria here to pass validation",
                 "--plan",
-                "Sufficiently long planning details here...",
+                "Sufficiently long planning details here to pass validation",
             ]
         )
-        task_id = json.loads(res.stdout)["data"]["id"]
+        print("DEBUG: CREATE RES:", res.stdout); task_id = json.loads(res.stdout).get("data", {}).get("id"); print(f"DEBUG: Task ID is {task_id}")
 
         self.run_tasks(["move", str(task_id), "READY"])
         current = "READY"
