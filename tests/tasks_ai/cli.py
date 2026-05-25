@@ -295,8 +295,10 @@ class TasksCLI:
         with open(diff_path, "w", encoding="utf-8") as f:
             f.write(diff_content or "# No changes detected\n")
 
-        # Debug: record values to a file in repo root
-        debug_path = os.path.join(self.root, "diff_debug.log")
+        # Debug: record values to a file in .tasks/log
+        log_dir = os.path.join(self.tasks_path, "log")
+        os.makedirs(log_dir, exist_ok=True)
+        debug_path = os.path.join(log_dir, "diff_debug.log")
         with open(debug_path, "a") as f:
             f.write(
                 f"branch={branch}, main_sha={main_sha}, diff_len={len(diff_content)}\n"
