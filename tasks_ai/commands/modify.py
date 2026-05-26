@@ -4,7 +4,7 @@ from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
 
-def run(cli, filename, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, 
+def run(cli, filename, task_type=None, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, 
         notes=None, progress=None, findings=None, mitigations=None, tests_passed=None, 
         priority=None, regression_check=None):
     """Execution logic for 'tasks modify'."""
@@ -18,6 +18,10 @@ def run(cli, filename, title=None, story=None, tech=None, criteria=None, plan=No
     tt, _ = parse_filename(fname)
     updated = False
     
+    if task_type:
+        task.metadata["Ty"] = task_type
+        updated = True
+
     if title:
         title = title.strip()
         if len(title) < 10:

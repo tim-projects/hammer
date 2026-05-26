@@ -11,6 +11,9 @@ def run(cli, title, task_type="task", priority=None, story=None, tech=None, crit
     if len(title) < 10:
         cli.error("Task title is too vague. Min 10 chars.")
     
+    if task_type not in ["task", "issue", "docs", "test"]:
+        cli.error(f"Invalid task type: {task_type}. Allowed: task, issue, docs, test.")
+    
     if branch:
         cli.log("Note: --branch flag is ignored; branch names are auto-generated from title.")
     

@@ -127,6 +127,12 @@ if __name__ == "__main__":
 
     mod_p = subparsers.add_parser("modify", help="Update task.")
     mod_p.add_argument("filename", help="Task Id (or filename).")
+    mod_p.add_argument(
+        "--type",
+        "-t",
+        choices=["task", "issue"],
+        help="Task type: task or issue.",
+    )
     mod_p.add_argument("--title", help="New title.")
     mod_p.add_argument("--story", help="User story.")
     mod_p.add_argument("--tech", help="Technical background.")
@@ -265,6 +271,7 @@ if __name__ == "__main__":
     elif args.command == "modify":
         cli.modify(
             args.filename,
+            task_type=args.type,
             title=args.title,
             story=args.story,
             tech=args.tech,

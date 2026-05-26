@@ -643,7 +643,6 @@ class TasksCLI:
             if os.path.exists(self.tasks_path):
                 # Safety check: create a backup
                 if self._tasks_directory_has_data(self.tasks_path):
-                    import shutil
                     from datetime import datetime
                     repo_name = os.path.basename(self.root.rstrip('/'))
                     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -888,6 +887,7 @@ class TasksCLI:
     def modify(
         self,
         filename,
+        task_type=None,
         title=None,
         story=None,
         tech=None,
@@ -906,6 +906,7 @@ class TasksCLI:
         modify_cmd.run(
             self,
             filename,
+            task_type=task_type,
             title=title,
             story=story,
             tech=tech,
