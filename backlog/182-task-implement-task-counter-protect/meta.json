@@ -1,0 +1,8 @@
+{
+  "Id": 182,
+  "Ti": "Implement task counter protection with hash verification and atomic backups",
+  "Cr": "260526 20:55",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "182-task-implement-task-counter-protect"
+}
