@@ -59,6 +59,9 @@ COMMAND_TO_TOOL = {
     "run": "tasks",
     "undo": "tasks",
     "doctor": "tasks",
+    "help": "tasks",
+    "-h": "tasks",
+    "--help": "tasks",
     # check commands
     "lint": "check",
     "test": "check",
@@ -88,6 +91,12 @@ def main():
         sys.exit(1)
 
     first_arg = sys.argv[1]
+
+    # Handle help flags
+    if first_arg in ('-h', '--help', 'help'):
+        # Show hammer help
+        print(__doc__)
+        sys.exit(0)
 
     # Alias: 'hammer show tasks' => 'hammer tasks list'
     if first_arg == "show" and len(sys.argv) >= 3 and sys.argv[2] == "tasks":

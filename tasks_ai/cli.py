@@ -7,6 +7,7 @@ import re
 import json
 import shutil
 import fcntl
+import hashlib
 from typing import cast
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -408,14 +409,64 @@ class TasksCLI:
             try:
                 with os.fdopen(fd, "w") as f:
                     if hasattr(task_or_content, "metadata"):
-                        FM.dump(task_or_content, path)
-                        return
+                        FM.dump(task_or_content, f)
                     else:
                         if isinstance(task_or_content, str):
                             f.write(task_or_content)
                         else:
                             f.write(task_or_content.decode("utf-8"))
-                os.replace(temp_path, path)
+            except Exception as e:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                raise e
+            os.replace(temp_path, path)
+        else:
+            # For non-md files, use the original logic
+            if path is None:
+                self.error("DEBUG: _atomic_write path is None!")
+            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
+            try:
+                shutil.rmtree(temp_dir)
+                FM.dump(task_or_content, temp_dir)
+                if os.path.exists(path):
+                    shutil.rmtree(path)
+                os.rename(temp_dir, path)
+            except Exception as e:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                raise e
+        else:
+            # For non-md files, use the original logic
+            if path is None:
+                self.error("DEBUG: _atomic_write path is None!")
+            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
+            try:
+                shutil.rmtree(temp_dir)
+                FM.dump(task_or_content, temp_dir)
+                if os.path.exists(path):
+                    shutil.rmtree(path)
+                os.rename(temp_dir, path)
+            except Exception as e:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                raise e
+            os.replace(temp_path, path)
+        else:
+            # For non-md files, use the original logic
+            if path is None:
+                self.error("DEBUG: _atomic_write path is None!")
+            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
+            try:
+                shutil.rmtree(temp_dir)
+                FM.dump(task_or_content, temp_dir)
+                if os.path.exists(path):
+                    shutil.rmtree(path)
+                os.rename(temp_dir, path)
+            except Exception as e:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                raise e
+            os.replace(temp_path, path)
             except Exception as e:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
@@ -834,29 +885,105 @@ class TasksCLI:
             return selected
         return None, None
 
-    def _get_next_id(self):
-        counter_file = os.path.join(self.tasks_path, ".task_counter")
-        if not os.path.exists(counter_file):
-            hint = "Run 'hammer tasks init' first."
-            if self.dev:
-                hint = "Dev tasks not initialized. Run 'hammer tasks --dev init' first."
-            self.error("Tasks not initialized.", hint=hint)
-        with open(counter_file, "r+") as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+    def _calculate_file_hash(self, filepath):
+        """Calculate SHA256 hash of a file"""
+        try:
+            hash_sha256 = hashlib.sha256()
+            with open(filepath, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
+        except Exception:
+            return None
+
+    def _write_counter_hash(self, counter_file, hash_file):
+        """Write hash of counter file to hash file using atomic write"""
+        try:
+            file_hash = self._calculate_file_hash(counter_file)
+            if file_hash:
+                self._atomic_write(hash_file, file_hash)
+        except Exception:
+            pass  # Fail silently for hash writing
+
+    def _verify_counter_hash(self, counter_file, hash_file):
+        """Verify that counter file matches its hash"""
+        if not os.path.exists(hash_file):
+            return False
+        try:
+            with open(hash_file, "r") as f:
+                stored_hash = f.read().strip()
+            calculated_hash = self._calculate_file_hash(counter_file)
+            return stored_hash == calculated_hash
+        except Exception:
+            return False
+
+    def _recover_task_counter_from_tasks(self):
+        """Recover task counter by scanning existing task IDs"""
+        try:
+            max_id = 0
+            # Scan all state folders for existing tasks
+            for state, folder in STATE_FOLDERS.items():
+                state_path = os.path.join(self.tasks_path, folder)
+                if not os.path.exists(state_path):
+                    continue
+                for item in os.listdir(state_path):
+                    if item in [".gitkeep", ".task_counter", "task_counter", ".task_counter.counter_hash", ".task_counter.counter_backup", ".task_counter.counter_backup.hash"]:
+                        continue
+                    item_path = os.path.join(state_path, item)
+                    if not os.path.isdir(item_path):
+                        continue
+                    # Try to get ID from directory name (format: {id}-{type}-{title})
+                    if "-" in item:
+                        parts = item.split("-", 1)
+                        if parts[0].isdigit():
+                            task_id = int(parts[0])
+                            if task_id > max_id:
+                                max_id = task_id
+                    # Also check metadata.json for ID as fallback
+                    meta_path = os.path.join(item_path, "meta.json")
+                    if os.path.exists(meta_path):
+                        try:
+                            import json
+                            with open(meta_path, "r") as f:
+                                meta = json.load(f)
+                            meta_id = meta.get("Id")
+                            if meta_id and str(meta_id).isdigit():
+                                task_id = int(meta_id)
+                                if task_id > max_id:
+                                    max_id = task_id
+                        except Exception:
+                            pass
+            # Also check remote branches for higher IDs
             try:
-                current = int(f.read().strip())
-                current += 1
-                f.seek(0)
-                f.truncate()
-                f.write(str(current))
-            finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-        self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
-        self._run_git(
-            ["commit", "--allow-empty", "-m", f"Bump task counter to {current}"],
-            cwd=self.tasks_path,
-        )
-        return current
+                # Get remote branch names that might contain task IDs
+                result = self._run_git(["ls-remote", "--heads", "origin"], cwd=self.root)
+                if result.returncode == 0:
+                    for line in result.stdout.strip().split('\n'):
+                        if not line:
+                            continue
+                        parts = line.split('\t')
+                        if len(parts) >= 2:
+                            ref = parts[1]
+                            # Look for refs like refs/heads/123-task-name
+                            if ref.startswith("refs/heads/"):
+                                branch_name = ref[11:]  # Remove refs/heads/
+                                if "-" in branch_name:
+                                    branch_parts = branch_name.split("-", 1)
+                                    if branch_parts[0].isdigit():
+                                        branch_id = int(branch_parts[0])
+                                        if branch_id > max_id:
+                                            max_id = branch_id
+            except Exception:
+                pass  # Fail silently for remote check
+            
+            return max_id if max_id > 0 else None
+        except Exception:
+            return None
+
+    def _get_next_id(self):
+        """Get the next task ID with protection and recovery mechanisms"""
+        protector = TaskCounterProtector(self.tasks_path, self)
+        return protector.get_next_id(self)
 
     def create(
         self,

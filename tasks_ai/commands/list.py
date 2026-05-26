@@ -41,27 +41,108 @@ def run(cli, show_all=False):
             if task.corrupted:
                 summary = "CORRUPTED TASK"
 
-            tt, tb = parse_filename(item)
-            task_id = task.metadata.get("Id")
+            tt, _ = parse_filename(item)  # We need tt for type
             
-            if not task_id and not task.corrupted:
-                task_id = cli._get_next_id()
-                task.metadata["Id"] = task_id
-                cli._atomic_write(path, task)
-                try:
-                    cli._run_git(["add", "--all"], cwd=cli.tasks_path)
-                    cli._run_git(
-                        ["commit", "--allow-empty", "-m", f"Assign Id {task_id} to {item}"], 
-                        cwd=cli.tasks_path
-                    )
-                except: pass
-
-            if not task_id:
-                task_id = item.split("-")[0] if "-" in item else "???"
-
+            # Determine the canonical task ID using multiple sources with validation
+            canonical_id = None
+            id_source = None
+            
+            # Source 1: metadata.Id (highest priority if valid)
+            metadata_id = task.metadata.get("Id")
+            if metadata_id and str(metadata_id).isdigit():
+                canonical_id = int(metadata_id)
+                id_source = "metadata.Id"
+            
+            # Source 2: metadata.Br (extract ID from branch if it follows expected format)
+            if not canonical_id:
+                branch_from_metadata = task.metadata.get("Br")
+                if branch_from_metadata and isinstance(branch_from_metadata, str) and "-" in branch_from_metadata:
+                    branch_parts = branch_from_metadata.split("-", 2)
+                    if len(branch_parts) >= 3 and branch_parts[0].isdigit():
+                        branch_id = int(branch_parts[0])
+                        canonical_id = branch_id
+                        id_source = "metadata.Br"
+            
+            # Source 3: directory name (extract ID if it follows expected format)
+            if not canonical_id and not task.corrupted:
+                dir_id = None
+                if "-" in item:
+                    parts = item.split("-", 1)
+                    if parts[0].isdigit():
+                        dir_id = int(parts[0])
+                
+                if dir_id is not None:
+                    canonical_id = dir_id
+                    id_source = "directory name"
+            
+            # If we still don't have an ID, try to fix metadata
+            if not canonical_id and not task.corrupted:
+                # Try to recover from directory name as last resort
+                dir_id = None
+                if "-" in item:
+                    parts = item.split("-", 1)
+                    if parts[0].isdigit():
+                        dir_id = int(parts[0])
+                
+                if dir_id is not None:
+                    canonical_id = dir_id
+                    id_source = "directory name (recovery)"
+                    # Fix the metadata
+                    task.metadata["Id"] = canonical_id
+                    cli._atomic_write(path, task)
+                    try:
+                        cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+                        cli._run_git(
+                            ["commit", "--allow-empty", "-m", f"Recovered Id {canonical_id} for {item} from directory name"], 
+                            cwd=cli.tasks_path
+                        )
+                    except: pass
+                    cli.log(f"Recovered missing ID {canonical_id} for task {item} from directory name")
+                else:
+                    # Last resort: assign new ID (should extremely rarely happen)
+                    canonical_id = cli._get_next_id()
+                    id_source = "new ID assignment"
+                    task.metadata["Id"] = canonical_id
+                    cli._atomic_write(path, task)
+                    try:
+                        cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+                        cli._run_git(
+                            ["commit", "--allow-empty", "-m", f"Assigned new Id {canonical_id} to {item}"], 
+                            cwd=cli.tasks_path
+                        )
+                    except: pass
+                    cli.log(f"Assigned new ID {canonical_id} to task {item} (no ID in metadata, dirname, or branch)")
+            
+            # Final fallback (should almost never happen)
+            if not canonical_id:
+                canonical_id = item.split("-")[0] if "-" in item else "???"
+                id_source = "directory fallback"
+            
+            # Determine branch name - prefer consistency with canonical ID
+            # First, check if metadata.Br exists and is valid
+            branch_from_metadata = task.metadata.get("Br")
+            if branch_from_metadata and isinstance(branch_from_metadata, str) and "-" in branch_from_metadata:
+                branch_parts = branch_from_metadata.split("-", 2)
+                if len(branch_parts) >= 3 and branch_parts[0].isdigit():
+                    branch_id = int(branch_parts[0])
+                    # If branch ID matches our canonical ID, use it
+                    if branch_id == canonical_id:
+                        tb = branch_from_metadata
+                    else:
+                        # Branch ID doesn't match - log warning and construct expected branch
+                        cli.log(f"Warning: Branch ID mismatch for task {item}: metadata.Br='{branch_from_metadata}' (ID={branch_id}) vs canonical ID={canonical_id}")
+                        # Construct expected branch from canonical ID
+                        tb = f"{canonical_id}-{tt}-{(task.metadata.get('Ti') or 'unknown')[:30]}".strip("-")
+                else:
+                    # metadata.Br doesn't follow expected format
+                    tb = f"{canonical_id}-{tt}-{(task.metadata.get('Ti') or 'unknown')[:30]}".strip("-")
+            else:
+                # No valid metadata.Br, construct expected branch
+                tb = f"{canonical_id}-{tt}-{(task.metadata.get('Ti') or 'unknown')[:30]}".strip("-")
+            
             seen.add(item)
             tasks.append({
-                "id": task_id,
+                "id": canonical_id,
                 "p": task.metadata.get("Pr") or 9,
                 "file": item,
                 "type": tt,
