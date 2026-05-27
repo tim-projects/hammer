@@ -1,1 +1,0 @@
-Fix pre-existing pyright type errors in the codebase that cause compliance failure

@@ -1,1 +1,0 @@
-- [ ] FIXED: pyright passes with no errors (resolved in task 54)
