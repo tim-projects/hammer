@@ -1,1 +1,0 @@
-Even after 'repo.py promote' reports a successful merge, 'tasks.py move' claims the branch is not merged.

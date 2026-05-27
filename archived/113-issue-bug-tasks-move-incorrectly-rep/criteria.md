@@ -1,1 +1,0 @@
-- [x] Fix merge verification logic
