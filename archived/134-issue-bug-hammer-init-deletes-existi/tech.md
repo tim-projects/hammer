@@ -1,1 +1,0 @@
-hammer script calls tasks.py init which initializes the tasks worktree. The current implementation likely removes/overwrites .tasks unconditionally. Need to add existence check and protection.
