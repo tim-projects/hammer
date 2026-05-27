@@ -1,1 +1,0 @@
-As a developer, I want to rename the LIVE state to DONE throughout the Kilo codebase, so that the terminology better reflects that tasks have completed the full pipeline and are considered done rather than "live".
