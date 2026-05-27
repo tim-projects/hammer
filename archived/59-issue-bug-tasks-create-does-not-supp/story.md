@@ -1,3 +1,0 @@
-When creating a new task, the command line interface does not output in JSON format even when the -j flag is provided, violating the mandate that all CLI operations must be machine-parseable.
-
-**RESOLUTION**: Verified that `-j` works correctly when placed before the command (e.g., `python tasks.py -j create "Title" ...`). The issue was likely user error (placing -j after the subcommand). The -j flag is a global argument and must come before the subcommand.

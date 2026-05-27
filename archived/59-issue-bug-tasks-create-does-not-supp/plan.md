@@ -1,1 +1,0 @@
-1. 1. Investigate 'tasks.py' handling of -j flag in 'create' command. 2. Implement fix. 3. Verify with 'tasks list -j'.

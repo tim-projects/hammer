@@ -1,1 +1,0 @@
-The 'create' command implementation of argparse or the handler function seems to ignore or incorrectly handle the -j/--json flag.

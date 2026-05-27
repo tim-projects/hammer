@@ -1,1 +1,0 @@
-1. 1. Run 'python tasks.py -j create "Test Title" ...' (with required flags). 2. Observe that output is not in JSON format.
