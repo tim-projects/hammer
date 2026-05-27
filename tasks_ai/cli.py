@@ -20,6 +20,7 @@ from .constants import (
     ALLOWED_TRANSITIONS,
     ALLOWED_CONFIG_KEYS,
 )
+from .counter import TaskCounterProtector
 from .file_manager import FM
 from .context import ProjectContext
 from .git_client import GitClient
