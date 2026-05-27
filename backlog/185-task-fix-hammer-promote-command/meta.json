@@ -1,0 +1,8 @@
+{
+  "Id": 185,
+  "Ti": "Fix hammer promote command by aliasing to hammer tasks move",
+  "Cr": "260527 00:54",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "185-task-fix-hammer-promote-command"
+}
