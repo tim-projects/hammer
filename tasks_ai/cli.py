@@ -435,21 +435,6 @@ class TasksCLI:
                 if os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
                 raise e
-        else:
-            # For non-md files, use the original logic
-            if path is None:
-                self.error("DEBUG: _atomic_write path is None!")
-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-            try:
-                shutil.rmtree(temp_dir)
-                FM.dump(task_or_content, temp_dir)
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                os.rename(temp_dir, path)
-            except Exception as e:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
-                raise e
             os.replace(temp_path, path)
         else:
             # For non-md files, use the original logic
@@ -886,13 +871,13 @@ class TasksCLI:
         return None, None
 
     def _calculate_file_hash(self, filepath):
-        """Calculate SHA256 hash of a file"""
+        """Calculate MD5 hash of a file (lightweight, good for integrity checking)"""
         try:
-            hash_sha256 = hashlib.sha256()
+            hash_md5 = hashlib.md5()
             with open(filepath, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_sha256.update(chunk)
-            return hash_sha256.hexdigest()
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
         except Exception:
             return None
 
