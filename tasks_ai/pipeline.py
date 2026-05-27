@@ -170,7 +170,7 @@ class PipelineService:
         if not os.path.exists(hash_path):
             return False
 
-        hasher = hashlib.sha256()
+        hasher = hashlib.md5()
         try:
             with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
                 hasher.update(f1.read())
@@ -179,6 +179,6 @@ class PipelineService:
             return False
 
         with open(hash_path, "r") as f:
-            stored_hash = f.read().strip()
+            stored_hash = f.read().split()[0]
 
         return hasher.hexdigest() == stored_hash
