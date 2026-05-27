@@ -1,1 +1,0 @@
-As a developer, I want to ensure that all tasks have valid titles so that I can easily identify and manage them in the task list.
