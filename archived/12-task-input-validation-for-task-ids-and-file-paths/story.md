@@ -1,1 +1,0 @@
-As a user I want to ensure that all inputs are validated to prevent injection attacks and ensure data integrity.

@@ -1,1 +1,0 @@
-Validate task IDs against pattern ^[0-9]+-[a-z-]+$ and validate file paths before operations.
