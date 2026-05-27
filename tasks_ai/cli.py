@@ -405,66 +405,7 @@ class TasksCLI:
         return "task", name_part
 
     def _atomic_write(self, path, task_or_content):
-<<<<<<< HEAD
-        if path.endswith(".md"):
-            dir_name = os.path.dirname(path)
-            os.makedirs(dir_name, exist_ok=True)
-            fd, temp_path = tempfile.mkstemp(dir=dir_name, text=False)
-            try:
-                with os.fdopen(fd, "w") as f:
-                    if hasattr(task_or_content, "metadata"):
-                        FM.dump(task_or_content, f)
-                    else:
-                        if isinstance(task_or_content, str):
-                            f.write(task_or_content)
-                        else:
-                            f.write(task_or_content.decode("utf-8"))
-            except Exception as e:
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                raise e
-            os.replace(temp_path, path)
-        else:
-            # For non-md files, use the original logic
-            if path is None:
-                self.error("DEBUG: _atomic_write path is None!")
-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-            try:
-                shutil.rmtree(temp_dir)
-                FM.dump(task_or_content, temp_dir)
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                os.rename(temp_dir, path)
-            except Exception as e:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
-                raise e
-            os.replace(temp_path, path)
-        else:
-            # For non-md files, use the original logic
-            if path is None:
-                self.error("DEBUG: _atomic_write path is None!")
-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-            try:
-                shutil.rmtree(temp_dir)
-                FM.dump(task_or_content, temp_dir)
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                os.rename(temp_dir, path)
-            except Exception as e:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
-                raise e
-            os.replace(temp_path, path)
-            except Exception as e:
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                raise e
-            return
-
-=======
         """Write a task or content to a path atomically."""
->>>>>>> 185-task-fix-hammer-promote-command-by
         if path is None:
             self.error("DEBUG: _atomic_write path is None!")
             return
@@ -939,13 +880,13 @@ class TasksCLI:
 
 
     def _calculate_file_hash(self, filepath):
-        """Calculate MD5 hash of a file (lightweight, good for integrity checking)"""
+        """Calculate SHA256 hash of a file"""
         try:
-            hash_md5 = hashlib.md5()
+            hash_sha256 = hashlib.sha256()
             with open(filepath, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
-            return hash_md5.hexdigest()
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
         except Exception:
             return None
 
