@@ -22,44 +22,59 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
     Write task or raw content to path atomically.
     Supports both single-file tasks (.md) and multi-file task directories.
     """
-    if path.endswith(".md"):
+    if hasattr(task_or_content, "metadata"):
+        # It's a Task object
+        if path.endswith(".md"):
+            if fm:
+                fm.dump(task_or_content, path)
+            else:
+                from .file_manager import FM
+                FM.dump(task_or_content, path)
+        else:
+            # Directory-based task
+            parent_dir = os.path.dirname(path.rstrip("/"))
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            temp_dir = tempfile.mkdtemp(dir=parent_dir or ".")
+            try:
+                if fm:
+                    fm.dump(task_or_content, temp_dir)
+                else:
+                    from .file_manager import FM
+                    FM.dump(task_or_content, temp_dir)
+                
+                if os.path.exists(path):
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+                os.rename(temp_dir, path)
+            except Exception as e:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                raise e
+    else:
+        # It's raw content (string or bytes)
+        content = task_or_content
+        if not isinstance(content, str):
+            try:
+                content = content.decode("utf-8")
+            except (AttributeError, UnicodeDecodeError):
+                content = str(content)
+        
         dir_name = os.path.dirname(path)
         if dir_name:
             os.makedirs(dir_name, exist_ok=True)
-        fd, temp_path = tempfile.mkstemp(dir=dir_name or ".", text=False)
+        
+        fd, temp_path = tempfile.mkstemp(dir=dir_name or ".", text=True)
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                if hasattr(task_or_content, "metadata") and fm:
-                    # If it's a Task object and we have FM, use FM.dump logic
-                    # This is a bit circular, might need better abstraction
-                    fm.dump(task_or_content, path)
-                    return
-                else:
-                    if isinstance(task_or_content, str):
-                        f.write(task_or_content)
-                    else:
-                        f.write(task_or_content.decode("utf-8"))
+            with os.fdopen(fd, "w") as f:
+                f.write(content)
             os.replace(temp_path, path)
         except Exception as e:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
             raise e
-        return
-
-    # Directory-based task
-    temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")) or ".")
-    try:
-        shutil.rmtree(temp_dir)
-        if hasattr(task_or_content, "metadata") and fm:
-            fm.dump(task_or_content, temp_dir)
-        
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        os.rename(temp_dir, path)
-    except Exception as e:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        raise e
 
 def sync_task_content(cli, filepath, task, is_final=False) -> bool:
     """Sync task metadata with current branch commits and notes."""

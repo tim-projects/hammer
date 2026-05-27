@@ -405,38 +405,53 @@ class TasksCLI:
         return "task", name_part
 
     def _atomic_write(self, path, task_or_content):
-        if path.endswith(".md"):
+        """Write a task or content to a path atomically."""
+        if path is None:
+            self.error("DEBUG: _atomic_write path is None!")
+            return
+
+        if hasattr(task_or_content, "metadata"):
+            # It's a Task object, use FM.dump
+            if path.endswith(".md"):
+                FM.dump(task_or_content, path)
+            else:
+                # Directory-based task
+                parent_dir = os.path.dirname(path.rstrip("/"))
+                os.makedirs(parent_dir, exist_ok=True)
+                temp_dir = tempfile.mkdtemp(dir=parent_dir)
+                try:
+                    FM.dump(task_or_content, temp_dir)
+                    if os.path.exists(path):
+                        if os.path.isdir(path):
+                            shutil.rmtree(path)
+                        else:
+                            os.remove(path)
+                    os.rename(temp_dir, path)
+                except Exception as e:
+                    if os.path.exists(temp_dir):
+                        shutil.rmtree(temp_dir)
+                    raise e
+        else:
+            # It's raw content (string or bytes)
+            content = task_or_content
+            if not isinstance(content, str):
+                try:
+                    content = content.decode("utf-8")
+                except (AttributeError, UnicodeDecodeError):
+                    content = str(content)
+            
             dir_name = os.path.dirname(path)
-            os.makedirs(dir_name, exist_ok=True)
-            fd, temp_path = tempfile.mkstemp(dir=dir_name, text=False)
+            if dir_name:
+                os.makedirs(dir_name, exist_ok=True)
+            
+            fd, temp_path = tempfile.mkstemp(dir=dir_name or ".", text=True)
             try:
                 with os.fdopen(fd, "w") as f:
-                    if hasattr(task_or_content, "metadata"):
-                        FM.dump(task_or_content, f)
-                    else:
-                        if isinstance(task_or_content, str):
-                            f.write(task_or_content)
-                        else:
-                            f.write(task_or_content.decode("utf-8"))
+                    f.write(content)
+                os.replace(temp_path, path)
             except Exception as e:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-                raise e
-            os.replace(temp_path, path)
-        else:
-            # For non-md files, use the original logic
-            if path is None:
-                self.error("DEBUG: _atomic_write path is None!")
-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-            try:
-                shutil.rmtree(temp_dir)
-                FM.dump(task_or_content, temp_dir)
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                os.rename(temp_dir, path)
-            except Exception as e:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
                 raise e
 
     def log(self, message):
@@ -787,50 +802,73 @@ class TasksCLI:
         )
 
     def find_task(self, name):
+        """Find a task by its ID or filename."""
         if name is None:
             return None, None
         name = str(name)
         if not name or not self._validate_task_id(name):
             return None, None
+        
+        # If it looks like a numeric ID, prioritize finding by metadata ID
         task_id = name.rsplit(".", 1)[0]
-
+        
         matches = []
+        
+        # 1. Quick check: directory named EXACTLY task_id or starts with task_id + '-'
+        for state, folder in STATE_FOLDERS.items():
+            state_dir = os.path.join(self.tasks_path, folder)
+            if not os.path.exists(state_dir):
+                continue
+            
+            # Direct match
+            direct_path = os.path.join(state_dir, task_id)
+            if os.path.isdir(direct_path):
+                matches.append((direct_path, state))
+            
+            # Match by prefix (e.g. "123-task-name")
+            if task_id.isdigit():
+                prefix = f"{task_id}-"
+                for item in os.listdir(state_dir):
+                    if item.startswith(prefix):
+                        path = os.path.join(state_dir, item)
+                        if os.path.isdir(path):
+                            matches.append((path, state))
 
-        # When searching by numeric ID, prioritize metadata Id match over directory name
-        # This prevents finding corrupted directories with just numeric names
-        if task_id.isdigit():
+        # 2. Exhaustive check (only if no matches found yet and it's a numeric ID)
+        if not matches and task_id.isdigit():
             for state, folder in STATE_FOLDERS.items():
                 fp = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(fp):
                     continue
                 for item in os.listdir(fp):
+                    if item == ".gitkeep":
+                        continue
                     path = os.path.join(fp, item)
                     if os.path.isdir(path):
-                        task = FM.load(path)
-                        if str(task.metadata.get("Id")) == task_id:
-                            matches.append((path, state))
-
-        # Fallback: look for directory named exactly as task_id
-        if not matches:
-            for state, folder in STATE_FOLDERS.items():
-                dir_path = os.path.join(self.tasks_path, folder, task_id)
-                if os.path.isdir(dir_path):
-                    matches.append((dir_path, state))
+                        try:
+                            task = FM.load(path)
+                            if str(task.metadata.get("Id")) == task_id:
+                                matches.append((path, state))
+                        except Exception:
+                            continue
 
         if not matches:
             return None, None
 
+        # Prioritization: prefer non-ARCHIVED states if multiple matches
         selected = None
         if len(matches) == 1:
             selected = matches[0]
         else:
+            # Prefer active states
             for path, state in matches:
-                if state == "ARCHIVED":
-                    selected = (path, "ARCHIVED")
+                if state not in ("ARCHIVED", "REJECTED", "BACKLOG"):
+                    selected = (path, state)
                     break
             if not selected:
+                # Then prefer READY/BACKLOG
                 for path, state in matches:
-                    if state != "BACKLOG":
+                    if state in ("READY", "BACKLOG"):
                         selected = (path, state)
                         break
             if not selected:
@@ -839,6 +877,7 @@ class TasksCLI:
         if selected and self._validate_path(selected[0]):
             return selected
         return None, None
+
 
     def _calculate_file_hash(self, filepath):
         """Calculate SHA256 hash of a file"""
