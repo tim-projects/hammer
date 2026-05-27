@@ -711,3 +711,251 @@ index de93bd4..490911b 100644
  
          self.run_tasks(["move", str(task_id), "READY"])
          current = "READY"
+diff --git a/diff_debug.log b/diff_debug.log
+index cb72cd4..fed5be4 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -1,3 +1,4 @@
+ branch=150-task-harden-regression-audit-with-c, main_sha=7ba8f90dc9c4eb1ec195aa31fc7820bdc1ea6c26, diff_len=1810
+ branch=167-task-implement-stale-branch-detecti, main_sha=94131e9016ac551ca8dec8f878d43eb800682aba, diff_len=1237
+ branch=147-task-enable-task-unarchival-from-ar, main_sha=ffc24c7d3c3c7134c6a33317f7e48ba52dd30da8, diff_len=1853
++branch=184-task-test-recovery-from-scratch, main_sha=a0543a3bc62fa2fe4ab671fbced84d8e6c782b5a, diff_len=31479
+diff --git a/repo.py b/repo.py
+index 9b6949b..fb054d0 100755
+--- a/repo.py
++++ b/repo.py
+@@ -268,100 +268,146 @@ def cmd_promote(src_input, original_task_id=None):
+         src.split("-")[0] if src.split("-")[0].isdigit() else None
+     )
+ 
+-    current_status = None
++    # Determine target state based on current task state or branch
++    target_state = None
+     if task_id and TasksCLI:
+-        cli = (
+-            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+-            if TasksCLI
+-            else None
+-        )
++        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+         path, current_status = cli.find_task(task_id)
++        if path and current_status:
++            # Map current status to target state for promotion
++            status_to_target = {
++                "PROGRESSING": "TESTING",
++                "TESTING": "REVIEW",
++                "REVIEW": "STAGING",
++                "STAGING": "DONE",  # Note: DONE is the state after STAGING in the task workflow
++            }
++            target_state = status_to_target.get(current_status)
++    # Fallback for non-task branches or if we couldn't determine from task
++    if not target_state:
++        if src not in PIPELINE:
++            target_state = "testing"
++        else:
++            if src == "testing":
++                target_state = "staging"
++            elif src == "staging":
++                target_state = "main"
++            else:
++                target_state = "testing"  # default
++
++    # If target_state is determined, use tasks move to handle the transition
++    if task_id and target_state:
++        # Use the tasks move command to handle the state transition and branch merge
++        from tasks_ai.cli import TasksCLI
++        cli = TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"])
++        # Map target_state to the actual state string expected by tasks move
++        # Note: The tasks move command expects state names like TESTING, REVIEW, etc.
++        state_map = {
++            "testing": "TESTING",
++            "staging": "STAGING",
++            "main": "DONE",  # After STAGING comes DONE in task workflow
++        }
++        move_state = state_map.get(target_state, target_state.upper())
++        # We need to move the task to the target state
++        # But note: if we are moving to REVIEW, we don't want to auto-merge the branch yet?
++        # However, the tasks move command will handle the branch merge when moving to TESTING, STAGING, or DONE.
++        # For REVIEW, it will not merge the branch (as we saw when moving to REVIEW).
++        cli.move(task_id, move_state)
++        log(f"✅ Successfully promoted {src.upper()} → {target_state.upper()} via tasks move")
++        # If we moved to main (DONE), we should archive the task
++        if target_state == "main":
++            log(f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task.")
++            cli.move(task_id, "ARCHIVED")
++            run(["git", "branch", "-d", src], check=False)
++        elif target_state != "main":
++            log(
++                f"Task {task_id} moved to {target_state.upper()}. Run 'repo promote {src}' to continue."
++            )
++    else:
++        # Fallback to original logic for non-task branches
++        target = None
++        if task_id and TasksCLI and current_status:
++            if current_status in ["PROGRESSING"]:
++                target = "testing"
++            elif current_status == "TESTING":
++                target = "staging"
++            elif current_status == "REVIEW":
++                target = "staging"
++            elif current_status == "STAGING":
++                target = "main"
++
++        # Fallback to existing logic if no target found
++        if not target:
++            target = (
++                "testing"
++                if src not in PIPELINE
++                else ("staging" if src == "testing" else "main")
++            )
+ 
+-    target = None
+-    if task_id and TasksCLI and current_status:
+-        if current_status in ["PROGRESSING"]:
+-            target = "testing"
+-        elif current_status == "TESTING":
+-            target = "staging"
+-        elif current_status == "REVIEW":
+-            target = "staging"
+-        elif current_status == "STAGING":
+-            target = "main"
+-
+-    # Fallback to existing logic if no target found
+-    if not target:
+-        target = (
+-            "testing"
+-            if src not in PIPELINE
+-            else ("staging" if src == "testing" else "main")
+-        )
+-
+-    if src == target:
+-        info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
+-        return
++        if src == target:
++            info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
++            return
+ 
+-    # Perform gate checks
+-    if task_id and TasksCLI and path:
+-        if target in ("staging", "main"):
+-            if current_status == "TESTING":
+-                info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
+-                assert isinstance(cli, TasksCLI)
+-                cli.move(task_id, "REVIEW")
+-                error(
+-                    f"Task {task_id} moved to REVIEW for audit.",
+-                    hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.",
+-                )
+-            if current_status == "REVIEW":
+-                from tasks_ai.file_manager import FM
+-
+-                task = FM.load(path)
+-                if not task.metadata.get("Rc"):
++        # Perform gate checks (only for task branches, but we are in non-task branch fallback)
++        if task_id and TasksCLI and path:
++            if target in ("staging", "main"):
++                if current_status == "TESTING":
++                    info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
++                    assert isinstance(cli, TasksCLI)
++                    cli.move(task_id, "REVIEW")
+                     error(
+-                        "Regression check not passed.",
+-                        hint=f"Run 'tasks modify {task_id} --regression-check'.",
++                        f"Task {task_id} moved to REVIEW for audit.",
++                        hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.",
+                     )
+-    needs_move = False
+-    print(f"DEBUG: needs_move={needs_move}, target={target}")
+-    if task_id and TasksCLI and current_status:
+-        if target == "testing" and current_status == "PROGRESSING":
+-            needs_move = True
+-        elif target == "staging" and current_status == "REVIEW":
+-            needs_move = True
+-        elif target == "main":
+-            needs_move = True
+-    if src not in PIPELINE or needs_move:
+-        cmd_merge(src, target)
+-    if task_id and TasksCLI and needs_move:
+-        cli = (
+-            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+-            if TasksCLI
+-            else None
+-        )
+-        new_status = None
+-        if target == "testing":
+-            new_status = "TESTING"
+-        elif target == "staging":
+-            new_status = "STAGING"
+-        elif target == "main":
+-            new_status = "DONE"
+-        if new_status:
+-            status = cli.find_task(task_id)[1]
+-            if status != new_status:
+-                cli.move(task_id, new_status)
+-    log(f"✅ Successfully promoted {src.upper()} → {target.upper()}")
+-    if target == "main":
+-        log(f"Merged to main complete. Current branch: {get_current_branch()}")
+-    if target == "main" and task_id and TasksCLI:
+-        log(
+-            f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
+-        )
+-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=True)
+-        cli.move(task_id, "ARCHIVED")
+-        run(["git", "branch", "-d", src], check=False)
+-    if target != "main" and original_task_id is not None:
+-        log(
+-            f"Task {task_id} moved to {target.upper()}. Run 'repo promote {src}' to continue."
+-        )
++                if current_status == "REVIEW":
++                    from tasks_ai.file_manager import FM
++
++                    task = FM.load(path)
++                    if not task.metadata.get("Rc"):
++                        error(
++                            "Regression check not passed.",
++                            hint=f"Run 'tasks modify {task_id} --regression-check'.",
++                        )
++        needs_move = False
++        if task_id and TasksCLI and current_status:
++            if target == "testing" and current_status == "PROGRESSING":
++                needs_move = True
++            elif target == "staging" and current_status == "REVIEW":
++                needs_move = True
++            elif target == "main":
++                needs_move = True
++        if src not in PIPELINE or needs_move:
++            cmd_merge(src, target)
++        if task_id and TasksCLI and needs_move:
++            cli = (
++                TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
++                if TasksCLI
++                else None
++            )
++            new_status = None
++            if target == "testing":
++                new_status = "TESTING"
++            elif target == "staging":
++                new_status = "STAGING"
++            elif target == "main":
++                new_status = "DONE"
++            if new_status:
++                status = cli.find_task(task_id)[1]
++                if status != new_status:
++                    cli.move(task_id, new_status)
++        log(f"✅ Successfully promoted {src.upper()} → {target.upper()}")
++        if target == "main":
++            log(f"Merged to main complete. Current branch: {get_current_branch()}")
++        if target == "main" and task_id and TasksCLI:
++            log(
++                f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
++            )
++            cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=True)
++            cli.move(task_id, "ARCHIVED")
++            run(["git", "branch", "-d", src], check=False)
++        if target != "main" and original_task_id is not None:
++            log(
++                f"Task {task_id} moved to {target.upper()}. Run 'repo promote {src}' to continue."
++            )
+ 
+ 
+ def cmd_demote(task_id_input, target_state):
