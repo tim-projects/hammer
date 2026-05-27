@@ -1,1 +1,0 @@
-1. 1. Change branch base to main. 2. Move .task_counter to a global location. 3. Implement file-locking for .tasks operations.

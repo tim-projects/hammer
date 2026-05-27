@@ -1,1 +1,0 @@
-As a developer, I want Hammer tasks to be independent of branch structure and consistently trackable so that I can manage tasks without desync, nested branching, or ID corruption.
