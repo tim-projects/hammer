@@ -1,1 +1,0 @@
-Use pytest with isolated temporary repositories.
