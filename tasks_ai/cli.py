@@ -191,10 +191,13 @@ class TasksCLI:
 
     def _validate_task_id(self, task_id):
         """Validate task ID format (numeric or slug)."""
-        if not task_id:
+        if task_id is None:
+            return False
+        task_id_str = str(task_id)
+        if not task_id_str:
             return False
         # Allow numeric IDs or task slugs (e.g., "1-task-title")
-        return bool(re.match(r"^[a-zA-Z0-9\-_.]+$", task_id))
+        return bool(re.match(r"^[a-zA-Z0-9\-_.]+$", task_id_str))
 
     def _validate_path(self, path):
         """Ensure path is within tasks_path to prevent traversal."""
@@ -435,57 +438,6 @@ class TasksCLI:
                 if os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
                 raise e
-        else:
-            # For non-md files, use the original logic
-            if path is None:
-                self.error("DEBUG: _atomic_write path is None!")
-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-            try:
-                shutil.rmtree(temp_dir)
-                FM.dump(task_or_content, temp_dir)
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                os.rename(temp_dir, path)
-            except Exception as e:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
-                raise e
-            os.replace(temp_path, path)
-        else:
-            # For non-md files, use the original logic
-            if path is None:
-                self.error("DEBUG: _atomic_write path is None!")
-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-            try:
-                shutil.rmtree(temp_dir)
-                FM.dump(task_or_content, temp_dir)
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                os.rename(temp_dir, path)
-            except Exception as e:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
-                raise e
-            os.replace(temp_path, path)
-            except Exception as e:
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                raise e
-            return
-
-        if path is None:
-            self.error("DEBUG: _atomic_write path is None!")
-        temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
-        try:
-            shutil.rmtree(temp_dir)
-            FM.dump(task_or_content, temp_dir)
-            if os.path.exists(path):
-                shutil.rmtree(path)
-            os.rename(temp_dir, path)
-        except Exception as e:
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
-            raise e
 
     def log(self, message):
         if self.as_json:
@@ -835,6 +787,9 @@ class TasksCLI:
         )
 
     def find_task(self, name):
+        if name is None:
+            return None, None
+        name = str(name)
         if not name or not self._validate_task_id(name):
             return None, None
         task_id = name.rsplit(".", 1)[0]
