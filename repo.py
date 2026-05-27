@@ -263,20 +263,46 @@ def cmd_commit(message):
 
 
 def cmd_promote(src_input, original_task_id=None):
+    """
+    Promote a branch through the pipeline.
+    This is now an alias for 'hammer tasks move' with appropriate state mapping.
+    """
+    print("DEBUG: Our new cmd_promote is being called")  # Debug line
     src = resolve_branch(src_input)
     task_id = original_task_id or (
         src.split("-")[0] if src.split("-")[0].isdigit() else None
     )
 
-    current_status = None
+    # For task branches, we need to determine the next state in the workflow
+    # For non-task branches, we fall back to the original pipeline logic
     if task_id and TasksCLI:
-        cli = (
-            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
-            if TasksCLI
-            else None
-        )
+        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
         path, current_status = cli.find_task(task_id)
-
+        if path and current_status:
+            # Map current status to the next state for promotion
+            # Note: The workflow is BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED
+            status_to_next_state = {
+                "PROGRESSING": "TESTING",
+                "TESTING": "REVIEW",
+                "REVIEW": "STAGING",
+                "STAGING": "DONE",
+                # Note: We don't handle BACKLOG or READY here as they're not typically "promoted"
+                # but if needed, they would map to READY and PROGRESSING respectively
+            }
+            next_state = status_to_next_state.get(current_status)
+            if next_state:
+                # Use tasks move to handle the transition
+                cli.move(task_id, next_state)
+                log(f"✅ Successfully promoted {src.upper()} → {next_state.upper()} via tasks move")
+                # If we moved to DONE (which comes after STAGING), we should archive the task
+                if next_state == "DONE":
+                    log(f"Task {task_id} successfully promoted to DONE. Auto-archiving branch and task.")
+                    cli.move(task_id, "ARCHIVED")
+                    run(["git", "branch", "-d", src], check=False)
+                return
+            # If we couldn't determine next state, fall through to non-task logic
+    
+    # Fallback to original logic for non-task branches or if we couldn't determine task state
     target = None
     if task_id and TasksCLI and current_status:
         if current_status in ["PROGRESSING"]:
@@ -321,7 +347,6 @@ def cmd_promote(src_input, original_task_id=None):
                         hint=f"Run 'tasks modify {task_id} --regression-check'.",
                     )
     needs_move = False
-    print(f"DEBUG: needs_move={needs_move}, target={target}")
     if task_id and TasksCLI and current_status:
         if target == "testing" and current_status == "PROGRESSING":
             needs_move = True
