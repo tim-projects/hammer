@@ -5,6 +5,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "184-task-test-recovery-from-scratch",
-  "Rc": "",
-  "Vp": true
+  "Rc": true,
+  "Vp": true,
+  "Tp": false
 }
