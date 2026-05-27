@@ -100,7 +100,12 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
             hint += " Use 'hammer tasks delete <id>' to permanently remove the task."
         if is_merged_branch:
             hint += "\nNote: Branch is merged to main. You can archive this task directly."
-        cli.error(f"Forbidden transition: {current_state} -> {new_status}", hint=hint)
+        cli.error(
+            f"Forbidden transition: {current_state} -> {new_status}",
+            hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. "
+                 f"Pipeline flow: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. "
+                 f"Do not bypass this tool."
+        )
 
     # Gates and Validations
     if current_state == "TESTING" and new_status == "REVIEW":
