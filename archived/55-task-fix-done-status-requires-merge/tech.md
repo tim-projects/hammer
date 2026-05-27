@@ -1,1 +1,0 @@
-Add merge check in cli.py move logic for LIVE status similar to ARCHIVED check. Verify branch is ancestor of main before allowing move to LIVE.

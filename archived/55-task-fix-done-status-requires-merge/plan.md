@@ -1,1 +1,0 @@
-1. Add merge check for LIVE in move_logic
