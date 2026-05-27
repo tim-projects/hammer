@@ -1,1 +1,0 @@
-As a developer I want the tasks-ai tool to delegate git operations to the repo tool.
