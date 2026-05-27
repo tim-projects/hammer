@@ -6,6 +6,6 @@
   "Pr": 2,
   "Br": "185-task-fix-hammer-promote-command-by",
   "Vp": true,
-  "Rc": true,
-  "Tp": false
+  "Rc": "",
+  "Tp": true
 }
