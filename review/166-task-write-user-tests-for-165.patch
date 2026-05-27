@@ -1,0 +1,173 @@
+diff --git a/diff_debug.log b/diff_debug.log
+index cb72cd4..7a7f4ba 100644
+--- a/diff_debug.log
++++ b/diff_debug.log
+@@ -1,3 +1,5 @@
+ branch=150-task-harden-regression-audit-with-c, main_sha=7ba8f90dc9c4eb1ec195aa31fc7820bdc1ea6c26, diff_len=1810
+ branch=167-task-implement-stale-branch-detecti, main_sha=94131e9016ac551ca8dec8f878d43eb800682aba, diff_len=1237
+ branch=147-task-enable-task-unarchival-from-ar, main_sha=ffc24c7d3c3c7134c6a33317f7e48ba52dd30da8, diff_len=1853
++branch=184-task-test-recovery-from-scratch, main_sha=a0543a3bc62fa2fe4ab671fbced84d8e6c782b5a, diff_len=31479
++branch=184-task-test-recovery-from-scratch, main_sha=a0543a3bc62fa2fe4ab671fbced84d8e6c782b5a, diff_len=42413
+diff --git a/repo.py b/repo.py
+index 9b6949b..0d48fd9 100755
+--- a/repo.py
++++ b/repo.py
+@@ -263,20 +263,46 @@ def cmd_commit(message):
+ 
+ 
+ def cmd_promote(src_input, original_task_id=None):
++    """
++    Promote a branch through the pipeline.
++    This is now an alias for 'hammer tasks move' with appropriate state mapping.
++    """
++    print("DEBUG: Our new cmd_promote is being called")  # Debug line
+     src = resolve_branch(src_input)
+     task_id = original_task_id or (
+         src.split("-")[0] if src.split("-")[0].isdigit() else None
+     )
+ 
+-    current_status = None
++    # For task branches, we need to determine the next state in the workflow
++    # For non-task branches, we fall back to the original pipeline logic
+     if task_id and TasksCLI:
+-        cli = (
+-            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+-            if TasksCLI
+-            else None
+-        )
++        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+         path, current_status = cli.find_task(task_id)
+-
++        if path and current_status:
++            # Map current status to the next state for promotion
++            # Note: The workflow is BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED
++            status_to_next_state = {
++                "PROGRESSING": "TESTING",
++                "TESTING": "REVIEW",
++                "REVIEW": "STAGING",
++                "STAGING": "DONE",
++                # Note: We don't handle BACKLOG or READY here as they're not typically "promoted"
++                # but if needed, they would map to READY and PROGRESSING respectively
++            }
++            next_state = status_to_next_state.get(current_status)
++            if next_state:
++                # Use tasks move to handle the transition
++                cli.move(task_id, next_state)
++                log(f"✅ Successfully promoted {src.upper()} → {next_state.upper()} via tasks move")
++                # If we moved to DONE (which comes after STAGING), we should archive the task
++                if next_state == "DONE":
++                    log(f"Task {task_id} successfully promoted to DONE. Auto-archiving branch and task.")
++                    cli.move(task_id, "ARCHIVED")
++                    run(["git", "branch", "-d", src], check=False)
++                return
++            # If we couldn't determine next state, fall through to non-task logic
++    
++    # Fallback to original logic for non-task branches or if we couldn't determine task state
+     target = None
+     if task_id and TasksCLI and current_status:
+         if current_status in ["PROGRESSING"]:
+@@ -321,7 +347,6 @@ def cmd_promote(src_input, original_task_id=None):
+                         hint=f"Run 'tasks modify {task_id} --regression-check'.",
+                     )
+     needs_move = False
+-    print(f"DEBUG: needs_move={needs_move}, target={target}")
+     if task_id and TasksCLI and current_status:
+         if target == "testing" and current_status == "PROGRESSING":
+             needs_move = True
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index e1e6ec1..8ebf483 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -191,10 +191,13 @@ class TasksCLI:
+ 
+     def _validate_task_id(self, task_id):
+         """Validate task ID format (numeric or slug)."""
+-        if not task_id:
++        if task_id is None:
++            return False
++        task_id_str = str(task_id)
++        if not task_id_str:
+             return False
+         # Allow numeric IDs or task slugs (e.g., "1-task-title")
+-        return bool(re.match(r"^[a-zA-Z0-9\-_.]+$", task_id))
++        return bool(re.match(r"^[a-zA-Z0-9\-_.]+$", task_id_str))
+ 
+     def _validate_path(self, path):
+         """Ensure path is within tasks_path to prevent traversal."""
+@@ -435,57 +438,6 @@ class TasksCLI:
+                 if os.path.exists(temp_dir):
+                     shutil.rmtree(temp_dir)
+                 raise e
+-        else:
+-            # For non-md files, use the original logic
+-            if path is None:
+-                self.error("DEBUG: _atomic_write path is None!")
+-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
+-            try:
+-                shutil.rmtree(temp_dir)
+-                FM.dump(task_or_content, temp_dir)
+-                if os.path.exists(path):
+-                    shutil.rmtree(path)
+-                os.rename(temp_dir, path)
+-            except Exception as e:
+-                if os.path.exists(temp_dir):
+-                    shutil.rmtree(temp_dir)
+-                raise e
+-            os.replace(temp_path, path)
+-        else:
+-            # For non-md files, use the original logic
+-            if path is None:
+-                self.error("DEBUG: _atomic_write path is None!")
+-            temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
+-            try:
+-                shutil.rmtree(temp_dir)
+-                FM.dump(task_or_content, temp_dir)
+-                if os.path.exists(path):
+-                    shutil.rmtree(path)
+-                os.rename(temp_dir, path)
+-            except Exception as e:
+-                if os.path.exists(temp_dir):
+-                    shutil.rmtree(temp_dir)
+-                raise e
+-            os.replace(temp_path, path)
+-            except Exception as e:
+-                if os.path.exists(temp_path):
+-                    os.remove(temp_path)
+-                raise e
+-            return
+-
+-        if path is None:
+-            self.error("DEBUG: _atomic_write path is None!")
+-        temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
+-        try:
+-            shutil.rmtree(temp_dir)
+-            FM.dump(task_or_content, temp_dir)
+-            if os.path.exists(path):
+-                shutil.rmtree(path)
+-            os.rename(temp_dir, path)
+-        except Exception as e:
+-            if os.path.exists(temp_dir):
+-                shutil.rmtree(temp_dir)
+-            raise e
+ 
+     def log(self, message):
+         if self.as_json:
+@@ -835,6 +787,9 @@ class TasksCLI:
+         )
+ 
+     def find_task(self, name):
++        if name is None:
++            return None, None
++        name = str(name)
+         if not name or not self._validate_task_id(name):
+             return None, None
+         task_id = name.rsplit(".", 1)[0]
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index df88446..e1a3e97 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -1,3 +1,4 @@
++from tasks_ai.file_manager import FM
+ import os
+ import shutil
+ import tempfile
