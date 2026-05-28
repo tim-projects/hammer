@@ -123,11 +123,34 @@ class TasksCLI:
     def _tasks_directory_has_data(self, path):
         return os.path.exists(path) and len(os.listdir(path)) > 0
     
-    def find_task(self, filename):
-        from .file_manager import FM
+    def init(self, force=False):
+        from .commands import cleanup
+        # Clean up non-worktree .tasks if exists
+        if os.path.exists(self.tasks_path):
+            # Safety check: create a backup
+            if self._tasks_directory_has_data(self.tasks_path):
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                backup_path = f"/tmp/.tasks.bak_{timestamp}"
+                os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+                self.log(f"Backing up existing .tasks to {backup_path}...")
+                shutil.copytree(self.tasks_path, backup_path)
+            
+            if not force:
+                self.error("Tasks directory already exists. Use --force to reinitialize.")
+            
+            shutil.rmtree(self.tasks_path)
+        
+        os.makedirs(self.tasks_path, exist_ok=True)
+        # Initialize internal state folders
         from .constants import STATE_FOLDERS
-        for _, folder in STATE_FOLDERS.items():
-            path = os.path.join(self.tasks_path, folder, filename)
-            if os.path.exists(path):
-                return path, FM.load(path)
-        return None, None
+        for folder in STATE_FOLDERS.values():
+            os.makedirs(os.path.join(self.tasks_path, folder), exist_ok=True)
+            with open(os.path.join(self.tasks_path, folder, ".gitkeep"), "w") as f:
+                f.write("")
+        
+        # Initialize counter
+        with open(os.path.join(self.tasks_path, ".task_counter"), "w") as f:
+            f.write("0")
+        
+        self.log(f"Tasks initialized at {self.tasks_path}")
