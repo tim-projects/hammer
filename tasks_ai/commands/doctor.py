@@ -1,12 +1,18 @@
 import os
-import json
 import re
 import shutil
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
-from ..models import Task
-from ..utils import parse_filename
 
+def extract_id_from_string(s):
+    """Extract numeric ID from string if it starts with digits followed by hyphen"""
+    if not s or not isinstance(s, str):
+        return None
+    if "-" in s:
+        parts = s.split("-", 1)
+        if parts[0].isdigit():
+            return int(parts[0])
+    return None
 
 def run(cli, fix=False):
     """Execution logic for 'tasks doctor'."""
@@ -33,16 +39,6 @@ def run(cli, fix=False):
 """
         cli._atomic_write(bug_path, content)
         return bug_filename
-
-    def extract_id_from_string(s):
-        """Extract numeric ID from string if it starts with digits followed by hyphen"""
-        if not s or not isinstance(s, str):
-            return None
-        if "-" in s:
-            parts = s.split("-", 1)
-            if parts[0].isdigit():
-                return int(parts[0])
-        return None
 
     # Check each state folder for inconsistencies
     for state, folder in STATE_FOLDERS.items():
@@ -72,17 +68,13 @@ def run(cli, fix=False):
             
             # Determine what the correct ID should be (priority: metadata.Id > metadata.Br > directory name)
             correct_id = None
-            id_source = None
             
             if metadata_id and str(metadata_id).isdigit():
                 correct_id = int(metadata_id)
-                id_source = "metadata.Id"
             elif branch_id is not None:
                 correct_id = branch_id
-                id_source = "metadata.Br"
             elif dir_id is not None:
                 correct_id = dir_id
-                id_source = "directory name"
             
             # If we can't determine a correct ID, skip this task
             if correct_id is None:
@@ -159,7 +151,6 @@ def run(cli, fix=False):
                 
                 # Git operations to record the fixes
                 try:
-                    rel_path = os.path.relpath(item_path, cli.tasks_path)
                     cli._run_git(["add", "--all"], cwd=cli.tasks_path)
                     cli._run_git(["commit", "--allow-empty", "-m", f"Doctor: fixed task inconsistencies for {correct_dir_name}"], cwd=cli.tasks_path)
                 except Exception as e:
@@ -171,7 +162,7 @@ def run(cli, fix=False):
                     bugs.append({
                         "id": f"{state}-{item}-{field}",
                         "title": f"Task {field} mismatch: {item}",
-                        "repro": f"Run 'hammer tasks list' to see task ID/branch mismatches",
+                        "repro": "Run 'hammer tasks list' to see task ID/branch mismatches",
                         "expected": f"{field} should be '{expected}'",
                         "actual": f"{field} is '{actual}'",
                     })

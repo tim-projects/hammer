@@ -21,13 +21,12 @@ class TestInitBackup(unittest.TestCase):
         if os.path.exists(self.dev_tasks):
             shutil.rmtree(self.dev_tasks)
         # Clean up /tmp backups created by the test
-        repo_name = os.path.basename(self.repo_root)
-        backup_dir = f"/tmp/{repo_name}"
-        if os.path.exists(backup_dir):
-            shutil.rmtree(backup_dir)
+        # Backups are created in /tmp/.tasks.bak_...
+        import glob
+        for f in glob.glob("/tmp/.tasks.bak_*"):
+            shutil.rmtree(f)
 
     def test_init_creates_backup(self):
-        repo_name = os.path.basename(self.repo_root)
 
         # Run hammer init --dev
         subprocess.run(["./hammer", "tasks", "--dev", "init"], check=True)

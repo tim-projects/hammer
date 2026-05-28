@@ -1,5 +1,4 @@
 import os
-import hashlib
 
 class TaskCounterProtector:
     """Protects and manages the task counter with hash verification and recovery."""

@@ -1,6 +1,4 @@
 import os
-import shutil
-import textwrap
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename

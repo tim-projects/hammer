@@ -18,11 +18,16 @@ def run(cli, title, task_type="task", priority=None, story=None, tech=None, crit
         cli.log("Note: --branch flag is ignored; branch names are auto-generated from title.")
     
     missing = []
-    if not story: missing.append("--story")
-    if not tech: missing.append("--tech")
-    if not criteria: missing.append("--criteria")
-    if not plan: missing.append("--plan")
-    if task_type == "issue" and not repro: missing.append("--repro")
+    if not story:
+        missing.append("--story")
+    if not tech:
+        missing.append("--tech")
+    if not criteria:
+        missing.append("--criteria")
+    if not plan:
+        missing.append("--plan")
+    if task_type == "issue" and not repro:
+        missing.append("--repro")
     
     if missing:
         cli.error(

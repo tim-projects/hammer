@@ -56,10 +56,14 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
 
     if notes or progress or findings or mitigations:
         n = task.parts.get("notes", "- Progress: \n- Findings: \n- Mitigations: \n")
-        if notes: n = notes
-        if progress: n = re.sub(r"- Progress:.*", f"- Progress: {progress}", n)
-        if findings: n = re.sub(r"- Findings:.*", f"- Findings: {findings}", n)
-        if mitigations: n = re.sub(r"- Mitigations:.*", f"- Mitigations: {mitigations}", n)
+        if notes:
+            n = notes
+        if progress:
+            n = re.sub(r"- Progress:.*", f"- Progress: {progress}", n)
+        if findings:
+            n = re.sub(r"- Findings:.*", f"- Findings: {findings}", n)
+        if mitigations:
+            n = re.sub(r"- Mitigations:.*", f"- Mitigations: {mitigations}", n)
         task.parts["notes"] = n
         updated = True
 

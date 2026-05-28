@@ -1,12 +1,11 @@
 # tasks_ai/cli.py
 import os
-import sys  # type: ignore[attr-defined]
+import sys
 import subprocess
 import tempfile
 import re
 import json
 import shutil
-import fcntl
 import hashlib
 from typing import cast
 from datetime import datetime, timedelta
@@ -18,7 +17,6 @@ from .constants import (
     CURRENT_TASK_FILENAME,
     STATE_FOLDERS,
     ALLOWED_TRANSITIONS,
-    ALLOWED_CONFIG_KEYS,
 )
 from .counter import TaskCounterProtector
 from .file_manager import FM
@@ -663,7 +661,6 @@ class TasksCLI:
                 # Safety check: create a backup
                 if self._tasks_directory_has_data(self.tasks_path):
                     from datetime import datetime
-                    repo_name = os.path.basename(self.root.rstrip('/'))
                     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                     backup_path = f"/tmp/.tasks.bak_{timestamp}"
                     os.makedirs(os.path.dirname(backup_path), exist_ok=True)
@@ -971,9 +968,9 @@ class TasksCLI:
             except Exception:
                 pass  # Fail silently for remote check
             
-            return max_id if max_id > 0 else None
+            return max_id
         except Exception:
-            return None
+            return 0
 
     def _get_next_id(self):
         """Get the next task ID with protection and recovery mechanisms"""
@@ -1133,58 +1130,6 @@ class TasksCLI:
     def link(self, filename, blocked_by_filename):
         from .commands import link as link_cmd
         link_cmd.run(self, filename, blocked_by_filename)
-
-        return "main"
-
-
-        if os.path.abspath(f1_str) == os.path.abspath(f2_str):
-            self.error("Cannot link a task to itself.")
-
-        f1_fname = os.path.basename(f1_str)
-        f2_fname = os.path.basename(f2_str)
-
-        task = FM.load(f1_str)
-        task_title = str(task.metadata.get("Ti", ""))
-        task_id_num = str(task.metadata.get("Id", ""))
-        tt, _ = self._parse_filename(f1_fname)
-        bl = task.metadata.get("Bl", [])
-        if not isinstance(bl, list):
-            bl = []
-        b_name = f2_fname
-        b_task = FM.load(f2_str)
-        b_title = str(b_task.metadata.get("Ti", ""))
-        b_id = str(b_task.metadata.get("Id", ""))
-        b_tt, _ = self._parse_filename(f2_fname)
-
-        # Check for circular dependency
-        if self._has_path(b_id, task_id_num):
-            self.error(
-                f"Circular dependency detected: linking '{filename}' -> '{blocked_by_filename}' "
-                f"would create a cycle. Task {b_id} already depends on task {task_id_num}."
-            )
-
-        if b_name not in bl:
-            bl.append(b_name)
-            task.metadata["Bl"] = bl
-            self._atomic_write(f1_str, task)
-            self._append_log(f1_str, "Lk")
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "--allow-empty", "-m", f"Lk {filename}->{b_name}"],
-                cwd=self.tasks_path,
-            )
-            self.log(
-                f"Linked: [{task_id_num}] {tt} | {task_title} -> [{b_id}] {b_tt} | {b_title}"
-            )
-        self.finish(
-            {
-                "id": task_id_num,
-                "task_id": filename,
-                "title": task_title,
-                "linked_to": b_name,
-                "linked_to_title": b_title,
-            }
-        )
 
     def move(self, filename, new_status, yes=False):
         from .commands import move as move_cmd
@@ -1399,78 +1344,6 @@ class TasksCLI:
             else:
                 print("Cancelled.")
 
-    def cleanup(self, dry_run=False, yes=False):
-        from .commands import cleanup as cleanup_cmd
-        cleanup_cmd.run(self, dry_run=dry_run, yes=yes)
-            # Respect workflow gates: only clean up branches for DONE, DONE, or REJECTED tasks
-            # (ARCHIVED tasks should also be cleaned up - they completed the pipeline)
-
-        if action == "detect":
-            detected = self._detect_tools()
-            if save and detected:
-                cfg = load_config()
-                for k, v in detected.items():
-                    key_name = (
-                        f"repo.{k}"
-                        if k in ["lint", "test", "type_check", "format"]
-                        else k
-                    )
-                    if v:
-                        cfg[key_name] = v
-                save_config(cfg)
-                if self.as_json:
-                    self.finish({"detected": detected, "saved": True})
-                else:
-                    print("Configuration saved.")
-            elif self.as_json:
-                self.finish({"detected": detected})
-            return
-
-        cfg = load_config()
-
-        if action == "list":
-            if self.as_json:
-                self.finish(cfg)
-            else:
-                if cfg:
-                    print("Configuration:")
-                    for k, v in cfg.items():
-                        print(f"  {k} = {v}")
-                else:
-                    print("No configuration found.")
-                print("\nRun 'config detect' to auto-detect project tools.")
-        elif action == "get":
-            if not key:
-                self.error("Missing config key.")
-            if self.as_json:
-                self.finish({"key": key, "value": cfg.get(key)})
-            else:
-                print(cfg.get(key, ""))
-        elif action == "set":
-            if not key or value is None:
-                self.error("Missing config key or value.")
-            if key not in ALLOWED_CONFIG_KEYS:
-                self.error(
-                    f"Invalid config key '{key}'.",
-                    hint=f"Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}. Use 'hammer tasks config detect' to auto-detect tools.",
-                )
-            cfg[key] = value
-            save_config(cfg)
-            if self.as_json:
-                self.finish({"key": key, "value": value})
-            else:
-                print(f"Set {key} = {value}")
-        else:
-            if self.as_json:
-                self.finish({"actions": ["get", "set", "list", "detect"]})
-            else:
-                print("Usage: tasks config [get|set|list|detect] [key] [value]")
-                print("  get <key>     - Get config value")
-                print("  set <key> <val> - Set config value")
-                print("  list          - List all config")
-                print("  detect        - Detect project tools and create config")
-
-    def _detect_tools(self):
         """Detect project type and suggest/create config."""
         detected = {}
 
@@ -1786,3 +1659,7 @@ class TasksCLI:
     def doctor(self, fix=False):
         from .commands import doctor as doctor_cmd
         doctor_cmd.run(self, fix=fix)
+
+    def config(self, action=None, key=None, value=None, save=False):
+        from .commands import config as config_cmd
+        config_cmd.run(self, action=action, key=key, value=value, save=save)

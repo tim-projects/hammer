@@ -18,6 +18,8 @@ class HammerTestBase(unittest.TestCase):
         self.script_path = os.path.join(self.repo_path, "tasks.py")
 
         os.makedirs(os.path.join(self.repo_path, ".tasks"), exist_ok=True)
+        with open(os.path.join(self.repo_path, ".tasks", ".task_counter"), "w") as f:
+            f.write("0")
         with open(os.path.join(self.repo_path, ".tasks", "config.yaml"), "w") as f:
             json.dump(
                 {

@@ -1,4 +1,3 @@
-import os
 from ..constants import KEY_MAP, ALLOWED_CONFIG_KEYS, load_config, save_config
 
 def run(cli, action=None, key=None, value=None, save=False):

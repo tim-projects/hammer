@@ -12,7 +12,6 @@ class ProjectContext:
         self.repo_root = self._get_git_root()
         self.main_repo_root = self._get_main_repo_root()
         self.is_worktree = os.path.normpath(self.repo_root) != os.path.normpath(self.main_repo_root)
-        repo_name = os.path.basename(self.main_repo_root)
         
         # Determine the base tasks directory
         if self.dev:

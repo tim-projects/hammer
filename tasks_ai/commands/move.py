@@ -163,7 +163,8 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     branch_sha = branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
     if not branch_sha:
         res = cli._run_git(["log", "-1", "--format=%H", branch])
-        if res.returncode == 0: branch_sha = res.stdout.strip()
+        if res.returncode == 0:
+            branch_sha = res.stdout.strip()
 
     if new_status == "PROGRESSING" and not branch_sha:
         has_origin = cli._run_git(["remote", "get-url", "origin"]).returncode == 0
@@ -192,14 +193,18 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     if new_status == "TESTING":
         from repo import cmd_promote, FLAGS
         FLAGS.update({"yes": yes, "quiet": cli.quiet, "json": True, "dev": cli.dev})
-        try: cmd_promote(branch)
-        except Exception as e: cli.error(f"Promotion failed: {e}")
+        try:
+            cmd_promote(branch)
+        except Exception as e:
+            cli.error(f"Promotion failed: {e}")
     
     if new_status == "ARCHIVED":
         cli._run_git(["add", "--all"], cwd=cli.tasks_path)
         cli._run_git(["commit", "-m", f"Archive [{task.metadata.get('Id')}] {task.metadata.get('Ti')}"], cwd=cli.tasks_path)
-        try: cli._push_tasks_branch("tasks", fatal=False)
-        except: pass
+        try:
+            cli._push_tasks_branch("tasks", fatal=False)
+        except Exception:
+            pass
     else:
         cli._run_git(["add", "--all"], cwd=cli.tasks_path)
         cli._run_git(["commit", "--allow-empty", "-m", f"Mv {os.path.basename(filepath_str)} -> {new_status}"], cwd=cli.tasks_path)

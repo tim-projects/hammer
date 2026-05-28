@@ -20,7 +20,9 @@ class TestAllTransitions(HammerTestBase):
                 "Sufficiently long planning details here to pass validation",
             ]
         )
-        print("DEBUG: CREATE RES:", res.stdout); task_id = json.loads(res.stdout).get("data", {}).get("id"); print(f"DEBUG: Task ID is {task_id}")
+        print("DEBUG: CREATE RES:", res.stdout)
+        task_id = json.loads(res.stdout).get("data", {}).get("id") 
+        print(f"DEBUG: Task ID is {task_id}")
 
         self.run_tasks(["move", str(task_id), "READY"])
         current = "READY"

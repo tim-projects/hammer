@@ -311,9 +311,9 @@ if __name__ == "__main__":
         cli.config(args.action, args.key, args.value, save=args.save)
     elif args.command == "upgrade":
         cli.upgrade()
+    elif args.command == "verify":
         cli.verify(args.id, args.proof)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)
+    elif args.command == "undo":
         cli.undo(args.filename)
-    elif args.command == "doctor":
-        cli.doctor(fix=args.fix)
