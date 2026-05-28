@@ -3,7 +3,7 @@ __version__ = "0.1.0"
 
 import argparse
 import sys
-from tasks_ai.cli import TasksCLI
+from tasks_ai.cli_engine import TasksCLI
 from tasks_ai.help_text import get_help_text
 
 if __name__ == "__main__":

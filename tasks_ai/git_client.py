@@ -61,9 +61,17 @@ class GitClient:
         elif cmd == "worktree" and "add" in args:
             self.log(f"Git: Added worktree at '{args[args.index('add') + 1]}'")
 
-    def get_current_branch(self) -> str:
-        res = self.run(["rev-parse", "--abbrev-ref", "HEAD"])
-        return res.stdout.strip()
+    def get_current_branch(self):
+        result = self.run(["rev-parse", "--abbrev-ref", "HEAD"])
+        return result.stdout.strip()
+
+    def get_default_branch(self):
+        # Fallback to 'main' if origin/HEAD cannot be determined
+        result = self.run(["symbolic-ref", "refs/remotes/origin/HEAD"])
+        if result.returncode == 0:
+            return result.stdout.strip().replace("refs/remotes/origin/", "")
+        return "main"
+
 
     def is_merged(self, branch: str, target: str = "main") -> bool:
         res = self.run(["branch", "--merged", target])
