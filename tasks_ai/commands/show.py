@@ -3,6 +3,7 @@ from ..constants import KEY_MAP, CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
 
+
 def run(cli, filename, section=None):
     """Execution logic for 'tasks show'."""
     filepath, _ = cli.find_task(filename)
@@ -16,20 +17,18 @@ def run(cli, filename, section=None):
     task = FM.load(filepath_str)
     tn = os.path.basename(filepath_str)
     tt, br = parse_filename(tn)
-    
+
     data = {
         "file": os.path.relpath(filepath_str, cli.root),
         "name": tn,
         "type": tt,
         "branch": br,
-        "metadata": {
-            str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()
-        },
+        "metadata": {str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()},
         "log_file": os.path.relpath(
             os.path.join(filepath_str, "activity.log"), cli.root
         ),
     }
-    
+
     dp = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
     if os.path.exists(dp):
         d = FM.load(dp)
@@ -57,14 +56,18 @@ def run(cli, filename, section=None):
                 title, content = section_map[section]
                 print(f"## {title}\n{content}")
             else:
-                cli.error(f"Unknown section '{section}'. Valid sections: {', '.join(section_map.keys())}")
+                cli.error(
+                    f"Unknown section '{section}'. Valid sections: {', '.join(section_map.keys())}"
+                )
         else:
-            meta = data['metadata']
-            print(f"# TASK: {meta.get('Title', data['name'])}\n"
-                  f"- **Id**: {meta.get('Id', '')} | **State**: {meta.get('State', '')} | **Priority**: {meta.get('Priority', '')}\n"
-                  f"- **File**: `{data['file']}`\n"
-                  f"- **Type**: {data['type']} | **Branch**: `{data['branch']}`")
-            
+            meta = data["metadata"]
+            print(
+                f"# TASK: {meta.get('Title', data['name'])}\n"
+                f"- **Id**: {meta.get('Id', '')} | **State**: {meta.get('State', '')} | **Priority**: {meta.get('Priority', '')}\n"
+                f"- **File**: `{data['file']}`\n"
+                f"- **Type**: {data['type']} | **Branch**: `{data['branch']}`"
+            )
+
             print(f"\n## Story\n{task.parts.get('story', 'No story')}")
             print(f"\n## Technical\n{task.parts.get('tech', 'No technical details')}")
             print(f"\n## Criteria\n{task.parts.get('criteria', 'No criteria')}")

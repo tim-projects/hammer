@@ -107,3 +107,16 @@ class FM:
             if content is None:
                 continue
             _atomic_write(os.path.join(path, f"{name}.md"), content)
+
+    @staticmethod
+    def append_log(path, message, section="progress"):
+        """Append a message to a specific section of a task."""
+        task = FM.load(path)
+        current = task.parts.get(section, "")
+        if current and not current.endswith("\n"):
+            current += "\n"
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        task.parts[section] = f"{current}[{timestamp}] {message}\n"
+        FM.dump(task, path)

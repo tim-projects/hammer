@@ -128,3 +128,31 @@ def test_link_tasks(setup_tasks):
     task = FM.load(path)
     # TasksCLI.link adds the branch name or Id to 'Bl' list
     assert any("2" in b for b in task.metadata.get("Bl", []))
+
+
+def test_restore_and_undo(setup_tasks):
+    cli = setup_tasks
+    # Create task
+    cli.create(
+        "Task to Undo/Restore",
+        story="As a user I want a story that is long enough.",
+        tech="Technical details that are long enough.",
+        criteria="Acceptance criteria that are long enough.",
+        plan="1. Implementation plan that is long enough.",
+    )
+    task_id = "1"
+
+    # Modify it
+    cli.modify(task_id, title="Modified Title")
+    
+    # Perform Undo
+    try:
+        cli.undo(task_id)
+    except SystemExit:
+        pass
+    
+    # Verify rollback
+    path, _ = cli.find_task(task_id)
+    from tasks_ai.file_manager import FM
+    task = FM.load(path)
+    assert task.metadata.get("Ti") == "Task to Undo/Restore"

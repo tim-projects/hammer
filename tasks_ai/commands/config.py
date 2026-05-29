@@ -1,5 +1,6 @@
 from ..constants import KEY_MAP, ALLOWED_CONFIG_KEYS, load_config, save_config
 
+
 def run(cli, action=None, key=None, value=None, save=False):
     """Execution logic for 'tasks config'."""
     if action == "detect":
@@ -35,8 +36,10 @@ def run(cli, action=None, key=None, value=None, save=False):
         if not key or value is None:
             cli.error("Missing config key or value.")
         if key not in ALLOWED_CONFIG_KEYS:
-            cli.error(f"Invalid config key '{key}'.", 
-                      hint=f"Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}.")
+            cli.error(
+                f"Invalid config key '{key}'.",
+                hint=f"Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}.",
+            )
         cfg[key] = value
         save_config(cli.tasks_path, cfg)
         if cli.as_json:

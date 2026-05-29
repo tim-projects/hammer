@@ -2,16 +2,17 @@ import os
 from ..file_manager import FM
 from ..utils import parse_filename, has_path
 
+
 def run(cli, filename, blocked_by_filename):
     """Execution logic for 'tasks link'."""
     f1, _ = cli.find_task(filename)
     f2, _ = cli.find_task(blocked_by_filename)
-    
+
     if not f1 or not f2:
         cli.error("One or both tasks not found.")
 
     f1_str, f2_str = str(f1), str(f2)
-    
+
     if os.path.abspath(f1_str) == os.path.abspath(f2_str):
         cli.error("Cannot link a task to itself.")
 
@@ -25,7 +26,7 @@ def run(cli, filename, blocked_by_filename):
     bl = task.metadata.get("Bl", [])
     if not isinstance(bl, list):
         bl = []
-    
+
     b_name = f2_fname
     b_task = FM.load(f2_str)
     b_title = str(b_task.metadata.get("Ti", ""))

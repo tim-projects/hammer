@@ -1,11 +1,15 @@
 import subprocess
+import os
 from typing import Optional, List
+from .constants import STATE_FOLDERS
+
 
 class GitClient:
     """
     Service for handling all git operations.
     Aware of worktree boundaries through ProjectContext.
     """
+
     def __init__(self, context, logger=None):
         self.context = context
         self.logger = logger
@@ -14,18 +18,26 @@ class GitClient:
         if self.logger:
             self.logger.log(message)
 
-    def run(self, args: List[str], cwd: Optional[str] = None, capture: bool = True, check: bool = False) -> subprocess.CompletedProcess:
+    def run(
+        self,
+        args: List[str],
+        cwd: Optional[str] = None,
+        capture: bool = True,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
         result = subprocess.run(
-            ["git"] + args, 
-            cwd=cwd, 
-            capture_output=capture, 
-            text=True
+            ["git"] + args, cwd=cwd, capture_output=capture, text=True
         )
 
         if check and result.returncode != 0:
-            raise subprocess.CalledProcessError(result.returncode, result.args, output=result.stdout, stderr=result.stderr)
+            raise subprocess.CalledProcessError(
+                result.returncode,
+                result.args,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
 
         if result.returncode == 0:
             self._handle_command_logging(args)
@@ -72,7 +84,85 @@ class GitClient:
             return result.stdout.strip().replace("refs/remotes/origin/", "")
         return "main"
 
-
     def is_merged(self, branch: str, target: str = "main") -> bool:
         res = self.run(["branch", "--merged", target])
         return branch in res.stdout
+
+    def generate_review_diff(self, task_path: str, branch: str) -> str:
+        """Generate a unified diff patch for the task branch against main including unstaged changes."""
+        tasks_path = self.context.tasks_path
+        review_dir = os.path.join(tasks_path, STATE_FOLDERS["REVIEW"])
+        task_id = os.path.basename(task_path)
+        diff_path = os.path.join(review_dir, f"{task_id}.patch")
+
+        os.makedirs(review_dir, exist_ok=True)
+
+        self.log(
+            f"[DEBUG] Generating review diff: task_id={task_id}, branch='{branch}'"
+        )
+
+        default_branch = self.get_default_branch()
+        main_sha = None
+        try:
+            main_sha = self.run(["rev-parse", default_branch]).stdout.strip()
+        except Exception:
+            main_sha = None
+
+        diff_content = ""
+
+        if main_sha:
+            result = self.run(["diff", f"{default_branch}...{branch}"])
+            if result.returncode == 0 and result.stdout.strip():
+                diff_content += result.stdout
+
+        # Get unstaged working tree changes
+        result = self.run(["diff", "--patch"])
+        if result.returncode == 0 and result.stdout:
+            if diff_content and not diff_content.endswith("\n"):
+                diff_content += "\n"
+            diff_content += result.stdout
+
+        # Get staged changes
+        result = self.run(["diff", "--cached", "--patch"])
+        if result.returncode == 0 and result.stdout:
+            if diff_content and not diff_content.endswith("\n"):
+                diff_content += "\n"
+            diff_content += f"# Staged changes:\n{result.stdout}"
+
+        with open(diff_path, "w", encoding="utf-8") as f:
+            f.write(diff_content or "# No changes detected\n")
+
+        self.log(f"Regression diff generated at {diff_path}")
+        return diff_path
+
+    def push_tasks_branch(self, branch="tasks", fatal=True):
+        """Internal: push current .tasks worktree branch to remote."""
+        tasks_path = self.context.tasks_path
+        if not os.path.exists(tasks_path):
+            msg = "Tasks not initialized."
+            if fatal and self.logger:
+                self.logger.error(msg)
+            return None
+
+        remotes = self.run(["remote", "-v"], cwd=tasks_path)
+        if not remotes.stdout.strip():
+            self.log("No remote configured - skipping push (local-only mode)")
+            return {"branch": branch, "remote": None}
+
+        current = self.run(
+            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=tasks_path
+        ).stdout.strip()
+        push_result = self.run(
+            ["push", "-u", "origin", f"{current}:refs/heads/{branch}"], cwd=tasks_path
+        )
+
+        if push_result.returncode != 0:
+            msg = f"Failed to push .tasks worktree to remote: {push_result.stderr}"
+            if fatal and self.logger:
+                self.logger.error(msg)
+            else:
+                self.log(f"Warning: {msg}")
+            return None
+
+        self.log(f"Pushed .tasks ({current}) to origin/{branch}")
+        return {"branch": branch, "remote": "origin", "from_branch": current}

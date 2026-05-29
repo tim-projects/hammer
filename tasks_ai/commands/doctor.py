@@ -4,6 +4,7 @@ import shutil
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 
+
 def extract_id_from_string(s):
     """Extract numeric ID from string if it starts with digits followed by hyphen"""
     if not s or not isinstance(s, str):
@@ -13,6 +14,7 @@ def extract_id_from_string(s):
         if parts[0].isdigit():
             return int(parts[0])
     return None
+
 
 def run(cli, fix=False):
     """Execution logic for 'tasks doctor'."""
@@ -45,48 +47,52 @@ def run(cli, fix=False):
         state_path = os.path.join(cli.tasks_path, folder)
         if not os.path.exists(state_path):
             continue
-            
+
         for item in os.listdir(state_path):
             if item == ".gitkeep":
                 continue
-                
+
             item_path = os.path.join(state_path, item)
             if not os.path.isdir(item_path):
                 continue
-                
+
             # Load task
             task = FM.load(item_path)
-            
+
             # Get IDs from different sources
             dir_id = extract_id_from_string(item)
             metadata_id = task.metadata.get("Id")
             branch_id = None
             branch_from_metadata = task.metadata.get("Br")
-            
+
             if branch_from_metadata and isinstance(branch_from_metadata, str):
                 branch_id = extract_id_from_string(branch_from_metadata)
-            
+
             # Determine what the correct ID should be (priority: metadata.Id > metadata.Br > directory name)
             correct_id = None
-            
+
             if metadata_id and str(metadata_id).isdigit():
                 correct_id = int(metadata_id)
             elif branch_id is not None:
                 correct_id = branch_id
             elif dir_id is not None:
                 correct_id = dir_id
-            
+
             # If we can't determine a correct ID, skip this task
             if correct_id is None:
                 continue
-            
+
             # Check for inconsistencies
             inconsistencies = []
-            
+
             # Check metadata.Id
-            if not (metadata_id and str(metadata_id).isdigit() and int(metadata_id) == correct_id):
+            if not (
+                metadata_id
+                and str(metadata_id).isdigit()
+                and int(metadata_id) == correct_id
+            ):
                 inconsistencies.append(("metadata.Id", metadata_id, correct_id))
-            
+
             # Check metadata.Br
             expected_br = None
             # Try to construct expected branch from task metadata
@@ -97,75 +103,113 @@ def run(cli, fix=False):
                     title_for_branch = "-".join(item.split("-", 2)[2:])
                 else:
                     title_for_branch = "unknown"
-            
+
             # Clean title for branch (remove special chars, limit length)
-            clean_title = re.sub(r"[^a-zA-Z0-9]+", "-", title_for_branch.lower()).strip("-")
+            clean_title = re.sub(r"[^a-zA-Z0-9]+", "-", title_for_branch.lower()).strip(
+                "-"
+            )
             if not clean_title:
                 clean_title = "task"
-            expected_br = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip("-")
-            
-            if not (branch_from_metadata and isinstance(branch_from_metadata, str) and branch_from_metadata == expected_br):
-                inconsistencies.append(("metadata.Br", branch_from_metadata, expected_br))
-            
+            expected_br = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip(
+                "-"
+            )
+
+            if not (
+                branch_from_metadata
+                and isinstance(branch_from_metadata, str)
+                and branch_from_metadata == expected_br
+            ):
+                inconsistencies.append(
+                    ("metadata.Br", branch_from_metadata, expected_br)
+                )
+
             # Check directory name
-            expected_dir = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip("-")
+            expected_dir = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip(
+                "-"
+            )
             if item != expected_dir:
                 inconsistencies.append(("directory name", item, expected_dir))
-            
+
             # If there are inconsistencies and fix is enabled, repair them
             if inconsistencies and fix:
                 # Determine the correct directory name
                 correct_dir_name = expected_dir
-                
+
                 # Only move if directory name is wrong
                 if item != correct_dir_name:
                     # Determine target state folder (should be same as current)
                     target_path = os.path.join(state_path, correct_dir_name)
-                    
+
                     # Ensure target doesn't already exist
                     if not os.path.exists(target_path):
                         # Move the directory
                         shutil.move(item_path, target_path)
                         item_path = target_path  # Update path for subsequent operations
-                        
+
                         # Log the move
-                        cli.log(f"Moved task directory: {item} -> {correct_dir_name} [{state}]")
+                        cli.log(
+                            f"Moved task directory: {item} -> {correct_dir_name} [{state}]"
+                        )
                     else:
-                        cli.log(f"Cannot move {item} to {correct_dir_name}: target already exists")
+                        cli.log(
+                            f"Cannot move {item} to {correct_dir_name}: target already exists"
+                        )
                         # Skip fixing if target exists to avoid data loss
-                        inconsistencies = [("directory name", item, f"CONFLICT: {correct_dir_name} already exists")]
-                
+                        inconsistencies = [
+                            (
+                                "directory name",
+                                item,
+                                f"CONFLICT: {correct_dir_name} already exists",
+                            )
+                        ]
+
                 # Fix metadata.Id if wrong
-                if not (metadata_id and str(metadata_id).isdigit() and int(metadata_id) == correct_id):
+                if not (
+                    metadata_id
+                    and str(metadata_id).isdigit()
+                    and int(metadata_id) == correct_id
+                ):
                     task.metadata["Id"] = correct_id
                     # Also update metadata.Br to be consistent
                     task.metadata["Br"] = expected_br
-                    
+
                     # Save the fixed metadata
                     FM.dump(task, item_path)
-                    cli.log(f"Fixed metadata for task {item_path}: Id={correct_id}, Br={expected_br}")
-                
+                    cli.log(
+                        f"Fixed metadata for task {item_path}: Id={correct_id}, Br={expected_br}"
+                    )
+
                 # If we moved the directory, we need to reload the task for git operations
                 if item != correct_dir_name:
                     task = FM.load(item_path)
-                
+
                 # Git operations to record the fixes
                 try:
                     cli._run_git(["add", "--all"], cwd=cli.tasks_path)
-                    cli._run_git(["commit", "--allow-empty", "-m", f"Doctor: fixed task inconsistencies for {correct_dir_name}"], cwd=cli.tasks_path)
+                    cli._run_git(
+                        [
+                            "commit",
+                            "--allow-empty",
+                            "-m",
+                            f"Doctor: fixed task inconsistencies for {correct_dir_name}",
+                        ],
+                        cwd=cli.tasks_path,
+                    )
                 except Exception as e:
                     cli.log(f"Warning: Could not commit fixes: {e}")
-            
+
             # Report bugs (whether fixed or not)
             if inconsistencies:
                 for field, actual, expected in inconsistencies:
-                    bugs.append({
-                        "id": f"{state}-{item}-{field}",
-                        "title": f"Task {field} mismatch: {item}",
-                        "repro": "Run 'hammer tasks list' to see task ID/branch mismatches",
-                        "expected": f"{field} should be '{expected}'",
-                        "actual": f"{field} is '{actual}'",
-                    })
+                    bugs.append(
+                        {
+                            "id": f"{state}-{item}-{field}",
+                            "title": f"Task {field} mismatch: {item}",
+                            "repro": "Run 'hammer tasks list' to see task ID/branch mismatches",
+                            "expected": f"{field} should be '{expected}'",
+                            "actual": f"{field} is '{actual}'",
+                        }
+                    )
 
     if bugs:
         cli.log(f"Found {len(bugs)} issues:")
@@ -173,10 +217,12 @@ def run(cli, fix=False):
             cli.log(f"- {b['title']} ({b['id']})")
         if not fix:
             for b in bugs:
-                create_bug_report(b['id'], b['title'], b['repro'], b['expected'], b['actual'])
+                create_bug_report(
+                    b["id"], b["title"], b["repro"], b["expected"], b["actual"]
+                )
         else:
             cli.log("Issues have been fixed.")
     else:
         cli.log("No issues found.")
-    
+
     cli.finish({"bugs": bugs})

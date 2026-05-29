@@ -1,6 +1,7 @@
 import os
 from ..audit import generate_audit
 
+
 def run(cli, task_id):
     # Find the patch file that starts with the task_id
     patch_dir = ".tasks/review"
@@ -9,7 +10,7 @@ def run(cli, task_id):
         if f.startswith(task_id) and f.endswith(".patch"):
             patch_file = os.path.join(patch_dir, f)
             break
-    
+
     if not patch_file:
         cli.error(f"Patch file not found for task {task_id}")
         return

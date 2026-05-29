@@ -1,0 +1,1300 @@
+{
+  "success": true,
+  "messages": [],
+  "data": {
+    "BACKLOG": [
+      {
+        "id": 151,
+        "p": 2,
+        "file": "151-task-security-audit-test",
+        "type": "task",
+        "branch": "151-task-security-audit-test",
+        "summary": "Security Audit Test",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 168,
+        "p": 2,
+        "file": "168-task-implement-safe-iterative-auto",
+        "type": "task",
+        "branch": "168-task-implement-safe-iterative-auto",
+        "summary": "Implement safe, iterative auto-promotion logic",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 171,
+        "p": 2,
+        "file": "171-task-write-user-tests-for-151-secur",
+        "type": "task",
+        "branch": "171-task-write-user-tests-for-151-secur",
+        "summary": "Write user tests for 151: Security Audit Test",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 172,
+        "p": 2,
+        "file": "172-task-write-user-tests-for-168-imple",
+        "type": "task",
+        "branch": "172-task-write-user-tests-for-168-imple",
+        "summary": "Write user tests for 168: Implement safe, iterative auto-pro",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 173,
+        "p": 2,
+        "file": "173-task-write-user-tests-for-86-implem",
+        "type": "task",
+        "branch": "173-task-write-user-tests-for-86-implem",
+        "summary": "Write user tests for 86: Implement Epic/Feature Branch Workf",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 174,
+        "p": 2,
+        "file": "174-task-write-user-tests-for-87-implem",
+        "type": "task",
+        "branch": "174-task-write-user-tests-for-87-implem",
+        "summary": "Write user tests for 87: Implement Worktree-Based Task Manag",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 175,
+        "p": 2,
+        "file": "175-task-write-user-tests-for-158-4-tas",
+        "type": "task",
+        "branch": "175-task-write-user-tests-for-158-4-tas",
+        "summary": "Write user tests for 158: 4-task-test-verification-gate-task",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 177,
+        "p": 2,
+        "file": "177-task-plan-modular-refactoring-of-mo",
+        "type": "task",
+        "branch": "177-task-plan-modular-refactoring-of-mo",
+        "summary": "Plan modular refactoring of monolithic codebase",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 179,
+        "p": 2,
+        "file": "179-task-valid-task-title",
+        "type": "task",
+        "branch": "179-task-valid-task-title",
+        "summary": "Valid Task Title",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 180,
+        "p": 2,
+        "file": "180-task-valid-task-title",
+        "type": "task",
+        "branch": "180-task-valid-task-title",
+        "summary": "Valid Task Title",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 182,
+        "p": 2,
+        "file": "182-task-implement-task-counter-protect",
+        "type": "task",
+        "branch": "182-task-implement-task-counter-protect",
+        "summary": "Implement task counter protection with hash verification and",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 183,
+        "p": 2,
+        "file": "183-task-test-task-counter-protection",
+        "type": "task",
+        "branch": "183-task-test-task-counter-protection",
+        "summary": "Test task counter protection",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 86,
+        "p": 2,
+        "file": "86-task-implement-epic-feature-branch",
+        "type": "task",
+        "branch": "86-task-implement-epic-feature-branch",
+        "summary": "Implement Epic/Feature Branch Workflow",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 87,
+        "p": 2,
+        "file": "87-task-implement-worktree-based-task",
+        "type": "task",
+        "branch": "87-task-implement-worktree-based-task",
+        "summary": "Implement Worktree-Based Task Management System",
+        "state": "BACKLOG"
+      },
+      {
+        "id": 158,
+        "p": 9,
+        "file": "158-task-test-verification-gate-task",
+        "type": "task",
+        "branch": "158-task-test-verification-gate-task",
+        "summary": "No Title",
+        "state": "BACKLOG"
+      }
+    ],
+    "READY": [
+      {
+        "id": 163,
+        "p": 2,
+        "file": "163-task-automatically-create-a-pair-ta",
+        "type": "task",
+        "branch": "163-task-automatically-create-a-pair-ta",
+        "summary": "Automatically create a pair task for user tests upon new tas",
+        "state": "READY"
+      },
+      {
+        "id": 165,
+        "p": 2,
+        "file": "165-task-implement-git-hook-to-restrict",
+        "type": "task",
+        "branch": "165-task-implement-git-hook-to-restrict",
+        "summary": "Implement git hook to restrict direct commits to main",
+        "state": "READY"
+      }
+    ],
+    "PROGRESSING": [
+      {
+        "id": 176,
+        "p": 2,
+        "file": "176-task-create-complete-function-map-o",
+        "type": "task",
+        "branch": "176-task-create-complete-function-map-o",
+        "summary": "Create complete function map of all files",
+        "state": "PROGRESSING"
+      },
+      {
+        "id": 178,
+        "p": 2,
+        "file": "178-task-consolidate-repo-merge-and-tas",
+        "type": "task",
+        "branch": "178-task-consolidate-repo-merge-and-tas",
+        "summary": "Consolidate repo merge and tasks move into a gated workflow",
+        "state": "PROGRESSING"
+      },
+      {
+        "id": 186,
+        "p": 2,
+        "file": "186-task-restore-hammer-tasks-list-desi",
+        "type": "task",
+        "branch": "186-task-restore-hammer-tasks-list-desi",
+        "summary": "Restore hammer tasks list design to previous tabular format",
+        "state": "PROGRESSING"
+      }
+    ],
+    "TESTING": [
+      {
+        "id": 187,
+        "p": 2,
+        "file": "187-task-repair-and-modularize-cli-py",
+        "type": "task",
+        "branch": "187-task-repair-and-modularize-cli-py",
+        "summary": "Repair and modularize cli.py",
+        "state": "TESTING"
+      }
+    ],
+    "REVIEW": [
+      {
+        "id": 164,
+        "p": 2,
+        "file": "164-task-write-user-tests-for-163",
+        "type": "task",
+        "branch": "164-task-write-user-tests-for-163",
+        "summary": "Write user tests for 163",
+        "state": "REVIEW"
+      },
+      {
+        "id": 166,
+        "p": 2,
+        "file": "166-task-write-user-tests-for-165",
+        "type": "task",
+        "branch": "166-task-write-user-tests-for-165",
+        "summary": "Write user tests for 165",
+        "state": "REVIEW"
+      }
+    ],
+    "DONE": [
+      {
+        "id": 141,
+        "p": 2,
+        "file": "141-task-remediate-task-state-corruptio",
+        "type": "task",
+        "branch": "141-task-remediate-task-state-corruptio",
+        "summary": "Remediate task state corruption bug",
+        "state": "DONE"
+      },
+      {
+        "id": 184,
+        "p": 2,
+        "file": "184-task-test-recovery-from-scratch",
+        "type": "task",
+        "branch": "184-task-test-recovery-from-scratch",
+        "summary": "Test recovery from scratch",
+        "state": "DONE"
+      },
+      {
+        "id": 40,
+        "p": 2,
+        "file": "40-task-fix-tasks-reconcile-to-respect",
+        "type": "task",
+        "branch": "40-task-fix-tasks-reconcile-to-respect",
+        "summary": "Fix tasks reconcile to respect workflow gates",
+        "state": "DONE"
+      },
+      {
+        "id": 44,
+        "p": 2,
+        "file": "44-task-delete-moves-task-to-rejected",
+        "type": "task",
+        "branch": "44-task-delete-moves-task-to-rejected",
+        "summary": "Delete moves task to REJECTED first",
+        "state": "DONE"
+      },
+      {
+        "id": 46,
+        "p": 2,
+        "file": "46-task-enforce-tests-passed-before-mo",
+        "type": "task",
+        "branch": "46-task-enforce-tests-passed-before-mo",
+        "summary": "Enforce tests passed before moving to REVIEW",
+        "state": "DONE"
+      },
+      {
+        "id": 49,
+        "p": 2,
+        "file": "49-task-prevent-circular-blocker-depen",
+        "type": "task",
+        "branch": "49-task-prevent-circular-blocker-depen",
+        "summary": "Prevent circular blocker dependencies",
+        "state": "DONE"
+      },
+      {
+        "id": 50,
+        "p": 2,
+        "file": "50-task-implement-tasks-undo-feature",
+        "type": "task",
+        "branch": "50-task-implement-tasks-undo-feature",
+        "summary": "Implement tasks undo feature",
+        "state": "DONE"
+      },
+      {
+        "id": 51,
+        "p": 2,
+        "file": "51-task-add-activity-logging-for-all-t",
+        "type": "task",
+        "branch": "51-task-add-activity-logging-for-all-t",
+        "summary": "Add activity logging for all task operations",
+        "state": "DONE"
+      },
+      {
+        "id": 52,
+        "p": 2,
+        "file": "52-task-fix-pre-existing-test-failures",
+        "type": "task",
+        "branch": "52-task-fix-pre-existing-test-failures",
+        "summary": "Fix pre-existing test failures",
+        "state": "DONE"
+      },
+      {
+        "id": 54,
+        "p": 2,
+        "file": "54-task-fix-all-pyright-type-errors",
+        "type": "task",
+        "branch": "54-task-fix-all-pyright-type-errors",
+        "summary": "Fix all pyright type errors",
+        "state": "DONE"
+      },
+      {
+        "id": 137,
+        "p": 9,
+        "file": "137-task-unknown",
+        "type": "task",
+        "branch": "137-task-unknown",
+        "summary": "No Title",
+        "state": "DONE"
+      }
+    ],
+    "ARCHIVED": [
+      {
+        "id": 106,
+        "p": 1,
+        "file": "106-task-fix-crash-when-task-files-are",
+        "type": "task",
+        "branch": "106-task-fix-crash-when-task-files-are",
+        "summary": "Fix crash when task files are corrupted",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 107,
+        "p": 1,
+        "file": "107-task-investigate-no-title-bug-in-ta",
+        "type": "task",
+        "branch": "107-task-investigate-no-title-bug-in-ta",
+        "summary": "Investigate 'No Title' bug in task creation/listing",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 113,
+        "p": 1,
+        "file": "113-task-bug-tasks-move-incorrectly-rep",
+        "type": "task",
+        "branch": "113-task-bug-tasks-move-incorrectly-rep",
+        "summary": "Bug: 'tasks move' incorrectly reports branch not merged to t",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 114,
+        "p": 1,
+        "file": "114-task-enforce-manual-audit-for-regre",
+        "type": "task",
+        "branch": "114-task-enforce-manual-audit-for-regre",
+        "summary": "Enforce manual audit for regression check",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 115,
+        "p": 1,
+        "file": "115-task-bug-nested-branching-state-des",
+        "type": "task",
+        "branch": "115-task-bug-nested-branching-state-des",
+        "summary": "Bug: Nested branching, state desync, and race conditions",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 12,
+        "p": 1,
+        "file": "12-task-input-validation-for-task-ids",
+        "type": "task",
+        "branch": "12-task-input-validation-for-task-ids",
+        "summary": "Input validation for task IDs and file paths",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 123,
+        "p": 1,
+        "file": "123-task-fix-help-on-repo-check-and-tas",
+        "type": "task",
+        "branch": "123-task-fix-help-on-repo-check-and-tas",
+        "summary": "Fix help on repo, check, and tasks commands to show help tex",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 125,
+        "p": 1,
+        "file": "125-task-bug-tool-fails-to-progress-alr",
+        "type": "task",
+        "branch": "125-task-bug-tool-fails-to-progress-alr",
+        "summary": "BUG: Tool fails to progress already-merged branches through ",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 13,
+        "p": 1,
+        "file": "13-task-validation-on-task-create",
+        "type": "task",
+        "branch": "13-task-validation-on-task-create",
+        "summary": "Validation on task create",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 130,
+        "p": 1,
+        "file": "130-task-fix-allowed-transitions-preven",
+        "type": "task",
+        "branch": "130-task-fix-allowed-transitions-preven",
+        "summary": "Fix ALLOWED_TRANSITIONS: prevent TESTING->STAGING skip of RE",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 131,
+        "p": 1,
+        "file": "131-task-checkpoint-should-detect-manua",
+        "type": "task",
+        "branch": "131-task-checkpoint-should-detect-manua",
+        "summary": "Checkpoint should detect manual edits to task files",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 134,
+        "p": 1,
+        "file": "134-task-bug-hammer-init-deletes-existi",
+        "type": "task",
+        "branch": "134-task-bug-hammer-init-deletes-existi",
+        "summary": "Bug: hammer init deletes existing .tasks folder and all task",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 14,
+        "p": 1,
+        "file": "14-task-circular-dependency-detection",
+        "type": "task",
+        "branch": "14-task-circular-dependency-detection",
+        "summary": "Circular dependency detection",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 143,
+        "p": 1,
+        "file": "143-task-bug-repo-sync-loops-on-up-to-d",
+        "type": "task",
+        "branch": "143-task-bug-repo-sync-loops-on-up-to-d",
+        "summary": "Bug: repo sync loops on up-to-date branches",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 145,
+        "p": 1,
+        "file": "145-task-fix-repo-sync-ignore-logic",
+        "type": "task",
+        "branch": "145-task-fix-repo-sync-ignore-logic",
+        "summary": "Fix repo sync ignore logic",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 24,
+        "p": 1,
+        "file": "24-task-resolve-remaining-pyright-type",
+        "type": "task",
+        "branch": "24-task-resolve-remaining-pyright-type",
+        "summary": "Resolve remaining pyright type errors",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 5,
+        "p": 1,
+        "file": "5-task-fix-race-condition-in-task-id",
+        "type": "task",
+        "branch": "5-task-fix-race-condition-in-task-id",
+        "summary": "Fix race condition in task ID assignment",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 55,
+        "p": 1,
+        "file": "55-task-fix-live-status-requires-merge",
+        "type": "task",
+        "branch": "55-task-fix-live-status-requires-merge",
+        "summary": "Fix LIVE status requires merge to main",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 56,
+        "p": 1,
+        "file": "56-task-fix-test-full-lifecycle-and-te",
+        "type": "task",
+        "branch": "56-task-fix-test-full-lifecycle-and-te",
+        "summary": "Fix test_full_lifecycle and test_auto_archival failures",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 57,
+        "p": 1,
+        "file": "57-task-fix-pre-existing-pyright-type",
+        "type": "task",
+        "branch": "57-task-fix-pre-existing-pyright-type",
+        "summary": "Fix pre-existing pyright type errors",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 59,
+        "p": 1,
+        "file": "59-task-bug-tasks-create-does-not-supp",
+        "type": "task",
+        "branch": "59-task-bug-tasks-create-does-not-supp",
+        "summary": "Bug: 'tasks create' does not support -j flag for JSON output",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 6,
+        "p": 1,
+        "file": "6-task-phase-1-add-git-functions-to-r",
+        "type": "task",
+        "branch": "6-task-phase-1-add-git-functions-to-r",
+        "summary": "Phase 1: Add Git functions to repo",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 63,
+        "p": 1,
+        "file": "63-task-add-tasks-save-command-to-push",
+        "type": "task",
+        "branch": "63-task-add-tasks-save-command-to-push",
+        "summary": "Add tasks save command to push .tasks worktree",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 66,
+        "p": 1,
+        "file": "66-task-fix-pre-existing-pyright-type",
+        "type": "task",
+        "branch": "66-task-fix-pre-existing-pyright-type",
+        "summary": "Fix pre-existing pyright type errors",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 67,
+        "p": 1,
+        "file": "67-task-check-py-test-hangs-when-run-f",
+        "type": "task",
+        "branch": "67-task-check-py-test-hangs-when-run-f",
+        "summary": "check.py test hangs when run from /opt/tasks-ai",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 68,
+        "p": 1,
+        "file": "68-task-add-gate-for-moving-tasks-to-t",
+        "type": "task",
+        "branch": "68-task-add-gate-for-moving-tasks-to-t",
+        "summary": "Add gate for moving tasks to TESTING state",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 79,
+        "p": 1,
+        "file": "79-task-bug-test-dev-mode-py-failure-i",
+        "type": "task",
+        "branch": "79-task-bug-test-dev-mode-py-failure-i",
+        "summary": "Bug: test_dev_mode.py failure in test_review_diff_in_dev_mod",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 89,
+        "p": 1,
+        "file": "89-task-fix-failing-pipeline-regressio",
+        "type": "task",
+        "branch": "89-task-fix-failing-pipeline-regressio",
+        "summary": "Fix failing pipeline regression tests",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 1,
+        "p": 2,
+        "file": "1-task-add-piping-support-for-tasks-a",
+        "type": "task",
+        "branch": "1-task-add-piping-support-for-tasks-a",
+        "summary": "Add piping support for tasks-ai",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 100,
+        "p": 2,
+        "file": "100-task-investigate-test-review-diff-i",
+        "type": "task",
+        "branch": "100-task-investigate-test-review-diff-i",
+        "summary": "Investigate test_review_diff_in_dev_mode failure",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 101,
+        "p": 2,
+        "file": "101-task-fix-branch-name-word-wrap-in-t",
+        "type": "task",
+        "branch": "101-task-fix-branch-name-word-wrap-in-t",
+        "summary": "Fix branch name word-wrap in tasks list display",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 102,
+        "p": 2,
+        "file": "102-task-automate-archived-transition-f",
+        "type": "task",
+        "branch": "102-task-automate-archived-transition-f",
+        "summary": "Automate ARCHIVED transition for merged branches",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 104,
+        "p": 2,
+        "file": "104-task-full-audit-of-commits-last-24h",
+        "type": "task",
+        "branch": "104-task-full-audit-of-commits-last-24h",
+        "summary": "Full audit of commits last 24h",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 108,
+        "p": 2,
+        "file": "108-task-test-title-with-special-charac",
+        "type": "task",
+        "branch": "108-task-test-title-with-special-charac",
+        "summary": "Test Title with Special Characters !@#$%^&*()",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 112,
+        "p": 2,
+        "file": "112-task-repo-py-support-configurable-r",
+        "type": "task",
+        "branch": "112-task-repo-py-support-configurable-r",
+        "summary": "Repo.py: Support configurable remote names",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 118,
+        "p": 2,
+        "file": "118-task-bug-dev-mode-storage-failure",
+        "type": "task",
+        "branch": "118-task-bug-dev-mode-storage-failure",
+        "summary": "Bug: Dev mode storage failure",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 119,
+        "p": 2,
+        "file": "119-task-bug-fix-test-dev-mode-py-failu",
+        "type": "task",
+        "branch": "119-task-bug-fix-test-dev-mode-py-failu",
+        "summary": "Bug: Fix test_dev_mode.py failure",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 120,
+        "p": 2,
+        "file": "120-task-bug-enforce-strict-pipeline-st",
+        "type": "task",
+        "branch": "120-task-bug-enforce-strict-pipeline-st",
+        "summary": "Bug: Enforce strict pipeline state transitions and archive g",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 121,
+        "p": 2,
+        "file": "121-task-bug-repo-py-merge-command-thro",
+        "type": "task",
+        "branch": "121-task-bug-repo-py-merge-command-thro",
+        "summary": "Bug: repo.py merge command throws IndexError",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 122,
+        "p": 2,
+        "file": "122-task-bug-repo-py-merge-command-inde",
+        "type": "task",
+        "branch": "122-task-bug-repo-py-merge-command-inde",
+        "summary": "Bug: repo.py merge command IndexError persists",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 124,
+        "p": 2,
+        "file": "124-task-allow-setting-multiple-criteri",
+        "type": "task",
+        "branch": "124-task-allow-setting-multiple-criteri",
+        "summary": "Allow setting multiple criteria values with --criteria value",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 126,
+        "p": 2,
+        "file": "126-task-fix-hammer-command-path-hash-i",
+        "type": "task",
+        "branch": "126-task-fix-hammer-command-path-hash-i",
+        "summary": "Fix hammer command PATH/hash issues after install",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 127,
+        "p": 2,
+        "file": "127-task-fix-repo-sync-should-not-auto",
+        "type": "task",
+        "branch": "127-task-fix-repo-sync-should-not-auto",
+        "summary": "Fix: repo sync should not auto-commit uncommitted changes",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 128,
+        "p": 2,
+        "file": "128-task-fix-repo-merge-indexerror-cras",
+        "type": "task",
+        "branch": "128-task-fix-repo-merge-indexerror-cras",
+        "summary": "Fix: repo merge IndexError crash",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 129,
+        "p": 2,
+        "file": "129-task-improve-tasks-create-should-ac",
+        "type": "task",
+        "branch": "129-task-improve-tasks-create-should-ac",
+        "summary": "Improve: tasks create should accept --branch flag",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 133,
+        "p": 2,
+        "file": "133-task-make-hammer-sync-bidirectional",
+        "type": "task",
+        "branch": "133-task-make-hammer-sync-bidirectional",
+        "summary": "Make hammer sync bidirectional (2-way sync)",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 135,
+        "p": 2,
+        "file": "135-task-enhancement-automated-tasks-wo",
+        "type": "task",
+        "branch": "135-task-enhancement-automated-tasks-wo",
+        "summary": "Enhancement: automated tasks worktree backup on archive with",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 136,
+        "p": 2,
+        "file": "136-task-improve-task-creation-error-me",
+        "type": "task",
+        "branch": "136-task-improve-task-creation-error-me",
+        "summary": "Improve task creation error messages for missing flags",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 138,
+        "p": 2,
+        "file": "138-task-fix-inconsistent-diff-patch-fi",
+        "type": "task",
+        "branch": "138-task-fix-inconsistent-diff-patch-fi",
+        "summary": "Fix inconsistent diff patch file paths",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 142,
+        "p": 2,
+        "file": "142-task-implement-atomic-metadata-upda",
+        "type": "task",
+        "branch": "142-task-implement-atomic-metadata-upda",
+        "summary": "Implement atomic metadata updates for tasks",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 144,
+        "p": 2,
+        "file": "144-task-formatting-expand-branch-colum",
+        "type": "task",
+        "branch": "144-task-formatting-expand-branch-colum",
+        "summary": "Formatting: Expand branch column width",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 147,
+        "p": 2,
+        "file": "147-task-enable-task-unarchival-from-ar",
+        "type": "task",
+        "branch": "147-task-enable-task-unarchival-from-ar",
+        "summary": "Enable task unarchival from ARCHIVED state",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 148,
+        "p": 2,
+        "file": "148-task-implement-mandatory-regression",
+        "type": "task",
+        "branch": "148-task-implement-mandatory-regression",
+        "summary": "Implement mandatory regression audit log enforcement",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 149,
+        "p": 2,
+        "file": "149-task-audit-test",
+        "type": "task",
+        "branch": "149-task-audit-test",
+        "summary": "Audit Test",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 150,
+        "p": 2,
+        "file": "150-task-harden-regression-audit-with-c",
+        "type": "task",
+        "branch": "150-task-harden-regression-audit-with-c",
+        "summary": "Harden regression audit with checksum validation",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 152,
+        "p": 2,
+        "file": "152-task-harden-audit-test",
+        "type": "task",
+        "branch": "152-task-harden-audit-test",
+        "summary": "Harden Audit Test",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 153,
+        "p": 2,
+        "file": "153-task-implement-unified-taskpathreso",
+        "type": "task",
+        "branch": "153-task-implement-unified-taskpathreso",
+        "summary": "Implement unified TaskPathResolver",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 154,
+        "p": 2,
+        "file": "154-task-automate-pipeline-reconciliati",
+        "type": "task",
+        "branch": "154-task-automate-pipeline-reconciliati",
+        "summary": "Automate pipeline reconciliation guidance",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 155,
+        "p": 2,
+        "file": "155-task-implement-30-day-cleanup-grace",
+        "type": "task",
+        "branch": "155-task-implement-30-day-cleanup-grace",
+        "summary": "Implement 30-day cleanup grace period and undo feature",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 156,
+        "p": 2,
+        "file": "156-task-implement-90-day-retention-and",
+        "type": "task",
+        "branch": "156-task-implement-90-day-retention-and",
+        "summary": "Implement 90-day retention and smart reconciliation",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 157,
+        "p": 2,
+        "file": "157-task-implement-verification-dialogu",
+        "type": "task",
+        "branch": "157-task-implement-verification-dialogu",
+        "summary": "Implement Verification Dialogue for task criteria",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 159,
+        "p": 2,
+        "file": "159-task-add-status-column-to-tasks-lis",
+        "type": "task",
+        "branch": "159-task-add-status-column-to-tasks-lis",
+        "summary": "Add Status column to tasks list",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 16,
+        "p": 2,
+        "file": "16-task-health-check-doctor-command",
+        "type": "task",
+        "branch": "16-task-health-check-doctor-command",
+        "summary": "Health check / doctor command",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 160,
+        "p": 2,
+        "file": "160-task-automated-safety-backup-for-ha",
+        "type": "task",
+        "branch": "160-task-automated-safety-backup-for-ha",
+        "summary": "Automated safety backup for hammer init",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 161,
+        "p": 2,
+        "file": "161-task-improve-logging-structure-and",
+        "type": "task",
+        "branch": "161-task-improve-logging-structure-and",
+        "summary": "Improve logging structure and relocate log files",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 162,
+        "p": 2,
+        "file": "162-task-ensure-all-hammer-commands-sup",
+        "type": "task",
+        "branch": "162-task-ensure-all-hammer-commands-sup",
+        "summary": "Ensure all hammer commands support -j and --json flags",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 167,
+        "p": 2,
+        "file": "167-task-implement-stale-branch-detecti",
+        "type": "task",
+        "branch": "167-task-implement-stale-branch-detecti",
+        "summary": "Implement stale-branch detection via git post-checkout hook",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 169,
+        "p": 2,
+        "file": "169-task-test-auto-promotion-gate-task",
+        "type": "task",
+        "branch": "169-task-test-auto-promotion-gate-task",
+        "summary": "Test auto-promotion gate task",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 17,
+        "p": 2,
+        "file": "17-task-implement-configuration-system",
+        "type": "task",
+        "branch": "17-task-implement-configuration-system",
+        "summary": "Implement configuration system",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 185,
+        "p": 2,
+        "file": "185-task-fix-hammer-promote-command-by",
+        "type": "task",
+        "branch": "185-task-fix-hammer-promote-command-by",
+        "summary": "Fix hammer promote command by aliasing to hammer tasks move",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 19,
+        "p": 2,
+        "file": "19-task-atomic-file-operations",
+        "type": "task",
+        "branch": "19-task-atomic-file-operations",
+        "summary": "Atomic file operations",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 4,
+        "p": 2,
+        "file": "4-task-create-comprehensive-test-suit",
+        "type": "task",
+        "branch": "4-task-create-comprehensive-test-suit",
+        "summary": "Create comprehensive test suite",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 58,
+        "p": 2,
+        "file": "58-task-robustness-test-suite-for-task",
+        "type": "task",
+        "branch": "58-task-robustness-test-suite-for-task",
+        "summary": "Robustness test suite for task workflow",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 60,
+        "p": 2,
+        "file": "60-task-add-priority-modification-feat",
+        "type": "task",
+        "branch": "60-task-add-priority-modification-feat",
+        "summary": "Add priority modification feature to 'tasks modify'",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 64,
+        "p": 2,
+        "file": "64-task-refactor-task-state-storage-re",
+        "type": "task",
+        "branch": "64-task-refactor-task-state-storage-re",
+        "summary": "Refactor task state storage: remove state from task files, u",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 65,
+        "p": 2,
+        "file": "65-task-fix-test-tasks-py-checkbox-com",
+        "type": "task",
+        "branch": "65-task-fix-test-tasks-py-checkbox-com",
+        "summary": "Fix test_tasks.py checkbox completion bug",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 69,
+        "p": 2,
+        "file": "69-task-rename-live-state-to-done-thro",
+        "type": "task",
+        "branch": "69-task-rename-live-state-to-done-thro",
+        "summary": "Rename LIVE state to DONE throughout codebase",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 7,
+        "p": 2,
+        "file": "7-task-phase-2-update-tasks-ai-to-use",
+        "type": "task",
+        "branch": "7-task-phase-2-update-tasks-ai-to-use",
+        "summary": "Phase 2: Update tasks-ai to use repo",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 71,
+        "p": 2,
+        "file": "71-task-auto-generate-diff-and-add-reg",
+        "type": "task",
+        "branch": "71-task-auto-generate-diff-and-add-reg",
+        "summary": "Auto-generate diff and add regression check gate on REVIEW",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 73,
+        "p": 2,
+        "file": "73-task-update-doctor-command-to-detec",
+        "type": "task",
+        "branch": "73-task-update-doctor-command-to-detec",
+        "summary": "Update doctor command to detect and fix common issues",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 75,
+        "p": 2,
+        "file": "75-task-investigate-missing-repo-binar",
+        "type": "task",
+        "branch": "75-task-investigate-missing-repo-binar",
+        "summary": "Investigate missing repo binary",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 76,
+        "p": 2,
+        "file": "76-task-implement-codebase-hash-based",
+        "type": "task",
+        "branch": "76-task-implement-codebase-hash-based",
+        "summary": "Implement codebase hash-based validation skipping",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 77,
+        "p": 2,
+        "file": "77-task-verify-skip-user-test-prompt-m",
+        "type": "task",
+        "branch": "77-task-verify-skip-user-test-prompt-m",
+        "summary": "Verify skip user test prompt message",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 78,
+        "p": 2,
+        "file": "78-task-investigate-double-push-prompt",
+        "type": "task",
+        "branch": "78-task-investigate-double-push-prompt",
+        "summary": "Investigate double push prompt",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 80,
+        "p": 2,
+        "file": "80-task-fix-promote-tool-workflow-gate",
+        "type": "task",
+        "branch": "80-task-fix-promote-tool-workflow-gate",
+        "summary": "Fix promote tool workflow gate",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 83,
+        "p": 2,
+        "file": "83-task-verify-refactored-review-gate",
+        "type": "task",
+        "branch": "83-task-verify-refactored-review-gate",
+        "summary": "Verify Refactored Review Gate",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 85,
+        "p": 2,
+        "file": "85-task-automated-pr-review-workflow",
+        "type": "task",
+        "branch": "85-task-automated-pr-review-workflow",
+        "summary": "Automated PR Review Workflow",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 88,
+        "p": 2,
+        "file": "88-task-rename-project-to-hammer-marke",
+        "type": "task",
+        "branch": "88-task-rename-project-to-hammer-marke",
+        "summary": "Rename project to Hammer - Marketing Rebrand",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 91,
+        "p": 2,
+        "file": "91-task-modularize-cli-commands-config",
+        "type": "task",
+        "branch": "91-task-modularize-cli-commands-config",
+        "summary": "Modularize CLI commands: Config, Doctor, Validation",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 92,
+        "p": 2,
+        "file": "92-task-review-diff-test",
+        "type": "task",
+        "branch": "92-task-review-diff-test",
+        "summary": "Review Diff Test",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 93,
+        "p": 2,
+        "file": "93-task-test-move-now",
+        "type": "task",
+        "branch": "93-task-test-move-now",
+        "summary": "Test move now",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 94,
+        "p": 2,
+        "file": "94-task-test-move-now",
+        "type": "task",
+        "branch": "94-task-test-move-now",
+        "summary": "Test move now",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 95,
+        "p": 2,
+        "file": "95-task-test-move-now",
+        "type": "task",
+        "branch": "95-task-test-move-now",
+        "summary": "Test move now",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 96,
+        "p": 2,
+        "file": "96-task-test-move-now",
+        "type": "task",
+        "branch": "96-task-test-move-now",
+        "summary": "Test move now",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 97,
+        "p": 2,
+        "file": "97-task-test-auto-promo",
+        "type": "task",
+        "branch": "97-task-test-auto-promo",
+        "summary": "Test auto promo",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 98,
+        "p": 2,
+        "file": "98-task-test-auto-promo",
+        "type": "task",
+        "branch": "98-task-test-auto-promo",
+        "summary": "Test auto promo",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 99,
+        "p": 2,
+        "file": "99-task-enhance-repo-py-merge-to-handl",
+        "type": "task",
+        "branch": "99-task-enhance-repo-py-merge-to-handl",
+        "summary": "Enhance repo.py merge to handle task IDs with confirmation p",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 18,
+        "p": 3,
+        "file": "18-task-troubleshooting-documentation",
+        "type": "task",
+        "branch": "18-task-troubleshooting-documentation",
+        "summary": "Troubleshooting documentation",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 8,
+        "p": 3,
+        "file": "8-task-phase-3-simplify-tasks-ai",
+        "type": "task",
+        "branch": "8-task-phase-3-simplify-tasks-ai",
+        "summary": "Phase 3: Simplify tasks-ai",
+        "state": "ARCHIVED"
+      },
+      {
+        "id": 132,
+        "p": 5,
+        "file": "132-task-test-transition-fix",
+        "type": "task",
+        "branch": "132-task-test-transition-fix",
+        "summary": "Test transition fix",
+        "state": "ARCHIVED"
+      }
+    ],
+    "REJECTED": [
+      {
+        "id": 90,
+        "p": 1,
+        "file": "90-task-fix-test-environment-toolchain",
+        "type": "task",
+        "branch": "90-task-fix-test-environment-toolchain",
+        "summary": "Fix test environment toolchain initialization",
+        "state": "REJECTED"
+      },
+      {
+        "id": 116,
+        "p": 2,
+        "file": "116-task-test-nested-branching-fix-1234",
+        "type": "task",
+        "branch": "116-task-test-nested-branching-fix-1234",
+        "summary": "Test Nested Branching Fix 12345",
+        "state": "REJECTED"
+      },
+      {
+        "id": 117,
+        "p": 2,
+        "file": "117-task-test-merged-branching-5678",
+        "type": "task",
+        "branch": "117-task-test-merged-branching-5678",
+        "summary": "Test Merged Branching 5678",
+        "state": "REJECTED"
+      },
+      {
+        "id": 137,
+        "p": 2,
+        "file": "137-task-improve-regression-check-error",
+        "type": "task",
+        "branch": "137-task-improve-regression-check-error",
+        "summary": "Improve regression check error message",
+        "state": "REJECTED"
+      },
+      {
+        "id": 53,
+        "p": 2,
+        "file": "53-task-fixed-pyright-type-errors-dupl",
+        "type": "task",
+        "branch": "53-task-fixed-pyright-type-errors-dupl",
+        "summary": "FIXED: pyright type errors - duplicate of task 54",
+        "state": "REJECTED"
+      },
+      {
+        "id": 81,
+        "p": 2,
+        "file": "81-task-test-review-gate",
+        "type": "task",
+        "branch": "81-task-test-review-gate",
+        "summary": "Test review gate",
+        "state": "REJECTED"
+      },
+      {
+        "id": 82,
+        "p": 2,
+        "file": "82-task-test-gate-regression-flag-very",
+        "type": "task",
+        "branch": "82-task-test-gate-regression-flag-very",
+        "summary": "Test gate regression flag - very long story",
+        "state": "REJECTED"
+      },
+      {
+        "id": 84,
+        "p": 2,
+        "file": "84-task-fix-pre-existing-regression-te",
+        "type": "task",
+        "branch": "84-task-fix-pre-existing-regression-te",
+        "summary": "Fix pre-existing regression test failures",
+        "state": "REJECTED"
+      }
+    ]
+  }
+}

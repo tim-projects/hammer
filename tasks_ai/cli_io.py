@@ -2,17 +2,20 @@ import os
 import sys
 import json
 
+
 def get_terminal_width():
     try:
         return os.get_terminal_size().columns
     except OSError:
         return 80
 
+
 def log(cli, message):
     if cli.as_json:
         cli.output_messages.append(message)
     elif not cli.quiet:
         print(message)
+
 
 def error(cli, message, hint=None):
     if cli.quiet:
@@ -32,6 +35,7 @@ def error(cli, message, hint=None):
             message = f"{message} | HINT: {hint}"
         print(f"Error: {message}", file=sys.stderr)
         sys.exit(1)
+
 
 def finish(cli, data=None):
     if cli.quiet:

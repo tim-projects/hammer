@@ -190,11 +190,15 @@ def check_merged_to_testing(branch):
 def cmd_merge(src_input, target_input):
     src = resolve_branch(src_input)
     target = resolve_branch(target_input)
-    
+
     # Identify if src is a task branch
     task_id = src.split("-")[0] if src.split("-")[0].isdigit() else None
-    cli = TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"]) if TasksCLI else None
-    
+    cli = (
+        TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"])
+        if TasksCLI
+        else None
+    )
+
     if task_id and cli:
         path, _ = cli.find_task(task_id)
         if path:
@@ -202,11 +206,13 @@ def cmd_merge(src_input, target_input):
             pipeline_to_status = {
                 "testing": "TESTING",
                 "staging": "STAGING",
-                "main": "DONE"
+                "main": "DONE",
             }
             new_status = pipeline_to_status.get(target)
             if new_status:
-                info(f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'...")
+                info(
+                    f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'..."
+                )
                 cli.move(task_id, new_status, yes=FLAGS["yes"])
                 return
 
@@ -293,15 +299,19 @@ def cmd_promote(src_input, original_task_id=None):
             if next_state:
                 # Use tasks move to handle the transition
                 cli.move(task_id, next_state)
-                log(f"✅ Successfully promoted {src.upper()} → {next_state.upper()} via tasks move")
+                log(
+                    f"✅ Successfully promoted {src.upper()} → {next_state.upper()} via tasks move"
+                )
                 # If we moved to DONE (which comes after STAGING), we should archive the task
                 if next_state == "DONE":
-                    log(f"Task {task_id} successfully promoted to DONE. Auto-archiving branch and task.")
+                    log(
+                        f"Task {task_id} successfully promoted to DONE. Auto-archiving branch and task."
+                    )
                     cli.move(task_id, "ARCHIVED")
                     run(["git", "branch", "-d", src], check=False)
                 return
             # If we couldn't determine next state, fall through to non-task logic
-    
+
     # Fallback to original logic for non-task branches or if we couldn't determine task state
     target = None
     if task_id and TasksCLI and current_status:

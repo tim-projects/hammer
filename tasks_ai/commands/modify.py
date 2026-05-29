@@ -4,20 +4,36 @@ from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
 
-def run(cli, filename, task_type=None, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, 
-        notes=None, progress=None, findings=None, mitigations=None, tests_passed=None, 
-        priority=None, regression_check=None):
+
+def run(
+    cli,
+    filename,
+    task_type=None,
+    title=None,
+    story=None,
+    tech=None,
+    criteria=None,
+    plan=None,
+    repro=None,
+    notes=None,
+    progress=None,
+    findings=None,
+    mitigations=None,
+    tests_passed=None,
+    priority=None,
+    regression_check=None,
+):
     """Execution logic for 'tasks modify'."""
     filepath, _ = cli.find_task(filename)
     if not filepath:
         cli.error(f"Task '{filename}' not found.")
-    
+
     task = FM.load(filepath)
     fname = os.path.basename(filepath)
     task_id = fname.rsplit(".", 1)[0]
     tt, _ = parse_filename(fname)
     updated = False
-    
+
     if task_type:
         task.metadata["Ty"] = task_type
         updated = True
@@ -28,7 +44,7 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
             cli.error("Title too vague.")
         task.metadata["Ti"] = title
         updated = True
-        
+
     if story:
         task.parts["story"] = story
         updated = True
@@ -86,20 +102,27 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
             dump = FM.load(dump_path)
             dump.parts["content"] = task.parts.get("notes", "")
             cli._atomic_write(dump_path, dump)
-            
+
         cli._append_log(filepath, "Mod")
         cli._run_git(["add", "--all"], cwd=cli.tasks_path)
-        cli._run_git(["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"], cwd=cli.tasks_path)
-        
-        cli.log(f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}")
-        
+        cli._run_git(
+            ["commit", "--allow-empty", "-m", f"Mod {os.path.basename(filepath)}"],
+            cwd=cli.tasks_path,
+        )
+
+        cli.log(
+            f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
+        )
+
         _, branch = parse_filename(os.path.basename(filepath))
         # Ensure branch exists logic if needed
     else:
         cli.log("No changes.")
-        
-    cli.finish({
-        "id": task.metadata.get("Id"),
-        "task_id": task_id,
-        "title": task.metadata.get("Ti", ""),
-    })
+
+    cli.finish(
+        {
+            "id": task.metadata.get("Id"),
+            "task_id": task_id,
+            "title": task.metadata.get("Ti", ""),
+        }
+    )

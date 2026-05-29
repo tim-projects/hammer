@@ -1,5 +1,29 @@
 # tasks_ai/constants.py
 
+import os
+import yaml
+
+
+def load_config(tasks_path):
+    config_path = os.path.join(tasks_path, "config.yaml")
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                return yaml.safe_load(f) or {}
+        except Exception:
+            return {}
+    return {}
+
+
+def save_config(tasks_path, cfg):
+    config_path = os.path.join(tasks_path, "config.yaml")
+    try:
+        with open(config_path, "w") as f:
+            yaml.safe_dump(cfg, f)
+    except Exception:
+        pass
+
+
 TASKS_DIR = ".tasks"
 TASKS_BRANCH = "tasks"
 CURRENT_TASK_FILENAME = "current-task.md"

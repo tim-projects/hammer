@@ -23,6 +23,7 @@ class TestInitBackup(unittest.TestCase):
         # Clean up /tmp backups created by the test
         # Backups are created in /tmp/.tasks.bak_...
         import glob
+
         for f in glob.glob("/tmp/.tasks.bak_*"):
             shutil.rmtree(f)
 
@@ -38,12 +39,16 @@ class TestInitBackup(unittest.TestCase):
         # Verify backup content
         backups = [d for d in os.listdir("/tmp") if d.startswith(".tasks.bak_")]
         latest_backup = os.path.join("/tmp", backups[-1])
-        
+
         # Find any md file in backlog to verify contents
         backlog_path = os.path.join(latest_backup, "backlog")
-        task_folders = [d for d in os.listdir(backlog_path) if os.path.isdir(os.path.join(backlog_path, d))]
+        task_folders = [
+            d
+            for d in os.listdir(backlog_path)
+            if os.path.isdir(os.path.join(backlog_path, d))
+        ]
         self.assertTrue(len(task_folders) > 0, "No task found in backup backlog")
-        
+
         task_dir = os.path.join(backlog_path, task_folders[0])
         self.assertTrue(os.path.exists(os.path.join(task_dir, "meta.json")))
 

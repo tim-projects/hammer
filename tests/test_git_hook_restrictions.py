@@ -5,6 +5,7 @@ import tempfile
 import subprocess
 from tasks_ai.cli import TasksCLI
 
+
 class TestGitHookRestrictions(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
@@ -31,10 +32,11 @@ class TestGitHookRestrictions(unittest.TestCase):
         with open("main_file.txt", "w") as f:
             f.write("direct commit")
         subprocess.run(["git", "add", "main_file.txt"], capture_output=True)
-        
+
         # We expect a custom hook (yet to be implemented) to reject this
         # This is a placeholder test for task 166
         pass
+
 
 if __name__ == "__main__":
     unittest.main()
