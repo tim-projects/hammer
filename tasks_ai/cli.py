@@ -463,6 +463,7 @@ class TasksCLI:
 
         if not is_worktree:
             if os.path.exists(self.tasks_path):
+                print(f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"); 
                 if self._tasks_directory_has_data(self.tasks_path):
                     from datetime import datetime
                     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
