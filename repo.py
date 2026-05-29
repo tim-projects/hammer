@@ -273,7 +273,6 @@ def cmd_promote(src_input, original_task_id=None):
     Promote a branch through the pipeline.
     This is now an alias for 'hammer tasks move' with appropriate state mapping.
     """
-    print("DEBUG: Our new cmd_promote is being called")  # Debug line
     src = resolve_branch(src_input)
     task_id = original_task_id or (
         src.split("-")[0] if src.split("-")[0].isdigit() else None
