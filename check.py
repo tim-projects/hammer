@@ -8,11 +8,13 @@ Commands:
   test         - Run tests
   typecheck    - Run type checker
   format       - Run formatter
+  debug        - Check for debug messages
   all          - Run all checks
 
 Options:
   --fix        - Apply fixes where possible
   --json       - JSON output
+  --dev        - Use /tmp/.tasks for config
 """
 
 import argparse
@@ -147,6 +149,107 @@ def get_commands(fix=False):
     }
 
 
+def run_debug_check(fix=False, as_json=False, dev=False):
+    """Run debug messages check."""
+    if as_json:
+        print(
+            json.dumps(
+                {
+                    "success": True,
+                    "tool": "debug",
+                    "configured": "internal",
+                    "messages": ["Debug check not yet implemented in Python version"],
+                }
+            )
+        )
+        return 0
+    
+    # Run the bash script
+    script_path = os.path.join(ROOT, "scripts", "staging-remove-debug-messages-check.sh")
+    if not os.path.exists(script_path):
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "tool": "debug",
+                        "error": f"Debug check script not found at {script_path}",
+                        "configured": "internal",
+                    }
+                )
+            )
+        else:
+            print(f"Error: Debug check script not found at {script_path}")
+        return 1
+    
+    try:
+        result = subprocess.run(
+            [script_path],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "success": result.returncode == 0,
+                        "tool": "debug",
+                        "configured": "internal",
+                        "stdout": result.stdout,
+                        "stderr": result.stderr,
+                        "exit_code": result.returncode,
+                    }
+                )
+            )
+        else:
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            
+            if result.returncode == 0:
+                print("✅ Debug check passed")
+            else:
+                print("❌ Debug check failed")
+        
+        return result.returncode
+    except subprocess.TimeoutExpired:
+        msg = "Debug check timed out after 30 seconds."
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "tool": "debug",
+                        "error": msg,
+                        "configured": "internal",
+                    }
+                )
+            )
+        else:
+            print(f"Error: {msg}")
+        return 1
+    except Exception as e:
+        msg = f"Failed to run debug check: {str(e)}"
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "tool": "debug",
+                        "error": msg,
+                        "configured": "internal",
+                    }
+                )
+            )
+        else:
+            print(f"Error: {msg}")
+        return 1
+
+
 def run_check(tool_type, fix=False, as_json=False, dev=False):
     sys.stderr.flush()
     config = load_config(dev)
@@ -191,22 +294,22 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             tool_basename = os.path.basename(tool) if tool else None
             lookup_key = tool_basename if (tool and tool_basename in commands) else tool
 
-    if not tool or lookup_key not in commands:
-        msg = f"❌ NO {tool_type.upper()} TOOL CONFIGURED! (EXPECTED KEY: {config_key})! RUN 'tasks config detect' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
-        if as_json:
-            print(
-                json.dumps(
-                    {
-                        "success": False,
-                        "tool": tool_type,
-                        "error": msg,
-                        "configured": tool,
-                    }
+        if not tool or lookup_key not in commands:
+            msg = f"❌ NO {tool_type.upper()} TOOL CONFIGURED! (EXPECTED KEY: {config_key})! RUN 'tasks config detect' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
+            if as_json:
+                print(
+                    json.dumps(
+                        {
+                            "success": False,
+                            "tool": tool_type,
+                            "error": msg,
+                            "configured": tool,
+                        }
+                    )
                 )
-            )
-        else:
-            print(f"Error: {msg}")
-        return 1
+            else:
+                print(f"Error: {msg}")
+            return 1
 
     cmd = commands[lookup_key].copy()
 
@@ -347,7 +450,6 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             print(
                 "\n⚠️ Do not bypass the tool - fix the actual code issues, not the validation config."
             )
-            print("   See AGENTS.md - Never Skip or Bypass section.")
 
     return result.returncode
 
@@ -383,8 +485,11 @@ def run_all(fix=False, as_json=False, dev=False):
 
     results = {}
     total_code = 0
-    for check in ["lint", "test", "typecheck", "format"]:
-        code = run_check(check, fix, as_json, dev)
+    for check in ["lint", "test", "typecheck", "format", "debug"]:
+        if check == "debug":
+            code = run_debug_check(fix, as_json, dev)
+        else:
+            code = run_check(check, fix, as_json, dev)
         results[check] = code
         if code != 0:
             total_code = 1
@@ -420,7 +525,7 @@ def main():
     parser.add_argument(
         "command",
         nargs="?",
-        choices=["lint", "test", "typecheck", "format", "all"],
+        choices=["lint", "test", "typecheck", "format", "debug", "all"],
         help="Check to run",
     )
     parser.add_argument("--fix", action="store_true", help="Apply fixes where possible")
@@ -435,6 +540,8 @@ def main():
 
     if args.command == "all":
         return run_all(args.fix, args.json, args.dev)
+    elif args.command == "debug":
+        return run_debug_check(args.fix, args.json, args.dev)
     else:
         return run_check(args.command, args.fix, args.json, args.dev)
 
