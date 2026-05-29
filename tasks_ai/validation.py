@@ -129,7 +129,7 @@ class Validation:
             return True
             
         # Allow paths within the repo
-        print(f"DEBUG: abs_path={abs_path}, root={os.path.abspath(self.cli.root)}, match={abs_path.startswith(os.path.abspath(self.cli.root))}"); if abs_path.startswith(os.path.abspath(self.cli.root)):
+        if abs_path.startswith(os.path.abspath(self.cli.root)):
             return True
             
         self.cli.error(f"Path outside repository: {path}")
