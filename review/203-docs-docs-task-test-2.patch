@@ -475,7 +475,7 @@ index 1a09ebc..ee4753f 100644
  
  AGENT_GUIDANCE = """
 diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
-index 440ca35..c3c22a2 100644
+index 440ca35..e94a9e7 100644
 --- a/tasks_ai/pipeline.py
 +++ b/tasks_ai/pipeline.py
 @@ -1,7 +1,8 @@
@@ -488,7 +488,7 @@ index 440ca35..c3c22a2 100644
  
  class PipelineError(Exception):
      def __init__(self, message, hint=None):
-@@ -19,33 +20,51 @@ class PipelineService:
+@@ -19,33 +20,53 @@ class PipelineService:
          self.context = context
          self.git = git_client
          self.logger = logger
@@ -512,6 +512,8 @@ index 440ca35..c3c22a2 100644
 +        task_type, _ = parse_filename(os.path.basename(filepath))
 +        allowed_transitions = self.get_allowed_transitions(task_type)
 +        
++        cli.log(f"DEBUG: Task type: {task_type}, Current: {current_state}, New: {new_status}, Allowed: {allowed_transitions.get(current_state, [])}")
++
 +        # Allow multi-step moves: validate each step in the chain
          if "," in new_status:
 +            last_state = current_state
@@ -547,7 +549,7 @@ index 440ca35..c3c22a2 100644
              )
  
      def validate_gate(self, task, target_state: str, task_path: str):
-@@ -54,16 +73,22 @@ class PipelineService:
+@@ -54,16 +75,22 @@ class PipelineService:
          Raises PipelineError with descriptive message and hint if gate fails.
          """
          task_id = task.metadata.get("Id")
@@ -572,7 +574,7 @@ index 440ca35..c3c22a2 100644
              # Check if coming from a state that requires Rc
              current_state = os.path.basename(os.path.dirname(task_path)).upper()
              if current_state in ["REVIEW", "TESTING", "STAGING", "DONE"]:
-@@ -78,7 +103,7 @@ class PipelineService:
+@@ -78,7 +105,7 @@ class PipelineService:
                      )
  
          # 3. Cryptographic Audit Integrity for STAGING/DONE
@@ -581,7 +583,7 @@ index 440ca35..c3c22a2 100644
              if not self.check_audit_integrity(task_id, task_path):
                  raise PipelineError(
                      f"Task '{task_id}' failed cryptographic audit integrity check.",
-@@ -86,7 +111,7 @@ class PipelineService:
+@@ -86,7 +113,7 @@ class PipelineService:
                  )
  
          # 4. Merge verification for DONE/ARCHIVED
@@ -590,7 +592,7 @@ index 440ca35..c3c22a2 100644
              branch = task.metadata.get("Br", "")
              if branch:
                  # Check if branch is merged into main
-@@ -155,7 +180,8 @@ class PipelineService:
+@@ -155,7 +182,8 @@ class PipelineService:
              filepath = os.path.join(task_path, filename)
              with open(filepath, "r", encoding="utf-8") as f:
                  content = f.read()
