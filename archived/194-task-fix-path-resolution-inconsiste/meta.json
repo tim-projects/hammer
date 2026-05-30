@@ -5,6 +5,8 @@
   "Bl": [],
   "Pr": 2,
   "Br": "194-task-fix-path-resolution-inconsiste",
-  "Tp": false,
-  "Rc": ""
+  "Tp": true,
+  "Rc": true,
+  "Vp": true,
+  "Ar": "true"
 }
