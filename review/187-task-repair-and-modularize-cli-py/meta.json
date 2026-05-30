@@ -6,6 +6,6 @@
   "Pr": 2,
   "Br": "187-task-repair-and-modularize-cli-py",
   "Tp": false,
-  "Rc": "",
+  "Rc": true,
   "Vp": true
 }
