@@ -1,1 +1,27 @@
-# No changes detected
+diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
+index 7b73439..2d8367d 100644
+--- a/tasks_ai/commands/verify.py
++++ b/tasks_ai/commands/verify.py
+@@ -22,8 +22,20 @@ def run(cli, task_id, proof):
+         return
+ 
+     # Write the verification proof
+-    hash_path = audit_file.replace(".audit", ".audit_hash")
++    # Audit file is in .tasks/review/<task_id>-<name>.audit
++    # We want it in .tasks/review/<task_id>-<name>/
++    task_dir = audit_file.replace(".audit", "")
++    os.makedirs(task_dir, exist_ok=True)
++    
++    proof_path = os.path.join(task_dir, "verification_proof.log")
++    with open(proof_path, "w") as f:
++        f.write(proof)
++        
++    hash_path = os.path.join(task_dir, ".audit_hash")
+     with open(hash_path, "w") as f:
+         f.write(proof)
+-
++    
++    # Update hash using pipeline
++    cli.pipeline.update_audit_hash(task_id, task_dir)
++    
+     cli.log(f"✅ Task {task_id} verified.")
