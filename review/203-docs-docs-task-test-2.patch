@@ -264,13 +264,29 @@ index fa0d5ba..b2bae9d 100644
              task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
          else:
 diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
-index 0814316..62dd07e 100644
+index 0814316..2d53617 100644
 --- a/tasks_ai/commands/move.py
 +++ b/tasks_ai/commands/move.py
-@@ -7,6 +7,28 @@ from ..utils import parse_filename, perform_move
+@@ -1,5 +1,5 @@
+ import os
+-from ..constants import STATE_FOLDERS, ALLOWED_TRANSITIONS, CURRENT_TASK_FILENAME
++from ..constants import STATE_FOLDERS, CURRENT_TASK_FILENAME
+ from ..file_manager import FM
+ from ..models import Task
+ from ..utils import parse_filename, perform_move
+@@ -7,13 +7,37 @@ from ..utils import parse_filename, perform_move
  
  def run(cli, filename, new_status, yes=False):
      """Execution logic for 'tasks move'."""
+-    cli.pipeline.check_transition(cli, filename, new_status)
+     filepath, current_state_from_folder = cli.find_task(filename)
+     if not filepath:
+         cli.error(
+             f"Task '{filename}' not found.",
+             hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
+         )
++    task_type, _ = parse_filename(os.path.basename(filepath))
++    allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
 +    
 +    # Handle multi-step transitions
 +    if "," in new_status:
@@ -293,9 +309,56 @@ index 0814316..62dd07e 100644
 +        return
 +
 +    # Single-step transition
-     cli.pipeline.check_transition(cli, filename, new_status)
-     filepath, current_state_from_folder = cli.find_task(filename)
-     if not filepath:
++    cli.pipeline.check_transition(cli, filename, new_status)
+ 
+     task = FM.load(filepath)
+     fname = os.path.basename(filepath)
+@@ -25,11 +49,11 @@ def run(cli, filename, new_status, yes=False):
+     # Chained auto-promotion
+     max_steps = 10
+     while (
+-        new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
++        new_status not in allowed_transitions.get(current_state_from_folder, [])
+         and current_state_from_folder != new_status
+         and max_steps > 0
+     ):
+-        allowed = ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
++        allowed = allowed_transitions.get(current_state_from_folder, [])
+         if not allowed:
+             break
+ 
+@@ -63,6 +87,8 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+ 
+     filepath_str = str(filepath)
+     task = FM.load(filepath_str)
++    task_type, _ = parse_filename(os.path.basename(filepath_str))
++    allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
+ 
+     if not force:
+         cli._validate_pipeline_gate(task, new_status, filepath_str)
+@@ -112,11 +138,11 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+             FM.dump(task, filepath_str)
+ 
+     if (
+-        new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
++        new_status not in allowed_transitions.get(current_state, [])
+         and not force
+         and not is_merged_branch
+     ):
+-        hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
++        hint = f"Allowed transitions from {current_state} are: {', '.join(allowed_transitions.get(current_state, []))}. Do not bypass this tool."
+         if current_state == "REJECTED" and new_status == "ARCHIVED":
+             hint += " Use 'hammer tasks delete <id>' to permanently remove the task."
+         if is_merged_branch:
+@@ -125,7 +151,7 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+             )
+         cli.error(
+             f"Forbidden transition: {current_state} -> {new_status}",
+-            hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. "
++            hint=f"Allowed transitions from {current_state} are: {', '.join(allowed_transitions.get(current_state, []))}. "
+             f"Pipeline flow: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. "
+             f"Do not bypass this tool.",
+         )
 diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
 index 7b73439..60ba9c7 100644
 --- a/tasks_ai/commands/verify.py
