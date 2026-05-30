@@ -100,7 +100,7 @@ index 7b73439..60ba9c7 100644
 +    
      cli.log(f"✅ Task {task_id} verified.")
 diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
-index 440ca35..cdba048 100644
+index 440ca35..8f8e162 100644
 --- a/tasks_ai/pipeline.py
 +++ b/tasks_ai/pipeline.py
 @@ -30,8 +30,15 @@ class PipelineService:
@@ -119,3 +119,13 @@ index 440ca35..cdba048 100644
          if (
              new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
              and current_state != new_status
+@@ -155,7 +162,8 @@ class PipelineService:
+             filepath = os.path.join(task_path, filename)
+             with open(filepath, "r", encoding="utf-8") as f:
+                 content = f.read()
+-            if re.search(r"^- \[ \]", content, re.MULTILINE):
++            # Allow flexible whitespace around - and [ ]
++            if re.search(r"^\s*-\s*\[\s*\]", content, re.MULTILINE):
+                 return True
+         return False
+ 
