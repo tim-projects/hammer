@@ -1,0 +1,8 @@
+{
+  "Id": 193,
+  "Ti": "Fix 'tasks reconcile --all' to avoid deleting branches of active tasks",
+  "Cr": "260530 01:09",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "193-task-fix-tasks-reconcile-all-to-avo"
+}
