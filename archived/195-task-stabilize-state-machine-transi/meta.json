@@ -5,6 +5,8 @@
   "Bl": [],
   "Pr": 2,
   "Br": "195-task-stabilize-state-machine-transi",
-  "Tp": false,
-  "Rc": ""
+  "Tp": true,
+  "Rc": true,
+  "Vp": true,
+  "Ar": "true"
 }
