@@ -5,6 +5,8 @@
   "Bl": [],
   "Pr": 2,
   "Br": "196-task-resolve-artifact-synchronizati",
-  "Tp": false,
-  "Rc": ""
+  "Tp": true,
+  "Rc": true,
+  "Vp": true,
+  "Ar": "true"
 }
