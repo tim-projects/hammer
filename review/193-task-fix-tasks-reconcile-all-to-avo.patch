@@ -1,5 +1,5 @@
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
-index 234f2a8..516f054 100644
+index 234f2a8..ee6fb37 100644
 --- a/tasks_ai/cli.py
 +++ b/tasks_ai/cli.py
 @@ -447,6 +447,14 @@ class TasksCLI:
@@ -48,6 +48,130 @@ index 234f2a8..516f054 100644
          branches = self._run_git(["branch"]).stdout
          if TASKS_BRANCH not in branches:
              self._run_git(["checkout", "--orphan", TASKS_BRANCH])
+@@ -649,41 +675,41 @@ class TasksCLI:
+ 
+     def _reconcile_scan(self):
+         candidates = []
+-        for state, folder in STATE_FOLDERS.items():
+-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
++        # Only reconcile tasks that are DONE
++        folder = STATE_FOLDERS.get("DONE")
++        fp = os.path.join(self.tasks_path, folder)
++        if not os.path.exists(fp):
++            return
++            
++        for item in os.listdir(fp):
++            if item == ".gitkeep":
+                 continue
+-            fp = os.path.join(self.tasks_path, folder)
+-            if not os.path.exists(fp):
++            path = os.path.join(fp, item)
++            if not os.path.isdir(path):
+                 continue
+-            for item in os.listdir(fp):
+-                if item == ".gitkeep":
+-                    continue
+-                path = os.path.join(fp, item)
+-                if not os.path.isdir(path):
+-                    continue
+-                task = FM.load(path)
+-                task_id = task.metadata.get("Id")
+-                if not task_id:
+-                    continue
+-                branch = item
+-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+-                if not main_sha or not branch_sha:
+-                    continue
+-                merge_base = self._run_git(
+-                    ["merge-base", branch_sha, "main"]
+-                ).stdout.strip()
+-                if merge_base == main_sha:
+-                    candidates.append(
+-                        {
+-                            "id": task_id,
+-                            "task_id": task_id,
+-                            "title": task.metadata.get("Ti", ""),
+-                            "branch": branch,
+-                            "filepath": path,
+-                            "state": state,
+-                        }
+-                    )
++            task = FM.load(path)
++            task_id = task.metadata.get("Id")
++            if not task_id:
++                continue
++            branch = item
++            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
++            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
++            if not main_sha or not branch_sha:
++                continue
++            merge_base = self._run_git(
++                ["merge-base", branch_sha, "main"]
++            ).stdout.strip()
++            if merge_base == main_sha:
++                candidates.append(
++                    {
++                        "id": task_id,
++                        "task_id": task_id,
++                        "title": task.metadata.get("Ti", ""),
++                        "branch": branch,
++                        "filepath": path,
++                        "state": "DONE",
++                    }
++                )
+ 
+         if not candidates:
+             if self.as_json:
+@@ -706,28 +732,28 @@ class TasksCLI:
+ 
+     def _reconcile_archive_all(self):
+         candidates = []
+-        for state, folder in STATE_FOLDERS.items():
+-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
++        # Only reconcile tasks that are DONE
++        folder = STATE_FOLDERS.get("DONE")
++        fp = os.path.join(self.tasks_path, folder)
++        if not os.path.exists(fp):
++            return
++
++        for item in os.listdir(fp):
++            if item == ".gitkeep":
+                 continue
+-            fp = os.path.join(self.tasks_path, folder)
+-            if not os.path.exists(fp):
++            path = os.path.join(fp, item)
++            if not os.path.isdir(path):
+                 continue
+-            for item in os.listdir(fp):
+-                if item == ".gitkeep":
+-                    continue
+-                path = os.path.join(fp, item)
+-                if not os.path.isdir(path):
+-                    continue
+-                branch = item
+-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+-                if (
+-                    main_sha
+-                    and branch_sha
+-                    and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+-                    == main_sha
+-                ):
+-                    candidates.append(item)
++            branch = item
++            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
++            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
++            if (
++                main_sha
++                and branch_sha
++                and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
++                == main_sha
++            ):
++                candidates.append(item)
+ 
+         archived = 0
+         for branch in candidates:
 diff --git a/tasks_ai/commands/audit.py b/tasks_ai/commands/audit.py
 index 6f11116..86a51f8 100644
 --- a/tasks_ai/commands/audit.py
