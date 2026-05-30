@@ -1,5 +1,7 @@
 lint: ruff
 package_manager: pip
+repo.lint: ruff
+repo.test: pytest
 test: pytest
 type_check: pyright
 workflows:
