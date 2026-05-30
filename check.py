@@ -163,9 +163,11 @@ def run_debug_check(fix=False, as_json=False, dev=False):
             )
         )
         return 0
-    
+
     # Run the bash script
-    script_path = os.path.join(ROOT, "scripts", "staging-remove-debug-messages-check.sh")
+    script_path = os.path.join(
+        ROOT, "scripts", "staging-remove-debug-messages-check.sh"
+    )
     if not os.path.exists(script_path):
         if as_json:
             print(
@@ -181,7 +183,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
         else:
             print(f"Error: Debug check script not found at {script_path}")
         return 1
-    
+
     try:
         result = subprocess.run(
             [script_path],
@@ -190,7 +192,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
             text=True,
             timeout=30,
         )
-        
+
         if as_json:
             print(
                 json.dumps(
@@ -209,12 +211,12 @@ def run_debug_check(fix=False, as_json=False, dev=False):
                 print(result.stdout)
             if result.stderr:
                 print(result.stderr, file=sys.stderr)
-            
+
             if result.returncode == 0:
                 print("✅ Debug check passed")
             else:
                 print("❌ Debug check failed")
-        
+
         return result.returncode
     except subprocess.TimeoutExpired:
         msg = "Debug check timed out after 30 seconds."
@@ -471,11 +473,11 @@ def get_last_hash_path():
     return os.path.join(find_project_root(), ".tasks", ".last_validation_hash")
 
 
-def run_all(fix=False, as_json=False, dev=False):
+def run_all(fix=False, as_json=False, dev=False, force=False):
     current_hash = get_current_hash()
     hash_path = get_last_hash_path()
 
-    if not fix and current_hash and os.path.exists(hash_path):
+    if not force and not fix and current_hash and os.path.exists(hash_path):
         with open(hash_path, "r") as f:
             last_hash = f.read().strip()
         if last_hash == current_hash:
@@ -529,6 +531,11 @@ def main():
         help="Check to run",
     )
     parser.add_argument("--fix", action="store_true", help="Apply fixes where possible")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force validation even if codebase unchanged",
+    )
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument("--dev", action="store_true", help="Use /tmp/.tasks for config")
 
@@ -539,7 +546,7 @@ def main():
         return 1
 
     if args.command == "all":
-        return run_all(args.fix, args.json, args.dev)
+        return run_all(args.fix, args.json, args.dev, args.force)
     elif args.command == "debug":
         return run_debug_check(args.fix, args.json, args.dev)
     else:

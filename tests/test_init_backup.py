@@ -8,18 +8,18 @@ import unittest
 class TestInitBackup(unittest.TestCase):
     def setUp(self):
         self.repo_root = os.getcwd()
-        self.dev_tasks = '/tmp/.tasks'
+        self.dev_tasks = "/tmp/.tasks"
         # Ensure clean state
         if os.path.exists(self.dev_tasks):
             shutil.rmtree(self.dev_tasks)
         os.makedirs(self.dev_tasks, exist_ok=True)
         # Create dummy task data: folder with meta.json
-        task_dir = os.path.join(self.dev_tasks, 'backlog', '1-test-task')
+        task_dir = os.path.join(self.dev_tasks, "backlog", "1-test-task")
         os.makedirs(task_dir, exist_ok=True)
-        with open(os.path.join(task_dir, 'meta.json'), 'w') as f:
-            json.dump({'Id': 1}, f)
-        with open(os.path.join(self.dev_tasks, '.task_counter'), 'w') as f:
-            f.write('1')
+        with open(os.path.join(task_dir, "meta.json"), "w") as f:
+            json.dump({"Id": 1}, f)
+        with open(os.path.join(self.dev_tasks, ".task_counter"), "w") as f:
+            f.write("1")
 
     def tearDown(self):
         if os.path.exists(self.dev_tasks):

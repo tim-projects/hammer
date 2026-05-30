@@ -124,14 +124,14 @@ class Validation:
         is_dev = self.cli.dev
         is_testing = os.environ.get("TASKS_TESTING") == "1"
         starts_tmp = path.startswith("/tmp")
-        
+
         if is_dev or is_testing or starts_tmp:
             return True
-            
+
         # Allow paths within the repo
         if abs_path.startswith(os.path.abspath(self.cli.root)):
             return True
-            
+
         self.cli.error(f"Path outside repository: {path}")
         return False
 

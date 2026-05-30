@@ -5,10 +5,10 @@ IMPORTANT: Always use -j for JSON output (machine-parseable for agents).
 For help on any command, use tasks <command> -h
 
 Pipeline Commands:
-  audit <id>        - Generate cryptographic SHA256 hash of the patch file.
+  audit <id>        - Generate cryptographic MD5 hash of the patch file.
                       Required gate: TESTING -> REVIEW.
   verify <id> --proof "..."
-                    - Validate criteria and bind proof to a SHA256 audit hash.
+                    - Validate criteria and bind proof to a MD5 audit hash.
                       Required gate: REVIEW -> STAGING.
   reconcile --all   - Auto-sync pipeline state with Git main branch merges.
 

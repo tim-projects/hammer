@@ -164,7 +164,7 @@ class PipelineService:
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
 
-        hasher = hashlib.sha256()
+        hasher = hashlib.md5()
         with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
             hasher.update(f1.read())
             hasher.update(f2.read())

@@ -18,6 +18,7 @@ from .task_service import TaskService
 from .cli_io import log, error, finish
 from .file_manager import FM
 
+
 class TasksCLI:
     def __init__(self, as_json=False, command=None, quiet=False, dev=False, yes=False):
         self.as_json = as_json
@@ -25,7 +26,7 @@ class TasksCLI:
         self.dev = dev
         self.yes = yes
         self.output_messages = []
-        
+
         self.context = ProjectContext(dev=dev)
         self.root = self.context.repo_root or os.getcwd()
 
@@ -43,6 +44,7 @@ class TasksCLI:
             if os.path.exists(pyproject_path):
                 try:
                     import toml
+
                     with open(pyproject_path, "r") as f:
                         pyproject_data = toml.load(f)
                         self.tasks_dir = (
@@ -55,14 +57,14 @@ class TasksCLI:
 
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
         if dev:
-             self.context.tasks_path = "/tmp/.tasks"
-             if not os.path.exists(self.context.tasks_path):
+            self.context.tasks_path = "/tmp/.tasks"
+            if not os.path.exists(self.context.tasks_path):
                 os.makedirs(self.context.tasks_path, exist_ok=True)
         elif os.path.isabs(self.tasks_dir):
             self.context.tasks_path = self.tasks_dir
 
         self.tasks_path = self.context.tasks_path
-        
+
         if not self.tasks_path:
             self.tasks_path = os.path.join(self.root, ".tasks")
             self.context.tasks_path = self.tasks_path
@@ -134,11 +136,11 @@ class TasksCLI:
                     content = content.decode("utf-8")
                 except (AttributeError, UnicodeDecodeError):
                     content = str(content)
-            
+
             dir_name = os.path.dirname(path)
             if dir_name:
                 os.makedirs(dir_name, exist_ok=True)
-            
+
             fd, temp_path = tempfile.mkstemp(dir=dir_name or ".", text=True)
             try:
                 with os.fdopen(fd, "w") as f:
@@ -152,7 +154,9 @@ class TasksCLI:
     def _append_log(self, path, message, section="progress"):
         FM.append_log(path, message, section=section)
         if path:
-            rel_log = os.path.join(os.path.relpath(path, self.tasks_path), "activity.log")
+            rel_log = os.path.join(
+                os.path.relpath(path, self.tasks_path), "activity.log"
+            )
             self._run_git(["add", rel_log], cwd=self.tasks_path)
 
     def _run_git(self, cmd, cwd=None):
@@ -201,6 +205,7 @@ class TasksCLI:
 
     def _get_next_id(self):
         from .counter import TaskCounterProtector
+
         protector = TaskCounterProtector(self.tasks_path, self)
         return protector.get_next_id(self)
 
@@ -218,7 +223,14 @@ class TasksCLI:
                     src = os.path.join(live_dir, item)
                     dst = os.path.join(done_dir, item)
                     if os.path.exists(os.path.join(self.tasks_path, ".git")):
-                        res = self._run_git(["mv", os.path.join("live", item), os.path.join("done", item)], cwd=self.tasks_path)
+                        res = self._run_git(
+                            [
+                                "mv",
+                                os.path.join("live", item),
+                                os.path.join("done", item),
+                            ],
+                            cwd=self.tasks_path,
+                        )
                         if res.returncode != 0:
                             if os.path.exists(dst):
                                 if os.path.isdir(dst):
@@ -236,7 +248,10 @@ class TasksCLI:
 
                 if os.path.exists(os.path.join(self.tasks_path, ".git")):
                     self._run_git(["add", "--all"], cwd=self.tasks_path)
-                    self._run_git(["commit", "-m", "Migrate LIVE tasks to DONE"], cwd=self.tasks_path)
+                    self._run_git(
+                        ["commit", "-m", "Migrate LIVE tasks to DONE"],
+                        cwd=self.tasks_path,
+                    )
                 self.log("Migration complete.")
 
             remaining = os.listdir(live_dir)
@@ -269,7 +284,10 @@ class TasksCLI:
                     self.log(f"Warning: Failed to load task at {path}: {e}")
         if updated:
             self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(["commit", "--allow-empty", "-m", "Clear delete marks"], cwd=self.tasks_path)
+            self._run_git(
+                ["commit", "--allow-empty", "-m", "Clear delete marks"],
+                cwd=self.tasks_path,
+            )
 
     def _validate_task_id(self, task_id):
         if not task_id:
@@ -280,8 +298,10 @@ class TasksCLI:
         cwd = cwd or self.root
         repo_path = os.path.join(self.root, "repo")
         if not os.path.exists(repo_path):
-             repo_path = self.repo_script
-        result = subprocess.run([repo_path] + args, cwd=cwd, capture_output=True, text=True)
+            repo_path = self.repo_script
+        result = subprocess.run(
+            [repo_path] + args, cwd=cwd, capture_output=True, text=True
+        )
         return result
 
     def _parse_filename(self, name):
@@ -319,7 +339,9 @@ class TasksCLI:
                             if "->DONE" in line:
                                 match = re.search(r"- (\d{6} \d{2}:\d{2}):", line)
                                 if match:
-                                    done_date = datetime.strptime(match.group(1), "%y%m%d %H:%M")
+                                    done_date = datetime.strptime(
+                                        match.group(1), "%y%m%d %H:%M"
+                                    )
                                     break
                         if done_date and (now - done_date) > timedelta(days=7):
                             self.log(f"Auto-archiving: {item}")
@@ -327,6 +349,7 @@ class TasksCLI:
 
     def _get_config(self, key=None):
         from .constants import load_config
+
         cfg = load_config(self.tasks_path)
         if key:
             return cfg.get(key)
@@ -351,12 +374,14 @@ class TasksCLI:
         tn = os.path.basename(filepath_str)
         _, branch = self._parse_filename(tn)
         updated = False
-        res = self._run_git(["log", branch, f"^{self._get_default_branch()}", "--oneline"])
+        res = self._run_git(
+            ["log", branch, f"^{self._get_default_branch()}", "--oneline"]
+        )
         commits = res.stdout.strip() if res.returncode == 0 else ""
         if commits:
             task.parts["commits"] = commits
             updated = True
-        
+
         dump_path = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
         if os.path.exists(dump_path):
             dump = FM.load(dump_path)
@@ -382,7 +407,9 @@ class TasksCLI:
             if not isinstance(bl, list):
                 bl = []
             for blocker_dir in bl:
-                blocker_id = blocker_dir.split("-")[0] if "-" in blocker_dir else blocker_dir
+                blocker_id = (
+                    blocker_dir.split("-")[0] if "-" in blocker_dir else blocker_dir
+                )
                 if str(blocker_id) == str(target_id):
                     return True
                 if self._has_path(blocker_id, target_id, visited):
@@ -400,17 +427,23 @@ class TasksCLI:
 
             # pre-merge hook
             with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
-                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"⚠️  Direct git merge to main detected. Pipeline governance requires './hammer repo merge'. Aborting.\"\n    exit 1\nfi")
+                f.write(
+                    '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "⚠️  Direct git merge to main detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
+                )
             os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
 
             # post-merge hook
             with open(os.path.join(hook_dir, "post-merge"), "w") as f:
-                f.write("#!/bin/bash\n\nif [ \"$HAMMER_INTERNAL_MERGE\" == \"1\" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$target_branch\" == \"main\" ]; then\n    echo \"Checking pipeline sync...\"\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n \"$staging_diff\" ] || [ -n \"$testing_diff\" ]; then\n        echo \"⚠️  Pipeline branches (staging/testing) are out of sync with main!\"\n        echo \"Run './hammer repo sync' to reconcile.\"\n    else\n        echo \"✅ Pipeline branches are in sync.\"\n    fi\nfi")
+                f.write(
+                    '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with main!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
+                )
             os.chmod(os.path.join(hook_dir, "post-merge"), 0o755)
 
             # pre-receive hook
             with open(os.path.join(hook_dir, "pre-receive"), "w") as f:
-                f.write("#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ \"$newrev\" == \"0000000000000000000000000000000000000000\" ]]; then\n        branch=$(basename \"$refname\")\n        if [[ \"$branch\" == \"main\" || \"$branch\" == \"staging\" || \"$branch\" == \"testing\" ]]; then\n            echo \"❌ Cannot delete critical pipeline branch: $branch\"\n            exit 1\n        fi\n    fi\ndone")
+                f.write(
+                    '#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "main" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
+                )
             os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
 
         if self.dev:
@@ -423,7 +456,9 @@ class TasksCLI:
                 f.write("0")
             self._run_git(["init"], cwd=self.tasks_path)
             self._run_git(["add", "."], cwd=self.tasks_path)
-            self._run_git(["commit", "-m", "Initial dev tasks commit"], cwd=self.tasks_path)
+            self._run_git(
+                ["commit", "-m", "Initial dev tasks commit"], cwd=self.tasks_path
+            )
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
             return
@@ -431,6 +466,7 @@ class TasksCLI:
         # Regular init
         original_branch = self._run_git(["branch", "--show-current"]).stdout.strip()
         from .constants import TASKS_BRANCH
+
         branches = self._run_git(["branch"]).stdout
         if TASKS_BRANCH not in branches:
             self._run_git(["checkout", "--orphan", TASKS_BRANCH])
@@ -463,28 +499,37 @@ class TasksCLI:
 
         if not is_worktree:
             if os.path.exists(self.tasks_path):
-                print(f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"); 
+                print(
+                    f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"
+                )
                 if self._tasks_directory_has_data(self.tasks_path):
                     from datetime import datetime
+
                     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                     backup_path = f"/tmp/.tasks.bak_{timestamp}"
                     self.log(f"Backing up existing .tasks to {backup_path}...")
                     shutil.copytree(self.tasks_path, backup_path)
                     if not force:
-                        self.error("Found existing .tasks directory with data. Use --force to reset.")
+                        self.error(
+                            "Found existing .tasks directory with data. Use --force to reset."
+                        )
                 if os.path.isdir(self.tasks_path):
                     shutil.rmtree(self.tasks_path)
                 else:
                     os.remove(self.tasks_path)
-            self._run_git(["worktree", "add", self.tasks_path, TASKS_BRANCH], cwd=self.root)
+            self._run_git(
+                ["worktree", "add", self.tasks_path, TASKS_BRANCH], cwd=self.root
+            )
 
         for folder in STATE_FOLDERS.values():
             p = os.path.join(self.tasks_path, folder)
             if not os.path.exists(p):
                 os.makedirs(p)
                 Path(os.path.join(p, ".gitkeep")).touch()
-                self._run_git(["add", os.path.join(folder, ".gitkeep")], cwd=self.tasks_path)
-        
+                self._run_git(
+                    ["add", os.path.join(folder, ".gitkeep")], cwd=self.tasks_path
+                )
+
         if self._run_git(["status", "--porcelain"], cwd=self.tasks_path).stdout:
             self._run_git(["commit", "-m", "Init tasks folders"], cwd=self.tasks_path)
 
@@ -496,13 +541,17 @@ class TasksCLI:
             self._run_git(["commit", "-m", "Init task counter"], cwd=self.tasks_path)
 
         install_hooks(self)
-        subprocess.run(["git", "config", "--global", "merge.message", "merge: auto-merge"], cwd=self.root)
+        subprocess.run(
+            ["git", "config", "--global", "merge.message", "merge: auto-merge"],
+            cwd=self.root,
+        )
         os.environ["GIT_MERGE_AUTOEDIT"] = "no"
         self.log("Tasks initialized.")
         self.finish()
 
     def save(self, branch="tasks"):
         from .commands import save as save_cmd
+
         result = save_cmd.run(self, branch=branch, fatal=True)
         self.finish(result)
 
@@ -511,63 +560,83 @@ class TasksCLI:
         tasks_path = self.tasks_path
         if os.path.exists(tasks_path):
             if force:
-                self.log(f"WARNING: {tasks_path} exists. --force specified, will overwrite.")
+                self.log(
+                    f"WARNING: {tasks_path} exists. --force specified, will overwrite."
+                )
                 if os.path.isdir(tasks_path):
                     shutil.rmtree(tasks_path)
                 else:
                     os.remove(tasks_path)
             else:
-                self.error(f"The directory '{tasks_path}' already exists. Use --force to overwrite, or delete it first.")
-        
+                self.error(
+                    f"The directory '{tasks_path}' already exists. Use --force to overwrite, or delete it first."
+                )
+
         self._run_git(["fetch", "origin"], cwd=self.root)
         self._run_git(["worktree", "prune"], cwd=self.root)
-        
+
         branch_check = self._run_git(["branch", "--list", branch], cwd=self.root)
         if branch_check.returncode == 0 and branch in branch_check.stdout:
             self._run_git(["worktree", "add", tasks_path, branch], cwd=self.root)
         else:
-            remote_check = self._run_git(["ls-remote", "--heads", "origin", branch], cwd=self.root)
+            remote_check = self._run_git(
+                ["ls-remote", "--heads", "origin", branch], cwd=self.root
+            )
             if not remote_check.stdout.strip():
-                self.error(f"Branch '{branch}' not found locally or on remote. Cannot restore.")
-            self._run_git(["worktree", "add", "-b", branch, tasks_path, f"origin/{branch}"], cwd=self.root)
-        
+                self.error(
+                    f"Branch '{branch}' not found locally or on remote. Cannot restore."
+                )
+            self._run_git(
+                ["worktree", "add", "-b", branch, tasks_path, f"origin/{branch}"],
+                cwd=self.root,
+            )
+
         self.log(f"Restored .tasks worktree from branch '{branch}' at {tasks_path}")
         self.finish({"restored": True, "branch": branch, "path": tasks_path})
 
     def list(self, show_all=False):
         from .commands import list as list_cmd
+
         list_cmd.run(self, show_all=show_all)
 
     def show(self, filename, section=None):
         from .commands import show as show_cmd
+
         show_cmd.run(self, filename, section=section)
 
     def current(self, filename=None):
         from .commands import current as current_cmd
+
         current_cmd.run(self, filename)
 
     def checkpoint(self, filename=None):
         from .commands import checkpoint as checkpoint_cmd
+
         checkpoint_cmd.run(self, filename)
 
     def create(self, title, task_type="task", priority=None, **kwargs):
         from .commands import create as create_cmd
+
         create_cmd.run(self, title, task_type=task_type, priority=priority, **kwargs)
 
     def modify(self, filename, **kwargs):
         from .commands import modify as modify_cmd
+
         modify_cmd.run(self, filename, **kwargs)
 
     def move(self, filename, status, yes=False):
         from .commands import move as move_cmd
+
         move_cmd.run(self, filename, status, yes=yes)
 
     def delete(self, filename, confirm=None):
         from .commands import delete as delete_cmd
+
         delete_cmd.run(self, filename, confirm=confirm)
 
     def link(self, filename, blocked_by):
         from .commands import link as link_cmd
+
         link_cmd.run(self, filename, blocked_by)
 
     def reconcile(self, target=None, all=False):
@@ -601,9 +670,20 @@ class TasksCLI:
                 branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
                 if not main_sha or not branch_sha:
                     continue
-                merge_base = self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
                 if merge_base == main_sha:
-                    candidates.append({"id": task_id, "task_id": task_id, "title": task.metadata.get("Ti", ""), "branch": branch, "filepath": path, "state": state})
+                    candidates.append(
+                        {
+                            "id": task_id,
+                            "task_id": task_id,
+                            "title": task.metadata.get("Ti", ""),
+                            "branch": branch,
+                            "filepath": path,
+                            "state": state,
+                        }
+                    )
 
         if not candidates:
             if self.as_json:
@@ -641,14 +721,19 @@ class TasksCLI:
                 branch = item
                 main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
                 branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                if main_sha and branch_sha and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip() == main_sha:
+                if (
+                    main_sha
+                    and branch_sha
+                    and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+                    == main_sha
+                ):
                     candidates.append(item)
-        
+
         archived = 0
         for branch in candidates:
             self._move_logic(branch, "ARCHIVED", force=True, yes=True)
             archived += 1
-        
+
         if self.as_json:
             self.finish({"archived": archived})
         else:
@@ -660,7 +745,7 @@ class TasksCLI:
             self.error(f"Task '{filename}' not found.")
         task = FM.load(filepath)
         branch = os.path.basename(filepath).rsplit(".", 1)[0]
-        
+
         has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
         if has_origin:
             if self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
@@ -670,32 +755,43 @@ class TasksCLI:
                 return
 
         if not self.as_json:
-            print(f"Task: [{task.metadata.get('Id', '')}] {task.metadata.get('Ti', '')}")
+            print(
+                f"Task: [{task.metadata.get('Id', '')}] {task.metadata.get('Ti', '')}"
+            )
             print(f"State: {state} (branch no longer exists)")
             if input("Archive this task? [y/N]: ").strip().lower() == "y":
-                self._move_logic(os.path.basename(filepath), "ARCHIVED", force=True, yes=False)
+                self._move_logic(
+                    os.path.basename(filepath), "ARCHIVED", force=True, yes=False
+                )
         else:
-            self._move_logic(os.path.basename(filepath), "ARCHIVED", force=True, yes=True)
+            self._move_logic(
+                os.path.basename(filepath), "ARCHIVED", force=True, yes=True
+            )
             self.finish({"archived": True})
 
     def cleanup(self, dry_run=False, yes=False):
         from .commands import cleanup as cleanup_cmd
+
         cleanup_cmd.run(self, dry_run=dry_run, yes=yes)
 
     def config(self, action=None, key=None, value=None, save=False):
         from .commands import config as config_cmd
+
         config_cmd.run(self, action=action, key=key, value=value, save=save)
 
     def doctor(self, fix=False):
         from .commands import doctor as doctor_cmd
+
         doctor_cmd.run(self, fix=fix)
 
     def verify(self, task_id, proof):
         from .commands import verify as verify_cmd
+
         verify_cmd.run(self, task_id, proof)
 
     def audit(self, task_id):
         from .commands import audit as audit_cmd
+
         audit_cmd.run(self, task_id)
 
     def undo(self, filename):
@@ -706,13 +802,22 @@ class TasksCLI:
 
         filepath_str = cast(str, filepath)
         fname = os.path.basename(filepath_str)
-        all_commits = self._run_git(["log", "--all", "--format=%h"], cwd=self.tasks_path).stdout.strip().split("\n")
+        all_commits = (
+            self._run_git(["log", "--all", "--format=%h"], cwd=self.tasks_path)
+            .stdout.strip()
+            .split("\n")
+        )
 
         prev_commit = None
         for commit in all_commits:
             if not commit:
                 continue
-            if fname in self._run_git(["ls-tree", "--name-only", "-r", commit], cwd=self.tasks_path).stdout:
+            if (
+                fname
+                in self._run_git(
+                    ["ls-tree", "--name-only", "-r", commit], cwd=self.tasks_path
+                ).stdout
+            ):
                 prev_commit = commit
                 break
         if not prev_commit:
@@ -726,34 +831,56 @@ class TasksCLI:
             if found_current:
                 prev_prev_commit = commit
                 break
-            if fname in self._run_git(["ls-tree", "--name-only", "-r", commit], cwd=self.tasks_path).stdout:
+            if (
+                fname
+                in self._run_git(
+                    ["ls-tree", "--name-only", "-r", commit], cwd=self.tasks_path
+                ).stdout
+            ):
                 found_current = True
         if not prev_prev_commit:
             self.error("Nothing to undo: first commit.")
 
-        if self._run_git(["log", "-1", "--format=%s", prev_commit], cwd=self.tasks_path).stdout.strip().startswith("Undo:"):
+        if (
+            self._run_git(
+                ["log", "-1", "--format=%s", prev_commit], cwd=self.tasks_path
+            )
+            .stdout.strip()
+            .startswith("Undo:")
+        ):
             self.error("Cannot undo twice.")
 
-        tree_res = self._run_git(["ls-tree", "--name-only", "-r", prev_prev_commit], cwd=self.tasks_path)
-        files_to_restore = [f for f in tree_res.stdout.strip().split("\n") if fname in f]
+        tree_res = self._run_git(
+            ["ls-tree", "--name-only", "-r", prev_prev_commit], cwd=self.tasks_path
+        )
+        files_to_restore = [
+            f for f in tree_res.stdout.strip().split("\n") if fname in f
+        ]
 
         temp_dir = tempfile.mkdtemp(dir=self.tasks_path)
         try:
             for file_path in files_to_restore:
                 out_path = os.path.join(temp_dir, os.path.basename(file_path))
-                content = self._run_git(["show", f"{prev_prev_commit}:{file_path}"], cwd=self.tasks_path).stdout
+                content = self._run_git(
+                    ["show", f"{prev_prev_commit}:{file_path}"], cwd=self.tasks_path
+                ).stdout
                 with open(out_path, "w") as f:
                     f.write(content)
 
             restored_task = FM.load(temp_dir)
             prev_state = restored_task.metadata.get("St", "BACKLOG")
-            target_dir = os.path.join(self.tasks_path, STATE_FOLDERS.get(prev_state, "backlog"), fname)
+            target_dir = os.path.join(
+                self.tasks_path, STATE_FOLDERS.get(prev_state, "backlog"), fname
+            )
 
             if os.path.isdir(filepath_str):
                 shutil.rmtree(filepath_str)
             shutil.move(temp_dir, target_dir)
             self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(["commit", "-m", f"Undo: restore {fname} to {prev_prev_commit[:7]}"], cwd=self.tasks_path)
+            self._run_git(
+                ["commit", "-m", f"Undo: restore {fname} to {prev_prev_commit[:7]}"],
+                cwd=self.tasks_path,
+            )
             self._append_log(target_dir, "Und")
             self.log(f"Undone: restored to {prev_state}")
             self.finish({"success": True, "previous_state": prev_state})
@@ -764,18 +891,19 @@ class TasksCLI:
 
     def upgrade(self):
         import subprocess
+
         self.log("Upgrading tasks...")
         subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])
 
     # --- Internals ---
     def _calculate_file_hash(self, filepath):
-        """Calculate SHA256 hash of a file"""
+        """Calculate MD5 hash of a file"""
         try:
-            hash_sha256 = hashlib.sha256()
+            hash_md5 = hashlib.md5()
             with open(filepath, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_sha256.update(chunk)
-            return hash_sha256.hexdigest()
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
         except Exception:
             return None
 
@@ -810,7 +938,14 @@ class TasksCLI:
                 if not os.path.exists(state_path):
                     continue
                 for item in os.listdir(state_path):
-                    if item in [".gitkeep", ".task_counter", "task_counter", ".task_counter.counter_hash", ".task_counter.counter_backup", ".task_counter.counter_backup.hash"]:
+                    if item in [
+                        ".gitkeep",
+                        ".task_counter",
+                        "task_counter",
+                        ".task_counter.counter_hash",
+                        ".task_counter.counter_backup",
+                        ".task_counter.counter_backup.hash",
+                    ]:
                         continue
                     item_path = os.path.join(state_path, item)
                     if not os.path.isdir(item_path):
@@ -827,6 +962,7 @@ class TasksCLI:
                     if os.path.exists(meta_path):
                         try:
                             import json
+
                             with open(meta_path, "r") as f:
                                 meta = json.load(f)
                             meta_id = meta.get("Id")
@@ -839,12 +975,14 @@ class TasksCLI:
             # Also check remote branches for higher IDs
             try:
                 # Get remote branch names that might contain task IDs
-                result = self._run_git(["ls-remote", "--heads", "origin"], cwd=self.root)
+                result = self._run_git(
+                    ["ls-remote", "--heads", "origin"], cwd=self.root
+                )
                 if result.returncode == 0:
-                    for line in result.stdout.strip().split('\n'):
+                    for line in result.stdout.strip().split("\n"):
                         if not line:
                             continue
-                        parts = line.split('\t')
+                        parts = line.split("\t")
                         if len(parts) >= 2:
                             ref = parts[1]
                             # Look for refs like refs/heads/123-task-name
@@ -858,7 +996,7 @@ class TasksCLI:
                                             max_id = branch_id
             except Exception:
                 pass  # Fail silently for remote check
-             
+
             return max_id
         except Exception:
             return 0
@@ -901,5 +1039,6 @@ class TasksCLI:
 
     def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         from .commands import move as move_cmd
+
         move_logic = getattr(move_cmd, "move_logic")
         move_logic(self, filename, new_status, force=force, yes=yes, sync=sync)

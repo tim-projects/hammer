@@ -144,15 +144,16 @@ def test_restore_and_undo(setup_tasks):
 
     # Modify it
     cli.modify(task_id, title="Modified Title")
-    
+
     # Perform Undo
     try:
         cli.undo(task_id)
     except SystemExit:
         pass
-    
+
     # Verify rollback
     path, _ = cli.find_task(task_id)
     from tasks_ai.file_manager import FM
+
     task = FM.load(path)
     assert task.metadata.get("Ti") == "Task to Undo/Restore"

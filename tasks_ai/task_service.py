@@ -1,5 +1,4 @@
 import os
-import re
 from .file_manager import FM
 from .constants import STATE_FOLDERS
 

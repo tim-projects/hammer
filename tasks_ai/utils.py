@@ -15,7 +15,8 @@ def parse_filename(name: str) -> Tuple[str, str]:
         if len(parts) >= 3:
             return parts[1], name_part
     if "_" in name_part:
-        return name_part.split("_", 1)
+        parts = name_part.split("_", 1)
+        return parts[0], parts[1]
     return "task", name_part
 
 
