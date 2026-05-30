@@ -4,5 +4,9 @@
   "Cr": "260530 22:41",
   "Bl": [],
   "Pr": 2,
-  "Br": "199-task-stabilize-dev-environment-for"
+  "Br": "199-task-stabilize-dev-environment-for",
+  "Rc": true,
+  "Tp": true,
+  "Vp": true,
+  "Ar": "true"
 }
