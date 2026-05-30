@@ -103,8 +103,8 @@ if __name__ == "__main__":
         "--type",
         "-t",
         default="task",
-        choices=["task", "issue"],
-        help="Task type: task or issue.",
+        choices=["task", "issue", "bug"],
+        help="Task type: task, issue, or bug.",
     )
     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
     cr_p.add_argument("--story", help="User story description.")
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     mod_p.add_argument(
         "--type",
         "-t",
-        choices=["task", "issue"],
-        help="Task type: task or issue.",
+        choices=["task", "issue", "bug"],
+        help="Task type: task, issue, or bug.",
     )
     mod_p.add_argument("--title", help="New title.")
     mod_p.add_argument("--story", help="User story.")

@@ -21,9 +21,13 @@ def run(cli, task_id, proof):
         cli.error(f"Audit verification failed for task {task_id}")
         return
 
-    # Write the verification proof
-    hash_path = audit_file.replace(".audit", ".audit_hash")
-    with open(hash_path, "w") as f:
+    # Write the verification proof log
+    task_dir = os.path.dirname(audit_file)
+    proof_log_path = os.path.join(task_dir, "verification_proof.log")
+    with open(proof_log_path, "w") as f:
         f.write(proof)
-
+    
+    # Generate/update the audit hash based on criteria and proof
+    cli.pipeline.update_audit_hash(task_id, task_dir)
+    
     cli.log(f"✅ Task {task_id} verified.")

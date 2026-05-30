@@ -178,7 +178,16 @@ class PipelineService:
         hash_path = os.path.join(task_path, ".audit_hash")
 
         if not os.path.exists(hash_path):
-            return False
+            raise PipelineError(
+                f"Task '{task_id}' has no audit hash.",
+                hint="Run 'tasks audit <id>' and 'tasks verify <id> --proof \"...\"' to generate one.",
+            )
+        
+        if not os.path.exists(proof_path):
+            raise PipelineError(
+                f"Task '{task_id}' is missing verification proof.",
+                hint="Run 'tasks verify <id> --proof \"...\"' to generate the proof log.",
+            )
 
         hasher = hashlib.md5()
         try:
@@ -186,7 +195,10 @@ class PipelineService:
                 hasher.update(f1.read())
                 hasher.update(f2.read())
         except FileNotFoundError:
-            return False
+            raise PipelineError(
+                f"Task '{task_id}' audit files missing.",
+                hint="Ensure criteria.md and verification_proof.log exist. Run 'tasks verify' to fix.",
+            )
 
         with open(hash_path, "r") as f:
             stored_hash = f.read().split()[0]

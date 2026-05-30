@@ -19,6 +19,9 @@ def run(
     branch=False,
 ):
     """Execution logic for 'tasks create'."""
+    if task_type == "bug":
+        task_type = "issue"
+
     title = title.strip()
     if len(title) < 10:
         cli.error("Task title is too vague. Min 10 chars.")
