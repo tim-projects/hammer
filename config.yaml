@@ -1,31 +1,97 @@
+lint: ruff
+package_manager: pip
+test: pytest
+type_check: pyright
 workflows:
   default:
-    transitions:
-      BACKLOG: ["READY"]
-      READY: ["PROGRESSING"]
-      PROGRESSING: ["TESTING", "BLOCKED", "REJECTED"]
-      TESTING: ["REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"]
-      REVIEW: ["STAGING", "TESTING", "BLOCKED", "PROGRESSING"]
-      STAGING: ["DONE", "ARCHIVED", "REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"]
-      DONE: ["ARCHIVED", "STAGING", "TESTING", "BLOCKED"]
-      BLOCKED: ["READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"]
-      ARCHIVED: ["READY", "TESTING"]
-      REJECTED: ["PROGRESSING"]
     gates:
-      TESTING: [incomplete_checkboxes]
-      STAGING: [regression_check, audit_integrity]
-      DONE: [merge_check]
+      DONE:
+      - merge_check
+      STAGING:
+      - regression_check
+      - audit_integrity
+      TESTING:
+      - incomplete_checkboxes
+    transitions:
+      ARCHIVED:
+      - READY
+      - TESTING
+      BACKLOG:
+      - READY
+      BLOCKED:
+      - READY
+      - PROGRESSING
+      - TESTING
+      - REVIEW
+      - STAGING
+      - DONE
+      DONE:
+      - ARCHIVED
+      - STAGING
+      - TESTING
+      - BLOCKED
+      PROGRESSING:
+      - TESTING
+      - BLOCKED
+      - REJECTED
+      READY:
+      - PROGRESSING
+      REJECTED:
+      - PROGRESSING
+      REVIEW:
+      - STAGING
+      - TESTING
+      - BLOCKED
+      - PROGRESSING
+      STAGING:
+      - DONE
+      - ARCHIVED
+      - REVIEW
+      - BLOCKED
+      - REJECTED
+      - PROGRESSING
+      TESTING:
+      - REVIEW
+      - BLOCKED
+      - REJECTED
+      - PROGRESSING
   docs:
-    transitions:
-      BACKLOG: ["READY"]
-      READY: ["PROGRESSING"]
-      PROGRESSING: ["REVIEW", "BLOCKED", "REJECTED"]
-      REVIEW: ["STAGING", "BLOCKED", "PROGRESSING"]
-      STAGING: ["DONE", "ARCHIVED", "REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"]
-      DONE: ["ARCHIVED", "STAGING", "BLOCKED"]
-      BLOCKED: ["READY", "PROGRESSING", "REVIEW", "STAGING", "DONE"]
-      ARCHIVED: ["READY"]
-      REJECTED: ["PROGRESSING"]
     gates:
-      STAGING: [audit_integrity]
-      DONE: [merge_check]
+      DONE:
+      - merge_check
+      STAGING:
+      - audit_integrity
+    transitions:
+      ARCHIVED:
+      - READY
+      BACKLOG:
+      - READY
+      BLOCKED:
+      - READY
+      - PROGRESSING
+      - REVIEW
+      - STAGING
+      - DONE
+      DONE:
+      - ARCHIVED
+      - STAGING
+      - BLOCKED
+      PROGRESSING:
+      - REVIEW
+      - BLOCKED
+      - REJECTED
+      READY:
+      - PROGRESSING
+      REJECTED:
+      - PROGRESSING
+      REVIEW:
+      - STAGING
+      - BLOCKED
+      - PROGRESSING
+      STAGING:
+      - DONE
+      - ARCHIVED
+      - REVIEW
+      - BLOCKED
+      - REJECTED
+      - PROGRESSING
