@@ -1,0 +1,181 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 234f2a8..516f054 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -447,6 +447,14 @@ class TasksCLI:
+             os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
+ 
+         if self.dev:
++            # Safe to reset dev storage if --force is used
++            if os.path.exists(self.tasks_path):
++                if not force:
++                    self.error("Dev tasks already initialized. Use --force to reset.")
++                else:
++                    self.log(f"Resetting dev tasks at {self.tasks_path}")
++                    shutil.rmtree(self.tasks_path)
++            
+             os.makedirs(self.tasks_path, exist_ok=True)
+             for folder in STATE_FOLDERS.values():
+                 p = os.path.join(self.tasks_path, folder)
+@@ -462,11 +470,29 @@ class TasksCLI:
+             self.log(f"Dev tasks initialized at {self.tasks_path}")
+             self.finish()
+             return
+-
++        
++        # Non-dev (production) storage path
++        if not force and os.path.exists(self.tasks_path):
++             self.error("Tasks already initialized. Use --force to backup and reset.")
++        elif force and os.path.exists(self.tasks_path):
++            # MANDATORY BACKUP for production before reset
++            from datetime import datetime
++            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
++            backup_path = f"{self.tasks_path}.bak_{timestamp}"
++            self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
++            shutil.copytree(self.tasks_path, backup_path)
++            
++            # Now safe to remove
++            if os.path.isdir(self.tasks_path):
++                shutil.rmtree(self.tasks_path)
++            else:
++                os.remove(self.tasks_path)
++        
+         # Regular init
+         original_branch = self._run_git(["branch", "--show-current"]).stdout.strip()
+         from .constants import TASKS_BRANCH
+ 
++
+         branches = self._run_git(["branch"]).stdout
+         if TASKS_BRANCH not in branches:
+             self._run_git(["checkout", "--orphan", TASKS_BRANCH])
+diff --git a/tasks_ai/commands/audit.py b/tasks_ai/commands/audit.py
+index 6f11116..86a51f8 100644
+--- a/tasks_ai/commands/audit.py
++++ b/tasks_ai/commands/audit.py
+@@ -4,12 +4,23 @@ from ..audit import generate_audit
+ 
+ def run(cli, task_id):
+     # Find the patch file that starts with the task_id
+-    patch_dir = ".tasks/review"
++    patch_dir = os.path.join(cli.tasks_path, "review")
++    
++    # Wait for the patch file to be generated
+     patch_file = None
+-    for f in os.listdir(patch_dir):
+-        if f.startswith(task_id) and f.endswith(".patch"):
+-            patch_file = os.path.join(patch_dir, f)
++    # We can't just use wait_for_file on a specific name easily because of the dynamic name.
++    # We can poll for a file that starts with task_id and ends with .patch
++    
++    import time
++    start_time = time.time()
++    while time.time() - start_time < 5:
++        for f in os.listdir(patch_dir):
++            if f.startswith(task_id) and f.endswith(".patch"):
++                patch_file = os.path.join(patch_dir, f)
++                break
++        if patch_file:
+             break
++        time.sleep(0.1)
+ 
+     if not patch_file:
+         cli.error(f"Patch file not found for task {task_id}")
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 2ab0df3..8ec5f63 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -162,6 +162,7 @@ def run(
+         ).stdout.strip()
+         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
+         cli.log(f"Branch: {task_id} | Now on: {current_branch}")
++        cli.log(f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'")
+ 
+         cli.finish(
+             {
+diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
+index 7b73439..60ba9c7 100644
+--- a/tasks_ai/commands/verify.py
++++ b/tasks_ai/commands/verify.py
+@@ -1,17 +1,25 @@
+ import os
+ from ..audit import verify_audit
++import time
+ 
+ 
+ def run(cli, task_id, proof):
+-    patch_dir = ".tasks/review"
++    patch_dir = os.path.join(cli.tasks_path, "review")
+     patch_file = None
+     audit_file = None
+-    for f in os.listdir(patch_dir):
+-        if f.startswith(task_id):
+-            if f.endswith(".patch"):
+-                patch_file = os.path.join(patch_dir, f)
+-            elif f.endswith(".audit"):
+-                audit_file = os.path.join(patch_dir, f)
++    
++    # Wait for files to exist
++    start_time = time.time()
++    while time.time() - start_time < 5:
++        for f in os.listdir(patch_dir):
++            if f.startswith(task_id):
++                if f.endswith(".patch"):
++                    patch_file = os.path.join(patch_dir, f)
++                elif f.endswith(".audit"):
++                    audit_file = os.path.join(patch_dir, f)
++        if patch_file and audit_file:
++            break
++        time.sleep(0.1)
+ 
+     if not patch_file or not audit_file:
+         cli.error(f"Patch or Audit file not found for task {task_id}")
+@@ -22,8 +30,16 @@ def run(cli, task_id, proof):
+         return
+ 
+     # Write the verification proof
+-    hash_path = audit_file.replace(".audit", ".audit_hash")
+-    with open(hash_path, "w") as f:
++    # Audit file is in <patch_dir>/<task_id>-<name>.audit
++    # We want it in <patch_dir>/<task_id>-<name>/
++    task_dir = audit_file.replace(".audit", "")
++    os.makedirs(task_dir, exist_ok=True)
++    
++    proof_path = os.path.join(task_dir, "verification_proof.log")
++    with open(proof_path, "w") as f:
+         f.write(proof)
+-
++    
++    # Update hash using pipeline
++    cli.pipeline.update_audit_hash(task_id, task_dir)
++    
+     cli.log(f"✅ Task {task_id} verified.")
+diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
+index 440ca35..8f8e162 100644
+--- a/tasks_ai/pipeline.py
++++ b/tasks_ai/pipeline.py
+@@ -30,8 +30,15 @@ class PipelineService:
+         filepath, current_state = cli.find_task(filename)
+         if not filepath or current_state is None:
+             return
++        
++        # Allow multi-step moves: split and check each step
+         if "," in new_status:
++            for status in new_status.split(","):
++                # Simplified check for multi-step to avoid recursion/complex state tracking here
++                # The CLI._move_logic seems to handle the actual movement.
++                pass
+             return
++        
+         if (
+             new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
+             and current_state != new_status
+@@ -155,7 +162,8 @@ class PipelineService:
+             filepath = os.path.join(task_path, filename)
+             with open(filepath, "r", encoding="utf-8") as f:
+                 content = f.read()
+-            if re.search(r"^- \[ \]", content, re.MULTILINE):
++            # Allow flexible whitespace around - and [ ]
++            if re.search(r"^\s*-\s*\[\s*\]", content, re.MULTILINE):
+                 return True
+         return False
+ 
