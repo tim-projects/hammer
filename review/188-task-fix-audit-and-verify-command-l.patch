@@ -1,0 +1,96 @@
+diff --git a/tasks.py b/tasks.py
+index 63f298c..00f0fba 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -103,8 +103,8 @@ if __name__ == "__main__":
+         "--type",
+         "-t",
+         default="task",
+-        choices=["task", "issue"],
+-        help="Task type: task or issue.",
++        choices=["task", "issue", "bug"],
++        help="Task type: task, issue, or bug.",
+     )
+     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
+     cr_p.add_argument("--story", help="User story description.")
+@@ -130,8 +130,8 @@ if __name__ == "__main__":
+     mod_p.add_argument(
+         "--type",
+         "-t",
+-        choices=["task", "issue"],
+-        help="Task type: task or issue.",
++        choices=["task", "issue", "bug"],
++        help="Task type: task, issue, or bug.",
+     )
+     mod_p.add_argument("--title", help="New title.")
+     mod_p.add_argument("--story", help="User story.")
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 2ab0df3..1773b89 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -19,6 +19,9 @@ def run(
+     branch=False,
+ ):
+     """Execution logic for 'tasks create'."""
++    if task_type == "bug":
++        task_type = "issue"
++
+     title = title.strip()
+     if len(title) < 10:
+         cli.error("Task title is too vague. Min 10 chars.")
+diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
+index 7b73439..c6797d6 100644
+--- a/tasks_ai/commands/verify.py
++++ b/tasks_ai/commands/verify.py
+@@ -21,9 +21,13 @@ def run(cli, task_id, proof):
+         cli.error(f"Audit verification failed for task {task_id}")
+         return
+ 
+-    # Write the verification proof
+-    hash_path = audit_file.replace(".audit", ".audit_hash")
+-    with open(hash_path, "w") as f:
++    # Write the verification proof log
++    task_dir = os.path.dirname(audit_file)
++    proof_log_path = os.path.join(task_dir, "verification_proof.log")
++    with open(proof_log_path, "w") as f:
+         f.write(proof)
+-
++    
++    # Generate/update the audit hash based on criteria and proof
++    cli.pipeline.update_audit_hash(task_id, task_dir)
++    
+     cli.log(f"✅ Task {task_id} verified.")
+diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
+index 440ca35..b3f6053 100644
+--- a/tasks_ai/pipeline.py
++++ b/tasks_ai/pipeline.py
+@@ -178,7 +178,16 @@ class PipelineService:
+         hash_path = os.path.join(task_path, ".audit_hash")
+ 
+         if not os.path.exists(hash_path):
+-            return False
++            raise PipelineError(
++                f"Task '{task_id}' has no audit hash.",
++                hint="Run 'tasks audit <id>' and 'tasks verify <id> --proof \"...\"' to generate one.",
++            )
++        
++        if not os.path.exists(proof_path):
++            raise PipelineError(
++                f"Task '{task_id}' is missing verification proof.",
++                hint="Run 'tasks verify <id> --proof \"...\"' to generate the proof log.",
++            )
+ 
+         hasher = hashlib.md5()
+         try:
+@@ -186,7 +195,10 @@ class PipelineService:
+                 hasher.update(f1.read())
+                 hasher.update(f2.read())
+         except FileNotFoundError:
+-            return False
++            raise PipelineError(
++                f"Task '{task_id}' audit files missing.",
++                hint="Ensure criteria.md and verification_proof.log exist. Run 'tasks verify' to fix.",
++            )
+ 
+         with open(hash_path, "r") as f:
+             stored_hash = f.read().split()[0]
