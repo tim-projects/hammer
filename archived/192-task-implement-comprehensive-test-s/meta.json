@@ -5,7 +5,8 @@
   "Bl": [],
   "Pr": 2,
   "Br": "192-task-implement-comprehensive-test-s",
-  "Tp": false,
-  "Rc": "",
-  "Vp": true
+  "Tp": true,
+  "Rc": true,
+  "Vp": true,
+  "Ar": "true"
 }
