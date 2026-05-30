@@ -3,3 +3,4 @@ repo.lint: ruff
 repo.skip_push: true
 repo.test: pytest
 repo.type_check: pyright
+type_check: pyright
