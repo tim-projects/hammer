@@ -13,7 +13,7 @@
   "INIT_REQUIRED": "WHAT: Task not initialized.\nWHY: NO WORKTREE FOUND. HAMMER need foundation.\nHOW: Run './hammer tasks init'.\nCONSEQUENCE: Hammer BLADE-LESS. FIX FOUNDATION.",
   "INVALID_CONFIG_KEY": "WHAT: Invalid config key '{key}'.\nWHY: UNKNOWN CONFIGURATION. HAMMER ignore unknown.\nHOW: Allowed: {allowed_keys}. Run 'hammer tasks config list'.\nCONSEQUENCE: Configuration error. FIX KEY.",
   "AUTO_PROMOTE_FAIL": "WHAT: Auto-promotion fail.\nWHY: Repository integration break.\nHOW: Check git status/merge conflict.\nCONSEQUENCE: Promotion halted. FIX NOW.",
-  "FORBIDDEN_TRANSITION": "WHAT: Transition {from_state} -> {to_state} forbidden.\nWHY: Pipeline governance violation.\nHOW: Follow pipeline flow.\nCONSEQUENCE: Pipeline flow break. OBEY FLOW.",
+  "FORBIDDEN_TRANSITION": "WHAT: Transition {from_state} -> {to_state} forbidden.\nWHY: Pipeline governance violation. Current state forbid this shift.\nHOW: Follow pipeline flow: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED.\nCONSEQUENCE: Pipeline flow break. OBEY FLOW.",
   "LINK_TASK_NOT_FOUND": "WHAT: Link target missing.\nWHY: HAMMER cannot link to nothing.\nHOW: Verify both tasks exist with 'hammer tasks list'.\nCONSEQUENCE: Link chain broken. FIX ID.",
   "LINK_SELF": "WHAT: Link to self forbidden.\nWHY: SELF-REFERENCE IS WEAK. Loops break logic.\nHOW: Link to a different task.\nCONSEQUENCE: Logic corruption. AVOID IT.",
   "CIRCULAR_DEPENDENCY": "WHAT: Cycle detected: {filename} -> {blocked_by}.\nWHY: CIRCULAR DEPENDENCY DETECTED. HAMMER forbid loop.\nHOW: Break cycle by linking to non-dependent task.\nCONSEQUENCE: Pipeline deadlock. FIX LOGIC.",
