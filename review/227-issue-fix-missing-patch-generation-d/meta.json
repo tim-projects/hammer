@@ -6,6 +6,6 @@
   "Pr": 1,
   "Br": "227-issue-fix-missing-patch-generation-d",
   "Vp": true,
-  "Rc": "",
+  "Rc": true,
   "Tp": false
 }
