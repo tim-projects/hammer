@@ -1,0 +1,39 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 26751ba..48a6555 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -36,6 +36,7 @@ from .pipeline_hooks import (
+     BranchSyncHook,
+     MainBranchProtectionHook,
+     ProgressUpdateHook,
++    CleanupReviewArtifactsHook,
+ )
+ 
+ 
+@@ -61,6 +62,9 @@ class TasksCLI:
+         self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
+ 
+         # Register ENTER hooks (Post-move actions)
++        self.hook_registry.register_enter_hook("BACKLOG", CleanupReviewArtifactsHook())
++        self.hook_registry.register_enter_hook("READY", CleanupReviewArtifactsHook())
++        self.hook_registry.register_enter_hook("PROGRESSING", CleanupReviewArtifactsHook())
+         self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
+         self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
+         self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
+@@ -176,6 +180,16 @@ class TasksCLI:
+                 os.makedirs(parent_dir, exist_ok=True)
+                 temp_dir = tempfile.mkdtemp(dir=parent_dir)
+                 try:
++                    # Preserve existing sibling files/folders if they exist
++                    if os.path.isdir(path):
++                        for item in os.listdir(path):
++                            src_item = os.path.join(path, item)
++                            dst_item = os.path.join(temp_dir, item)
++                            if os.path.isdir(src_item):
++                                shutil.copytree(src_item, dst_item)
++                            else:
++                                shutil.copy2(src_item, dst_item)
++
+                     FM.dump(task_or_content, temp_dir)
+                     if os.path.exists(path):
+                         if os.path.isdir(path):
