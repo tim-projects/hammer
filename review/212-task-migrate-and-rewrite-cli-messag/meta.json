@@ -6,6 +6,6 @@
   "Pr": 2,
   "Br": "212-task-migrate-and-rewrite-cli-messag",
   "Tp": false,
-  "Rc": "",
+  "Rc": true,
   "Vp": true
 }
