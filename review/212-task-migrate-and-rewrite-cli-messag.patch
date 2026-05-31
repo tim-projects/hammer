@@ -1,0 +1,1226 @@
+diff --git a/tasks.py b/tasks.py
+index 63f298c..95c1cdb 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -103,8 +103,8 @@ if __name__ == "__main__":
+         "--type",
+         "-t",
+         default="task",
+-        choices=["task", "issue"],
+-        help="Task type: task or issue.",
++        choices=["task", "issue", "docs"],
++        help="Task type: task or issue or docs.",
+     )
+     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
+     cr_p.add_argument("--story", help="User story description.")
+@@ -130,8 +130,8 @@ if __name__ == "__main__":
+     mod_p.add_argument(
+         "--type",
+         "-t",
+-        choices=["task", "issue"],
+-        help="Task type: task or issue.",
++        choices=["task", "issue", "docs"],
++        help="Task type: task or issue or docs.",
+     )
+     mod_p.add_argument("--title", help="New title.")
+     mod_p.add_argument("--story", help="User story.")
+@@ -268,6 +268,8 @@ if __name__ == "__main__":
+             repro=args.repro,
+             branch=args.branch,
+         )
++    elif args.command == "audit":
++        cli.audit(args.id)
+     elif args.command == "modify":
+         cli.modify(
+             args.filename,
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 234f2a8..90aab4b 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -17,6 +17,25 @@ from .validation import Validation
+ from .task_service import TaskService
+ from .cli_io import log, error, finish
+ from .file_manager import FM
++from .hooks import HookRegistry
++from .messages import MessageRegistry
++from .pipeline_hooks import (
++    SaveProgressHook,
++    ValidationHook,
++    ContentSufficiencyHook,
++    BlockerCheckHook,
++    TestingToReviewGateHook,
++    TestingPromotionHook,
++    ReviewDiffHook,
++    ArchivedCommitHook,
++    PostMoveCommitHook,
++    ValidationPassedMarkHook,
++    BranchCheckHook,
++    CleanWorkspaceHook,
++    BranchSyncHook,
++    MainBranchProtectionHook,
++    ProgressUpdateHook,
++)
+ 
+ 
+ class TasksCLI:
+@@ -26,6 +45,38 @@ class TasksCLI:
+         self.dev = dev
+         self.yes = yes
+         self.output_messages = []
++        self.hook_registry = HookRegistry()
++        self.messages = MessageRegistry()
++        
++        # Register EXIT hooks (Pre-move gates/checks)
++        self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
++        self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
++        self.hook_registry.register_exit_hook("PROGRESSING", MainBranchProtectionHook())
++        self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
++        self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
++        self.hook_registry.register_exit_hook("TESTING", ValidationHook())
++        self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
++        self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
++
++        # Register ENTER hooks (Post-move actions)
++        self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
++        self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
++        self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
++        self.hook_registry.register_enter_hook("PROGRESSING", BranchSyncHook())
++        self.hook_registry.register_enter_hook("TESTING", ValidationPassedMarkHook())
++        self.hook_registry.register_enter_hook("TESTING", TestingPromotionHook())
++        self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
++        self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
++        self.hook_registry.register_enter_hook("STAGING", BranchCheckHook())
++        self.hook_registry.register_enter_hook("STAGING", CleanWorkspaceHook())
++        self.hook_registry.register_enter_hook("DONE", BranchCheckHook())
++        self.hook_registry.register_enter_hook("ARCHIVED", BranchCheckHook())
++        self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
++        
++        # Post-move generic hooks
++        for state in ["BACKLOG", "READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE", "REJECTED"]:
++            self.hook_registry.register_enter_hook(state, SaveProgressHook())
++            self.hook_registry.register_enter_hook(state, PostMoveCommitHook())
+ 
+         self.context = ProjectContext(dev=dev)
+         self.root = self.context.repo_root or os.getcwd()
+@@ -94,8 +145,10 @@ class TasksCLI:
+     def log(self, message):
+         log(self, message)
+ 
+-    def error(self, message, hint=None):
+-        error(self, message, hint=hint)
++    def error(self, code, hint_code=None, **kwargs):
++        message = self.messages.get_error(code, **kwargs)
++        hint = self.messages.get_hint(hint_code or code, **kwargs)
++        error(self, message, hint=hint if hint else None)
+ 
+     def finish(self, data=None):
+         finish(self, data=data)
+@@ -447,6 +500,14 @@ class TasksCLI:
+             os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
+ 
+         if self.dev:
++            # Safe to reset dev storage if --force is used
++            if os.path.exists(self.tasks_path):
++                if not force:
++                    self.error("Dev tasks already initialized. Use --force to reset.")
++                else:
++                    self.log(f"Resetting dev tasks at {self.tasks_path}")
++                    shutil.rmtree(self.tasks_path)
++            
+             os.makedirs(self.tasks_path, exist_ok=True)
+             for folder in STATE_FOLDERS.values():
+                 p = os.path.join(self.tasks_path, folder)
+@@ -462,11 +523,29 @@ class TasksCLI:
+             self.log(f"Dev tasks initialized at {self.tasks_path}")
+             self.finish()
+             return
+-
++        
++        # Non-dev (production) storage path
++        if not force and os.path.exists(self.tasks_path):
++             self.error("Tasks already initialized. Use --force to backup and reset.")
++        elif force and os.path.exists(self.tasks_path):
++            # MANDATORY BACKUP for production before reset
++            from datetime import datetime
++            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
++            backup_path = f"{self.tasks_path}.bak_{timestamp}"
++            self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
++            shutil.copytree(self.tasks_path, backup_path)
++            
++            # Now safe to remove
++            if os.path.isdir(self.tasks_path):
++                shutil.rmtree(self.tasks_path)
++            else:
++                os.remove(self.tasks_path)
++        
+         # Regular init
+         original_branch = self._run_git(["branch", "--show-current"]).stdout.strip()
+         from .constants import TASKS_BRANCH
+ 
++
+         branches = self._run_git(["branch"]).stdout
+         if TASKS_BRANCH not in branches:
+             self._run_git(["checkout", "--orphan", TASKS_BRANCH])
+@@ -649,41 +728,41 @@ class TasksCLI:
+ 
+     def _reconcile_scan(self):
+         candidates = []
+-        for state, folder in STATE_FOLDERS.items():
+-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
++        # Only reconcile tasks that are DONE
++        folder = STATE_FOLDERS.get("DONE")
++        fp = os.path.join(self.tasks_path, folder)
++        if not os.path.exists(fp):
++            return
++            
++        for item in os.listdir(fp):
++            if item == ".gitkeep":
+                 continue
+-            fp = os.path.join(self.tasks_path, folder)
+-            if not os.path.exists(fp):
++            path = os.path.join(fp, item)
++            if not os.path.isdir(path):
+                 continue
+-            for item in os.listdir(fp):
+-                if item == ".gitkeep":
+-                    continue
+-                path = os.path.join(fp, item)
+-                if not os.path.isdir(path):
+-                    continue
+-                task = FM.load(path)
+-                task_id = task.metadata.get("Id")
+-                if not task_id:
+-                    continue
+-                branch = item
+-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+-                if not main_sha or not branch_sha:
+-                    continue
+-                merge_base = self._run_git(
+-                    ["merge-base", branch_sha, "main"]
+-                ).stdout.strip()
+-                if merge_base == main_sha:
+-                    candidates.append(
+-                        {
+-                            "id": task_id,
+-                            "task_id": task_id,
+-                            "title": task.metadata.get("Ti", ""),
+-                            "branch": branch,
+-                            "filepath": path,
+-                            "state": state,
+-                        }
+-                    )
++            task = FM.load(path)
++            task_id = task.metadata.get("Id")
++            if not task_id:
++                continue
++            branch = item
++            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
++            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
++            if not main_sha or not branch_sha:
++                continue
++            merge_base = self._run_git(
++                ["merge-base", branch_sha, "main"]
++            ).stdout.strip()
++            if merge_base == main_sha:
++                candidates.append(
++                    {
++                        "id": task_id,
++                        "task_id": task_id,
++                        "title": task.metadata.get("Ti", ""),
++                        "branch": branch,
++                        "filepath": path,
++                        "state": "DONE",
++                    }
++                )
+ 
+         if not candidates:
+             if self.as_json:
+@@ -706,28 +785,28 @@ class TasksCLI:
+ 
+     def _reconcile_archive_all(self):
+         candidates = []
+-        for state, folder in STATE_FOLDERS.items():
+-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
++        # Only reconcile tasks that are DONE
++        folder = STATE_FOLDERS.get("DONE")
++        fp = os.path.join(self.tasks_path, folder)
++        if not os.path.exists(fp):
++            return
++
++        for item in os.listdir(fp):
++            if item == ".gitkeep":
+                 continue
+-            fp = os.path.join(self.tasks_path, folder)
+-            if not os.path.exists(fp):
++            path = os.path.join(fp, item)
++            if not os.path.isdir(path):
+                 continue
+-            for item in os.listdir(fp):
+-                if item == ".gitkeep":
+-                    continue
+-                path = os.path.join(fp, item)
+-                if not os.path.isdir(path):
+-                    continue
+-                branch = item
+-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+-                if (
+-                    main_sha
+-                    and branch_sha
+-                    and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+-                    == main_sha
+-                ):
+-                    candidates.append(item)
++            branch = item
++            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
++            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
++            if (
++                main_sha
++                and branch_sha
++                and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
++                == main_sha
++            ):
++                candidates.append(item)
+ 
+         archived = 0
+         for branch in candidates:
+diff --git a/tasks_ai/cli_utils.py b/tasks_ai/cli_utils.py
+index e69de29..0108349 100644
+--- a/tasks_ai/cli_utils.py
++++ b/tasks_ai/cli_utils.py
+@@ -0,0 +1,71 @@
++
++COLORS = {
++    "HEADER": "\033[1;37m",  # White bold
++    "PROGRESSING": "\033[1;32m",  # Green
++    "READY": "\033[1;33m",  # Yellow
++    "TESTING": "\033[1;35m",  # Magenta
++    "REVIEW": "\033[1;34m",  # Blue
++    "STAGING": "\033[1;36m",  # Cyan
++    "DONE": "\033[0;32m",  # Green
++    "ARCHIVED": "\033[0;37m",  # Grey
++    "RESET": "\033[0m",
++    "LINE": "\033[38;5;238m", # Darker grey
++}
++
++PRIO_COLORS = {
++    "1": "\033[1;31m", # Red bold
++    "2": "\033[31m",   # Red
++    "3": "\033[33m",   # Yellow
++    "9": "\033[37m",   # Grey
++}
++
++def format_table(headers, rows, status_idx=None, prio_idx=None):
++    if not rows:
++        return "No data."
++
++    # Calculate column widths
++    widths = [len(h) for h in headers]
++    for row in rows:
++        for i, cell in enumerate(row):
++            widths[i] = max(widths[i], len(str(cell)))
++
++    L = COLORS["LINE"]
++    R = COLORS["RESET"]
++
++    # Header
++    output = []
++    
++    # Helper for borders
++    def b(left_border, m, r, sep="─┬─"):
++        return f"{L}{left_border}{sep.join('─' * (w+2) for w in widths)}{r}{R}"
++
++    output.append(b("┌", "┬", "┐"))
++    
++    header_line = f"{L}│{R} " + f" {L}│{R} ".join(f"{COLORS['HEADER']}{h:<{widths[i]}}{R}" for i, h in enumerate(headers)) + f" {L}│{R}"
++    output.append(header_line)
++    output.append(b("├", "┼", "┤"))
++
++    # Rows
++    for row in rows:
++        formatted_row = []
++        for i, cell in enumerate(row):
++            cell_str = str(cell)
++            color = ""
++            reset = ""
++            
++            # Status color
++            if status_idx is not None and i == status_idx:
++                color = COLORS.get(cell_str, "")
++                reset = COLORS["RESET"] if color else ""
++            # Priority color
++            elif prio_idx is not None and i == prio_idx:
++                color = PRIO_COLORS.get(cell_str, "")
++                reset = COLORS["RESET"] if color else ""
++            
++            formatted_row.append(f"{color}{cell_str:<{widths[i]}}{reset}")
++        
++        row_str = f"{L}│{R} " + f" {L}│{R} ".join(formatted_row) + f" {L}│{R}"
++        output.append(row_str)
++
++    output.append(b("└", "┴", "┘"))
++    return "\n".join(output)
+diff --git a/tasks_ai/commands/audit.py b/tasks_ai/commands/audit.py
+index 6f11116..5667dfb 100644
+--- a/tasks_ai/commands/audit.py
++++ b/tasks_ai/commands/audit.py
+@@ -3,18 +3,20 @@ from ..audit import generate_audit
+ 
+ 
+ def run(cli, task_id):
+-    # Find the patch file that starts with the task_id
+-    patch_dir = ".tasks/review"
+-    patch_file = None
+-    for f in os.listdir(patch_dir):
+-        if f.startswith(task_id) and f.endswith(".patch"):
+-            patch_file = os.path.join(patch_dir, f)
+-            break
++    # Find the task directory first to get its full folder name
++    task_path, state = cli.find_task(task_id)
++    if not task_path or state != "REVIEW":
++        cli.error(f"Task {task_id} must be in REVIEW state to perform audit.",
++                  hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW")
+ 
+-    if not patch_file:
+-        cli.error(f"Patch file not found for task {task_id}")
+-        return
++    review_dir = os.path.join(cli.tasks_path, "review")
++    task_folder_name = os.path.basename(task_path)
++    
++    patch_file = os.path.join(review_dir, f"{task_folder_name}.patch")
++    if not os.path.exists(patch_file):
++        cli.error(f"Regression patch not found: {patch_file}",
++                  hint="This file should be auto-generated when moving to REVIEW. Try moving the task back to TESTING and then to REVIEW again.")
+ 
+-    output_path = patch_file.replace(".patch", ".audit")
++    output_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+     generate_audit(task_id, patch_file, output_path)
+     cli.log(f"✅ Audit log created for task {task_id}")
+diff --git a/tasks_ai/commands/checkpoint.py b/tasks_ai/commands/checkpoint.py
+index 8aa076c..1f1e06c 100644
+--- a/tasks_ai/commands/checkpoint.py
++++ b/tasks_ai/commands/checkpoint.py
+@@ -6,7 +6,7 @@ def run(cli, filename=None):
+     """Execution logic for 'tasks checkpoint'."""
+     filepath, task = cli.get_active_task(filename)
+     if not filepath or not task:
+-        cli.error("No active task.")
++        cli.error("NO_ACTIVE_TASK")
+ 
+     filepath_str = str(filepath)
+     fname = os.path.basename(filepath_str)
+diff --git a/tasks_ai/commands/config.py b/tasks_ai/commands/config.py
+index 26bb45b..2b34b2c 100644
+--- a/tasks_ai/commands/config.py
++++ b/tasks_ai/commands/config.py
+@@ -27,18 +27,19 @@ def run(cli, action=None, key=None, value=None, save=False):
+         cli.finish(cfg)
+     elif action == "get":
+         if not key:
+-            cli.error("Missing config key.")
++            cli.error("MISSING_CONFIG_KEY")
+         if cli.as_json:
+             cli.finish({"key": key, "value": cfg.get(key)})
+         else:
+             print(cfg.get(key, ""))
+     elif action == "set":
+         if not key or value is None:
+-            cli.error("Missing config key or value.")
++            cli.error("MISSING_CONFIG_KEY_OR_VALUE")
+         if key not in ALLOWED_CONFIG_KEYS:
+             cli.error(
+-                f"Invalid config key '{key}'.",
+-                hint=f"Allowed keys: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}.",
++                "INVALID_CONFIG_KEY",
++                key=key,
++                allowed_keys=', '.join(sorted(ALLOWED_CONFIG_KEYS))
+             )
+         cfg[key] = value
+         save_config(cli.tasks_path, cfg)
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 2ab0df3..42f577e 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -21,7 +21,7 @@ def run(
+     """Execution logic for 'tasks create'."""
+     title = title.strip()
+     if len(title) < 10:
+-        cli.error("Task title is too vague. Min 10 chars.")
++        cli.error("TITLE_TOO_VAGUE")
+ 
+     if task_type not in ["task", "issue", "docs", "test"]:
+         cli.error(f"Invalid task type: {task_type}. Allowed: task, issue, docs, test.")
+@@ -118,7 +118,7 @@ def run(
+             "criteria": (
+                 "\n".join(f"- [ ] {c}" for c in criteria)
+                 if isinstance(criteria, list)
+-                else f"- [ ] {criteria}"
++                else f"{criteria}"
+             )
+             if criteria
+             else "",
+@@ -162,6 +162,7 @@ def run(
+         ).stdout.strip()
+         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
+         cli.log(f"Branch: {task_id} | Now on: {current_branch}")
++        cli.log(f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'")
+ 
+         cli.finish(
+             {
+diff --git a/tasks_ai/commands/current.py b/tasks_ai/commands/current.py
+index 018cb6b..c28e72d 100644
+--- a/tasks_ai/commands/current.py
++++ b/tasks_ai/commands/current.py
+@@ -8,7 +8,7 @@ def run(cli, filename=None):
+     """Execution logic for 'tasks current'."""
+     filepath, task = cli.get_active_task(filename)
+     if not filepath or not task:
+-        cli.error("No active task.")
++        cli.error("NO_ACTIVE_TASK")
+ 
+     filepath_str = str(filepath)
+     tn = os.path.basename(filepath_str)
+diff --git a/tasks_ai/commands/list.py b/tasks_ai/commands/list.py
+index e5920ce..2eb95cb 100644
+--- a/tasks_ai/commands/list.py
++++ b/tasks_ai/commands/list.py
+@@ -8,7 +8,7 @@ from ..libs.list_layout import render_table
+ def run(cli, show_all=False):
+     """Execution logic for 'tasks list'."""
+     if not os.path.exists(cli.tasks_path):
+-        cli.error("Init required.")
++        cli.error("INIT_REQUIRED")
+ 
+     # Check if we should output JSON
+     output_json = cli.as_json
+diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
+index fa0d5ba..b2bae9d 100644
+--- a/tasks_ai/commands/modify.py
++++ b/tasks_ai/commands/modify.py
+@@ -52,6 +52,7 @@ def run(
+         task.parts["tech"] = tech
+         updated = True
+     if criteria:
++        # Overwrite existing criteria completely
+         if isinstance(criteria, list):
+             task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+         else:
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index 0814316..b425471 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -1,19 +1,42 @@
+ import os
+-from ..constants import STATE_FOLDERS, ALLOWED_TRANSITIONS, CURRENT_TASK_FILENAME
++from ..constants import STATE_FOLDERS
+ from ..file_manager import FM
+-from ..models import Task
+ from ..utils import parse_filename, perform_move
+ 
+ 
+ def run(cli, filename, new_status, yes=False):
+     """Execution logic for 'tasks move'."""
+-    cli.pipeline.check_transition(cli, filename, new_status)
+     filepath, current_state_from_folder = cli.find_task(filename)
+     if not filepath:
+         cli.error(
+             f"Task '{filename}' not found.",
+             hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
+         )
++    task_type, _ = parse_filename(os.path.basename(filepath))
++    allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
++    
++    # Handle multi-step transitions
++    if "," in new_status:
++        steps = [s.strip() for s in new_status.split(",")]
++        # Validate the entire chain
++        cli.pipeline.check_transition(cli, filename, new_status)
++        
++        # Perform each step
++        for step in steps:
++            # We already validated the chain, but we might need to skip already-reached states
++            _, current_state = cli.find_task(filename)
++            if current_state == step:
++                continue
++            
++            # Perform individual move
++            move_logic(cli, filename, step, force=False, yes=yes, sync=True)
++            
++        cli.log(f"Moved: [{cli.find_task(filename)[0].split('/')[-1]}] -> {new_status}")
++        cli.finish({"status": new_status})
++        return
++
++    # Single-step transition
++    cli.pipeline.check_transition(cli, filename, new_status)
+ 
+     task = FM.load(filepath)
+     fname = os.path.basename(filepath)
+@@ -25,11 +48,11 @@ def run(cli, filename, new_status, yes=False):
+     # Chained auto-promotion
+     max_steps = 10
+     while (
+-        new_status not in ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
++        new_status not in allowed_transitions.get(current_state_from_folder, [])
+         and current_state_from_folder != new_status
+         and max_steps > 0
+     ):
+-        allowed = ALLOWED_TRANSITIONS.get(current_state_from_folder, [])
++        allowed = allowed_transitions.get(current_state_from_folder, [])
+         if not allowed:
+             break
+ 
+@@ -63,6 +86,8 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+ 
+     filepath_str = str(filepath)
+     task = FM.load(filepath_str)
++    task_type, _ = parse_filename(os.path.basename(filepath_str))
++    allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
+ 
+     if not force:
+         cli._validate_pipeline_gate(task, new_status, filepath_str)
+@@ -112,11 +137,11 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+             FM.dump(task, filepath_str)
+ 
+     if (
+-        new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
++        new_status not in allowed_transitions.get(current_state, [])
+         and not force
+         and not is_merged_branch
+     ):
+-        hint = f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. Do not bypass this tool."
++        hint = f"Allowed transitions from {current_state} are: {', '.join(allowed_transitions.get(current_state, []))}. Do not bypass this tool."
+         if current_state == "REJECTED" and new_status == "ARCHIVED":
+             hint += " Use 'hammer tasks delete <id>' to permanently remove the task."
+         if is_merged_branch:
+@@ -125,176 +150,21 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+             )
+         cli.error(
+             f"Forbidden transition: {current_state} -> {new_status}",
+-            hint=f"Allowed transitions from {current_state} are: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}. "
++            hint=f"Allowed transitions from {current_state} are: {', '.join(allowed_transitions.get(current_state, []))}. "
+             f"Pipeline flow: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. "
+             f"Do not bypass this tool.",
+         )
+ 
+-    # Gates and Validations
+-    if current_state == "TESTING" and new_status == "REVIEW":
+-        task = FM.load(filepath_str)
+-        if not task.metadata.get("Tp", False):
+-            cli.error(
+-                "Tests must be passed before moving to REVIEW.",
+-                hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed.",
+-            )
+-        cli._run_validation()
+-        cli._run_tests()
+-        cli.log(
+-            "--- ⚠️  REVIEW GATE ENTERED ⚠️ ---\nMandatory gates remaining: Cryptographic Audit, Regression Check, and Staging Promotion."
+-        )
+-
+-    if current_state in ["TESTING", "PROGRESSING"]:
+-        cli.log("Running pre-transition validation...")
+-        cli._run_validation()
+-        cli._run_tests()
+-
+-    if current_state == "TESTING" and new_status != "REVIEW":
+-        cli._run_validation()
+-        task = FM.load(filepath_str)
+-        task.metadata["Vp"] = True
+-        FM.dump(task, filepath_str)
+-
+-    if current_state == "PROGRESSING" and new_status == "TESTING":
+-        cli._run_validation()
+-        cli.log("Validation passed. Marking validation_passed...")
+-        task = FM.load(filepath_str)
+-        task.metadata["Vp"] = True
+-        FM.dump(task, filepath_str)
+-
+-    # Content sufficiency checks
+-    def has_complete_content(t, fn):
+-        for part in ["story", "tech", "criteria", "plan"]:
+-            if not t.parts.get(part) or len(str(t.parts.get(part)).strip()) < 10:
+-                return False
+-        tt, _ = parse_filename(fn)
+-        if tt == "issue" and (
+-            not t.parts.get("repro") or len(str(t.parts.get("repro")).strip()) < 10
+-        ):
+-            return False
+-        return True
+-
+-    if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
+-        if not has_complete_content(task, os.path.basename(filepath_str)):
+-            cli.error("Task lacks required content to leave BACKLOG.")
+-
+-    if new_status == "PROGRESSING":
+-        bl = task.metadata.get("Bl", [])
+-        for b in bl:
+-            _, bs = cli.find_task(str(b))
+-            if bs != "ARCHIVED":
+-                cli.error(f"Blocked by {b}. Blocker must be ARCHIVED first.")
+-        if not has_complete_content(task, os.path.basename(filepath_str)):
+-            cli.error("Task lacks sufficient detail to move to PROGRESSING.")
+-
+-    # Branch checks
+-    _, branch = parse_filename(os.path.basename(filepath_str))
+-    branch_sha_res = cli._run_git(["rev-parse", branch])
+-    branch_sha = branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
+-    if not branch_sha:
+-        res = cli._run_git(["log", "-1", "--format=%H", branch])
+-        if res.returncode == 0:
+-            branch_sha = res.stdout.strip()
+-
+-    if new_status == "PROGRESSING" and not branch_sha:
+-        has_origin = cli._run_git(["remote", "get-url", "origin"]).returncode == 0
+-        if has_origin:
+-            remote_check = cli._run_git(["ls-remote", "--heads", "origin", branch])
+-            if remote_check.stdout.strip():
+-                cli.log(
+-                    f"Branch '{branch}' not found locally. Restoring from remote..."
+-                )
+-                cli._run_git(
+-                    ["checkout", "-b", branch, f"origin/{branch}"], cwd=cli.root
+-                )
+-                branch_sha = cli._run_git(["rev-parse", branch]).stdout.strip()
+-
+-    if not force:
+-        has_origin = cli._run_git(["remote", "get-url", "origin"]).returncode == 0
+-        if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):
+-            if has_origin:
+-                if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
+-                    cli.error(
+-                        f"Branch '{branch}' not pushed to remote. Push and try again."
+-                    )
+-
+-        if new_status == "TESTING" and current_state in (
+-            "READY",
+-            "BACKLOG",
+-            "PROGRESSING",
+-        ):
+-            # Detailed progress check (unstaged + commits vs testing/main)
+-            pass
+-
+-    # Final Execution
+-    perform_move(cli, task, current_state, new_status, filepath_str)
+-
+-    # Post-move hooks
+-    if new_status == "TESTING":
+-        from repo import cmd_promote, FLAGS
+-
+-        FLAGS.update({"yes": yes, "quiet": cli.quiet, "json": True, "dev": cli.dev})
+-        try:
+-            cmd_promote(branch)
+-        except Exception as e:
+-            cli.error(f"Promotion failed: {e}")
+-
+-    if new_status == "ARCHIVED":
+-        cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+-        cli._run_git(
+-            [
+-                "commit",
+-                "-m",
+-                f"Archive [{task.metadata.get('Id')}] {task.metadata.get('Ti')}",
+-            ],
+-            cwd=cli.tasks_path,
+-        )
+-        try:
+-            cli._push_tasks_branch("tasks", fatal=False)
+-        except Exception:
+-            pass
+-    else:
+-        cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+-        cli._run_git(
+-            [
+-                "commit",
+-                "--allow-empty",
+-                "-m",
+-                f"Mv {os.path.basename(filepath_str)} -> {new_status}",
+-            ],
+-            cwd=cli.tasks_path,
+-        )
++    # 1. Run Exit Hooks (Pre-move checks and actions)
++    cli.hook_registry.run_exit_hooks(cli, task, current_state, new_status, filepath_str)
+ 
+-    if new_status == "PROGRESSING":
+-        dump_path = os.path.join(
+-            os.path.join(
+-                cli.tasks_path,
+-                STATE_FOLDERS[new_status],
+-                os.path.basename(filepath_str),
+-            ),
+-            CURRENT_TASK_FILENAME,
+-        )
+-        d = Task(
+-            metadata={"Task": os.path.basename(filepath_str)},
+-            parts={"content": task.parts.get("notes", "- Progress: \n")},
+-        )
+-        cli._atomic_write(dump_path, d)
++    # 2. Final Execution (Physical move)
++    new_task = perform_move(cli, task, current_state, new_status, filepath_str)
+ 
+-    if new_status == "REVIEW":
+-        cli._generate_review_diff(
+-            os.path.join(
+-                cli.tasks_path,
+-                STATE_FOLDERS[new_status],
+-                os.path.basename(filepath_str),
+-            ),
+-            branch,
+-        )
+-        task.metadata["Rc"] = ""
+-        cli._atomic_write(
+-            os.path.join(
+-                cli.tasks_path,
+-                STATE_FOLDERS[new_status],
+-                os.path.basename(filepath_str),
+-            ),
+-            task,
+-        )
++    # 3. Run Enter Hooks (Post-move actions)
++    new_filepath = os.path.join(
++        cli.tasks_path,
++        STATE_FOLDERS[new_status],
++        os.path.basename(filepath_str),
++    )
++    cli.hook_registry.run_enter_hooks(cli, new_task, current_state, new_status, new_filepath)
+diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
+index 7b73439..09b1cc6 100644
+--- a/tasks_ai/commands/verify.py
++++ b/tasks_ai/commands/verify.py
+@@ -1,29 +1,37 @@
+ import os
+-from ..audit import verify_audit
+ 
+ 
+ def run(cli, task_id, proof):
+-    patch_dir = ".tasks/review"
+-    patch_file = None
+-    audit_file = None
+-    for f in os.listdir(patch_dir):
+-        if f.startswith(task_id):
+-            if f.endswith(".patch"):
+-                patch_file = os.path.join(patch_dir, f)
+-            elif f.endswith(".audit"):
+-                audit_file = os.path.join(patch_dir, f)
++    task_path, state = cli.find_task(task_id)
++    if not task_path or state != "REVIEW":
++        cli.error(f"Task {task_id} must be in REVIEW state to perform verification.",
++                  hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW")
+ 
+-    if not patch_file or not audit_file:
+-        cli.error(f"Patch or Audit file not found for task {task_id}")
+-        return
++    review_dir = os.path.join(cli.tasks_path, "review")
++    task_folder_name = os.path.basename(task_path)
++    
++    patch_file = os.path.join(review_dir, f"{task_folder_name}.patch")
++    audit_file = os.path.join(review_dir, f"{task_folder_name}.audit")
++    
++    if not os.path.exists(patch_file):
++        cli.error(f"Regression patch missing: {patch_file}",
++                  hint="Move task to TESTING and back to REVIEW to re-generate the patch.")
++                  
++    if not os.path.exists(audit_file):
++        cli.error(f"Cryptographic audit missing: {audit_file}",
++                  hint=f"A code review (audit) is required.\n  Run: ./hammer tasks audit {task_id}")
+ 
++    from ..audit import verify_audit
+     if not verify_audit(patch_file, audit_file):
+-        cli.error(f"Audit verification failed for task {task_id}")
+-        return
++        cli.error(f"Audit verification failed for task {task_id}. The code has changed since the last audit.",
++                  hint=f"Re-run audit: ./hammer tasks audit {task_id}")
+ 
+     # Write the verification proof
+-    hash_path = audit_file.replace(".audit", ".audit_hash")
+-    with open(hash_path, "w") as f:
++    proof_path = os.path.join(task_path, "verification_proof.log")
++    with open(proof_path, "w") as f:
+         f.write(proof)
+-
++    
++    # Update hash using pipeline
++    cli.pipeline.update_audit_hash(task_id, task_path)
++    
+     cli.log(f"✅ Task {task_id} verified.")
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index 1a09ebc..ee4753f 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -3,7 +3,6 @@
+ import os
+ import yaml
+ 
+-
+ def load_config(tasks_path):
+     config_path = os.path.join(tasks_path, "config.yaml")
+     if os.path.exists(config_path):
+@@ -14,6 +13,9 @@ def load_config(tasks_path):
+             return {}
+     return {}
+ 
++def get_workflows(tasks_path):
++    cfg = load_config(tasks_path)
++    return cfg.get("workflows", {})
+ 
+ def save_config(tasks_path, cfg):
+     config_path = os.path.join(tasks_path, "config.yaml")
+@@ -23,7 +25,6 @@ def save_config(tasks_path, cfg):
+     except Exception:
+         pass
+ 
+-
+ TASKS_DIR = ".tasks"
+ TASKS_BRANCH = "tasks"
+ CURRENT_TASK_FILENAME = "current-task.md"
+@@ -40,7 +41,8 @@ STATE_FOLDERS = {
+     "REJECTED": "rejected",
+ }
+ 
+-ALLOWED_TRANSITIONS = {
++# The default workflow if no type-specific one is defined
++DEFAULT_ALLOWED_TRANSITIONS = {
+     "BACKLOG": ["READY"],
+     "READY": ["PROGRESSING"],
+     "PROGRESSING": ["TESTING", "BLOCKED", "REJECTED"],
+@@ -53,6 +55,9 @@ ALLOWED_TRANSITIONS = {
+     "REJECTED": ["PROGRESSING"],
+ }
+ 
++# Deprecated in favor of workflow-based transitions
++ALLOWED_TRANSITIONS = DEFAULT_ALLOWED_TRANSITIONS
++
+ KEY_MAP = {
+     "Id": "Id",
+     "Ti": "Title",
+@@ -76,6 +81,7 @@ ALLOWED_CONFIG_KEYS = {
+     "repo.type_check",
+     "repo.format",
+     "repo.skip_user_test_prompt",
++    "workflows",
+ }
+ 
+ AGENT_GUIDANCE = """
+diff --git a/tasks_ai/file_manager.py b/tasks_ai/file_manager.py
+index 85c4b0d..2eed307 100644
+--- a/tasks_ai/file_manager.py
++++ b/tasks_ai/file_manager.py
+@@ -75,6 +75,9 @@ class FM:
+                 part_name = f[:-3]
+                 with open(os.path.join(path, f), "r") as file:
+                     parts[part_name] = file.read()
++            elif f in ["verification_proof.log", ".audit_hash"]:
++                with open(os.path.join(path, f), "r") as file:
++                    parts[f] = file.read()
+         return Task(metadata=meta, parts=parts, corrupted=corrupted)
+ 
+     @staticmethod
+@@ -106,7 +109,11 @@ class FM:
+                 continue
+             if content is None:
+                 continue
+-            _atomic_write(os.path.join(path, f"{name}.md"), content)
++            
++            if name.endswith(".md") or name in ["verification_proof.log", ".audit_hash"]:
++                _atomic_write(os.path.join(path, name), content)
++            else:
++                _atomic_write(os.path.join(path, f"{name}.md"), content)
+ 
+     @staticmethod
+     def append_log(path, message, section="progress"):
+diff --git a/tasks_ai/libs/list_layout.py b/tasks_ai/libs/list_layout.py
+index 720e4c9..1a8cb02 100644
+--- a/tasks_ai/libs/list_layout.py
++++ b/tasks_ai/libs/list_layout.py
+@@ -1,53 +1,11 @@
+-import shutil
+-import textwrap
+-
+-C_HEADER = "\033[1;47;30m"
+-C_ID = "\033[1;32m"
+-C_PRIO = "\033[1;35m"
+-C_TYPE = "\033[36m"
+-C_RESET = "\033[0m"
+-
++from ..cli_utils import format_table
+ 
+ def render_table(all_data):
+-    term_width = shutil.get_terminal_size(fallback=(180, 24)).columns
+-    fixed_cols = 3 + 1 + 2 + 1 + 7 + 1 + 6 + 1 + 30
+-    summary_min = 30
+-    available = max(term_width - fixed_cols, 10)
+-    branch_width = 30
+-    summary_width = max(summary_min, available)
+-
+-    print(
+-        f"{C_HEADER}{'#':>3} {'P':>2} {'Summary':<{summary_width}} {'Status':<7} {'Type':<6} {'Branch':<{branch_width}}{C_RESET}"
+-    )
+-
++    headers = ["#", "P", "Summary", "Status", "Type", "Branch"]
++    rows = []
+     for state, tasks in all_data.items():
+         for t in tasks:
+-            summary_lines = textwrap.wrap(t["summary"], width=summary_width) or [""]
+-
+-            def simple_wrap(text, width):
+-                res = []
+-                while len(text) > width:
+-                    res.append(text[:width])
+-                    text = text[width:]
+-                res.append(text)
+-                return res
+-
+-            branch_lines = simple_wrap(t["branch"], branch_width) or [""]
+-            max_lines = max(len(summary_lines), len(branch_lines))
+-
+-            for i in range(max_lines):
+-                id_str = str(t["id"]) if i == 0 else ""
+-                p_str = str(t["p"]) if i == 0 else ""
+-                s_line = summary_lines[i] if i < len(summary_lines) else ""
+-                status_str = t["state"] if i == 0 else ""
+-                type_str = t["type"] if i == 0 else ""
+-                b_line = branch_lines[i] if i < len(branch_lines) else ""
+-
+-                id_f = f"{C_ID}{id_str:>3}{C_RESET}" if i == 0 else "   "
+-                p_f = f"{C_PRIO}{p_str:>2}{C_RESET}" if i == 0 else "  "
+-                status_f = f"{C_TYPE}{status_str:<7}{C_RESET}" if i == 0 else "       "
+-                type_f = f"{C_TYPE}{type_str:<6}{C_RESET}" if i == 0 else "      "
+-
+-                print(
+-                    f"{id_f} {p_f} {s_line:<{summary_width}} {status_f} {type_f} {b_line:<{branch_width}}"
+-                )
++            rows.append([t["id"], t["p"], t["summary"], t["state"], t["type"], t["branch"]])
++    
++    # Status is column 3 (0-indexed), Priority is column 1
++    print(format_table(headers, rows, status_idx=3, prio_idx=1))
+diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
+index 440ca35..ad0062b 100644
+--- a/tasks_ai/pipeline.py
++++ b/tasks_ai/pipeline.py
+@@ -1,7 +1,8 @@
+ import os
+ import hashlib
+ import re
+-
++from .constants import get_workflows, DEFAULT_ALLOWED_TRANSITIONS
++from .utils import parse_filename
+ 
+ class PipelineError(Exception):
+     def __init__(self, message, hint=None):
+@@ -19,33 +20,51 @@ class PipelineService:
+         self.context = context
+         self.git = git_client
+         self.logger = logger
++        self.workflows = get_workflows(context.tasks_path)
++
++    def get_allowed_transitions(self, task_type: str):
++        workflow = self.workflows.get(task_type, self.workflows.get("default", {"transitions": DEFAULT_ALLOWED_TRANSITIONS}))
++        return workflow.get("transitions", DEFAULT_ALLOWED_TRANSITIONS)
+ 
+     def log(self, message: str):
+         if self.logger:
+             self.logger.log(message)
+ 
+     def check_transition(self, cli, filename: str, new_status: str):
+-        from .constants import ALLOWED_TRANSITIONS
+-
+         filepath, current_state = cli.find_task(filename)
+         if not filepath or current_state is None:
+             return
++        
++        task_type, _ = parse_filename(os.path.basename(filepath))
++        allowed_transitions = self.get_allowed_transitions(task_type)
++        
++        # Allow multi-step moves: validate each step in the chain
+         if "," in new_status:
++            last_state = current_state
++            for next_state in new_status.split(","):
++                next_state = next_state.strip()
++                if next_state == last_state:
++                    continue
++                if next_state not in allowed_transitions.get(last_state, []):
++                     cli.error(
++                        f"Forbidden transition in chain: {last_state} -> {next_state}",
++                        hint=f"Allowed from {last_state}: {', '.join(allowed_transitions.get(last_state, []))}",
++                    )
++                     return
++                last_state = next_state
+             return
++        
+         if (
+-            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
++            new_status not in allowed_transitions.get(current_state, [])
+             and current_state != new_status
+         ):
+             if current_state == "BACKLOG" and new_status == "PROGRESSING":
+                 cli.log("Auto-promoting BACKLOG to READY before PROGRESSING.")
+-                cli.log(
+-                    "REMINDER: Ensure the task is fully populated with 'story', 'tech', 'criteria', and 'plan' fields to meet the READY gate."
+-                )
+                 cli._move_logic(filename, "READY", yes=True)
+                 return
+             cli.error(
+                 f"Forbidden transition: {current_state} -> {new_status}",
+-                hint=f"Allowed: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}",
++                hint=f"Allowed: {', '.join(allowed_transitions.get(current_state, []))}",
+             )
+ 
+     def validate_gate(self, task, target_state: str, task_path: str):
+@@ -54,16 +73,22 @@ class PipelineService:
+         Raises PipelineError with descriptive message and hint if gate fails.
+         """
+         task_id = task.metadata.get("Id")
++        task_type, _ = parse_filename(os.path.basename(task_path))
++        
++        # Resolve gates based on workflow
++        workflow = self.workflows.get(task_type, self.workflows.get("default", {}))
++        gates_config = workflow.get("gates", {})
++        enabled_gates = gates_config.get(target_state, [])
+ 
+         # 1. Enforce criteria completion for TESTING
+-        if target_state == "TESTING" and self.has_incomplete_checkboxes(task_path):
++        if "incomplete_checkboxes" in enabled_gates and self.has_incomplete_checkboxes(task_path):
+             raise PipelineError(
+                 f"Cannot move to {target_state}: contains unfinished checkboxes (- [ ])",
+                 hint="Edit criteria.md and change '- [ ]' to '- [x]' for completed items.",
+             )
+ 
+         # 2. Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
+-        if target_state in ["STAGING", "DONE", "ARCHIVED"]:
++        if "regression_check" in enabled_gates:
+             # Check if coming from a state that requires Rc
+             current_state = os.path.basename(os.path.dirname(task_path)).upper()
+             if current_state in ["REVIEW", "TESTING", "STAGING", "DONE"]:
+@@ -78,7 +103,7 @@ class PipelineService:
+                     )
+ 
+         # 3. Cryptographic Audit Integrity for STAGING/DONE
+-        if target_state in ["STAGING", "DONE"]:
++        if "audit_integrity" in enabled_gates:
+             if not self.check_audit_integrity(task_id, task_path):
+                 raise PipelineError(
+                     f"Task '{task_id}' failed cryptographic audit integrity check.",
+@@ -86,7 +111,7 @@ class PipelineService:
+                 )
+ 
+         # 4. Merge verification for DONE/ARCHIVED
+-        if target_state in ["DONE", "ARCHIVED"]:
++        if "merge_check" in enabled_gates:
+             branch = task.metadata.get("Br", "")
+             if branch:
+                 # Check if branch is merged into main
+@@ -155,7 +180,8 @@ class PipelineService:
+             filepath = os.path.join(task_path, filename)
+             with open(filepath, "r", encoding="utf-8") as f:
+                 content = f.read()
+-            if re.search(r"^- \[ \]", content, re.MULTILINE):
++            # Allow flexible whitespace around - and [ ]
++            if re.search(r"^\s*-\s*\[\s*\]", content, re.MULTILINE):
+                 return True
+         return False
+ 
+@@ -163,32 +189,94 @@ class PipelineService:
+         criteria_path = os.path.join(task_path, "criteria.md")
+         proof_path = os.path.join(task_path, "verification_proof.log")
+         hash_path = os.path.join(task_path, ".audit_hash")
++        
++        # Sibling files
++        review_dir = os.path.dirname(task_path)
++        task_folder_name = os.path.basename(task_path)
++        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+ 
+         hasher = hashlib.md5()
+-        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+-            hasher.update(f1.read())
+-            hasher.update(f2.read())
++        with open(criteria_path, "rb") as f_crit, \
++             open(proof_path, "rb") as f_proof, \
++             open(audit_path, "rb") as f_audit:
++            hasher.update(f_crit.read())
++            hasher.update(f_proof.read())
++            hasher.update(f_audit.read())
+ 
+         with open(hash_path, "w") as f:
+             f.write(hasher.hexdigest())
+ 
+-    def check_audit_integrity(self, task_id: str, task_path: str) -> bool:
++    def check_audit_integrity(self, task_id: str, task_path: str):
++        """
++        Verify the integrity of the cryptographic audit and verification proof.
++        Raises PipelineError with descriptive message and hint if integrity check fails.
++        """
+         criteria_path = os.path.join(task_path, "criteria.md")
+         proof_path = os.path.join(task_path, "verification_proof.log")
+         hash_path = os.path.join(task_path, ".audit_hash")
++        
++        # Also need the patch and audit files which are siblings to the task directory in .tasks/review/
++        review_dir = os.path.dirname(task_path)
++        task_folder_name = os.path.basename(task_path)
++        patch_path = os.path.join(review_dir, f"{task_folder_name}.patch")
++        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
++
++        # 1. Check for basic files
++        if not os.path.exists(patch_path):
++             raise PipelineError(
++                f"Regression patch missing: {patch_path}",
++                hint="This file should be auto-generated when moving to REVIEW. Try moving the task back to TESTING and then to REVIEW again."
++            )
++            
++        if not os.path.exists(audit_path):
++            raise PipelineError(
++                f"Cryptographic audit missing: {audit_path}",
++                hint=f"A code review (audit) is required.\n  Run: ./hammer tasks audit {task_id}"
++            )
++
++        if not os.path.exists(proof_path):
++            raise PipelineError(
++                f"Verification proof missing: {proof_path}",
++                hint=f"Proof of criteria completion is required.\n  Run: ./hammer tasks verify {task_id} --proof \"Your proof message\""
++            )
+ 
+         if not os.path.exists(hash_path):
+-            return False
++            raise PipelineError(
++                f"Audit integrity hash missing: {hash_path}",
++                hint=f"The audit chain is incomplete.\n  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
++            )
++
++        # 2. Verify Audit vs Patch
++        from .audit import verify_audit
++        if not verify_audit(patch_path, audit_path):
++             raise PipelineError(
++                f"Audit mismatch: The code has changed since the last audit of '{task_id}'.",
++                hint=f"The hash in {audit_path} does not match {patch_path}.\n"
++                     f"  1. Re-review the changes in the patch file.\n"
++                     f"  2. Re-run: ./hammer tasks audit {task_id}\n"
++                     f"  3. Re-run: ./hammer tasks verify {task_id} --proof \"...\""
++            )
+ 
++        # 3. Verify Integrity Hash (Criteria + Proof + Audit)
+         hasher = hashlib.md5()
+         try:
+-            with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+-                hasher.update(f1.read())
+-                hasher.update(f2.read())
+-        except FileNotFoundError:
+-            return False
++            with open(criteria_path, "rb") as f_crit, \
++                 open(proof_path, "rb") as f_proof, \
++                 open(audit_path, "rb") as f_audit:
++                hasher.update(f_crit.read())
++                hasher.update(f_proof.read())
++                hasher.update(f_audit.read())
++        except FileNotFoundError as e:
++            raise PipelineError(f"Integrity check failed: missing file {e.filename}")
+ 
+         with open(hash_path, "r") as f:
+             stored_hash = f.read().split()[0]
+ 
+-        return hasher.hexdigest() == stored_hash
++        if hasher.hexdigest() != stored_hash:
++             raise PipelineError(
++                f"Integrity mismatch: Criteria, proof, or audit has changed for task '{task_id}'.",
++                hint=f"The cryptographic lock in {hash_path} is broken.\n"
++                     f"  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
++            )
++        
++        return True
