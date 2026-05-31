@@ -1,5 +1,5 @@
 diff --git a/tasks.py b/tasks.py
-index 63f298c..113339e 100755
+index 63f298c..95c1cdb 100755
 --- a/tasks.py
 +++ b/tasks.py
 @@ -103,8 +103,8 @@ if __name__ == "__main__":
@@ -24,6 +24,15 @@ index 63f298c..113339e 100755
      )
      mod_p.add_argument("--title", help="New title.")
      mod_p.add_argument("--story", help="User story.")
+@@ -268,6 +268,8 @@ if __name__ == "__main__":
+             repro=args.repro,
+             branch=args.branch,
+         )
++    elif args.command == "audit":
++        cli.audit(args.id)
+     elif args.command == "modify":
+         cli.modify(
+             args.filename,
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
 index 234f2a8..2e57deb 100644
 --- a/tasks_ai/cli.py
@@ -800,6 +809,23 @@ index 1a09ebc..ee4753f 100644
  }
  
  AGENT_GUIDANCE = """
+diff --git a/tasks_ai/file_manager.py b/tasks_ai/file_manager.py
+index 85c4b0d..ad043ee 100644
+--- a/tasks_ai/file_manager.py
++++ b/tasks_ai/file_manager.py
+@@ -106,7 +106,11 @@ class FM:
+                 continue
+             if content is None:
+                 continue
+-            _atomic_write(os.path.join(path, f"{name}.md"), content)
++            
++            if name.endswith(".md") or name in ["verification_proof.log", ".audit_hash"]:
++                _atomic_write(os.path.join(path, name), content)
++            else:
++                _atomic_write(os.path.join(path, f"{name}.md"), content)
+ 
+     @staticmethod
+     def append_log(path, message, section="progress"):
 diff --git a/tasks_ai/libs/list_layout.py b/tasks_ai/libs/list_layout.py
 index 720e4c9..1a8cb02 100644
 --- a/tasks_ai/libs/list_layout.py
