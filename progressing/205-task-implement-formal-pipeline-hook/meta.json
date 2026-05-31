@@ -4,5 +4,7 @@
   "Cr": "260530 23:57",
   "Bl": [],
   "Pr": 3,
-  "Br": "205-task-implement-formal-pipeline-hook"
+  "Br": "205-task-implement-formal-pipeline-hook",
+  "Tp": false,
+  "Rc": true
 }
