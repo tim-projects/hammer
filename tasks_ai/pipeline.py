@@ -178,11 +178,13 @@ class PipelineService:
         return False
 
     def update_audit_hash(self, task_id: str, task_path: str):
+        # Sibling files reside in the same directory as the criteria.md, proof, etc.
         criteria_path = os.path.join(task_path, "criteria.md")
+        self.log(f"DEBUG: update_audit_hash task_path={task_path}, criteria_path={criteria_path}, exists={os.path.exists(criteria_path)}")
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
         
-        # Sibling files
+        # Sibling files (patch/audit) are in .tasks/review/FOLDER_NAME/
         review_dir = os.path.dirname(task_path)
         task_folder_name = os.path.basename(task_path)
         audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
@@ -207,47 +209,30 @@ class PipelineService:
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
         
-        # Also need the patch and audit files which are siblings to the task directory in .tasks/review/
+        # Sibling files (patch folder/audit file) are in .tasks/review/FOLDER_NAME/
         review_dir = os.path.dirname(task_path)
         task_folder_name = os.path.basename(task_path)
-        patch_path = os.path.join(review_dir, f"{task_folder_name}.patch")
+        patches_dir = os.path.join(review_dir, task_folder_name, "patches")
         audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
 
         # 1. Check for basic files
-        if not os.path.exists(patch_path):
-             raise PipelineError(
-                f"Regression patch missing: {patch_path}",
-                hint="This file should be auto-generated when moving to REVIEW. Try moving the task back to TESTING and then to REVIEW again."
-            )
+        self.log(f"DEBUG: checking patches_dir={patches_dir}, exists={os.path.exists(patches_dir)}")
+        if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
+             raise PipelineError("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
             
         if not os.path.exists(audit_path):
-            raise PipelineError(
-                f"Cryptographic audit missing: {audit_path}",
-                hint=f"A code review (audit) is required.\n  Run: ./hammer tasks audit {task_id}"
-            )
+            raise PipelineError("AUDIT_MISSING", audit_path=audit_path, task_id=task_id)
 
         if not os.path.exists(proof_path):
-            raise PipelineError(
-                f"Verification proof missing: {proof_path}",
-                hint=f"Proof of criteria completion is required.\n  Run: ./hammer tasks verify {task_id} --proof \"Your proof message\""
-            )
+            raise PipelineError("PROOF_MISSING", proof_path=proof_path)
 
         if not os.path.exists(hash_path):
-            raise PipelineError(
-                f"Audit integrity hash missing: {hash_path}",
-                hint=f"The audit chain is incomplete.\n  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
-            )
+            raise PipelineError("HASH_MISSING", hash_path=hash_path)
 
-        # 2. Verify Audit vs Patch
+        # 2. Verify Audit vs Patches
         from .audit import verify_audit
-        if not verify_audit(patch_path, audit_path):
-             raise PipelineError(
-                f"Audit mismatch: The code has changed since the last audit of '{task_id}'.",
-                hint=f"The hash in {audit_path} does not match {patch_path}.\n"
-                     f"  1. Re-review the changes in the patch file.\n"
-                     f"  2. Re-run: ./hammer tasks audit {task_id}\n"
-                     f"  3. Re-run: ./hammer tasks verify {task_id} --proof \"...\""
-            )
+        if not verify_audit(patches_dir, audit_path):
+             raise PipelineError("AUDIT_MISMATCH", task_id=task_id)
 
         # 3. Verify Integrity Hash (Criteria + Proof + Audit)
         hasher = hashlib.md5()
@@ -265,10 +250,6 @@ class PipelineService:
             stored_hash = f.read().split()[0]
 
         if hasher.hexdigest() != stored_hash:
-             raise PipelineError(
-                f"Integrity mismatch: Criteria, proof, or audit has changed for task '{task_id}'.",
-                hint=f"The cryptographic lock in {hash_path} is broken.\n"
-                     f"  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
-            )
+             raise PipelineError("INTEGRITY_MISMATCH", task_id=task_id)
         
         return True

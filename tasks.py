@@ -179,6 +179,11 @@ if __name__ == "__main__":
     )
     rec_p.add_argument("target", nargs="?")
     rec_p.add_argument("--all", action="store_true", help="Clean up all candidates.")
+    rec_p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be reconciled without making changes.",
+    )
 
     clean_p = subparsers.add_parser(
         "cleanup",
@@ -306,7 +311,7 @@ if __name__ == "__main__":
     elif args.command == "link":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
-        cli.reconcile(args.target, all=args.all)
+        cli.reconcile(args.target, all=args.all, dry_run=args.dry_run)
     elif args.command == "cleanup":
         cli.cleanup(dry_run=args.dry_run, yes=args.yes)
     elif args.command == "config":

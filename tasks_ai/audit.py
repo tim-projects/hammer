@@ -12,24 +12,27 @@ def generate_file_patches(cli, task_id, task_path, branch):
     """Generate individual patches for each changed file."""
     changed_files = get_changed_files(cli, task_path, branch)
     cli.log(f"DEBUG: branch={branch}, changed_files={changed_files}")
-    patches_dir = os.path.join(".tasks", "review", task_id, "patches")
+
+    task_folder_name = os.path.basename(task_path)
+    patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
+    cli.log(f"DEBUG: patches_dir={patches_dir}")
     os.makedirs(patches_dir, exist_ok=True)
-    
+
     generated_patches = []
     for file_path in changed_files:
         cli.log(f"DEBUG: generating patch for {file_path}")
         patch_filename = f"{file_path.replace(os.sep, '_')}.patch"
         patch_path = os.path.join(patches_dir, patch_filename)
-        
+
         # Generate diff for this file
         main_branch = cli.git.get_default_branch()
-        res = cli.git.run(["diff", f"{main_branch}...{branch}", "--", file_path], cwd=cli.root)
-        
+        res = cli.git.run(["diff", f"{main_branch}..{branch}", "--", file_path], cwd=cli.root)
+
         with open(patch_path, "w") as f:
             f.write(res.stdout)
-            
+
         generated_patches.append({"file": file_path, "patch_path": patch_path})
-        
+
     return generated_patches
 
 def generate_audit(task_id, task_path, patches_dir, output_path):

@@ -20,6 +20,7 @@ from .file_manager import FM
 from .hooks import HookRegistry
 from .messages import MessageRegistry
 from .pipeline_hooks import (
+    BranchSyncOnExitTestingHook,
     SaveProgressHook,
     ValidationHook,
     ContentSufficiencyHook,
@@ -55,6 +56,7 @@ class TasksCLI:
         self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
         self.hook_registry.register_exit_hook("TESTING", ValidationHook())
+        self.hook_registry.register_exit_hook("TESTING", BranchSyncOnExitTestingHook())
         self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
         self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
 
@@ -729,51 +731,69 @@ class TasksCLI:
 
         link_cmd.run(self, filename, blocked_by)
 
-    def reconcile(self, target=None, all=False):
+    def reconcile(self, target=None, all=False, dry_run=False):
         if not target and not all:
-            self._reconcile_scan()
+            self._reconcile_scan(dry_run=dry_run)
         elif all:
-            self._reconcile_archive_all()
+            self._reconcile_archive_all(dry_run=dry_run)
         else:
-            self._reconcile_single(target)
+            self._reconcile_single(target, dry_run=dry_run)
 
-    def _reconcile_scan(self):
+    def _reconcile_scan(self, dry_run=False):
         candidates = []
-        # Only reconcile tasks that are DONE
-        folder = STATE_FOLDERS.get("DONE")
-        fp = os.path.join(self.tasks_path, folder)
-        if not os.path.exists(fp):
-            return
-            
-        for item in os.listdir(fp):
-            if item == ".gitkeep":
+        # Audit all states for tampering or archive candidates
+        for state, folder in STATE_FOLDERS.items():
+            fp = os.path.join(self.tasks_path, folder)
+            if not os.path.exists(fp):
                 continue
-            path = os.path.join(fp, item)
-            if not os.path.isdir(path):
-                continue
-            task = FM.load(path)
-            task_id = task.metadata.get("Id")
-            if not task_id:
-                continue
-            branch = item
-            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-            if not main_sha or not branch_sha:
-                continue
-            merge_base = self._run_git(
-                ["merge-base", branch_sha, "main"]
-            ).stdout.strip()
-            if merge_base == main_sha:
-                candidates.append(
-                    {
-                        "id": task_id,
-                        "task_id": task_id,
-                        "title": task.metadata.get("Ti", ""),
-                        "branch": branch,
-                        "filepath": path,
-                        "state": "DONE",
-                    }
-                )
+                
+            for item in os.listdir(fp):
+                if item == ".gitkeep":
+                    continue
+                path = os.path.join(fp, item)
+                if not os.path.isdir(path):
+                    continue
+                
+                # Check for tampering (folder name mismatch with metadata)
+                try:
+                    task = FM.load(path)
+                    if os.path.basename(path) != STATE_FOLDERS.get(state):
+                         # If it's in the wrong folder, reconcile it automatically
+                         self.console("tamper", "detected", f"{item} in {state}")
+                         if not dry_run:
+                            self._move_logic(item, list(STATE_FOLDERS.keys())[list(STATE_FOLDERS.values()).index(os.path.basename(os.path.dirname(path)))], force=True, yes=True)
+                         else:
+                            self.console("tamper", "would_fix", item)
+                         continue
+                except:
+                    continue
+                    
+                # Continue with archive candidate scan
+                if state != "DONE":
+                    continue
+                    
+                task_id = task.metadata.get("Id")
+                if not task_id:
+                    continue
+                branch = item
+                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+                if not main_sha or not branch_sha:
+                    continue
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
+                if merge_base == main_sha:
+                    candidates.append(
+                        {
+                            "id": task_id,
+                            "task_id": task_id,
+                            "title": task.metadata.get("Ti", ""),
+                            "branch": branch,
+                            "filepath": path,
+                            "state": "DONE",
+                        }
+                    )
 
         if not candidates:
             if self.as_json:
@@ -794,7 +814,7 @@ class TasksCLI:
             print("\nTo archive a task, run: tasks reconcile <id>")
             print("To archive all, run: tasks reconcile --all")
 
-    def _reconcile_archive_all(self):
+    def _reconcile_archive_all(self, dry_run=False):
         candidates = []
         # Only reconcile tasks that are DONE
         folder = STATE_FOLDERS.get("DONE")
@@ -821,18 +841,21 @@ class TasksCLI:
 
         archived = 0
         for branch in candidates:
-            self._move_logic(branch, "ARCHIVED", force=True, yes=True)
-            archived += 1
+            if not dry_run:
+                self._move_logic(branch, "ARCHIVED", force=True, yes=True)
+                archived += 1
+            else:
+                self.console("archive", "would_archive", branch)
 
         if self.as_json:
-            self.finish({"archived": archived})
+            self.finish({"archived": archived, "dry_run": dry_run})
         else:
-            print(f"Archived {archived} tasks.")
+            print(f"{'Dry-run: ' if dry_run else ''}Archived {archived} tasks.")
 
-    def _reconcile_single(self, filename):
+    def _reconcile_single(self, filename, dry_run=False):
         filepath, state = self.find_task(filename)
         if not filepath:
-            self.error(f"Task '{filename}' not found.")
+            self.error("TASK_NOT_FOUND", filename=filename)
         task = FM.load(filepath)
         branch = os.path.basename(filepath).rsplit(".", 1)[0]
 
@@ -849,7 +872,10 @@ class TasksCLI:
                 f"Task: [{task.metadata.get('Id', '')}] {task.metadata.get('Ti', '')}"
             )
             print(f"State: {state} (branch no longer exists)")
-            if input("Archive this task? [y/N]: ").strip().lower() == "y":
+            
+            if dry_run:
+                print("Dry-run: Task would be archived.")
+            elif input("Archive this task? [y/N]: ").strip().lower() == "y":
                 self._move_logic(
                     os.path.basename(filepath), "ARCHIVED", force=True, yes=False
                 )

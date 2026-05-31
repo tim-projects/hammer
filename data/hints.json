@@ -36,5 +36,6 @@
   "INIT_EXPLANATION": "WHAT: Initialize workspace storage.\nWHY: FOUNDATION REQUIRED.\nHOW: Run './hammer tasks init'.\nCONSEQUENCE: No init, no foundation, no task. INIT NOW.",
   "TOO_SHORT": "WHAT: TOO SHORT: {too_short}.\nWHY: INSUFFICIENT DETAIL. HAMMER demand substance.\nHOW: Provide more detail.\nCONSEQUENCE: Task rejected. FIX CONTENT.",
   "STATE_REQUIRED": "WHAT: Task {task_id} must be in {required_state} state.\nWHY: PIPELINE GOVERNANCE VIOLATION.\nHOW: Use './hammer tasks move <id> {required_state}'.\nCONSEQUENCE: Promotion blocked. OBEY PIPELINE.",
-  "MISSING_PARTS": "WHAT: Missing: {missing_parts}.\nWHY: HAMMER command incomplete.\nHOW: Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'{issue_repro}.\nCONSEQUENCE: Command abort. FIX INSTRUCTION."
+  "MISSING_PARTS": "WHAT: Missing: {missing_parts}.\nWHY: HAMMER command incomplete.\nHOW: Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'{issue_repro}.\nCONSEQUENCE: Command abort. FIX INSTRUCTION.",
+  "INTEGRITY_VIOLATION": "WHAT: Task location mismatch detected.\nWHY: TAMPERING DETECTED. Folder does not match state.\nHOW: 1. Do not move folders manually. 2. Run './hammer tasks doctor --fix'.\nCONSEQUENCE: Data corruption threat. LOCKING ACCESS."
 }

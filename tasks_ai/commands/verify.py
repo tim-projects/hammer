@@ -7,9 +7,12 @@ def run(cli, task_id, proof):
         cli.error(f"Task {task_id} must be in REVIEW state to perform verification.",
                   hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW")
 
+    # Get the *actual* current filepath, which holds the folder name
+    current_path, _ = cli.find_task(task_id)
+    task_folder_name = os.path.basename(current_path)
+    
     review_dir = os.path.join(cli.tasks_path, "review")
-    patches_dir = os.path.join(review_dir, task_id, "patches")
-    task_folder_name = os.path.basename(task_path)
+    patches_dir = os.path.join(review_dir, task_folder_name, "patches")
     audit_file = os.path.join(review_dir, f"{task_folder_name}.audit")
     
     if not os.path.exists(patches_dir) or not os.listdir(patches_dir):

@@ -176,7 +176,8 @@ class CleanWorkspaceHook(PipelineHook):
         patterns = ["*.log", "__pycache__", ".pytest_cache", ".ruff_cache", ".tasks.bak_*"]
         for pattern in patterns:
             cli.console("clean", "pattern", pattern)
-            cli.git.run(["clean", "-fd", "-e", ".tasks", "-e", ".env", "--", pattern])
+            # Only clean in the project root, NOT inside .tasks/review
+            cli.git.run(["clean", "-fd", "-e", ".tasks/review", "-e", ".tasks", "-e", ".env", "--", pattern])
 
 class BranchSyncHook(PipelineHook):
     """Switches to the task branch and merges changes from main."""
@@ -247,3 +248,16 @@ class ProgressUpdateHook(PipelineHook):
                         progress_path=progress_path,
                         current_path=current_path
                     )
+
+class BranchSyncOnExitTestingHook(PipelineHook):
+    """Detect and merge missing commit during exit TESTING."""
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if current_state == "TESTING" and new_status != "TESTING":
+            _, branch = parse_filename(os.path.basename(filepath))
+            
+            # Detect divergence
+            cli.console("git", "check", "divergence")
+            res = cli.git.run(["rev-list", f"main..{branch}", "--count"])
+            if res.stdout.strip() != "0":
+                cli.console("git", "merge", "missing commit")
+                cli.git.run(["merge", "main"])

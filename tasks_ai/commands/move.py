@@ -99,42 +99,11 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     if sync and not force:
         cli._git_merge_transition(task, new_status, yes=yes)
 
-    # Archived from non-standard state check
-    is_merged_branch = False
-    if new_status == "ARCHIVED" and current_state not in [
-        "DONE",
-        "STAGING",
-        "REJECTED",
-    ]:
+    # Archived check: Enforce branch merge to main
+    if new_status == "ARCHIVED" and not force:
         _, branch = parse_filename(os.path.basename(filepath_str))
-        branch_commit = None
-        if cli._run_git(["rev-parse", "--verify", branch]).returncode == 0:
-            branch_commit = cli._run_git(["rev-parse", branch]).stdout.strip()
-
-        if not branch_commit:
-            origin_check = cli._run_git(
-                ["ls-remote", "--heads", "origin", branch]
-            ).stdout.strip()
-            if origin_check:
-                cli._run_git(["fetch", "origin", branch], cwd=cli.root)
-                branch_commit = cli._run_git(
-                    ["rev-parse", f"origin/{branch}"]
-                ).stdout.strip()
-
-        if branch_commit:
-            is_merged_branch = (
-                cli._run_git(
-                    ["merge-base", "--is-ancestor", branch_commit, "main"]
-                ).returncode
-                == 0
-            )
-
-        if is_merged_branch:
-            for flag in ["Rc", "Tp", "Vp"]:
-                if not task.metadata.get(flag):
-                    task.metadata[flag] = True
-            task.metadata["Ar"] = "true"
-            FM.dump(task, filepath_str)
+        if not cli.git.is_merged(branch, "main"):
+            cli.error("BRANCH_NOT_MERGED", branch=branch)
 
     if (
         new_status not in allowed_transitions.get(current_state, [])

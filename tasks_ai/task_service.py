@@ -79,6 +79,11 @@ class TaskService:
                 selected = matches[0]
 
         if selected and self.cli._validate_path(selected[0]):
+            # Integrity check: folder location must match metadata state
+            task_path, state = selected
+            folder_name = os.path.basename(os.path.dirname(task_path))
+            if folder_name != STATE_FOLDERS.get(state):
+                self.cli.error("INTEGRITY_VIOLATION")
             return selected
         return None, None
 
