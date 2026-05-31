@@ -741,59 +741,49 @@ class TasksCLI:
 
     def _reconcile_scan(self, dry_run=False):
         candidates = []
-        # Audit all states for tampering or archive candidates
+        all_tasks = []
         for state, folder in STATE_FOLDERS.items():
             fp = os.path.join(self.tasks_path, folder)
             if not os.path.exists(fp):
                 continue
-                
             for item in os.listdir(fp):
                 if item == ".gitkeep":
                     continue
                 path = os.path.join(fp, item)
-                if not os.path.isdir(path):
-                    continue
+                if os.path.isdir(path):
+                    all_tasks.append((path, state, item))
+
+        # Second, verify all tasks
+        for path, state, item in all_tasks:
+            try:
+                task = FM.load(path)
+                task_state = task.metadata.get("St", state) # Default to folder state if St missing
+                expected_folder = STATE_FOLDERS.get(task_state)
+                if os.path.basename(os.path.dirname(path)) != expected_folder:
+                     self.console("tamper", "detected", f"{item} in {os.path.basename(os.path.dirname(path))}, metadata={task_state}")
+                     if not dry_run:
+                        target_path = os.path.join(self.tasks_path, expected_folder, item)
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        shutil.move(path, target_path)
+                     else:
+                        self.console("tamper", "would_fix", item)
+                     continue
                 
-                # Check for tampering (folder name mismatch with metadata)
-                try:
-                    task = FM.load(path)
-                    if os.path.basename(path) != STATE_FOLDERS.get(state):
-                         # If it's in the wrong folder, reconcile it automatically
-                         self.console("tamper", "detected", f"{item} in {state}")
-                         if not dry_run:
-                            self._move_logic(item, list(STATE_FOLDERS.keys())[list(STATE_FOLDERS.values()).index(os.path.basename(os.path.dirname(path)))], force=True, yes=True)
-                         else:
-                            self.console("tamper", "would_fix", item)
-                         continue
-                except:
-                    continue
-                    
-                # Continue with archive candidate scan
-                if state != "DONE":
-                    continue
-                    
-                task_id = task.metadata.get("Id")
-                if not task_id:
-                    continue
-                branch = item
-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                if not main_sha or not branch_sha:
-                    continue
-                merge_base = self._run_git(
-                    ["merge-base", branch_sha, "main"]
-                ).stdout.strip()
-                if merge_base == main_sha:
-                    candidates.append(
-                        {
-                            "id": task_id,
-                            "task_id": task_id,
+                if task_state == "DONE":
+                    # Archive scan
+                    branch = item
+                    main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+                    branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+                    if main_sha and branch_sha and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip() == main_sha:
+                        candidates.append({
+                            "id": task.metadata.get("Id"),
                             "title": task.metadata.get("Ti", ""),
                             "branch": branch,
                             "filepath": path,
                             "state": "DONE",
-                        }
-                    )
+                        })
+            except Exception:
+                continue
 
         if not candidates:
             if self.as_json:

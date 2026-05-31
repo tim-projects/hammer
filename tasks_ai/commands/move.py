@@ -18,17 +18,15 @@ def run(cli, filename, new_status, yes=False):
     # Handle multi-step transitions
     if "," in new_status:
         steps = [s.strip() for s in new_status.split(",")]
-        # Validate the entire chain
-        cli.pipeline.check_transition(cli, filename, new_status)
         
-        # Perform each step
+        # Perform each step individually, letting move_logic enforce gates
         for step in steps:
-            # We already validated the chain, but we might need to skip already-reached states
+            # Re-fetch state for each step to validate current transition
             _, current_state = cli.find_task(filename)
             if current_state == step:
                 continue
             
-            # Perform individual move
+            # Perform individual move; move_logic now enforces ALL gates
             move_logic(cli, filename, step, force=False, yes=yes, sync=True)
             
         cli.log(f"Moved: [{cli.find_task(filename)[0].split('/')[-1]}] -> {new_status}")
@@ -108,7 +106,6 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     if (
         new_status not in allowed_transitions.get(current_state, [])
         and not force
-        and not is_merged_branch
     ):
         cli.error(
             "FORBIDDEN_TRANSITION",
