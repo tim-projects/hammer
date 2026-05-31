@@ -222,7 +222,6 @@ class PipelineService:
             
         if not os.path.exists(audit_path):
             raise PipelineError("AUDIT_MISSING", audit_path=audit_path, task_id=task_id)
-
         if not os.path.exists(proof_path):
             raise PipelineError("PROOF_MISSING", proof_path=proof_path)
 
