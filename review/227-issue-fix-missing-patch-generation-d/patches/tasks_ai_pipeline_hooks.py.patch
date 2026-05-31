@@ -1,0 +1,90 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index d466c53..a415594 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -1,4 +1,5 @@
+ import os
++import shutil
+ from .hooks import PipelineHook
+ from .constants import CURRENT_TASK_FILENAME
+ from .models import Task
+@@ -107,17 +108,28 @@ class ReviewDiffHook(PipelineHook):
+     """Generates a file-level diff patches and resets Rc when entering REVIEW."""
+     def execute(self, cli, task, current_state, new_status, filepath):
+         if new_status == "REVIEW":
+-            cli.log("DEBUG: ReviewDiffHook running")
+-            from .audit import generate_file_patches
+-            _, branch = parse_filename(os.path.basename(filepath))
+-            task_id = task.metadata.get("Id")
+-            # Get the *actual* current filepath
+-            current_path, _ = cli.find_task(str(task_id))
+-            cli.console("audit", "generate", f"patches for {current_path}")
+-            generate_file_patches(cli, str(task_id), current_path, branch)
+-            task.metadata["Rc"] = ""
+-            # Re-dumping to update Rc in the new location
+-            cli._atomic_write(current_path, task)
++            cli.log(f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}")
++            try:
++                from .audit import generate_file_patches
++                _, branch = parse_filename(os.path.basename(filepath))
++                task_id = task.metadata.get("Id")
++                # Get the *actual* current filepath
++                current_path, _ = cli.find_task(str(task_id))
++                cli.log(f"DEBUG: ReviewDiffHook: current_path={current_path}, branch={branch}")
++                
++                cli.console("audit", "generate", f"patches for {current_path}")
++                
++                # Verify generate_file_patches behavior
++                patches = generate_file_patches(cli, str(task_id), current_path, branch)
++                cli.log(f"DEBUG: ReviewDiffHook: generate_file_patches returned {len(patches)} patches")
++                
++                task.metadata["Rc"] = ""
++                # Re-dumping to update Rc in the new location
++                cli._atomic_write(current_path, task)
++                cli.log("DEBUG: ReviewDiffHook: _atomic_write finished")
++            except Exception as e:
++                cli.log(f"DEBUG: ReviewDiffHook FAILED: {e}")
++                raise e
+ 
+ class ArchivedCommitHook(PipelineHook):
+     """Commits and pushes the tasks worktree when entering ARCHIVED."""
+@@ -261,3 +273,39 @@ class BranchSyncOnExitTestingHook(PipelineHook):
+             if res.stdout.strip() != "0":
+                 cli.console("git", "merge", "missing commit")
+                 cli.git.run(["merge", "main"])
++
++class CleanupReviewArtifactsHook(PipelineHook):
++    """Clears review artifacts (patches, audit files, Rc flag) when moving back to early states."""
++    def execute(self, cli, task, current_state, new_status, filepath):
++        if new_status in ["BACKLOG", "READY", "PROGRESSING"]:
++            task_folder_name = os.path.basename(filepath)
++            
++            # 1. Clear patches directory
++            patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
++            if os.path.exists(patches_dir):
++                cli.log(f"DEBUG: Cleaning up patches directory: {patches_dir}")
++                shutil.rmtree(patches_dir)
++            
++            # 2. Clear audit file
++            audit_path = os.path.join(cli.tasks_path, "review", f"{task_folder_name}.audit")
++            if os.path.exists(audit_path):
++                cli.log(f"DEBUG: Cleaning up audit file: {audit_path}")
++                os.remove(audit_path)
++            
++            # 3. Clear verification proof and internal audit hash in task folder
++            proof_path = os.path.join(filepath, "verification_proof.log")
++            if os.path.exists(proof_path):
++                cli.log(f"DEBUG: Cleaning up verification proof: {proof_path}")
++                os.remove(proof_path)
++                
++            hash_path = os.path.join(filepath, ".audit_hash")
++            if os.path.exists(hash_path):
++                cli.log(f"DEBUG: Cleaning up audit hash: {hash_path}")
++                os.remove(hash_path)
++
++            # 4. Clear Regression Check (Rc) and Verification Passed (Vp) flags
++            task.metadata["Rc"] = ""
++            task.metadata["Vp"] = False
++            
++            # Update the task file
++            cli._atomic_write(filepath, task)
