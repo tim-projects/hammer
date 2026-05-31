@@ -215,8 +215,6 @@ class PipelineService:
         patches_dir = os.path.abspath(os.path.join(review_dir, task_folder_name, "patches"))
         audit_path = os.path.abspath(os.path.join(review_dir, f"{task_folder_name}.audit"))
         
-        abs_task_path = os.path.abspath(task_path)
-
         # 1. Check for basic files
         self.log(f"DEBUG: checking patches_dir={patches_dir}, exists={os.path.exists(patches_dir)}")
         if not os.path.exists(patches_dir) or not os.listdir(patches_dir):

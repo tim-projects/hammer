@@ -73,16 +73,19 @@ def run(cli, show_all=False):
     candidates = []
     for state, folder in STATE_FOLDERS.items():
         fp = os.path.join(cli.tasks_path, folder)
-        if not os.path.exists(fp): continue
+        if not os.path.exists(fp):
+            continue
         for item in os.listdir(fp):
-            if item == ".gitkeep": continue
+            if item == ".gitkeep":
+                continue
             path = os.path.join(fp, item)
-            if not os.path.isdir(path): continue
+            if not os.path.isdir(path):
+                continue
             try:
                 task = FM.load(path)
                 if os.path.basename(os.path.dirname(path)) != STATE_FOLDERS.get(task.metadata.get("St", state)):
                      candidates.append({"task": item, "issue": "tampered location"})
-            except:
+            except Exception:
                 candidates.append({"task": item, "issue": "corrupted metadata"})
 
     if candidates:
