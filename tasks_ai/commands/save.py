@@ -4,9 +4,8 @@ import os
 def run(cli, branch="tasks", fatal=True):
     """Internal: push current .tasks worktree branch to remote."""
     if not os.path.exists(cli.tasks_path):
-        msg = "Tasks not initialized. Run 'hammer tasks init' first."
         if fatal:
-            cli.error(msg)
+            cli.error("INIT_REQUIRED")
         return None
 
     remotes = cli._run_git(["remote", "-v"], cwd=cli.tasks_path)
@@ -18,9 +17,8 @@ def run(cli, branch="tasks", fatal=True):
             cli.log("No remote configured - skipping push (local-only mode)")
             return {"branch": branch, "remote": None, "from_branch": current}
         else:
-            msg = "No remote configured in .tasks. Set up a remote or use --dev / -y flag."
             if fatal:
-                cli.error(msg)
+                cli.error("NO_REMOTE_CONFIGURED")
             return None
 
     current = cli._run_git(
@@ -31,11 +29,10 @@ def run(cli, branch="tasks", fatal=True):
     )
 
     if push_result.returncode != 0:
-        msg = f"Failed to push .tasks worktree to remote: {push_result.stderr}"
         if fatal:
-            cli.error(msg)
+            cli.error("PUSH_FAIL", stderr=push_result.stderr)
         else:
-            cli.log(f"Warning: {msg}")
+            cli.log(f"Warning: {push_result.stderr}")
             return None
 
     cli.log(f"Pushed .tasks ({current}) to origin/{branch}")

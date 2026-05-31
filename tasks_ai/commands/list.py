@@ -8,7 +8,7 @@ from ..libs.list_layout import render_table
 def run(cli, show_all=False):
     """Execution logic for 'tasks list'."""
     if not os.path.exists(cli.tasks_path):
-        cli.error("Init required.")
+        cli.error("INIT_REQUIRED")
 
     # Check if we should output JSON
     output_json = cli.as_json

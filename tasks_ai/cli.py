@@ -17,6 +17,25 @@ from .validation import Validation
 from .task_service import TaskService
 from .cli_io import log, error, finish
 from .file_manager import FM
+from .hooks import HookRegistry
+from .messages import MessageRegistry
+from .pipeline_hooks import (
+    SaveProgressHook,
+    ValidationHook,
+    ContentSufficiencyHook,
+    BlockerCheckHook,
+    TestingToReviewGateHook,
+    TestingPromotionHook,
+    ReviewDiffHook,
+    ArchivedCommitHook,
+    PostMoveCommitHook,
+    ValidationPassedMarkHook,
+    BranchCheckHook,
+    CleanWorkspaceHook,
+    BranchSyncHook,
+    MainBranchProtectionHook,
+    ProgressUpdateHook,
+)
 
 
 class TasksCLI:
@@ -26,6 +45,38 @@ class TasksCLI:
         self.dev = dev
         self.yes = yes
         self.output_messages = []
+        self.hook_registry = HookRegistry()
+        self.messages = MessageRegistry()
+        
+        # Register EXIT hooks (Pre-move gates/checks)
+        self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
+        self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
+        self.hook_registry.register_exit_hook("PROGRESSING", MainBranchProtectionHook())
+        self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
+        self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
+        self.hook_registry.register_exit_hook("TESTING", ValidationHook())
+        self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
+        self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
+
+        # Register ENTER hooks (Post-move actions)
+        self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", BranchSyncHook())
+        self.hook_registry.register_enter_hook("TESTING", ValidationPassedMarkHook())
+        self.hook_registry.register_enter_hook("TESTING", TestingPromotionHook())
+        self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
+        self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
+        self.hook_registry.register_enter_hook("STAGING", BranchCheckHook())
+        self.hook_registry.register_enter_hook("STAGING", CleanWorkspaceHook())
+        self.hook_registry.register_enter_hook("DONE", BranchCheckHook())
+        self.hook_registry.register_enter_hook("ARCHIVED", BranchCheckHook())
+        self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
+        
+        # Post-move generic hooks
+        for state in ["BACKLOG", "READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE", "REJECTED"]:
+            self.hook_registry.register_enter_hook(state, SaveProgressHook())
+            self.hook_registry.register_enter_hook(state, PostMoveCommitHook())
 
         self.context = ProjectContext(dev=dev)
         self.root = self.context.repo_root or os.getcwd()
@@ -94,8 +145,14 @@ class TasksCLI:
     def log(self, message):
         log(self, message)
 
-    def error(self, message, hint=None):
-        error(self, message, hint=hint)
+    def console(self, type_tag, action, result):
+        """Standardized, concise logging: [type] action -> result."""
+        log(self, f"[{type_tag.lower()}] {action.lower()} -> {result.lower()}")
+
+    def error(self, code, hint_code=None, **kwargs):
+        message = self.messages.get_error(code, **kwargs)
+        hint = self.messages.get_hint(hint_code or code, **kwargs)
+        error(self, message, hint=hint if hint else None)
 
     def finish(self, data=None):
         finish(self, data=data)
@@ -180,7 +237,14 @@ class TasksCLI:
             task_path, _ = self.find_task(task_id)
         if not task_path:
             return
-        return self.pipeline.validate_gate(task, target_state, task_path)
+        try:
+            return self.pipeline.validate_gate(task, target_state, task_path)
+        except Exception as e:
+            if hasattr(e, "code"):
+                self.error(e.code, **e.kwargs)
+            else:
+                self.error(str(e))
+            sys.exit(1)
 
     def _run_validation(self, fix=False):
         return self.validation.run_lint(fix=fix)
@@ -447,6 +511,14 @@ class TasksCLI:
             os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
 
         if self.dev:
+            # Safe to reset dev storage if --force is used
+            if os.path.exists(self.tasks_path):
+                if not force:
+                    self.error("Dev tasks already initialized. Use --force to reset.")
+                else:
+                    self.log(f"Resetting dev tasks at {self.tasks_path}")
+                    shutil.rmtree(self.tasks_path)
+            
             os.makedirs(self.tasks_path, exist_ok=True)
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
@@ -462,10 +534,28 @@ class TasksCLI:
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
             return
-
+        
+        # Non-dev (production) storage path
+        if not force and os.path.exists(self.tasks_path):
+             self.error("Tasks already initialized. Use --force to backup and reset.")
+        elif force and os.path.exists(self.tasks_path):
+            # MANDATORY BACKUP for production before reset
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            backup_path = f"{self.tasks_path}.bak_{timestamp}"
+            self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
+            shutil.copytree(self.tasks_path, backup_path)
+            
+            # Now safe to remove
+            if os.path.isdir(self.tasks_path):
+                shutil.rmtree(self.tasks_path)
+            else:
+                os.remove(self.tasks_path)
+        
         # Regular init
         original_branch = self._run_git(["branch", "--show-current"]).stdout.strip()
         from .constants import TASKS_BRANCH
+
 
         branches = self._run_git(["branch"]).stdout
         if TASKS_BRANCH not in branches:
@@ -649,41 +739,41 @@ class TasksCLI:
 
     def _reconcile_scan(self):
         candidates = []
-        for state, folder in STATE_FOLDERS.items():
-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
+        # Only reconcile tasks that are DONE
+        folder = STATE_FOLDERS.get("DONE")
+        fp = os.path.join(self.tasks_path, folder)
+        if not os.path.exists(fp):
+            return
+            
+        for item in os.listdir(fp):
+            if item == ".gitkeep":
                 continue
-            fp = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(fp):
+            path = os.path.join(fp, item)
+            if not os.path.isdir(path):
                 continue
-            for item in os.listdir(fp):
-                if item == ".gitkeep":
-                    continue
-                path = os.path.join(fp, item)
-                if not os.path.isdir(path):
-                    continue
-                task = FM.load(path)
-                task_id = task.metadata.get("Id")
-                if not task_id:
-                    continue
-                branch = item
-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                if not main_sha or not branch_sha:
-                    continue
-                merge_base = self._run_git(
-                    ["merge-base", branch_sha, "main"]
-                ).stdout.strip()
-                if merge_base == main_sha:
-                    candidates.append(
-                        {
-                            "id": task_id,
-                            "task_id": task_id,
-                            "title": task.metadata.get("Ti", ""),
-                            "branch": branch,
-                            "filepath": path,
-                            "state": state,
-                        }
-                    )
+            task = FM.load(path)
+            task_id = task.metadata.get("Id")
+            if not task_id:
+                continue
+            branch = item
+            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+            if not main_sha or not branch_sha:
+                continue
+            merge_base = self._run_git(
+                ["merge-base", branch_sha, "main"]
+            ).stdout.strip()
+            if merge_base == main_sha:
+                candidates.append(
+                    {
+                        "id": task_id,
+                        "task_id": task_id,
+                        "title": task.metadata.get("Ti", ""),
+                        "branch": branch,
+                        "filepath": path,
+                        "state": "DONE",
+                    }
+                )
 
         if not candidates:
             if self.as_json:
@@ -706,28 +796,28 @@ class TasksCLI:
 
     def _reconcile_archive_all(self):
         candidates = []
-        for state, folder in STATE_FOLDERS.items():
-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
+        # Only reconcile tasks that are DONE
+        folder = STATE_FOLDERS.get("DONE")
+        fp = os.path.join(self.tasks_path, folder)
+        if not os.path.exists(fp):
+            return
+
+        for item in os.listdir(fp):
+            if item == ".gitkeep":
                 continue
-            fp = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(fp):
+            path = os.path.join(fp, item)
+            if not os.path.isdir(path):
                 continue
-            for item in os.listdir(fp):
-                if item == ".gitkeep":
-                    continue
-                path = os.path.join(fp, item)
-                if not os.path.isdir(path):
-                    continue
-                branch = item
-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                if (
-                    main_sha
-                    and branch_sha
-                    and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
-                    == main_sha
-                ):
-                    candidates.append(item)
+            branch = item
+            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+            if (
+                main_sha
+                and branch_sha
+                and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+                == main_sha
+            ):
+                candidates.append(item)
 
         archived = 0
         for branch in candidates:

@@ -6,7 +6,7 @@ def run(cli, filename=None):
     """Execution logic for 'tasks checkpoint'."""
     filepath, task = cli.get_active_task(filename)
     if not filepath or not task:
-        cli.error("No active task.")
+        cli.error("NO_ACTIVE_TASK")
 
     filepath_str = str(filepath)
     fname = os.path.basename(filepath_str)

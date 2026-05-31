@@ -1,12 +1,14 @@
 import os
 import hashlib
 import re
-
+from .constants import get_workflows, DEFAULT_ALLOWED_TRANSITIONS
+from .utils import parse_filename
 
 class PipelineError(Exception):
-    def __init__(self, message, hint=None):
-        super().__init__(message)
-        self.hint = hint
+    def __init__(self, code, **kwargs):
+        self.code = code
+        self.kwargs = kwargs
+        super().__init__(f"PipelineError: {code} kwargs: {kwargs}")
 
 
 class PipelineService:
@@ -19,33 +21,51 @@ class PipelineService:
         self.context = context
         self.git = git_client
         self.logger = logger
+        self.workflows = get_workflows(context.tasks_path)
+
+    def get_allowed_transitions(self, task_type: str):
+        workflow = self.workflows.get(task_type, self.workflows.get("default", {"transitions": DEFAULT_ALLOWED_TRANSITIONS}))
+        return workflow.get("transitions", DEFAULT_ALLOWED_TRANSITIONS)
 
     def log(self, message: str):
         if self.logger:
             self.logger.log(message)
 
     def check_transition(self, cli, filename: str, new_status: str):
-        from .constants import ALLOWED_TRANSITIONS
-
         filepath, current_state = cli.find_task(filename)
         if not filepath or current_state is None:
             return
+        
+        task_type, _ = parse_filename(os.path.basename(filepath))
+        allowed_transitions = self.get_allowed_transitions(task_type)
+        
+        # Allow multi-step moves: validate each step in the chain
         if "," in new_status:
+            last_state = current_state
+            for next_state in new_status.split(","):
+                next_state = next_state.strip()
+                if next_state == last_state:
+                    continue
+                if next_state not in allowed_transitions.get(last_state, []):
+                     cli.error(
+                        f"Forbidden transition in chain: {last_state} -> {next_state}",
+                        hint=f"Allowed from {last_state}: {', '.join(allowed_transitions.get(last_state, []))}",
+                    )
+                     return
+                last_state = next_state
             return
+        
         if (
-            new_status not in ALLOWED_TRANSITIONS.get(current_state, [])
+            new_status not in allowed_transitions.get(current_state, [])
             and current_state != new_status
         ):
             if current_state == "BACKLOG" and new_status == "PROGRESSING":
                 cli.log("Auto-promoting BACKLOG to READY before PROGRESSING.")
-                cli.log(
-                    "REMINDER: Ensure the task is fully populated with 'story', 'tech', 'criteria', and 'plan' fields to meet the READY gate."
-                )
                 cli._move_logic(filename, "READY", yes=True)
                 return
             cli.error(
                 f"Forbidden transition: {current_state} -> {new_status}",
-                hint=f"Allowed: {', '.join(ALLOWED_TRANSITIONS.get(current_state, []))}",
+                hint=f"Allowed: {', '.join(allowed_transitions.get(current_state, []))}",
             )
 
     def validate_gate(self, task, target_state: str, task_path: str):
@@ -54,46 +74,43 @@ class PipelineService:
         Raises PipelineError with descriptive message and hint if gate fails.
         """
         task_id = task.metadata.get("Id")
+        task_type, _ = parse_filename(os.path.basename(task_path))
+        
+        # Resolve gates based on workflow
+        workflow = self.workflows.get(task_type, self.workflows.get("default", {}))
+        gates_config = workflow.get("gates", {})
+        enabled_gates = gates_config.get(target_state, [])
 
         # 1. Enforce criteria completion for TESTING
-        if target_state == "TESTING" and self.has_incomplete_checkboxes(task_path):
-            raise PipelineError(
-                f"Cannot move to {target_state}: contains unfinished checkboxes (- [ ])",
-                hint="Edit criteria.md and change '- [ ]' to '- [x]' for completed items.",
-            )
+        if "incomplete_checkboxes" in enabled_gates and self.has_incomplete_checkboxes(task_path):
+            raise PipelineError("UNFINISHED_CHECKBOXES")
 
         # 2. Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
-        if target_state in ["STAGING", "DONE", "ARCHIVED"]:
+        if "regression_check" in enabled_gates:
             # Check if coming from a state that requires Rc
             current_state = os.path.basename(os.path.dirname(task_path)).upper()
             if current_state in ["REVIEW", "TESTING", "STAGING", "DONE"]:
                 if not task.metadata.get("Rc"):
                     patch_path = f".tasks/review/{task_id}.patch"
                     raise PipelineError(
-                        f"Cannot move to {target_state}: regression check not passed (Rc flag not set).",
-                        hint=f"Complete the regression check before promoting.\n"
-                        f"  1. Review the diff patch at {patch_path}\n"
-                        "  2. Audit for regressions and side-effects\n"
-                        f"  3. Run: ./hammer tasks modify {task_id} --regression-check",
+                        "REGRESSION_CHECK_NOT_PASSED",
+                        patch_path=patch_path,
+                        task_id=task_id
                     )
 
         # 3. Cryptographic Audit Integrity for STAGING/DONE
-        if target_state in ["STAGING", "DONE"]:
-            if not self.check_audit_integrity(task_id, task_path):
-                raise PipelineError(
-                    f"Task '{task_id}' failed cryptographic audit integrity check.",
-                    hint="The criteria or proof has changed since the last audit. Re-run 'tasks audit' and 'tasks verify'.",
-                )
+        if "audit_integrity" in enabled_gates:
+            self.check_audit_integrity(task_id, task_path)
 
         # 4. Merge verification for DONE/ARCHIVED
-        if target_state in ["DONE", "ARCHIVED"]:
+        if "merge_check" in enabled_gates:
             branch = task.metadata.get("Br", "")
             if branch:
                 # Check if branch is merged into main
                 if not self.git.is_merged(branch, "main"):
                     raise PipelineError(
-                        f"Task '{task_id}' cannot be moved to {target_state} as branch '{branch}' is not merged into 'main'.",
-                        hint="Run './hammer repo merge <branch> main' to finalize integration.",
+                        "BRANCH_NOT_MERGED",
+                        branch=branch
                     )
 
     def git_merge_transition(self, task, target_state: str, yes: bool = False):
@@ -155,7 +172,8 @@ class PipelineService:
             filepath = os.path.join(task_path, filename)
             with open(filepath, "r", encoding="utf-8") as f:
                 content = f.read()
-            if re.search(r"^- \[ \]", content, re.MULTILINE):
+            # Allow flexible whitespace around - and [ ]
+            if re.search(r"^\s*-\s*\[\s*\]", content, re.MULTILINE):
                 return True
         return False
 
@@ -163,32 +181,94 @@ class PipelineService:
         criteria_path = os.path.join(task_path, "criteria.md")
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
+        
+        # Sibling files
+        review_dir = os.path.dirname(task_path)
+        task_folder_name = os.path.basename(task_path)
+        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
 
         hasher = hashlib.md5()
-        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
-            hasher.update(f1.read())
-            hasher.update(f2.read())
+        with open(criteria_path, "rb") as f_crit, \
+             open(proof_path, "rb") as f_proof, \
+             open(audit_path, "rb") as f_audit:
+            hasher.update(f_crit.read())
+            hasher.update(f_proof.read())
+            hasher.update(f_audit.read())
 
         with open(hash_path, "w") as f:
             f.write(hasher.hexdigest())
 
-    def check_audit_integrity(self, task_id: str, task_path: str) -> bool:
+    def check_audit_integrity(self, task_id: str, task_path: str):
+        """
+        Verify the integrity of the cryptographic audit and verification proof.
+        Raises PipelineError with descriptive message and hint if integrity check fails.
+        """
         criteria_path = os.path.join(task_path, "criteria.md")
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
+        
+        # Also need the patch and audit files which are siblings to the task directory in .tasks/review/
+        review_dir = os.path.dirname(task_path)
+        task_folder_name = os.path.basename(task_path)
+        patch_path = os.path.join(review_dir, f"{task_folder_name}.patch")
+        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+
+        # 1. Check for basic files
+        if not os.path.exists(patch_path):
+             raise PipelineError(
+                f"Regression patch missing: {patch_path}",
+                hint="This file should be auto-generated when moving to REVIEW. Try moving the task back to TESTING and then to REVIEW again."
+            )
+            
+        if not os.path.exists(audit_path):
+            raise PipelineError(
+                f"Cryptographic audit missing: {audit_path}",
+                hint=f"A code review (audit) is required.\n  Run: ./hammer tasks audit {task_id}"
+            )
+
+        if not os.path.exists(proof_path):
+            raise PipelineError(
+                f"Verification proof missing: {proof_path}",
+                hint=f"Proof of criteria completion is required.\n  Run: ./hammer tasks verify {task_id} --proof \"Your proof message\""
+            )
 
         if not os.path.exists(hash_path):
-            return False
+            raise PipelineError(
+                f"Audit integrity hash missing: {hash_path}",
+                hint=f"The audit chain is incomplete.\n  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
+            )
 
+        # 2. Verify Audit vs Patch
+        from .audit import verify_audit
+        if not verify_audit(patch_path, audit_path):
+             raise PipelineError(
+                f"Audit mismatch: The code has changed since the last audit of '{task_id}'.",
+                hint=f"The hash in {audit_path} does not match {patch_path}.\n"
+                     f"  1. Re-review the changes in the patch file.\n"
+                     f"  2. Re-run: ./hammer tasks audit {task_id}\n"
+                     f"  3. Re-run: ./hammer tasks verify {task_id} --proof \"...\""
+            )
+
+        # 3. Verify Integrity Hash (Criteria + Proof + Audit)
         hasher = hashlib.md5()
         try:
-            with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
-                hasher.update(f1.read())
-                hasher.update(f2.read())
-        except FileNotFoundError:
-            return False
+            with open(criteria_path, "rb") as f_crit, \
+                 open(proof_path, "rb") as f_proof, \
+                 open(audit_path, "rb") as f_audit:
+                hasher.update(f_crit.read())
+                hasher.update(f_proof.read())
+                hasher.update(f_audit.read())
+        except FileNotFoundError as e:
+            raise PipelineError(f"Integrity check failed: missing file {e.filename}")
 
         with open(hash_path, "r") as f:
             stored_hash = f.read().split()[0]
 
-        return hasher.hexdigest() == stored_hash
+        if hasher.hexdigest() != stored_hash:
+             raise PipelineError(
+                f"Integrity mismatch: Criteria, proof, or audit has changed for task '{task_id}'.",
+                hint=f"The cryptographic lock in {hash_path} is broken.\n"
+                     f"  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
+            )
+        
+        return True

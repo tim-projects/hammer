@@ -57,7 +57,8 @@ def run(cli, filename, section=None):
                 print(f"## {title}\n{content}")
             else:
                 cli.error(
-                    f"Unknown section '{section}'. Valid sections: {', '.join(section_map.keys())}"
+                    "UNKNOWN_SECTION",
+                    section=section
                 )
         else:
             meta = data["metadata"]

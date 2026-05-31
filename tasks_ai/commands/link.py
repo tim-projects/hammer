@@ -9,12 +9,12 @@ def run(cli, filename, blocked_by_filename):
     f2, _ = cli.find_task(blocked_by_filename)
 
     if not f1 or not f2:
-        cli.error("One or both tasks not found.")
+        cli.error("LINK_TASK_NOT_FOUND")
 
     f1_str, f2_str = str(f1), str(f2)
 
     if os.path.abspath(f1_str) == os.path.abspath(f2_str):
-        cli.error("Cannot link a task to itself.")
+        cli.error("LINK_SELF")
 
     f1_fname = os.path.basename(f1_str)
     f2_fname = os.path.basename(f2_str)
@@ -36,8 +36,9 @@ def run(cli, filename, blocked_by_filename):
     # Check for circular dependency
     if has_path(b_id, task_id_num, cli.tasks_path, FM):
         cli.error(
-            f"Circular dependency detected: linking '{filename}' -> '{blocked_by_filename}' "
-            f"would create a cycle. Task {b_id} already depends on task {task_id_num}."
+            "CIRCULAR_DEPENDENCY",
+            filename=filename,
+            blocked_by=blocked_by_filename
         )
 
     if b_name not in bl:

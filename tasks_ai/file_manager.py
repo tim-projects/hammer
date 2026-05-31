@@ -75,6 +75,9 @@ class FM:
                 part_name = f[:-3]
                 with open(os.path.join(path, f), "r") as file:
                     parts[part_name] = file.read()
+            elif f in ["verification_proof.log", ".audit_hash"]:
+                with open(os.path.join(path, f), "r") as file:
+                    parts[f] = file.read()
         return Task(metadata=meta, parts=parts, corrupted=corrupted)
 
     @staticmethod
@@ -106,7 +109,11 @@ class FM:
                 continue
             if content is None:
                 continue
-            _atomic_write(os.path.join(path, f"{name}.md"), content)
+            
+            if name.endswith(".md") or name in ["verification_proof.log", ".audit_hash"]:
+                _atomic_write(os.path.join(path, name), content)
+            else:
+                _atomic_write(os.path.join(path, f"{name}.md"), content)
 
     @staticmethod
     def append_log(path, message, section="progress"):

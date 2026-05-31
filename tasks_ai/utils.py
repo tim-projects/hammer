@@ -157,18 +157,30 @@ def perform_move(cli, task, current_state, new_status, filepath):
     filepath_str = str(filepath)
     sync_task_content(cli, filepath_str, task, is_final=(new_status == "ARCHIVED"))
     task.metadata.pop("St", None)
-    fname = os.path.basename(filepath_str)
+    
+    # Enforce ID-based directory naming using Br metadata (which is id-type-title)
+    fname = task.metadata.get("Br")
+    if not fname:
+        fname = os.path.basename(filepath_str)
+        
     new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
 
     # Move and cleanup
-    atomic_write(new_filepath, task, fm=FM)
-    if os.path.exists(filepath_str):
-        if os.path.isdir(filepath_str):
-            shutil.rmtree(filepath_str)
-        else:
-            os.remove(filepath_str)
+    if filepath_str != new_filepath:
+        if os.path.exists(new_filepath):
+            cli.error(f"Collision detected at {new_filepath}. Pipeline transition failed.")
+            
+        atomic_write(new_filepath, task, fm=FM)
+        if os.path.exists(filepath_str):
+            if os.path.isdir(filepath_str):
+                shutil.rmtree(filepath_str)
+            else:
+                os.remove(filepath_str)
+    else:
+        # Just update metadata if folder name is same
+        atomic_write(new_filepath, task, fm=FM)
+
     cli._append_log(new_filepath, f"{current_state}->{new_status}")
-    return task
     return task
 
 

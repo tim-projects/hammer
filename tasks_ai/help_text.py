@@ -5,6 +5,8 @@ IMPORTANT: Always use -j for JSON output (machine-parseable for agents).
 For help on any command, use tasks <command> -h
 
 Pipeline Commands:
+  init              - Construct foundation: Create .tasks directory and configure git.
+                      Run this first to initialize workspace storage.
   audit <id>        - Generate cryptographic MD5 hash of the patch file.
                       Required gate: TESTING -> REVIEW.
   verify <id> --proof "..."

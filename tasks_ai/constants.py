@@ -3,7 +3,6 @@
 import os
 import yaml
 
-
 def load_config(tasks_path):
     config_path = os.path.join(tasks_path, "config.yaml")
     if os.path.exists(config_path):
@@ -14,6 +13,9 @@ def load_config(tasks_path):
             return {}
     return {}
 
+def get_workflows(tasks_path):
+    cfg = load_config(tasks_path)
+    return cfg.get("workflows", {})
 
 def save_config(tasks_path, cfg):
     config_path = os.path.join(tasks_path, "config.yaml")
@@ -22,7 +24,6 @@ def save_config(tasks_path, cfg):
             yaml.safe_dump(cfg, f)
     except Exception:
         pass
-
 
 TASKS_DIR = ".tasks"
 TASKS_BRANCH = "tasks"
@@ -40,7 +41,8 @@ STATE_FOLDERS = {
     "REJECTED": "rejected",
 }
 
-ALLOWED_TRANSITIONS = {
+# The default workflow if no type-specific one is defined
+DEFAULT_ALLOWED_TRANSITIONS = {
     "BACKLOG": ["READY"],
     "READY": ["PROGRESSING"],
     "PROGRESSING": ["TESTING", "BLOCKED", "REJECTED"],
@@ -52,6 +54,9 @@ ALLOWED_TRANSITIONS = {
     "ARCHIVED": ["READY", "TESTING"],
     "REJECTED": ["PROGRESSING"],
 }
+
+# Deprecated in favor of workflow-based transitions
+ALLOWED_TRANSITIONS = DEFAULT_ALLOWED_TRANSITIONS
 
 KEY_MAP = {
     "Id": "Id",
@@ -76,6 +81,7 @@ ALLOWED_CONFIG_KEYS = {
     "repo.type_check",
     "repo.format",
     "repo.skip_user_test_prompt",
+    "workflows",
 }
 
 AGENT_GUIDANCE = """

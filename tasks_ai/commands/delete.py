@@ -10,10 +10,10 @@ def run(cli, filename, confirm=None):
     """Execution logic for 'tasks delete'."""
     filepath, current_state = cli.find_task(filename)
     if not filepath:
-        cli.error(f"Task '{filename}' not found.")
+        cli.error("TASK_NOT_FOUND", filename=filename)
 
     if not cli._validate_path(filepath):
-        cli.error(f"Invalid task path: {filepath}")
+        cli.error("INVALID_TASK_PATH", filepath=filepath)
 
     filepath_str = str(filepath)
     task = FM.load(filepath_str)
