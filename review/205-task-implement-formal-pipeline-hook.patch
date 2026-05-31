@@ -25,10 +25,10 @@ index 63f298c..113339e 100755
      mod_p.add_argument("--title", help="New title.")
      mod_p.add_argument("--story", help="User story.")
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
-index 234f2a8..548bcd1 100644
+index 234f2a8..2e57deb 100644
 --- a/tasks_ai/cli.py
 +++ b/tasks_ai/cli.py
-@@ -17,6 +17,23 @@ from .validation import Validation
+@@ -17,6 +17,24 @@ from .validation import Validation
  from .task_service import TaskService
  from .cli_io import log, error, finish
  from .file_manager import FM
@@ -48,11 +48,12 @@ index 234f2a8..548bcd1 100644
 +    CleanWorkspaceHook,
 +    BranchSyncHook,
 +    MainBranchProtectionHook,
++    ProgressUpdateHook,
 +)
  
  
  class TasksCLI:
-@@ -26,6 +43,36 @@ class TasksCLI:
+@@ -26,6 +44,37 @@ class TasksCLI:
          self.dev = dev
          self.yes = yes
          self.output_messages = []
@@ -63,6 +64,7 @@ index 234f2a8..548bcd1 100644
 +        self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
 +        self.hook_registry.register_exit_hook("PROGRESSING", MainBranchProtectionHook())
 +        self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
++        self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
 +        self.hook_registry.register_exit_hook("TESTING", ValidationHook())
 +        self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
 +        self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
@@ -89,7 +91,7 @@ index 234f2a8..548bcd1 100644
  
          self.context = ProjectContext(dev=dev)
          self.root = self.context.repo_root or os.getcwd()
-@@ -447,6 +494,14 @@ class TasksCLI:
+@@ -447,6 +496,14 @@ class TasksCLI:
              os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
  
          if self.dev:
@@ -104,7 +106,7 @@ index 234f2a8..548bcd1 100644
              os.makedirs(self.tasks_path, exist_ok=True)
              for folder in STATE_FOLDERS.values():
                  p = os.path.join(self.tasks_path, folder)
-@@ -462,11 +517,29 @@ class TasksCLI:
+@@ -462,11 +519,29 @@ class TasksCLI:
              self.log(f"Dev tasks initialized at {self.tasks_path}")
              self.finish()
              return
@@ -135,7 +137,7 @@ index 234f2a8..548bcd1 100644
          branches = self._run_git(["branch"]).stdout
          if TASKS_BRANCH not in branches:
              self._run_git(["checkout", "--orphan", TASKS_BRANCH])
-@@ -649,41 +722,41 @@ class TasksCLI:
+@@ -649,41 +724,41 @@ class TasksCLI:
  
      def _reconcile_scan(self):
          candidates = []
@@ -210,7 +212,7 @@ index 234f2a8..548bcd1 100644
  
          if not candidates:
              if self.as_json:
-@@ -706,28 +779,28 @@ class TasksCLI:
+@@ -706,28 +781,28 @@ class TasksCLI:
  
      def _reconcile_archive_all(self):
          candidates = []
@@ -336,37 +338,41 @@ index e69de29..0108349 100644
 +    output.append(b("└", "┴", "┘"))
 +    return "\n".join(output)
 diff --git a/tasks_ai/commands/audit.py b/tasks_ai/commands/audit.py
-index 6f11116..86a51f8 100644
+index 6f11116..5667dfb 100644
 --- a/tasks_ai/commands/audit.py
 +++ b/tasks_ai/commands/audit.py
-@@ -4,12 +4,23 @@ from ..audit import generate_audit
+@@ -3,18 +3,20 @@ from ..audit import generate_audit
+ 
  
  def run(cli, task_id):
-     # Find the patch file that starts with the task_id
+-    # Find the patch file that starts with the task_id
 -    patch_dir = ".tasks/review"
-+    patch_dir = os.path.join(cli.tasks_path, "review")
-+    
-+    # Wait for the patch file to be generated
-     patch_file = None
+-    patch_file = None
 -    for f in os.listdir(patch_dir):
 -        if f.startswith(task_id) and f.endswith(".patch"):
 -            patch_file = os.path.join(patch_dir, f)
-+    # We can't just use wait_for_file on a specific name easily because of the dynamic name.
-+    # We can poll for a file that starts with task_id and ends with .patch
-+    
-+    import time
-+    start_time = time.time()
-+    while time.time() - start_time < 5:
-+        for f in os.listdir(patch_dir):
-+            if f.startswith(task_id) and f.endswith(".patch"):
-+                patch_file = os.path.join(patch_dir, f)
-+                break
-+        if patch_file:
-             break
-+        time.sleep(0.1)
+-            break
++    # Find the task directory first to get its full folder name
++    task_path, state = cli.find_task(task_id)
++    if not task_path or state != "REVIEW":
++        cli.error(f"Task {task_id} must be in REVIEW state to perform audit.",
++                  hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW")
  
-     if not patch_file:
-         cli.error(f"Patch file not found for task {task_id}")
+-    if not patch_file:
+-        cli.error(f"Patch file not found for task {task_id}")
+-        return
++    review_dir = os.path.join(cli.tasks_path, "review")
++    task_folder_name = os.path.basename(task_path)
++    
++    patch_file = os.path.join(review_dir, f"{task_folder_name}.patch")
++    if not os.path.exists(patch_file):
++        cli.error(f"Regression patch not found: {patch_file}",
++                  hint="This file should be auto-generated when moving to REVIEW. Try moving the task back to TESTING and then to REVIEW again.")
+ 
+-    output_path = patch_file.replace(".patch", ".audit")
++    output_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+     generate_audit(task_id, patch_file, output_path)
+     cli.log(f"✅ Audit log created for task {task_id}")
 diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
 index 2ab0df3..4ef3c5a 100644
 --- a/tasks_ai/commands/create.py
@@ -677,60 +683,63 @@ index 0814316..b425471 100644
 +    )
 +    cli.hook_registry.run_enter_hooks(cli, new_task, current_state, new_status, new_filepath)
 diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
-index 7b73439..60ba9c7 100644
+index 7b73439..09b1cc6 100644
 --- a/tasks_ai/commands/verify.py
 +++ b/tasks_ai/commands/verify.py
-@@ -1,17 +1,25 @@
+@@ -1,29 +1,37 @@
  import os
- from ..audit import verify_audit
-+import time
+-from ..audit import verify_audit
  
  
  def run(cli, task_id, proof):
 -    patch_dir = ".tasks/review"
-+    patch_dir = os.path.join(cli.tasks_path, "review")
-     patch_file = None
-     audit_file = None
+-    patch_file = None
+-    audit_file = None
 -    for f in os.listdir(patch_dir):
 -        if f.startswith(task_id):
 -            if f.endswith(".patch"):
 -                patch_file = os.path.join(patch_dir, f)
 -            elif f.endswith(".audit"):
 -                audit_file = os.path.join(patch_dir, f)
-+    
-+    # Wait for files to exist
-+    start_time = time.time()
-+    while time.time() - start_time < 5:
-+        for f in os.listdir(patch_dir):
-+            if f.startswith(task_id):
-+                if f.endswith(".patch"):
-+                    patch_file = os.path.join(patch_dir, f)
-+                elif f.endswith(".audit"):
-+                    audit_file = os.path.join(patch_dir, f)
-+        if patch_file and audit_file:
-+            break
-+        time.sleep(0.1)
++    task_path, state = cli.find_task(task_id)
++    if not task_path or state != "REVIEW":
++        cli.error(f"Task {task_id} must be in REVIEW state to perform verification.",
++                  hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW")
  
-     if not patch_file or not audit_file:
-         cli.error(f"Patch or Audit file not found for task {task_id}")
-@@ -22,8 +30,16 @@ def run(cli, task_id, proof):
-         return
+-    if not patch_file or not audit_file:
+-        cli.error(f"Patch or Audit file not found for task {task_id}")
+-        return
++    review_dir = os.path.join(cli.tasks_path, "review")
++    task_folder_name = os.path.basename(task_path)
++    
++    patch_file = os.path.join(review_dir, f"{task_folder_name}.patch")
++    audit_file = os.path.join(review_dir, f"{task_folder_name}.audit")
++    
++    if not os.path.exists(patch_file):
++        cli.error(f"Regression patch missing: {patch_file}",
++                  hint="Move task to TESTING and back to REVIEW to re-generate the patch.")
++                  
++    if not os.path.exists(audit_file):
++        cli.error(f"Cryptographic audit missing: {audit_file}",
++                  hint=f"A code review (audit) is required.\n  Run: ./hammer tasks audit {task_id}")
+ 
++    from ..audit import verify_audit
+     if not verify_audit(patch_file, audit_file):
+-        cli.error(f"Audit verification failed for task {task_id}")
+-        return
++        cli.error(f"Audit verification failed for task {task_id}. The code has changed since the last audit.",
++                  hint=f"Re-run audit: ./hammer tasks audit {task_id}")
  
      # Write the verification proof
 -    hash_path = audit_file.replace(".audit", ".audit_hash")
 -    with open(hash_path, "w") as f:
-+    # Audit file is in <patch_dir>/<task_id>-<name>.audit
-+    # We want it in <patch_dir>/<task_id>-<name>/
-+    task_dir = audit_file.replace(".audit", "")
-+    os.makedirs(task_dir, exist_ok=True)
-+    
-+    proof_path = os.path.join(task_dir, "verification_proof.log")
++    proof_path = os.path.join(task_path, "verification_proof.log")
 +    with open(proof_path, "w") as f:
          f.write(proof)
 -
 +    
 +    # Update hash using pipeline
-+    cli.pipeline.update_audit_hash(task_id, task_dir)
++    cli.pipeline.update_audit_hash(task_id, task_path)
 +    
      cli.log(f"✅ Task {task_id} verified.")
 diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
@@ -857,7 +866,7 @@ index 720e4c9..1a8cb02 100644
 +    # Status is column 3 (0-indexed), Priority is column 1
 +    print(format_table(headers, rows, status_idx=3, prio_idx=1))
 diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
-index 440ca35..c3c22a2 100644
+index 440ca35..ad0062b 100644
 --- a/tasks_ai/pipeline.py
 +++ b/tasks_ai/pipeline.py
 @@ -1,7 +1,8 @@
@@ -982,3 +991,109 @@ index 440ca35..c3c22a2 100644
                  return True
          return False
  
+@@ -163,32 +189,94 @@ class PipelineService:
+         criteria_path = os.path.join(task_path, "criteria.md")
+         proof_path = os.path.join(task_path, "verification_proof.log")
+         hash_path = os.path.join(task_path, ".audit_hash")
++        
++        # Sibling files
++        review_dir = os.path.dirname(task_path)
++        task_folder_name = os.path.basename(task_path)
++        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+ 
+         hasher = hashlib.md5()
+-        with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+-            hasher.update(f1.read())
+-            hasher.update(f2.read())
++        with open(criteria_path, "rb") as f_crit, \
++             open(proof_path, "rb") as f_proof, \
++             open(audit_path, "rb") as f_audit:
++            hasher.update(f_crit.read())
++            hasher.update(f_proof.read())
++            hasher.update(f_audit.read())
+ 
+         with open(hash_path, "w") as f:
+             f.write(hasher.hexdigest())
+ 
+-    def check_audit_integrity(self, task_id: str, task_path: str) -> bool:
++    def check_audit_integrity(self, task_id: str, task_path: str):
++        """
++        Verify the integrity of the cryptographic audit and verification proof.
++        Raises PipelineError with descriptive message and hint if integrity check fails.
++        """
+         criteria_path = os.path.join(task_path, "criteria.md")
+         proof_path = os.path.join(task_path, "verification_proof.log")
+         hash_path = os.path.join(task_path, ".audit_hash")
++        
++        # Also need the patch and audit files which are siblings to the task directory in .tasks/review/
++        review_dir = os.path.dirname(task_path)
++        task_folder_name = os.path.basename(task_path)
++        patch_path = os.path.join(review_dir, f"{task_folder_name}.patch")
++        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
++
++        # 1. Check for basic files
++        if not os.path.exists(patch_path):
++             raise PipelineError(
++                f"Regression patch missing: {patch_path}",
++                hint="This file should be auto-generated when moving to REVIEW. Try moving the task back to TESTING and then to REVIEW again."
++            )
++            
++        if not os.path.exists(audit_path):
++            raise PipelineError(
++                f"Cryptographic audit missing: {audit_path}",
++                hint=f"A code review (audit) is required.\n  Run: ./hammer tasks audit {task_id}"
++            )
++
++        if not os.path.exists(proof_path):
++            raise PipelineError(
++                f"Verification proof missing: {proof_path}",
++                hint=f"Proof of criteria completion is required.\n  Run: ./hammer tasks verify {task_id} --proof \"Your proof message\""
++            )
+ 
+         if not os.path.exists(hash_path):
+-            return False
++            raise PipelineError(
++                f"Audit integrity hash missing: {hash_path}",
++                hint=f"The audit chain is incomplete.\n  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
++            )
++
++        # 2. Verify Audit vs Patch
++        from .audit import verify_audit
++        if not verify_audit(patch_path, audit_path):
++             raise PipelineError(
++                f"Audit mismatch: The code has changed since the last audit of '{task_id}'.",
++                hint=f"The hash in {audit_path} does not match {patch_path}.\n"
++                     f"  1. Re-review the changes in the patch file.\n"
++                     f"  2. Re-run: ./hammer tasks audit {task_id}\n"
++                     f"  3. Re-run: ./hammer tasks verify {task_id} --proof \"...\""
++            )
+ 
++        # 3. Verify Integrity Hash (Criteria + Proof + Audit)
+         hasher = hashlib.md5()
+         try:
+-            with open(criteria_path, "rb") as f1, open(proof_path, "rb") as f2:
+-                hasher.update(f1.read())
+-                hasher.update(f2.read())
+-        except FileNotFoundError:
+-            return False
++            with open(criteria_path, "rb") as f_crit, \
++                 open(proof_path, "rb") as f_proof, \
++                 open(audit_path, "rb") as f_audit:
++                hasher.update(f_crit.read())
++                hasher.update(f_proof.read())
++                hasher.update(f_audit.read())
++        except FileNotFoundError as e:
++            raise PipelineError(f"Integrity check failed: missing file {e.filename}")
+ 
+         with open(hash_path, "r") as f:
+             stored_hash = f.read().split()[0]
+ 
+-        return hasher.hexdigest() == stored_hash
++        if hasher.hexdigest() != stored_hash:
++             raise PipelineError(
++                f"Integrity mismatch: Criteria, proof, or audit has changed for task '{task_id}'.",
++                hint=f"The cryptographic lock in {hash_path} is broken.\n"
++                     f"  Run: ./hammer tasks audit {task_id} && ./hammer tasks verify {task_id} --proof \"...\""
++            )
++        
++        return True
