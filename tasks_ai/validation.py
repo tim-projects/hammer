@@ -27,8 +27,8 @@ class Validation:
         )
         if result.returncode != 0:
             self.cli.error(
-                "❌ HAMMER SAY NO! VALIDATION BROKEN! FIX NOW! 🔨",
-                hint="RUN 'check lint' TO SEE ERRORS. HAMMER NO BYPASS TOOL!",
+                "PIPELINE_VALIDATION_FAILED",
+                msg="lint validation failed"
             )
 
     def run_tests(self, fail_safe=False):
@@ -48,8 +48,8 @@ class Validation:
             if fail_safe:
                 return result
             self.cli.error(
-                "❌ TEST BREAK! HAMMER SAY NO! FIX NOW! 🔨",
-                hint="RUN 'check test' TO SEE FAILURES. HAMMER NO BYPASS TOOL!",
+                "TEST_FAILURE",
+                msg="test suite failed"
             )
         return result
 

@@ -37,5 +37,7 @@
   "TOO_SHORT": "Too short: {too_short}.",
   "STATE_REQUIRED": "Task {task_id} must be in {required_state} state.",
   "MISSING_PARTS": "Missing: {missing_parts}.",
-  "INTEGRITY_VIOLATION": "Task location mismatch detected."
+  "INTEGRITY_VIOLATION": "Task location mismatch detected.",
+  "PIPELINE_VALIDATION_FAILED": "Pipeline validation failed.",
+  "TEST_FAILURE": "Test failure detected."
 }

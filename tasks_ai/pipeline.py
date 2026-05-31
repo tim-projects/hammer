@@ -210,10 +210,12 @@ class PipelineService:
         hash_path = os.path.join(task_path, ".audit_hash")
         
         # Sibling files (patch folder/audit file) are in .tasks/review/FOLDER_NAME/
-        review_dir = os.path.dirname(task_path)
+        review_dir = os.path.join(self.context.tasks_path, "review")
         task_folder_name = os.path.basename(task_path)
-        patches_dir = os.path.join(review_dir, task_folder_name, "patches")
-        audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+        patches_dir = os.path.abspath(os.path.join(review_dir, task_folder_name, "patches"))
+        audit_path = os.path.abspath(os.path.join(review_dir, f"{task_folder_name}.audit"))
+        
+        abs_task_path = os.path.abspath(task_path)
 
         # 1. Check for basic files
         self.log(f"DEBUG: checking patches_dir={patches_dir}, exists={os.path.exists(patches_dir)}")

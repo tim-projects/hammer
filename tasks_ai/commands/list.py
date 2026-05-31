@@ -67,5 +67,30 @@ def run(cli, show_all=False):
         return
 
     render_table(all_data)
+    
+    # Problem Tasks Scan
+    cli.log("--- SCANNING FOR PROBLEM TASKS ---")
+    candidates = []
+    for state, folder in STATE_FOLDERS.items():
+        fp = os.path.join(cli.tasks_path, folder)
+        if not os.path.exists(fp): continue
+        for item in os.listdir(fp):
+            if item == ".gitkeep": continue
+            path = os.path.join(fp, item)
+            if not os.path.isdir(path): continue
+            try:
+                task = FM.load(path)
+                if os.path.basename(os.path.dirname(path)) != STATE_FOLDERS.get(task.metadata.get("St", state)):
+                     candidates.append({"task": item, "issue": "tampered location"})
+            except:
+                candidates.append({"task": item, "issue": "corrupted metadata"})
+
+    if candidates:
+        print("\n## Problem Tasks")
+        print(f"{'Task':<40} {'Issue'}")
+        print("-" * 60)
+        for c in candidates:
+            print(f"{c['task']:<40} {c['issue']}")
+        print("\nRun './hammer tasks reconcile' to fix.")
 
     cli.finish(all_data)

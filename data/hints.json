@@ -21,7 +21,7 @@
   "PUSH_FAIL": "WHAT: Push fail: {stderr}.\nWHY: Git push blocked.\nHOW: Check network and git status.\nCONSEQUENCE: Work trapped. FIX PUSH.",
   "UNKNOWN_SECTION": "WHAT: Unknown section '{section}'.\nWHY: SECTION DISOBEDIENCE. HAMMER do not know '{section}'.\nHOW: Use: story, tech, criteria, plan, repro, notes, progress.\nCONSEQUENCE: Output remain EMPTY. FIX SECTION.",
   "UNFINISHED_CHECKBOXES": "WHAT: Task contain unfinished checkbox (- [ ]).\nWHY: INCOMPLETE CRITERIA. HAMMER forbid promotion.\nHOW: Edit criteria.md, change '- [ ]' to '- [x]'.\nCONSEQUENCE: Pipeline halt. FIX CRITERIA.",
-  "REGRESSION_CHECK_NOT_PASSED": "WHAT: Regression check not passed (Rc flag not set).\nWHY: Pipeline governance require regression check.\nHOW: 1. Review patch at {patch_path}. 2. Audit for regression. 3. Run './hammer tasks modify {task_id} --regression-check'.\nCONSEQUENCE: Promotion halted. FIX NOW.",
+  "REGRESSION_CHECK_NOT_PASSED": "WHAT: Regression check not passed (Rc flag not set).\nWHY: Pipeline governance require regression check.\nHOW: 1. Audit the fragmented patches in '.tasks/review/{task_id}/patches/'. 2. Run './hammer tasks modify {task_id} --regression-check'.\nCONSEQUENCE: Promotion halted. FIX NOW.",
   "BRANCH_NOT_MERGED": "WHAT: Task branch '{branch}' not merged to main.\nWHY: Integration rule broken.\nHOW: Run './hammer repo merge <branch> main'.\nCONSEQUENCE: Integration halted. FIX SYNC.",
   "AUDIT_PATCH_MISSING": "WHAT: Regression patches missing from {patches_dir}.\nWHY: Patch generation failure during REVIEW state.\nHOW: Move task back to TESTING and promote to REVIEW again.\nCONSEQUENCE: Audit impossible. FIX PATH.",
   "AUDIT_MISSING": "WHAT: Cryptographic audit missing: {audit_path}.\nWHY: Code review required.\nHOW: Run './hammer tasks audit {task_id}'.\nCONSEQUENCE: Audit chain broken. OBEY AUDIT.",
@@ -37,5 +37,7 @@
   "TOO_SHORT": "WHAT: TOO SHORT: {too_short}.\nWHY: INSUFFICIENT DETAIL. HAMMER demand substance.\nHOW: Provide more detail.\nCONSEQUENCE: Task rejected. FIX CONTENT.",
   "STATE_REQUIRED": "WHAT: Task {task_id} must be in {required_state} state.\nWHY: PIPELINE GOVERNANCE VIOLATION.\nHOW: Use './hammer tasks move <id> {required_state}'.\nCONSEQUENCE: Promotion blocked. OBEY PIPELINE.",
   "MISSING_PARTS": "WHAT: Missing: {missing_parts}.\nWHY: HAMMER command incomplete.\nHOW: Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'{issue_repro}.\nCONSEQUENCE: Command abort. FIX INSTRUCTION.",
-  "INTEGRITY_VIOLATION": "WHAT: Task location mismatch detected.\nWHY: TAMPERING DETECTED. Folder does not match state.\nHOW: 1. Do not move folders manually. 2. Run './hammer tasks doctor --fix'.\nCONSEQUENCE: Data corruption threat. LOCKING ACCESS."
+  "INTEGRITY_VIOLATION": "WHAT: Task location mismatch detected.\nWHY: TAMPERING DETECTED. Folder does not match state.\nHOW: 1. Do not move folders manually. 2. Run './hammer tasks doctor --fix'.\nCONSEQUENCE: Data corruption threat. LOCKING ACCESS.",
+  "PIPELINE_VALIDATION_FAILED": "WHAT: Pipeline validation failed: {msg}.\nWHY: Governance rules broken.\nHOW: Run './hammer check all' to identify failure.\nCONSEQUENCE: Promotion halted. FIX FAILURES.",
+  "TEST_FAILURE": "WHAT: Test failure: {msg}.\nWHY: Regression detected.\nHOW: Run 'pytest' to debug failure. 2. Fix test.\nCONSEQUENCE: Promotion halted. FIX TEST."
 }
