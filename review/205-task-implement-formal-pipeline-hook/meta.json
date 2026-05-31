@@ -5,7 +5,7 @@
   "Bl": [],
   "Pr": 3,
   "Br": "205-task-implement-formal-pipeline-hook",
-  "Tp": true,
-  "Rc": "",
+  "Tp": false,
+  "Rc": true,
   "Vp": true
 }
