@@ -15,14 +15,14 @@ def run(cli, task_id):
     current_path, _ = cli.find_task(task_id)
     task_folder_name = os.path.basename(current_path)
 
-    task = cli.get_active_task(task_id)
+    # Load task metadata correctly
+    task = FM.load(current_path)
     if task.metadata.get("Rc") == "PASSED":
-        cli.log(
-            f"✅ No changes detected for task {task_id} (already merged or empty diff). Skipping audit."
-        )
+        cli.log(f"✅ No changes detected for task {task_id} (already merged or empty diff). Skipping audit.")
         return
 
     review_dir = os.path.join(cli.tasks_path, "review")
+
     patches_dir = os.path.join(review_dir, task_folder_name, "patches")
 
     if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
