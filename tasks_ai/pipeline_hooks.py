@@ -123,7 +123,11 @@ class ReviewDiffHook(PipelineHook):
                 patches = generate_file_patches(cli, str(task_id), current_path, branch)
                 cli.log(f"DEBUG: ReviewDiffHook: generate_file_patches returned {len(patches)} patches")
                 
-                task.metadata["Rc"] = ""
+                if not patches:
+                    cli.log(f"DEBUG: No changes detected for task {task_id}, auto-passing regression check.")
+                    task.metadata["Rc"] = True
+                else:
+                    task.metadata["Rc"] = ""
                 # Re-dumping to update Rc in the new location
                 cli._atomic_write(current_path, task)
                 cli.log("DEBUG: ReviewDiffHook: _atomic_write finished")
