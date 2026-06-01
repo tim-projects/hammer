@@ -74,13 +74,21 @@ class TestingToReviewGateHook(PipelineHook):
             
             patches = generate_file_patches(cli, str(task_id), filepath, branch)
             
+            # Robust check: if patches is empty, verify if branch is merged and workspace is clean
             if not patches:
-                cli.log(f"DEBUG: No changes detected for task {task_id}, auto-passing regression check.")
-                task.metadata["Rc"] = "PASSED"
+                is_merged = cli.git.is_merged(branch, "main")
+                status = cli.git.run(["status", "--porcelain"], cwd=cli.root).stdout.strip()
+                
+                if is_merged and not status:
+                    cli.log(f"DEBUG: Branch {branch} merged and workspace clean, auto-passing regression check.")
+                    task.metadata["Rc"] = "PASSED"
+                else:
+                    cli.log(f"DEBUG: No patches found, but branch not merged or workspace dirty. is_merged={is_merged}, status='{status}'")
+                    task.metadata["Rc"] = ""
             else:
                 task.metadata["Rc"] = ""
             
-            cli.log(f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata['Rc']}")
+            cli.log(f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}")
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
 
