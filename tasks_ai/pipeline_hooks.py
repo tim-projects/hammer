@@ -66,6 +66,21 @@ class TestingToReviewGateHook(PipelineHook):
                     "Tests must be passed before moving to REVIEW.",
                     hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed.",
                 )
+            
+            # Patch generation check
+            from .audit import generate_file_patches
+            _, branch = parse_filename(os.path.basename(filepath))
+            task_id = task.metadata.get("Id")
+            
+            patches = generate_file_patches(cli, str(task_id), filepath, branch)
+            
+            if not patches:
+                cli.log(f"DEBUG: No changes detected for task {task_id}, auto-passing regression check.")
+                task.metadata["Rc"] = "PASSED"
+            else:
+                task.metadata["Rc"] = ""
+            
+            cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
 
 class BranchCheckHook(PipelineHook):
@@ -109,31 +124,8 @@ class ReviewDiffHook(PipelineHook):
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "REVIEW":
             cli.log(f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}")
-            try:
-                from .audit import generate_file_patches
-                _, branch = parse_filename(os.path.basename(filepath))
-                task_id = task.metadata.get("Id")
-                # Get the *actual* current filepath
-                current_path, _ = cli.find_task(str(task_id))
-                cli.log(f"DEBUG: ReviewDiffHook: current_path={current_path}, branch={branch}")
-                
-                cli.console("audit", "generate", f"patches for {current_path}")
-                
-                # Verify generate_file_patches behavior
-                patches = generate_file_patches(cli, str(task_id), current_path, branch)
-                cli.log(f"DEBUG: ReviewDiffHook: generate_file_patches returned {len(patches)} patches")
-                
-                if not patches:
-                    cli.log(f"DEBUG: No changes detected for task {task_id}, auto-passing regression check.")
-                    task.metadata["Rc"] = True
-                else:
-                    task.metadata["Rc"] = ""
-                # Re-dumping to update Rc in the new location
-                cli._atomic_write(current_path, task)
-                cli.log("DEBUG: ReviewDiffHook: _atomic_write finished")
-            except Exception as e:
-                cli.log(f"DEBUG: ReviewDiffHook FAILED: {e}")
-                raise e
+            # Patch generation is now handled in TestingToReviewGateHook to ensure Rc is set correctly.
+            cli.log("DEBUG: ReviewDiffHook: patches already generated in TestingToReviewGateHook")
 
 class ArchivedCommitHook(PipelineHook):
     """Commits and pushes the tasks worktree when entering ARCHIVED."""
