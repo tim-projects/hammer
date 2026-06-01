@@ -855,12 +855,10 @@ class TasksCLI:
 
     def _reconcile_archive_all(self, dry_run=False):
         candidates = []
-        # Only reconcile tasks that are DONE
         folder = STATE_FOLDERS.get("DONE")
         fp = os.path.join(self.tasks_path, folder)
         if not os.path.exists(fp):
             return
-
         for item in os.listdir(fp):
             if item == ".gitkeep":
                 continue
@@ -868,24 +866,26 @@ class TasksCLI:
             if not os.path.isdir(path):
                 continue
             branch = item
-            main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-            branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-            if (
-                main_sha
-                and branch_sha
-                and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
-                == main_sha
-            ):
-                candidates.append(item)
-
+            try:
+                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+                merge_base = self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+                if merge_base == main_sha:
+                    candidates.append(item)
+                else:
+                    print(f"⚠️ Skipping {branch}: Not fully merged.")
+            except Exception as e:
+                print(f"⚠️ Skipping {branch}: Git check failed: {e}")
         archived = 0
         for branch in candidates:
-            if not dry_run:
-                self._move_logic(branch, "ARCHIVED", force=True, yes=True)
-                archived += 1
-            else:
-                self.console("archive", "would_archive", branch)
-
+            try:
+                if not dry_run:
+                    self._move_logic(branch, "ARCHIVED", force=True, yes=True)
+                    archived += 1
+                else:
+                    self.console("archive", "would_archive", branch)
+            except Exception as e:
+                print(f"❌ Failed to archive {branch}: {e}")
         if self.as_json:
             self.finish({"archived": archived, "dry_run": dry_run})
         else:
