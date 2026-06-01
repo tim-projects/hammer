@@ -3,6 +3,7 @@
 import os
 import yaml
 
+
 def load_config(tasks_path):
     config_path = os.path.join(tasks_path, "config.yaml")
     if os.path.exists(config_path):
@@ -13,9 +14,11 @@ def load_config(tasks_path):
             return {}
     return {}
 
+
 def get_workflows(tasks_path):
     cfg = load_config(tasks_path)
     return cfg.get("workflows", {})
+
 
 def save_config(tasks_path, cfg):
     config_path = os.path.join(tasks_path, "config.yaml")
@@ -24,6 +27,7 @@ def save_config(tasks_path, cfg):
             yaml.safe_dump(cfg, f)
     except Exception:
         pass
+
 
 TASKS_DIR = ".tasks"
 TASKS_BRANCH = "tasks"

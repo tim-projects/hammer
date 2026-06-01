@@ -26,7 +26,6 @@ from .pipeline_hooks import (
     ContentSufficiencyHook,
     BlockerCheckHook,
     TestingToReviewGateHook,
-    TestingPromotionHook,
     ReviewDiffHook,
     ArchivedCommitHook,
     PostMoveCommitHook,
@@ -50,7 +49,7 @@ class TasksCLI:
         self.output_messages = []
         self.hook_registry = HookRegistry()
         self.messages = MessageRegistry()
-        
+
         # Register EXIT hooks (Pre-move gates/checks)
         self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
         self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
@@ -65,14 +64,15 @@ class TasksCLI:
         # Register ENTER hooks (Post-move actions)
         self.hook_registry.register_enter_hook("BACKLOG", CleanupReviewArtifactsHook())
         self.hook_registry.register_enter_hook("READY", CleanupReviewArtifactsHook())
-        self.hook_registry.register_enter_hook("PROGRESSING", CleanupReviewArtifactsHook())
+        self.hook_registry.register_enter_hook(
+            "PROGRESSING", CleanupReviewArtifactsHook()
+        )
         self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BranchSyncHook())
         self.hook_registry.register_enter_hook("TESTING", BranchExistsHook())
         self.hook_registry.register_enter_hook("TESTING", ValidationPassedMarkHook())
-        self.hook_registry.register_enter_hook("TESTING", TestingPromotionHook())
         self.hook_registry.register_enter_hook("REVIEW", BranchExistsHook())
         self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
         self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
@@ -81,9 +81,18 @@ class TasksCLI:
         self.hook_registry.register_enter_hook("DONE", BranchCheckHook())
         self.hook_registry.register_enter_hook("ARCHIVED", BranchCheckHook())
         self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
-        
+
         # Post-move generic hooks
-        for state in ["BACKLOG", "READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE", "REJECTED"]:
+        for state in [
+            "BACKLOG",
+            "READY",
+            "PROGRESSING",
+            "TESTING",
+            "REVIEW",
+            "STAGING",
+            "DONE",
+            "REJECTED",
+        ]:
             self.hook_registry.register_enter_hook(state, SaveProgressHook())
             self.hook_registry.register_enter_hook(state, PostMoveCommitHook())
 
@@ -264,12 +273,6 @@ class TasksCLI:
             else:
                 self.error(str(e))
             sys.exit(1)
-
-    def _run_validation(self, fix=False):
-        return self.validation.run_lint(fix=fix)
-
-    def _run_tests(self, fail_safe=False):
-        return self.validation.run_tests(fail_safe=fail_safe)
 
     def _detect_tools(self):
         return self.validation.detect_tools()
@@ -549,7 +552,7 @@ class TasksCLI:
                 else:
                     self.log(f"Resetting dev tasks at {self.tasks_path}")
                     shutil.rmtree(self.tasks_path)
-            
+
             os.makedirs(self.tasks_path, exist_ok=True)
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
@@ -565,28 +568,28 @@ class TasksCLI:
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
             return
-        
+
         # Non-dev (production) storage path
         if not force and os.path.exists(self.tasks_path):
-             self.error("Tasks already initialized. Use --force to backup and reset.")
+            self.error("Tasks already initialized. Use --force to backup and reset.")
         elif force and os.path.exists(self.tasks_path):
             # MANDATORY BACKUP for production before reset
             from datetime import datetime
+
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             backup_path = f"{self.tasks_path}.bak_{timestamp}"
             self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
             shutil.copytree(self.tasks_path, backup_path)
-            
+
             # Now safe to remove
             if os.path.isdir(self.tasks_path):
                 shutil.rmtree(self.tasks_path)
             else:
                 os.remove(self.tasks_path)
-        
+
         # Regular init
         original_branch = self._run_git(["branch", "--show-current"]).stdout.strip()
         from .constants import TASKS_BRANCH
-
 
         branches = self._run_git(["branch"]).stdout
         if TASKS_BRANCH not in branches:
@@ -786,31 +789,48 @@ class TasksCLI:
         for path, state, item in all_tasks:
             try:
                 task = FM.load(path)
-                task_state = task.metadata.get("St", state) # Default to folder state if St missing
+                task_state = task.metadata.get(
+                    "St", state
+                )  # Default to folder state if St missing
                 expected_folder = STATE_FOLDERS.get(task_state)
                 if os.path.basename(os.path.dirname(path)) != expected_folder:
-                     self.console("tamper", "detected", f"{item} in {os.path.basename(os.path.dirname(path))}, metadata={task_state}")
-                     if not dry_run:
-                        target_path = os.path.join(self.tasks_path, expected_folder, item)
+                    self.console(
+                        "tamper",
+                        "detected",
+                        f"{item} in {os.path.basename(os.path.dirname(path))}, metadata={task_state}",
+                    )
+                    if not dry_run:
+                        target_path = os.path.join(
+                            self.tasks_path, expected_folder, item
+                        )
                         os.makedirs(os.path.dirname(target_path), exist_ok=True)
                         shutil.move(path, target_path)
-                     else:
+                    else:
                         self.console("tamper", "would_fix", item)
-                     continue
-                
+                    continue
+
                 if task_state == "DONE":
                     # Archive scan
                     branch = item
                     main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
                     branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                    if main_sha and branch_sha and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip() == main_sha:
-                        candidates.append({
-                            "id": task.metadata.get("Id"),
-                            "title": task.metadata.get("Ti", ""),
-                            "branch": branch,
-                            "filepath": path,
-                            "state": "DONE",
-                        })
+                    if (
+                        main_sha
+                        and branch_sha
+                        and self._run_git(
+                            ["merge-base", branch_sha, "main"]
+                        ).stdout.strip()
+                        == main_sha
+                    ):
+                        candidates.append(
+                            {
+                                "id": task.metadata.get("Id"),
+                                "title": task.metadata.get("Ti", ""),
+                                "branch": branch,
+                                "filepath": path,
+                                "state": "DONE",
+                            }
+                        )
             except Exception:
                 continue
 
@@ -891,7 +911,7 @@ class TasksCLI:
                 f"Task: [{task.metadata.get('Id', '')}] {task.metadata.get('Ti', '')}"
             )
             print(f"State: {state} (branch no longer exists)")
-            
+
             if dry_run:
                 print("Dry-run: Task would be archived.")
             elif input("Archive this task? [y/N]: ").strip().lower() == "y":

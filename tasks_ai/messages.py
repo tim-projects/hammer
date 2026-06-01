@@ -1,6 +1,7 @@
 import json
 import os
 
+
 class MessageRegistry:
     def __init__(self, data_dir="data"):
         self.errors = self._load_json(os.path.join(data_dir, "errors.json"))

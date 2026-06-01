@@ -109,8 +109,11 @@ class FM:
                 continue
             if content is None:
                 continue
-            
-            if name.endswith(".md") or name in ["verification_proof.log", ".audit_hash"]:
+
+            if name.endswith(".md") or name in [
+                "verification_proof.log",
+                ".audit_hash",
+            ]:
                 _atomic_write(os.path.join(path, name), content)
             else:
                 _atomic_write(os.path.join(path, f"{name}.md"), content)

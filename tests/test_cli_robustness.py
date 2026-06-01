@@ -5,11 +5,12 @@ import os
 import shutil
 import tempfile
 
+
 class TestCLIRobustness(unittest.TestCase):
     def setUp(self):
         self.repo_dir = tempfile.mkdtemp()
         self.tasks_py = os.path.join(os.getcwd(), "tasks.py")
-        
+
     def tearDown(self):
         shutil.rmtree(self.repo_dir)
 
@@ -20,7 +21,7 @@ class TestCLIRobustness(unittest.TestCase):
             cwd=self.repo_dir,
             capture_output=True,
         )
-    
+
         # Test with missing fields
         result = subprocess.run(
             [
@@ -33,7 +34,7 @@ class TestCLIRobustness(unittest.TestCase):
             capture_output=True,
             text=True,
         )
-    
+
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("MISSING_PARTS", result.stderr)
 
@@ -44,7 +45,7 @@ class TestCLIRobustness(unittest.TestCase):
             cwd=self.repo_dir,
             capture_output=True,
         )
-    
+
         # Test with too short fields
         result = subprocess.run(
             [
@@ -65,9 +66,10 @@ class TestCLIRobustness(unittest.TestCase):
             capture_output=True,
             text=True,
         )
-    
+
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("TOO_SHORT", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

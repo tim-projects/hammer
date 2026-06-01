@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 
+
 class PipelineHook(ABC):
     @abstractmethod
     def execute(self, cli, task, current_state, new_status, filepath):
         pass
+
 
 class HookRegistry:
     def __init__(self):

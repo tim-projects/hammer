@@ -36,9 +36,7 @@ def run(cli, filename, blocked_by_filename):
     # Check for circular dependency
     if has_path(b_id, task_id_num, cli.tasks_path, FM):
         cli.error(
-            "CIRCULAR_DEPENDENCY",
-            filename=filename,
-            blocked_by=blocked_by_filename
+            "CIRCULAR_DEPENDENCY", filename=filename, blocked_by=blocked_by_filename
         )
 
     if b_name not in bl:

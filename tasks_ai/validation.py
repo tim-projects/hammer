@@ -12,47 +12,6 @@ class Validation:
     def __init__(self, cli: "TasksCLI"):
         self.cli = cli
 
-    def run_lint(self, fix=False):
-        if os.environ.get("TASKS_TESTING") == "1":
-            return
-        check_path = os.path.join(self.cli.root, "check.py")
-        if not os.path.exists(check_path):
-            return
-        result = subprocess.run(
-            [sys.executable, check_path, "lint"] + (["--fix"] if fix else []),
-            cwd=self.cli.root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
-            self.cli.error(
-                "PIPELINE_VALIDATION_FAILED",
-                msg="lint validation failed"
-            )
-
-    def run_tests(self, fail_safe=False):
-        if os.environ.get("TASKS_TESTING") == "1":
-            return subprocess.CompletedProcess("", 0)
-        check_path = os.path.join(self.cli.root, "check.py")
-        if not os.path.exists(check_path):
-            return subprocess.CompletedProcess("", 0)
-        result = subprocess.run(
-            [sys.executable, check_path, "test"],
-            cwd=self.cli.root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
-            if fail_safe:
-                return result
-            self.cli.error(
-                "TEST_FAILURE",
-                msg="test suite failed"
-            )
-        return result
-
     def detect_tools(self) -> Dict[str, str]:
         """Detect project type and suggest/create config."""
         detected = {}
@@ -148,7 +107,10 @@ class Validation:
         if self.cli.as_json:
             cmd.append("--json")
 
-        result = subprocess.run(cmd, cwd=self.cli.root, capture_output=True, text=True)
+        capture = self.cli.as_json or self.cli.quiet
+        result = subprocess.run(
+            cmd, cwd=self.cli.root, capture_output=capture, text=True
+        )
 
         if self.cli.as_json:
             try:
@@ -162,8 +124,11 @@ class Validation:
             except json.JSONDecodeError:
                 self.cli.error(f"Failed to parse tool output: {result.stdout}")
         else:
-            print(result.stdout)
-            if result.stderr:
-                print(result.stderr, file=sys.stderr)
+            if capture:
+                print(result.stdout)
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr)
+
             if result.returncode != 0:
-                self.cli.error(f"Tool execution failed: {tool_name}")
+                self.cli.error(f"Tool execution failed: {tool_name or 'all'}")
+        return result

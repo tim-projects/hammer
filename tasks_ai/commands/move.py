@@ -14,21 +14,21 @@ def run(cli, filename, new_status, yes=False):
         )
     task_type, _ = parse_filename(os.path.basename(filepath))
     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
-    
+
     # Handle multi-step transitions
     if "," in new_status:
         steps = [s.strip() for s in new_status.split(",")]
-        
+
         # Perform each step individually, letting move_logic enforce gates
         for step in steps:
             # Re-fetch state for each step to validate current transition
             _, current_state = cli.find_task(filename)
             if current_state == step:
                 continue
-            
+
             # Perform individual move; move_logic now enforces ALL gates
             move_logic(cli, filename, step, force=False, yes=yes, sync=True)
-            
+
         cli.log(f"Moved: [{cli.find_task(filename)[0].split('/')[-1]}] -> {new_status}")
         cli.finish({"status": new_status})
         return
@@ -103,15 +103,8 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
         if not cli.git.is_merged(branch, "main"):
             cli.error("BRANCH_NOT_MERGED", branch=branch)
 
-    if (
-        new_status not in allowed_transitions.get(current_state, [])
-        and not force
-    ):
-        cli.error(
-            "FORBIDDEN_TRANSITION",
-            from_state=current_state,
-            to_state=new_status
-        )
+    if new_status not in allowed_transitions.get(current_state, []) and not force:
+        cli.error("FORBIDDEN_TRANSITION", from_state=current_state, to_state=new_status)
 
     # 1. Run Exit Hooks (Pre-move checks and actions)
     cli.hook_registry.run_exit_hooks(cli, task, current_state, new_status, filepath_str)
@@ -125,4 +118,6 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
         STATE_FOLDERS[new_status],
         os.path.basename(filepath_str),
     )
-    cli.hook_registry.run_enter_hooks(cli, new_task, current_state, new_status, new_filepath)
+    cli.hook_registry.run_enter_hooks(
+        cli, new_task, current_state, new_status, new_filepath
+    )

@@ -47,7 +47,7 @@ def run(
         cli.error(
             "MISSING_PARTS",
             missing_parts=", ".join(missing),
-            issue_repro=" --repro <repro>" if task_type == 'issue' else ""
+            issue_repro=" --repro <repro>" if task_type == "issue" else "",
         )
 
     MIN_LEN = 15
@@ -162,7 +162,9 @@ def run(
         ).stdout.strip()
         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
         cli.log(f"Branch: {task_id} | Now on: {current_branch}")
-        cli.log(f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'")
+        cli.log(
+            f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'"
+        )
 
         cli.finish(
             {

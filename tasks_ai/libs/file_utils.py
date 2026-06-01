@@ -1,6 +1,7 @@
 import os
 import time
 
+
 def wait_for_file(filepath, timeout=5):
     """Wait for a file to exist on the filesystem."""
     start_time = time.time()

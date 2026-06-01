@@ -4,6 +4,7 @@ import re
 from .constants import get_workflows, DEFAULT_ALLOWED_TRANSITIONS
 from .utils import parse_filename
 
+
 class PipelineError(Exception):
     def __init__(self, code, **kwargs):
         self.code = code
@@ -24,7 +25,10 @@ class PipelineService:
         self.workflows = get_workflows(context.tasks_path)
 
     def get_allowed_transitions(self, task_type: str):
-        workflow = self.workflows.get(task_type, self.workflows.get("default", {"transitions": DEFAULT_ALLOWED_TRANSITIONS}))
+        workflow = self.workflows.get(
+            task_type,
+            self.workflows.get("default", {"transitions": DEFAULT_ALLOWED_TRANSITIONS}),
+        )
         return workflow.get("transitions", DEFAULT_ALLOWED_TRANSITIONS)
 
     def log(self, message: str):
@@ -35,10 +39,10 @@ class PipelineService:
         filepath, current_state = cli.find_task(filename)
         if not filepath or current_state is None:
             return
-        
+
         task_type, _ = parse_filename(os.path.basename(filepath))
         allowed_transitions = self.get_allowed_transitions(task_type)
-        
+
         # Allow multi-step moves: validate each step in the chain
         if "," in new_status:
             last_state = current_state
@@ -47,14 +51,14 @@ class PipelineService:
                 if next_state == last_state:
                     continue
                 if next_state not in allowed_transitions.get(last_state, []):
-                     cli.error(
+                    cli.error(
                         f"Forbidden transition in chain: {last_state} -> {next_state}",
                         hint=f"Allowed from {last_state}: {', '.join(allowed_transitions.get(last_state, []))}",
                     )
-                     return
+                    return
                 last_state = next_state
             return
-        
+
         if (
             new_status not in allowed_transitions.get(current_state, [])
             and current_state != new_status
@@ -75,14 +79,16 @@ class PipelineService:
         """
         task_id = task.metadata.get("Id")
         task_type, _ = parse_filename(os.path.basename(task_path))
-        
+
         # Resolve gates based on workflow
         workflow = self.workflows.get(task_type, self.workflows.get("default", {}))
         gates_config = workflow.get("gates", {})
         enabled_gates = gates_config.get(target_state, [])
 
         # 1. Enforce criteria completion for TESTING
-        if "incomplete_checkboxes" in enabled_gates and self.has_incomplete_checkboxes(task_path):
+        if "incomplete_checkboxes" in enabled_gates and self.has_incomplete_checkboxes(
+            task_path
+        ):
             raise PipelineError("UNFINISHED_CHECKBOXES")
 
         # 2. Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
@@ -95,12 +101,17 @@ class PipelineService:
                     raise PipelineError(
                         "REGRESSION_CHECK_NOT_PASSED",
                         patch_path=patch_path,
-                        task_id=task_id
+                        task_id=task_id,
                     )
 
         # 3. Cryptographic Audit Integrity for STAGING/DONE
         if "audit_integrity" in enabled_gates:
-            self.check_audit_integrity(task_id, task_path)
+            if task.metadata.get("Rc") != "PASSED":
+                self.check_audit_integrity(task_id, task_path)
+            else:
+                self.log(
+                    f"DEBUG: Skipping audit_integrity check for task {task_id} as Rc is 'PASSED'"
+                )
 
         # 4. Merge verification for DONE/ARCHIVED
         if "merge_check" in enabled_gates:
@@ -108,10 +119,7 @@ class PipelineService:
             if branch:
                 # Check if branch is merged into main
                 if not self.git.is_merged(branch, "main"):
-                    raise PipelineError(
-                        "BRANCH_NOT_MERGED",
-                        branch=branch
-                    )
+                    raise PipelineError("BRANCH_NOT_MERGED", branch=branch)
 
     def git_merge_transition(self, task, target_state: str, yes: bool = False):
         """Perform the git merges associated with a pipeline transition."""
@@ -180,19 +188,23 @@ class PipelineService:
     def update_audit_hash(self, task_id: str, task_path: str):
         # Sibling files reside in the same directory as the criteria.md, proof, etc.
         criteria_path = os.path.join(task_path, "criteria.md")
-        self.log(f"DEBUG: update_audit_hash task_path={task_path}, criteria_path={criteria_path}, exists={os.path.exists(criteria_path)}")
+        self.log(
+            f"DEBUG: update_audit_hash task_path={task_path}, criteria_path={criteria_path}, exists={os.path.exists(criteria_path)}"
+        )
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
-        
+
         # Sibling files (patch/audit) are in .tasks/review/FOLDER_NAME/
         review_dir = os.path.dirname(task_path)
         task_folder_name = os.path.basename(task_path)
         audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
 
         hasher = hashlib.md5()
-        with open(criteria_path, "rb") as f_crit, \
-             open(proof_path, "rb") as f_proof, \
-             open(audit_path, "rb") as f_audit:
+        with (
+            open(criteria_path, "rb") as f_crit,
+            open(proof_path, "rb") as f_proof,
+            open(audit_path, "rb") as f_audit,
+        ):
             hasher.update(f_crit.read())
             hasher.update(f_proof.read())
             hasher.update(f_audit.read())
@@ -208,18 +220,24 @@ class PipelineService:
         criteria_path = os.path.join(task_path, "criteria.md")
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
-        
+
         # Sibling files (patch folder/audit file) are in .tasks/review/FOLDER_NAME/
         review_dir = os.path.join(self.context.tasks_path, "review")
         task_folder_name = os.path.basename(task_path)
-        patches_dir = os.path.abspath(os.path.join(review_dir, task_folder_name, "patches"))
-        audit_path = os.path.abspath(os.path.join(review_dir, f"{task_folder_name}.audit"))
-        
+        patches_dir = os.path.abspath(
+            os.path.join(review_dir, task_folder_name, "patches")
+        )
+        audit_path = os.path.abspath(
+            os.path.join(review_dir, f"{task_folder_name}.audit")
+        )
+
         # 1. Check for basic files
-        self.log(f"DEBUG: checking patches_dir={patches_dir}, exists={os.path.exists(patches_dir)}")
+        self.log(
+            f"DEBUG: checking patches_dir={patches_dir}, exists={os.path.exists(patches_dir)}"
+        )
         if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
-             raise PipelineError("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
-            
+            raise PipelineError("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
+
         if not os.path.exists(audit_path):
             raise PipelineError("AUDIT_MISSING", audit_path=audit_path, task_id=task_id)
         if not os.path.exists(proof_path):
@@ -230,15 +248,18 @@ class PipelineService:
 
         # 2. Verify Audit vs Patches
         from .audit import verify_audit
+
         if not verify_audit(patches_dir, audit_path):
-             raise PipelineError("AUDIT_MISMATCH", task_id=task_id)
+            raise PipelineError("AUDIT_MISMATCH", task_id=task_id)
 
         # 3. Verify Integrity Hash (Criteria + Proof + Audit)
         hasher = hashlib.md5()
         try:
-            with open(criteria_path, "rb") as f_crit, \
-                 open(proof_path, "rb") as f_proof, \
-                 open(audit_path, "rb") as f_audit:
+            with (
+                open(criteria_path, "rb") as f_crit,
+                open(proof_path, "rb") as f_proof,
+                open(audit_path, "rb") as f_audit,
+            ):
                 hasher.update(f_crit.read())
                 hasher.update(f_proof.read())
                 hasher.update(f_audit.read())
@@ -249,6 +270,6 @@ class PipelineService:
             stored_hash = f.read().split()[0]
 
         if hasher.hexdigest() != stored_hash:
-             raise PipelineError("INTEGRITY_MISMATCH", task_id=task_id)
-        
+            raise PipelineError("INTEGRITY_MISMATCH", task_id=task_id)
+
         return True

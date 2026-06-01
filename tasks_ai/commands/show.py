@@ -56,10 +56,7 @@ def run(cli, filename, section=None):
                 title, content = section_map[section]
                 print(f"## {title}\n{content}")
             else:
-                cli.error(
-                    "UNKNOWN_SECTION",
-                    section=section
-                )
+                cli.error("UNKNOWN_SECTION", section=section)
         else:
             meta = data["metadata"]
             print(

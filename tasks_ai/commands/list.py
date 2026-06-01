@@ -67,7 +67,7 @@ def run(cli, show_all=False):
         return
 
     render_table(all_data)
-    
+
     # Problem Tasks Scan
     cli.log("--- SCANNING FOR PROBLEM TASKS ---")
     candidates = []
@@ -83,8 +83,10 @@ def run(cli, show_all=False):
                 continue
             try:
                 task = FM.load(path)
-                if os.path.basename(os.path.dirname(path)) != STATE_FOLDERS.get(task.metadata.get("St", state)):
-                     candidates.append({"task": item, "issue": "tampered location"})
+                if os.path.basename(os.path.dirname(path)) != STATE_FOLDERS.get(
+                    task.metadata.get("St", state)
+                ):
+                    candidates.append({"task": item, "issue": "tampered location"})
             except Exception:
                 candidates.append({"task": item, "issue": "corrupted metadata"})
 

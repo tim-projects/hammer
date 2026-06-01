@@ -281,7 +281,9 @@ def cmd_promote(src_input, original_task_id=None):
     # For task branches, we need to determine the next state in the workflow
     # For non-task branches, we fall back to the original pipeline logic
     if task_id and TasksCLI:
-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
+        cli = TasksCLI(
+            quiet=FLAGS.get("quiet", False), dev=FLAGS["dev"], yes=FLAGS["yes"]
+        )
         path, current_status = cli.find_task(task_id)
         if path and current_status:
             # Map current status to the next state for promotion

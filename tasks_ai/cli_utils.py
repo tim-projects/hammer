@@ -1,4 +1,3 @@
-
 COLORS = {
     "HEADER": "\033[1;37m",  # White bold
     "PROGRESSING": "\033[1;32m",  # Green
@@ -9,15 +8,16 @@ COLORS = {
     "DONE": "\033[0;32m",  # Green
     "ARCHIVED": "\033[0;37m",  # Grey
     "RESET": "\033[0m",
-    "LINE": "\033[38;5;238m", # Darker grey
+    "LINE": "\033[38;5;238m",  # Darker grey
 }
 
 PRIO_COLORS = {
-    "1": "\033[1;31m", # Red bold
-    "2": "\033[31m",   # Red
-    "3": "\033[33m",   # Yellow
-    "9": "\033[37m",   # Grey
+    "1": "\033[1;31m",  # Red bold
+    "2": "\033[31m",  # Red
+    "3": "\033[33m",  # Yellow
+    "9": "\033[37m",  # Grey
 }
+
 
 def format_table(headers, rows, status_idx=None, prio_idx=None):
     if not rows:
@@ -34,14 +34,20 @@ def format_table(headers, rows, status_idx=None, prio_idx=None):
 
     # Header
     output = []
-    
+
     # Helper for borders
     def b(left_border, m, r, sep="─┬─"):
-        return f"{L}{left_border}{sep.join('─' * (w+2) for w in widths)}{r}{R}"
+        return f"{L}{left_border}{sep.join('─' * (w + 2) for w in widths)}{r}{R}"
 
     output.append(b("┌", "┬", "┐"))
-    
-    header_line = f"{L}│{R} " + f" {L}│{R} ".join(f"{COLORS['HEADER']}{h:<{widths[i]}}{R}" for i, h in enumerate(headers)) + f" {L}│{R}"
+
+    header_line = (
+        f"{L}│{R} "
+        + f" {L}│{R} ".join(
+            f"{COLORS['HEADER']}{h:<{widths[i]}}{R}" for i, h in enumerate(headers)
+        )
+        + f" {L}│{R}"
+    )
     output.append(header_line)
     output.append(b("├", "┼", "┤"))
 
@@ -52,7 +58,7 @@ def format_table(headers, rows, status_idx=None, prio_idx=None):
             cell_str = str(cell)
             color = ""
             reset = ""
-            
+
             # Status color
             if status_idx is not None and i == status_idx:
                 color = COLORS.get(cell_str, "")
@@ -61,9 +67,9 @@ def format_table(headers, rows, status_idx=None, prio_idx=None):
             elif prio_idx is not None and i == prio_idx:
                 color = PRIO_COLORS.get(cell_str, "")
                 reset = COLORS["RESET"] if color else ""
-            
+
             formatted_row.append(f"{color}{cell_str:<{widths[i]}}{reset}")
-        
+
         row_str = f"{L}│{R} " + f" {L}│{R} ".join(formatted_row) + f" {L}│{R}"
         output.append(row_str)
 

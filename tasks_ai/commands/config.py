@@ -39,7 +39,7 @@ def run(cli, action=None, key=None, value=None, save=False):
             cli.error(
                 "INVALID_CONFIG_KEY",
                 key=key,
-                allowed_keys=', '.join(sorted(ALLOWED_CONFIG_KEYS))
+                allowed_keys=", ".join(sorted(ALLOWED_CONFIG_KEYS)),
             )
         cfg[key] = value
         save_config(cli.tasks_path, cfg)
