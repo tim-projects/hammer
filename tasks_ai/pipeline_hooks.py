@@ -80,6 +80,7 @@ class TestingToReviewGateHook(PipelineHook):
             else:
                 task.metadata["Rc"] = ""
             
+            cli.log(f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata['Rc']}")
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
 
