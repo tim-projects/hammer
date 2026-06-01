@@ -339,6 +339,9 @@ def cmd_promote(src_input, original_task_id=None):
 
     # Perform gate checks
     if task_id and TasksCLI and path:
+        from tasks_ai.file_manager import FM
+
+        task = FM.load(path)
         # Use CLI's robust gate validation
         cli._validate_pipeline_gate(task, target.upper(), path)
     needs_move = False
