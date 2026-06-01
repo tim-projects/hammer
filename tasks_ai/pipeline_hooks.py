@@ -309,3 +309,24 @@ class CleanupReviewArtifactsHook(PipelineHook):
             
             # Update the task file
             cli._atomic_write(filepath, task)
+
+class BranchExistsHook(PipelineHook):
+    """Checks if the task branch exists; if not, moves back to PROGRESSING."""
+    def execute(self, cli, task, current_state, new_status, filepath):
+        _, branch = parse_filename(os.path.basename(filepath))
+        if not branch:
+            return
+
+        res = cli.git.run(["rev-parse", "--verify", branch], check=False)
+        if res.returncode != 0:
+            cli.log(f"Branch {branch} missing. Auto-demoting to PROGRESSING.")
+            
+            # 1. Trigger cleanup
+            cleanup = CleanupReviewArtifactsHook()
+            cleanup.execute(cli, task, new_status, "PROGRESSING", filepath)
+            
+            # 2. Move to PROGRESSING
+            cli.move(task.metadata.get("Id"), "PROGRESSING")
+            
+            # 3. Raise error to inform user
+            cli.error("BRANCH_MISSING_AUTO_DEMOTED", branch=branch)

@@ -37,6 +37,7 @@ from .pipeline_hooks import (
     MainBranchProtectionHook,
     ProgressUpdateHook,
     CleanupReviewArtifactsHook,
+    BranchExistsHook,
 )
 
 
@@ -69,8 +70,10 @@ class TasksCLI:
         self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BranchSyncHook())
+        self.hook_registry.register_enter_hook("TESTING", BranchExistsHook())
         self.hook_registry.register_enter_hook("TESTING", ValidationPassedMarkHook())
         self.hook_registry.register_enter_hook("TESTING", TestingPromotionHook())
+        self.hook_registry.register_enter_hook("REVIEW", BranchExistsHook())
         self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
         self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
         self.hook_registry.register_enter_hook("STAGING", BranchCheckHook())
@@ -499,40 +502,45 @@ class TasksCLI:
         return False
 
     # --- Commands ---
+    def init_hooks(self):
+        self.log("Installing git hooks...")
+        self.install_hooks()
+        self.log("✅ Git hooks installed.")
+
+    def install_hooks(self):
+        hook_dir = os.path.join(self.root, ".git", "hooks")
+        if not os.path.exists(hook_dir):
+            return
+
+        # pre-commit hook
+        with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# 1. Block direct commits to main\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi\n\n# 2. Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
+            )
+        os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
+
+        # pre-merge hook
+        with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "⚠️  Direct git merge to main detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
+            )
+        os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
+
+        # post-merge hook
+        with open(os.path.join(hook_dir, "post-merge"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with main!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
+            )
+        os.chmod(os.path.join(hook_dir, "post-merge"), 0o755)
+
+        # pre-receive hook
+        with open(os.path.join(hook_dir, "pre-receive"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "main" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
+            )
+        os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
+
     def init(self, force=False):
-        def install_hooks(self):
-            hook_dir = os.path.join(self.root, ".git", "hooks")
-            if not os.path.exists(hook_dir):
-                return
-
-            # pre-commit hook
-            with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# 1. Block direct commits to main\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi\n\n# 2. Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
-                )
-            os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
-
-            # pre-merge hook
-            with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "⚠️  Direct git merge to main detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
-                )
-            os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
-
-            # post-merge hook
-            with open(os.path.join(hook_dir, "post-merge"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with main!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
-                )
-            os.chmod(os.path.join(hook_dir, "post-merge"), 0o755)
-
-            # pre-receive hook
-            with open(os.path.join(hook_dir, "pre-receive"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "main" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
-                )
-            os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
-
         if self.dev:
             # Safe to reset dev storage if --force is used
             if os.path.exists(self.tasks_path):
@@ -653,7 +661,7 @@ class TasksCLI:
             self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", "Init task counter"], cwd=self.tasks_path)
 
-        install_hooks(self)
+        self.install_hooks()
         subprocess.run(
             ["git", "config", "--global", "merge.message", "merge: auto-merge"],
             cwd=self.root,

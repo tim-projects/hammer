@@ -215,6 +215,10 @@ if __name__ == "__main__":
         "upgrade", help="Upgrade tasks to latest version (runs install.sh)."
     )
 
+    subparsers.add_parser(
+        "init-hooks", help="Update Git hooks without reinitializing tasks."
+    )
+
     run_p = subparsers.add_parser("run", help="Run a configured tool.")
     run_p.add_argument(
         "tool",
@@ -318,6 +322,8 @@ if __name__ == "__main__":
         cli.config(args.action, args.key, args.value, save=args.save)
     elif args.command == "upgrade":
         cli.upgrade()
+    elif args.command == "init-hooks":
+        cli.init_hooks()
     elif args.command == "verify":
         cli.verify(args.id, args.proof)
     elif args.command == "doctor":
