@@ -505,6 +505,13 @@ class TasksCLI:
             if not os.path.exists(hook_dir):
                 return
 
+            # pre-commit hook
+            with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
+                f.write(
+                    '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi'
+                )
+            os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
+
             # pre-merge hook
             with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
                 f.write(
