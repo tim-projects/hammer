@@ -508,7 +508,7 @@ class TasksCLI:
             # pre-commit hook
             with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
                 f.write(
-                    '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi'
+                    '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# 1. Block direct commits to main\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi\n\n# 2. Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
                 )
             os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
 
