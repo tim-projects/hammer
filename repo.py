@@ -341,16 +341,12 @@ def cmd_promote(src_input, original_task_id=None):
     if task_id and TasksCLI and path:
         from tasks_ai.file_manager import FM
 
-<<<<<<< HEAD
-        t = FM.load(path)
-        cli._validate_pipeline_gate(t, target.upper(), path)
-=======
         task = FM.load(path)
         # Use CLI's robust gate validation
         cli._validate_pipeline_gate(task, target.upper(), path)
+
     needs_move = False
     if task_id and TasksCLI and current_status:
->>>>>>> 240-task-align-repo-promote-error-handl
         if target == "testing" and current_status == "PROGRESSING":
             needs_move = True
         elif target == "staging" and current_status == "REVIEW":
