@@ -340,11 +340,8 @@ def cmd_promote(src_input, original_task_id=None):
     # Perform gate checks
     if task_id and TasksCLI and path:
         from tasks_ai.file_manager import FM
-
         t = FM.load(path)
         cli._validate_pipeline_gate(t, target.upper(), path)
-    needs_move = False
-    if task_id and TasksCLI and current_status:
         if target == "testing" and current_status == "PROGRESSING":
             needs_move = True
         elif target == "staging" and current_status == "REVIEW":
