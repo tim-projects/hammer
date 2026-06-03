@@ -771,9 +771,9 @@ class TasksCLI:
         else:
             self._reconcile_single(target, dry_run=dry_run)
 
-
     def unarchive(self, task_id):
         from .commands.unarchive import run
+
         run(self, task_id)
 
     def _reconcile_scan(self, dry_run=False):

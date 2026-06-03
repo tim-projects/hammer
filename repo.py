@@ -268,14 +268,16 @@ def cmd_commit(message):
         warn("No changes to commit")
 
 
-
 def check_main_divergence():
     run(["git", "fetch", "origin"])
     local = run(["git", "rev-parse", "main"], capture=True).stdout.strip()
     remote = run(["git", "rev-parse", "origin/main"], capture=True).stdout.strip()
     if local != remote:
-        error("Local main is out of sync with origin/main. Run git pull or resolve divergence manually.", 
-              hint="Run git fetch origin && git log main..origin/main to see missing commits.")
+        error(
+            "Local main is out of sync with origin/main. Run git pull or resolve divergence manually.",
+            hint="Run git fetch origin && git log main..origin/main to see missing commits.",
+        )
+
 
 def cmd_promote(src_input, original_task_id=None):
     """
