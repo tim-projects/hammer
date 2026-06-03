@@ -97,6 +97,9 @@ if __name__ == "__main__":
     lk_p.add_argument("filename", help="Task Id (or filename) to block.")
     lk_p.add_argument("blocked_by", help="Task Id (or filename) that is blocking.")
 
+    un_p = subparsers.add_parser("unarchive", help="Unarchive a task.")
+    un_p.add_argument("filename", help="Task Id (or filename).")
+
     cr_p = subparsers.add_parser("create", help="Create task.")
     cr_p.add_argument("title", help="Task title (min 10 chars).")
     cr_p.add_argument(
@@ -316,6 +319,8 @@ if __name__ == "__main__":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
         cli.reconcile(args.target, all=args.all, dry_run=args.dry_run)
+    elif args.command == "unarchive":
+        cli.unarchive(args.filename)
     elif args.command == "cleanup":
         cli.cleanup(dry_run=args.dry_run, yes=args.yes)
     elif args.command == "config":

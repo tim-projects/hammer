@@ -268,6 +268,15 @@ def cmd_commit(message):
         warn("No changes to commit")
 
 
+
+def check_main_divergence():
+    run(["git", "fetch", "origin"])
+    local = run(["git", "rev-parse", "main"], capture=True).stdout.strip()
+    remote = run(["git", "rev-parse", "origin/main"], capture=True).stdout.strip()
+    if local != remote:
+        error("Local main is out of sync with origin/main. Run git pull or resolve divergence manually.", 
+              hint="Run git fetch origin && git log main..origin/main to see missing commits.")
+
 def cmd_promote(src_input, original_task_id=None):
     """
     Promote a branch through the pipeline.
@@ -333,6 +342,8 @@ def cmd_promote(src_input, original_task_id=None):
             else ("staging" if src == "testing" else "main")
         )
 
+    if target == "main":
+        check_main_divergence()
     if src == target:
         info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
         return
@@ -375,6 +386,7 @@ def cmd_promote(src_input, original_task_id=None):
     log(f"✅ Successfully promoted {src.upper()} → {target.upper()}")
     if target == "main":
         log(f"Merged to main complete. Current branch: {get_current_branch()}")
+        run(["git", "push", "origin", "main"])
     if target == "main" and task_id and TasksCLI:
         log(
             f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
