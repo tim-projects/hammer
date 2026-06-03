@@ -14,6 +14,13 @@ This repo has a local `tasks.py` that should be used instead of the system-insta
 ./hammer tasks -j list
 ```
 
+### 🏗️ Pipeline Structure
+The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED).
+
+* **Automation Engine:** The mechanism that executes the Pipeline.
+* **Automation Rule:** The Automation Engine will chain all Jobs within a Stage automatically.
+* **Halt Policy:** The Pipeline halts only when a Check fails or Manual Intervention (e.g., audit) is required.
+
 ### 🛠️ Development & Testing
 
 When testing the tool itself or performing "dry runs" of task operations without affecting the project's real `.tasks` worktree, use the `--dev` flag. This will use `/tmp/.tasks` as an isolated storage directory. Note that the `--dev` flag is strictly for testing tool behavior and operational workflows in an isolated environment; it should NOT be used to create tasks meant for real project progress.

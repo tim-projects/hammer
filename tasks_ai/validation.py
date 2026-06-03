@@ -96,7 +96,9 @@ class Validation:
 
     def run_tool(self, tool_name: Optional[str] = None, fix: bool = False):
         """Run configured tools (lint, test, typecheck, format)."""
-        check_py = os.path.join(self.cli.root, "check.py")
+        # Resolve project root independently of CWD
+        repo_root = self.cli.context.repo_root or os.getcwd()
+        check_py = os.path.join(repo_root, "check.py")
         if not os.path.exists(check_py):
             self.cli.error("check.py not found in project root.")
             return
@@ -109,7 +111,7 @@ class Validation:
 
         capture = self.cli.as_json or self.cli.quiet
         result = subprocess.run(
-            cmd, cwd=self.cli.root, capture_output=capture, text=True
+            cmd, cwd=repo_root, capture_output=capture, text=True
         )
 
         if self.cli.as_json:
