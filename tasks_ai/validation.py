@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional
 
 if TYPE_CHECKING:
@@ -96,23 +97,24 @@ class Validation:
 
     def run_tool(self, tool_name: Optional[str] = None, fix: bool = False):
         """Run configured tools (lint, test, typecheck, format)."""
-        # Resolve project root independently of CWD
-        repo_root = self.cli.context.repo_root or os.getcwd()
-        check_py = os.path.join(repo_root, "check.py")
-        if not os.path.exists(check_py):
+        # Resolve project root independently of CWD using the same logic as repo_script
+        install_dir = Path(__file__).resolve().parent.parent
+        check_py = install_dir / "check.py"
+
+        if not check_py.exists():
             self.cli.error("check.py not found in project root.")
             return
 
-        cmd = [sys.executable, check_py, tool_name or "all"]
+        cmd = [sys.executable, str(check_py), tool_name or "all"]
         if fix:
             cmd.append("--fix")
         if self.cli.as_json:
             cmd.append("--json")
 
+        # repo_root is still needed for execution context
+        repo_root = self.cli.context.repo_root or os.getcwd()
         capture = self.cli.as_json or self.cli.quiet
-        result = subprocess.run(
-            cmd, cwd=repo_root, capture_output=capture, text=True
-        )
+        result = subprocess.run(cmd, cwd=repo_root, capture_output=capture, text=True)
 
         if self.cli.as_json:
             try:
