@@ -5,20 +5,25 @@ def run(cli, action=None, key=None, value=None, save=False):
     """Execution logic for 'tasks config'."""
     if action == "detect":
         detected = cli._detect_tools()
-        if save and detected:
+        if not detected:
+            if not cli.as_json:
+                cli.log("No tools detected in project root.")
+            cli.finish({})
+            return
+
+        if save:
             cfg = load_config(cli.tasks_path)
             for k, v in detected.items():
                 key_name = KEY_MAP.get(k, k)
                 if v:
                     cfg[key_name] = v
             save_config(cli.tasks_path, cfg)
-            if cli.as_json:
-                cli.finish({"detected": detected, "saved": True})
-            else:
+            if not cli.as_json:
                 cli.log("Detected tools saved to config.yaml.")
-                cli.finish(detected)
-        else:
-            cli.finish(detected)
+
+        if not cli.as_json:
+            cli.log(f"Detected tools: {detected}")
+        cli.finish(detected)
         return
 
     cfg = load_config(cli.tasks_path)

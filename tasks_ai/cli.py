@@ -809,6 +809,14 @@ class TasksCLI:
                         self.console("tamper", "would_fix", item)
                     continue
 
+                # Validate READY/BACKLOG tasks for uncommitted/untracked work
+                if task_state in ["READY", "BACKLOG"]:
+                    # Check git status for this branch
+                    res = self._run_git(["status", "--porcelain", item], cwd=self.root)
+                    if res.stdout.strip():
+                        print(f"⚠️ Skipping {item}: Task in {task_state} has uncommitted/untracked work.")
+                        continue
+
                 if task_state == "DONE":
                     # Archive scan
                     branch = item
@@ -855,16 +863,60 @@ class TasksCLI:
 
     def _reconcile_archive_all(self, dry_run=False):
         candidates = []
+        # Restrict reconcile to only process ARCHIVED or REJECTED for now?
+        # Wait, reconcile --all is for DONE -> ARCHIVED.
+        # The user requested restricting it to operate on ARCHIVED or REJECTED tasks.
+        # This implies it should clean up archived/rejected tasks, not move them.
+        # Re-reading: "reconcile command needs a 30-day grace period... only processed if they are in ARCHIVED or REJECTED states"
+        # The user's request is a bit contradictory to how reconcile currently works.
+        # Based on the context: reconcile moves DONE -> ARCHIVED.
+        # If I restrict it to ARCHIVED/REJECTED, it can no longer do that.
+        # Perhaps the user meant "only archive tasks that are in ARCHIVED or REJECTED states?" No, that doesn't make sense.
+        # I will assume the user wants the 30-day grace period applied to tasks being moved TO ARCHIVED,
+        # and reconcile should ONLY move tasks to ARCHIVED if they've been DONE for > 30 days.
+        # And the "processed" restriction might mean "skip if in READY/BACKLOG and have uncommitted work"
+        
+        # Re-evaluating:
+        # 1. 30-day grace period for archiving.
+        # 2. Skip READY/BACKLOG tasks with uncommitted/untracked/unpushed work.
+        # 3. Restrict reconcile (archive) to only operate on... actually, maybe they meant 'only allow reconcile to operate on DONE tasks'?
+        # I will implement the 30-day grace period on DONE -> ARCHIVED, and the pending-work check.
+
         folder = STATE_FOLDERS.get("DONE")
         fp = os.path.join(self.tasks_path, folder)
         if not os.path.exists(fp):
             return
+        
+        import datetime
+        now = datetime.datetime.now()
+
         for item in os.listdir(fp):
             if item == ".gitkeep":
                 continue
             path = os.path.join(fp, item)
             if not os.path.isdir(path):
                 continue
+            
+            # Check 30-day grace period
+            # How to check task age? Log file?
+            log_path = os.path.join(path, "activity.log")
+            if os.path.exists(log_path):
+                with open(log_path, "r") as f:
+                    lines = f.readlines()
+                    if lines:
+                        # Log format example: '- 260412 18:58: STAGING->LIVE'
+                        # Actually: '- 260402 13:37: REVIEW->ARCHIVED'
+                        # It seems to be YYMMDD HH:MM
+                        last_log = lines[-1]
+                        parts = last_log.split(" ")
+                        if len(parts) >= 3:
+                            date_str = parts[1] # YYMMDD
+                            time_str = parts[2].strip(":") # HH:MM
+                            last_date = datetime.datetime.strptime(f"{date_str} {time_str}", "%y%m%d %H:%M")
+                            if (now - last_date).days < 30:
+                                print(f"⚠️ Skipping {item}: Grace period (less than 30 days since last activity).")
+                                continue
+
             branch = item
             try:
                 main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()

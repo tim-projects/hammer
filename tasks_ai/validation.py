@@ -16,7 +16,8 @@ class Validation:
     def detect_tools(self) -> Dict[str, str]:
         """Detect project type and suggest/create config."""
         detected = {}
-        root = self.cli.root
+        # Ensure we use the actual repo root
+        root = self.cli.context.repo_root or self.cli.root
 
         if os.path.exists(os.path.join(root, "package.json")):
             detected["package_manager"] = "npm"
@@ -118,13 +119,31 @@ class Validation:
 
         if self.cli.as_json:
             try:
-                data = json.loads(result.stdout)
+                # Handle potential JSON Lines (multiple JSON objects)
+                lines = [
+                    json.loads(line)
+                    for line in result.stdout.strip().splitlines()
+                    if line.strip()
+                ]
+                if len(lines) == 1:
+                    data = lines[0]
+                else:
+                    # Aggregate results
+                    data = {
+                        "success": all(line.get("success", False) for line in lines),
+                        "results": lines,
+                    }
+
                 if result.returncode == 0:
                     self.cli.finish(data)
                 else:
-                    self.cli.error(
-                        f"Tool execution failed: {tool_name}", hint=data.get("error")
-                    )
+                    # Try to extract a meaningful error
+                    error_msg = "Tool execution failed"
+                    for line in lines:
+                        if not line.get("success", True):
+                            error_msg = line.get("error", error_msg)
+                            break
+                    self.cli.error(f"Tool execution failed: {tool_name or 'all'}", hint=error_msg)
             except json.JSONDecodeError:
                 self.cli.error(f"Failed to parse tool output: {result.stdout}")
         else:

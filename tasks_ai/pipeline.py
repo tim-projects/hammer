@@ -52,8 +52,9 @@ class PipelineService:
                     continue
                 if next_state not in allowed_transitions.get(last_state, []):
                     cli.error(
-                        f"Forbidden transition in chain: {last_state} -> {next_state}",
-                        hint=f"Allowed from {last_state}: {', '.join(allowed_transitions.get(last_state, []))}",
+                        "FORBIDDEN_TRANSITION",
+                        from_state=last_state,
+                        to_state=next_state,
                     )
                     return
                 last_state = next_state
@@ -68,8 +69,9 @@ class PipelineService:
                 cli._move_logic(filename, "READY", yes=True)
                 return
             cli.error(
-                f"Forbidden transition: {current_state} -> {new_status}",
-                hint=f"Allowed: {', '.join(allowed_transitions.get(current_state, []))}",
+                "FORBIDDEN_TRANSITION",
+                from_state=current_state,
+                to_state=new_status,
             )
 
     def validate_gate(self, task, target_state: str, task_path: str):
