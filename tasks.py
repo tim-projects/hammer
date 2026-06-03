@@ -244,8 +244,9 @@ if __name__ == "__main__":
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
         "--fix",
-        action="store_true",
-        help="Attempt to fix issues automatically.",
+        nargs="?",
+        const=True,
+        help="Attempt to fix issues automatically (optionally specify task ID).",
     )
 
     args = parser.parse_args()

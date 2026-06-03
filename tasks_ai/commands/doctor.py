@@ -19,6 +19,9 @@ def extract_id_from_string(s):
 def run(cli, fix=False):
     """Execution logic for 'tasks doctor'."""
     bugs = []
+    fix_id = None
+    if isinstance(fix, str):
+        fix_id = int(fix)
 
     def sanitize_filename(name):
         return re.sub(r"[^a-z0-9\-]", "-", name.lower())
@@ -68,7 +71,7 @@ def run(cli, fix=False):
             if branch_from_metadata and isinstance(branch_from_metadata, str):
                 branch_id = extract_id_from_string(branch_from_metadata)
 
-            # Determine what the correct ID should be (priority: metadata.Id > metadata.Br > directory name)
+            # Determine what the correct ID should be
             correct_id = None
 
             if metadata_id and str(metadata_id).isdigit():
@@ -78,8 +81,11 @@ def run(cli, fix=False):
             elif dir_id is not None:
                 correct_id = dir_id
 
-            # If we can't determine a correct ID, skip this task
             if correct_id is None:
+                continue
+                
+            # If fix_id is provided, only process that task
+            if fix_id is not None and correct_id != fix_id:
                 continue
 
             # Check for inconsistencies
@@ -122,6 +128,10 @@ def run(cli, fix=False):
                 inconsistencies.append(
                     ("metadata.Br", branch_from_metadata, expected_br)
                 )
+            
+            # Add state transition inconsistency check
+            if branch_from_metadata and not cli._run_git(["rev-parse", "--verify", branch_from_metadata]).returncode == 0:
+                inconsistencies.append(("git branch", branch_from_metadata, "Branch exists"))
 
             # Check directory name
             expected_dir = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip(
