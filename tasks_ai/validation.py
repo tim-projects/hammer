@@ -143,7 +143,9 @@ class Validation:
                         if not line.get("success", True):
                             error_msg = line.get("error", error_msg)
                             break
-                    self.cli.error(f"Tool execution failed: {tool_name or 'all'}", hint=error_msg)
+                    self.cli.error(
+                        f"Tool execution failed: {tool_name or 'all'}", hint=error_msg
+                    )
             except json.JSONDecodeError:
                 self.cli.error(f"Failed to parse tool output: {result.stdout}")
         else:

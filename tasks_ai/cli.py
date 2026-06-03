@@ -814,7 +814,9 @@ class TasksCLI:
                     # Check git status for this branch
                     res = self._run_git(["status", "--porcelain", item], cwd=self.root)
                     if res.stdout.strip():
-                        print(f"⚠️ Skipping {item}: Task in {task_state} has uncommitted/untracked work.")
+                        print(
+                            f"⚠️ Skipping {item}: Task in {task_state} has uncommitted/untracked work."
+                        )
                         continue
 
                 if task_state == "DONE":
@@ -875,7 +877,7 @@ class TasksCLI:
         # I will assume the user wants the 30-day grace period applied to tasks being moved TO ARCHIVED,
         # and reconcile should ONLY move tasks to ARCHIVED if they've been DONE for > 30 days.
         # And the "processed" restriction might mean "skip if in READY/BACKLOG and have uncommitted work"
-        
+
         # Re-evaluating:
         # 1. 30-day grace period for archiving.
         # 2. Skip READY/BACKLOG tasks with uncommitted/untracked/unpushed work.
@@ -886,8 +888,9 @@ class TasksCLI:
         fp = os.path.join(self.tasks_path, folder)
         if not os.path.exists(fp):
             return
-        
+
         import datetime
+
         now = datetime.datetime.now()
 
         for item in os.listdir(fp):
@@ -896,7 +899,7 @@ class TasksCLI:
             path = os.path.join(fp, item)
             if not os.path.isdir(path):
                 continue
-            
+
             # Check 30-day grace period
             # How to check task age? Log file?
             log_path = os.path.join(path, "activity.log")
@@ -910,11 +913,15 @@ class TasksCLI:
                         last_log = lines[-1]
                         parts = last_log.split(" ")
                         if len(parts) >= 3:
-                            date_str = parts[1] # YYMMDD
-                            time_str = parts[2].strip(":") # HH:MM
-                            last_date = datetime.datetime.strptime(f"{date_str} {time_str}", "%y%m%d %H:%M")
+                            date_str = parts[1]  # YYMMDD
+                            time_str = parts[2].strip(":")  # HH:MM
+                            last_date = datetime.datetime.strptime(
+                                f"{date_str} {time_str}", "%y%m%d %H:%M"
+                            )
                             if (now - last_date).days < 30:
-                                print(f"⚠️ Skipping {item}: Grace period (less than 30 days since last activity).")
+                                print(
+                                    f"⚠️ Skipping {item}: Grace period (less than 30 days since last activity)."
+                                )
                                 continue
 
             branch = item
