@@ -1,33 +1,49 @@
 import os
-from ..audit import verify_audit
 
 
 def run(cli, task_id, proof):
-    patch_dir = ".tasks/review"
-    patch_file = None
-    audit_file = None
-    for f in os.listdir(patch_dir):
-        if f.startswith(task_id):
-            if f.endswith(".patch"):
-                patch_file = os.path.join(patch_dir, f)
-            elif f.endswith(".audit"):
-                audit_file = os.path.join(patch_dir, f)
+    task_path, state = cli.find_task(task_id)
+    if not task_path or state != "REVIEW":
+        cli.error(
+            f"Task {task_id} must be in REVIEW state to perform verification.",
+            hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW",
+        )
 
-    if not patch_file or not audit_file:
-        cli.error(f"Patch or Audit file not found for task {task_id}")
-        return
+    # Get the *actual* current filepath, which holds the folder name
+    current_path, _ = cli.find_task(task_id)
+    task_folder_name = os.path.basename(current_path)
 
-    if not verify_audit(patch_file, audit_file):
-        cli.error(f"Audit verification failed for task {task_id}")
-        return
+    review_dir = os.path.join(cli.tasks_path, "review")
+    patches_dir = os.path.join(review_dir, task_folder_name, "patches")
+    audit_file = os.path.join(review_dir, f"{task_folder_name}.audit")
 
-    # Write the verification proof log
-    task_dir = os.path.dirname(audit_file)
-    proof_log_path = os.path.join(task_dir, "verification_proof.log")
-    with open(proof_log_path, "w") as f:
+    from ..file_manager import FM
+
+    task = FM.load(task_path)
+    is_auto_passed = task.metadata.get("Rc") == "PASSED"
+
+    if not is_auto_passed:
+        if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
+            cli.error("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
+
+        if not os.path.exists(audit_file):
+            cli.error("AUDIT_MISSING", audit_path=audit_file, task_id=task_id)
+
+        from ..audit import verify_audit
+
+        if not verify_audit(patches_dir, audit_file):
+            cli.error("AUDIT_MISMATCH", task_id=task_id)
+
+    # Write the verification proof
+    proof_path = os.path.join(task_path, "verification_proof.log")
+    with open(proof_path, "w") as f:
         f.write(proof)
-    
-    # Generate/update the audit hash based on criteria and proof
-    cli.pipeline.update_audit_hash(task_id, task_dir)
-    
+
+    # Update hash using pipeline if not auto-passed
+    if not is_auto_passed:
+        cli.pipeline.update_audit_hash(task_id, task_path)
+    else:
+        # If we skip, check_audit_integrity will be skipped anyway because Rc == "PASSED"
+        cli.log(f"DEBUG: Skipping audit hash update for auto-passed task {task_id}")
+
     cli.log(f"✅ Task {task_id} verified.")

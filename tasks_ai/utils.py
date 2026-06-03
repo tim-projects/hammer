@@ -41,6 +41,16 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
                 os.makedirs(parent_dir, exist_ok=True)
             temp_dir = tempfile.mkdtemp(dir=parent_dir or ".")
             try:
+                # Preserve existing sibling files/folders if they exist
+                if os.path.isdir(path):
+                    for item in os.listdir(path):
+                        src_item = os.path.join(path, item)
+                        dst_item = os.path.join(temp_dir, item)
+                        if os.path.isdir(src_item):
+                            shutil.copytree(src_item, dst_item)
+                        else:
+                            shutil.copy2(src_item, dst_item)
+
                 if fm:
                     fm.dump(task_or_content, temp_dir)
                 else:
@@ -157,18 +167,45 @@ def perform_move(cli, task, current_state, new_status, filepath):
     filepath_str = str(filepath)
     sync_task_content(cli, filepath_str, task, is_final=(new_status == "ARCHIVED"))
     task.metadata.pop("St", None)
-    fname = os.path.basename(filepath_str)
+
+    # Enforce ID-based directory naming using Br metadata (which is id-type-title)
+    fname = task.metadata.get("Br")
+    if not fname or fname == "None":
+        cli.error(
+            "TASK_METADATA_CORRUPTED",
+            detail=f"Task {task.metadata.get('Id')} is missing 'Br' metadata or has invalid 'Br' value.",
+        )
+
+    # Ensure mandatory fields exist
+    for field in ["Id", "Ti"]:
+        if not task.metadata.get(field):
+            cli.error(
+                "TASK_METADATA_CORRUPTED",
+                detail=f"Task {task.metadata.get('Id')} is missing mandatory field: {field}",
+            )
+
     new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
 
     # Move and cleanup
-    atomic_write(new_filepath, task, fm=FM)
-    if os.path.exists(filepath_str):
-        if os.path.isdir(filepath_str):
-            shutil.rmtree(filepath_str)
-        else:
-            os.remove(filepath_str)
+    if filepath_str != new_filepath:
+        if os.path.exists(new_filepath):
+            # If it's a directory, we can move contents or just remove and move
+            # But wait, if it exists, it might be because a hook created it (e.g. patches folder)
+            # So we should be careful.
+            pass
+
+        atomic_write(new_filepath, task, fm=FM)
+
+        if os.path.exists(filepath_str):
+            if os.path.isdir(filepath_str):
+                shutil.rmtree(filepath_str)
+            else:
+                os.remove(filepath_str)
+    else:
+        # Just update metadata if folder name is same
+        atomic_write(new_filepath, task, fm=FM)
+
     cli._append_log(new_filepath, f"{current_state}->{new_status}")
-    return task
     return task
 
 

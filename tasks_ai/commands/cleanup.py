@@ -37,6 +37,14 @@ def run(cli, dry_run=False, yes=False):
         # Check if merged
         res = cli._run_git(["merge-base", "--is-ancestor", branch, default_branch])
         if res.returncode == 0:
+            # SAFETY CHECK: Verify branch is clean
+            status_res = cli._run_git(["status", "--porcelain", branch])
+            if status_res.stdout.strip():
+                print(
+                    f"⚠️ Skipping {branch}: Uncommitted/untracked changes detected. Clean up work first."
+                )
+                continue
+
             if dry_run:
                 cleaned.append(branch)
             else:

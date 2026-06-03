@@ -24,10 +24,10 @@ def run(
 
     title = title.strip()
     if len(title) < 10:
-        cli.error("Task title is too vague. Min 10 chars.")
+        cli.error("TITLE_TOO_VAGUE")
 
     if task_type not in ["task", "issue", "docs", "test"]:
-        cli.error(f"Invalid task type: {task_type}. Allowed: task, issue, docs, test.")
+        cli.error("INVALID_TASK_TYPE", task_type=task_type)
 
     if branch:
         cli.log(
@@ -48,9 +48,9 @@ def run(
 
     if missing:
         cli.error(
-            f"MISSING PARTS: {', '.join(missing)}! HAMMER SAY NO! FIX! 🔨\n"
-            f"Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'"
-            f"{' --repro <repro>' if task_type == 'issue' else ''}"
+            "MISSING_PARTS",
+            missing_parts=", ".join(missing),
+            issue_repro=" --repro <repro>" if task_type == "issue" else "",
         )
 
     MIN_LEN = 15
@@ -76,7 +76,7 @@ def run(
             too_short.append(f"--repro (min {MIN_LEN} chars)")
 
     if too_short:
-        cli.error(f"TOO SHORT: {', '.join(too_short)}! HAMMER SAY NO! FIX! 🔨")
+        cli.error("TOO_SHORT", too_short=", ".join(too_short))
 
     if priority is not None:
         try:
@@ -84,7 +84,7 @@ def run(
             if not (1 <= p <= 9):
                 raise ValueError()
         except (ValueError, TypeError):
-            cli.error("Priority must be a number between 1 and 9.")
+            cli.error("PRIORITY_INVALID")
 
     clean_title = re.sub(r"[^a-zA-Z0-9]+", "-", title.lower()).strip("-")
     numeric_id = cli._get_next_id()
@@ -92,7 +92,7 @@ def run(
     task_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["BACKLOG"], task_id)
 
     if cli.find_task(task_id)[0]:
-        cli.error(f"Task {task_id} exists.")
+        cli.error("TASK_EXISTS", task_id=task_id)
 
     for state, folder in STATE_FOLDERS.items():
         fp = os.path.join(cli.tasks_path, folder)
@@ -104,7 +104,7 @@ def run(
             path = os.path.join(fp, item)
             task = FM.load(path)
             if task.metadata.get("Id") == numeric_id:
-                cli.error(f"Task with Id {numeric_id} already exists (in {state}).")
+                cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
 
     task = Task(
         metadata={
@@ -121,7 +121,7 @@ def run(
             "criteria": (
                 "\n".join(f"- [ ] {c}" for c in criteria)
                 if isinstance(criteria, list)
-                else f"- [ ] {criteria}"
+                else f"{criteria}"
             )
             if criteria
             else "",
@@ -165,6 +165,9 @@ def run(
         ).stdout.strip()
         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
         cli.log(f"Branch: {task_id} | Now on: {current_branch}")
+        cli.log(
+            f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'"
+        )
 
         cli.finish(
             {

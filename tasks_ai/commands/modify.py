@@ -52,6 +52,7 @@ def run(
         task.parts["tech"] = tech
         updated = True
     if criteria:
+        # Overwrite existing criteria completely
         if isinstance(criteria, list):
             task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
         else:

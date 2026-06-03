@@ -103,8 +103,8 @@ if __name__ == "__main__":
         "--type",
         "-t",
         default="task",
-        choices=["task", "issue", "bug"],
-        help="Task type: task, issue, or bug.",
+        choices=["task", "issue", "docs"],
+        help="Task type: task or issue or docs.",
     )
     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
     cr_p.add_argument("--story", help="User story description.")
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     mod_p.add_argument(
         "--type",
         "-t",
-        choices=["task", "issue", "bug"],
-        help="Task type: task, issue, or bug.",
+        choices=["task", "issue", "docs"],
+        help="Task type: task or issue or docs.",
     )
     mod_p.add_argument("--title", help="New title.")
     mod_p.add_argument("--story", help="User story.")
@@ -179,6 +179,11 @@ if __name__ == "__main__":
     )
     rec_p.add_argument("target", nargs="?")
     rec_p.add_argument("--all", action="store_true", help="Clean up all candidates.")
+    rec_p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be reconciled without making changes.",
+    )
 
     clean_p = subparsers.add_parser(
         "cleanup",
@@ -208,6 +213,10 @@ if __name__ == "__main__":
 
     subparsers.add_parser(
         "upgrade", help="Upgrade tasks to latest version (runs install.sh)."
+    )
+
+    subparsers.add_parser(
+        "init-hooks", help="Update Git hooks without reinitializing tasks."
     )
 
     run_p = subparsers.add_parser("run", help="Run a configured tool.")
@@ -268,6 +277,8 @@ if __name__ == "__main__":
             repro=args.repro,
             branch=args.branch,
         )
+    elif args.command == "audit":
+        cli.audit(args.id)
     elif args.command == "modify":
         cli.modify(
             args.filename,
@@ -304,13 +315,15 @@ if __name__ == "__main__":
     elif args.command == "link":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
-        cli.reconcile(args.target, all=args.all)
+        cli.reconcile(args.target, all=args.all, dry_run=args.dry_run)
     elif args.command == "cleanup":
         cli.cleanup(dry_run=args.dry_run, yes=args.yes)
     elif args.command == "config":
         cli.config(args.action, args.key, args.value, save=args.save)
     elif args.command == "upgrade":
         cli.upgrade()
+    elif args.command == "init-hooks":
+        cli.init_hooks()
     elif args.command == "verify":
         cli.verify(args.id, args.proof)
     elif args.command == "doctor":

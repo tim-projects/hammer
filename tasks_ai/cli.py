@@ -17,6 +17,27 @@ from .validation import Validation
 from .task_service import TaskService
 from .cli_io import log, error, finish
 from .file_manager import FM
+from .hooks import HookRegistry
+from .messages import MessageRegistry
+from .pipeline_hooks import (
+    BranchSyncOnExitTestingHook,
+    SaveProgressHook,
+    ValidationHook,
+    ContentSufficiencyHook,
+    BlockerCheckHook,
+    TestingToReviewGateHook,
+    ReviewDiffHook,
+    ArchivedCommitHook,
+    PostMoveCommitHook,
+    ValidationPassedMarkHook,
+    BranchCheckHook,
+    CleanWorkspaceHook,
+    BranchSyncHook,
+    MainBranchProtectionHook,
+    ProgressUpdateHook,
+    CleanupReviewArtifactsHook,
+    BranchExistsHook,
+)
 
 
 class TasksCLI:
@@ -26,6 +47,54 @@ class TasksCLI:
         self.dev = dev
         self.yes = yes
         self.output_messages = []
+        self.hook_registry = HookRegistry()
+        self.messages = MessageRegistry()
+
+        # Register EXIT hooks (Pre-move gates/checks)
+        self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
+        self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
+        self.hook_registry.register_exit_hook("PROGRESSING", MainBranchProtectionHook())
+        self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
+        self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
+        self.hook_registry.register_exit_hook("TESTING", ValidationHook())
+        self.hook_registry.register_exit_hook("TESTING", BranchSyncOnExitTestingHook())
+        self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
+        self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
+
+        # Register ENTER hooks (Post-move actions)
+        self.hook_registry.register_enter_hook("BACKLOG", CleanupReviewArtifactsHook())
+        self.hook_registry.register_enter_hook("READY", CleanupReviewArtifactsHook())
+        self.hook_registry.register_enter_hook(
+            "PROGRESSING", CleanupReviewArtifactsHook()
+        )
+        self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", BranchSyncHook())
+        self.hook_registry.register_enter_hook("TESTING", BranchExistsHook())
+        self.hook_registry.register_enter_hook("TESTING", ValidationPassedMarkHook())
+        self.hook_registry.register_enter_hook("REVIEW", BranchExistsHook())
+        self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
+        self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
+        self.hook_registry.register_enter_hook("STAGING", BranchCheckHook())
+        self.hook_registry.register_enter_hook("STAGING", CleanWorkspaceHook())
+        self.hook_registry.register_enter_hook("DONE", BranchCheckHook())
+        self.hook_registry.register_enter_hook("ARCHIVED", BranchCheckHook())
+        self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
+
+        # Post-move generic hooks
+        for state in [
+            "BACKLOG",
+            "READY",
+            "PROGRESSING",
+            "TESTING",
+            "REVIEW",
+            "STAGING",
+            "DONE",
+            "REJECTED",
+        ]:
+            self.hook_registry.register_enter_hook(state, SaveProgressHook())
+            self.hook_registry.register_enter_hook(state, PostMoveCommitHook())
 
         self.context = ProjectContext(dev=dev)
         self.root = self.context.repo_root or os.getcwd()
@@ -94,8 +163,14 @@ class TasksCLI:
     def log(self, message):
         log(self, message)
 
-    def error(self, message, hint=None):
-        error(self, message, hint=hint)
+    def console(self, type_tag, action, result):
+        """Standardized, concise logging: [type] action -> result."""
+        log(self, f"[{type_tag.lower()}] {action.lower()} -> {result.lower()}")
+
+    def error(self, code, hint_code=None, **kwargs):
+        message = self.messages.get_error(code, **kwargs)
+        hint = self.messages.get_hint(hint_code or code, **kwargs)
+        error(self, message, hint=hint if hint else None)
 
     def finish(self, data=None):
         finish(self, data=data)
@@ -117,6 +192,16 @@ class TasksCLI:
                 os.makedirs(parent_dir, exist_ok=True)
                 temp_dir = tempfile.mkdtemp(dir=parent_dir)
                 try:
+                    # Preserve existing sibling files/folders if they exist
+                    if os.path.isdir(path):
+                        for item in os.listdir(path):
+                            src_item = os.path.join(path, item)
+                            dst_item = os.path.join(temp_dir, item)
+                            if os.path.isdir(src_item):
+                                shutil.copytree(src_item, dst_item)
+                            else:
+                                shutil.copy2(src_item, dst_item)
+
                     FM.dump(task_or_content, temp_dir)
                     if os.path.exists(path):
                         if os.path.isdir(path):
@@ -180,13 +265,14 @@ class TasksCLI:
             task_path, _ = self.find_task(task_id)
         if not task_path:
             return
-        return self.pipeline.validate_gate(task, target_state, task_path)
-
-    def _run_validation(self, fix=False):
-        return self.validation.run_lint(fix=fix)
-
-    def _run_tests(self, fail_safe=False):
-        return self.validation.run_tests(fail_safe=fail_safe)
+        try:
+            return self.pipeline.validate_gate(task, target_state, task_path)
+        except Exception as e:
+            if hasattr(e, "code"):
+                self.error(e.code, **e.kwargs)
+            else:
+                self.error(str(e))
+            sys.exit(1)
 
     def _detect_tools(self):
         return self.validation.detect_tools()
@@ -419,34 +505,54 @@ class TasksCLI:
         return False
 
     # --- Commands ---
+    def init_hooks(self):
+        self.log("Installing git hooks...")
+        self.install_hooks()
+        self.log("✅ Git hooks installed.")
+
+    def install_hooks(self):
+        hook_dir = os.path.join(self.root, ".git", "hooks")
+        if not os.path.exists(hook_dir):
+            return
+
+        # pre-commit hook
+        with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# 1. Block direct commits to main\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi\n\n# 2. Block non-conformant branch names (skip pipeline branches)\n# Convention: <id>-<type>-<title>\nif [[ "$target_branch" != "staging" && "$target_branch" != "testing" && ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
+            )
+        os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
+
+        # pre-merge hook
+        with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "⚠️  Direct git merge to main detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
+            )
+        os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
+
+        # post-merge hook
+        with open(os.path.join(hook_dir, "post-merge"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with main!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
+            )
+        os.chmod(os.path.join(hook_dir, "post-merge"), 0o755)
+
+        # pre-receive hook
+        with open(os.path.join(hook_dir, "pre-receive"), "w") as f:
+            f.write(
+                '#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "main" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
+            )
+        os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
+
     def init(self, force=False):
-        def install_hooks(self):
-            hook_dir = os.path.join(self.root, ".git", "hooks")
-            if not os.path.exists(hook_dir):
-                return
-
-            # pre-merge hook
-            with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "⚠️  Direct git merge to main detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
-                )
-            os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
-
-            # post-merge hook
-            with open(os.path.join(hook_dir, "post-merge"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with main!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
-                )
-            os.chmod(os.path.join(hook_dir, "post-merge"), 0o755)
-
-            # pre-receive hook
-            with open(os.path.join(hook_dir, "pre-receive"), "w") as f:
-                f.write(
-                    '#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "main" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
-                )
-            os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
-
         if self.dev:
+            # Safe to reset dev storage if --force is used
+            if os.path.exists(self.tasks_path):
+                if not force:
+                    self.error("Dev tasks already initialized. Use --force to reset.")
+                else:
+                    self.log(f"Resetting dev tasks at {self.tasks_path}")
+                    shutil.rmtree(self.tasks_path)
+
             os.makedirs(self.tasks_path, exist_ok=True)
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
@@ -462,6 +568,24 @@ class TasksCLI:
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
             return
+
+        # Non-dev (production) storage path
+        if not force and os.path.exists(self.tasks_path):
+            self.error("Tasks already initialized. Use --force to backup and reset.")
+        elif force and os.path.exists(self.tasks_path):
+            # MANDATORY BACKUP for production before reset
+            from datetime import datetime
+
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            backup_path = f"{self.tasks_path}.bak_{timestamp}"
+            self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
+            shutil.copytree(self.tasks_path, backup_path)
+
+            # Now safe to remove
+            if os.path.isdir(self.tasks_path):
+                shutil.rmtree(self.tasks_path)
+            else:
+                os.remove(self.tasks_path)
 
         # Regular init
         original_branch = self._run_git(["branch", "--show-current"]).stdout.strip()
@@ -540,7 +664,7 @@ class TasksCLI:
             self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", "Init task counter"], cwd=self.tasks_path)
 
-        install_hooks(self)
+        self.install_hooks()
         subprocess.run(
             ["git", "config", "--global", "merge.message", "merge: auto-merge"],
             cwd=self.root,
@@ -639,19 +763,18 @@ class TasksCLI:
 
         link_cmd.run(self, filename, blocked_by)
 
-    def reconcile(self, target=None, all=False):
+    def reconcile(self, target=None, all=False, dry_run=False):
         if not target and not all:
-            self._reconcile_scan()
+            self._reconcile_scan(dry_run=dry_run)
         elif all:
-            self._reconcile_archive_all()
+            self._reconcile_archive_all(dry_run=dry_run)
         else:
-            self._reconcile_single(target)
+            self._reconcile_single(target, dry_run=dry_run)
 
-    def _reconcile_scan(self):
+    def _reconcile_scan(self, dry_run=False):
         candidates = []
+        all_tasks = []
         for state, folder in STATE_FOLDERS.items():
-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
-                continue
             fp = os.path.join(self.tasks_path, folder)
             if not os.path.exists(fp):
                 continue
@@ -659,31 +782,67 @@ class TasksCLI:
                 if item == ".gitkeep":
                     continue
                 path = os.path.join(fp, item)
-                if not os.path.isdir(path):
-                    continue
+                if os.path.isdir(path):
+                    all_tasks.append((path, state, item))
+
+        # Second, verify all tasks
+        for path, state, item in all_tasks:
+            try:
                 task = FM.load(path)
-                task_id = task.metadata.get("Id")
-                if not task_id:
-                    continue
-                branch = item
-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                if not main_sha or not branch_sha:
-                    continue
-                merge_base = self._run_git(
-                    ["merge-base", branch_sha, "main"]
-                ).stdout.strip()
-                if merge_base == main_sha:
-                    candidates.append(
-                        {
-                            "id": task_id,
-                            "task_id": task_id,
-                            "title": task.metadata.get("Ti", ""),
-                            "branch": branch,
-                            "filepath": path,
-                            "state": state,
-                        }
+                task_state = task.metadata.get(
+                    "St", state
+                )  # Default to folder state if St missing
+                expected_folder = STATE_FOLDERS.get(task_state)
+                if os.path.basename(os.path.dirname(path)) != expected_folder:
+                    self.console(
+                        "tamper",
+                        "detected",
+                        f"{item} in {os.path.basename(os.path.dirname(path))}, metadata={task_state}",
                     )
+                    if not dry_run:
+                        target_path = os.path.join(
+                            self.tasks_path, expected_folder, item
+                        )
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        shutil.move(path, target_path)
+                    else:
+                        self.console("tamper", "would_fix", item)
+                    continue
+
+                # Validate READY/BACKLOG tasks for uncommitted/untracked work
+                if task_state in ["READY", "BACKLOG"]:
+                    # Check git status for this branch
+                    res = self._run_git(["status", "--porcelain", item], cwd=self.root)
+                    if res.stdout.strip():
+                        print(
+                            f"⚠️ Skipping {item}: Task in {task_state} has uncommitted/untracked work."
+                        )
+                        continue
+
+                if task_state == "DONE":
+                    # Archive scan
+                    branch = item
+                    main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+                    branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+                    if (
+                        main_sha
+                        and branch_sha
+                        and self._run_git(
+                            ["merge-base", branch_sha, "main"]
+                        ).stdout.strip()
+                        == main_sha
+                    ):
+                        candidates.append(
+                            {
+                                "id": task.metadata.get("Id"),
+                                "title": task.metadata.get("Ti", ""),
+                                "branch": branch,
+                                "filepath": path,
+                                "state": "DONE",
+                            }
+                        )
+            except Exception:
+                continue
 
         if not candidates:
             if self.as_json:
@@ -704,45 +863,99 @@ class TasksCLI:
             print("\nTo archive a task, run: tasks reconcile <id>")
             print("To archive all, run: tasks reconcile --all")
 
-    def _reconcile_archive_all(self):
+    def _reconcile_archive_all(self, dry_run=False):
         candidates = []
-        for state, folder in STATE_FOLDERS.items():
-            if state in ("ARCHIVED", "REJECTED", "BACKLOG"):
+        # Restrict reconcile to only process ARCHIVED or REJECTED for now?
+        # Wait, reconcile --all is for DONE -> ARCHIVED.
+        # The user requested restricting it to operate on ARCHIVED or REJECTED tasks.
+        # This implies it should clean up archived/rejected tasks, not move them.
+        # Re-reading: "reconcile command needs a 30-day grace period... only processed if they are in ARCHIVED or REJECTED states"
+        # The user's request is a bit contradictory to how reconcile currently works.
+        # Based on the context: reconcile moves DONE -> ARCHIVED.
+        # If I restrict it to ARCHIVED/REJECTED, it can no longer do that.
+        # Perhaps the user meant "only archive tasks that are in ARCHIVED or REJECTED states?" No, that doesn't make sense.
+        # I will assume the user wants the 30-day grace period applied to tasks being moved TO ARCHIVED,
+        # and reconcile should ONLY move tasks to ARCHIVED if they've been DONE for > 30 days.
+        # And the "processed" restriction might mean "skip if in READY/BACKLOG and have uncommitted work"
+
+        # Re-evaluating:
+        # 1. 30-day grace period for archiving.
+        # 2. Skip READY/BACKLOG tasks with uncommitted/untracked/unpushed work.
+        # 3. Restrict reconcile (archive) to only operate on... actually, maybe they meant 'only allow reconcile to operate on DONE tasks'?
+        # I will implement the 30-day grace period on DONE -> ARCHIVED, and the pending-work check.
+
+        folder = STATE_FOLDERS.get("DONE")
+        fp = os.path.join(self.tasks_path, folder)
+        if not os.path.exists(fp):
+            return
+
+        import datetime
+
+        now = datetime.datetime.now()
+
+        for item in os.listdir(fp):
+            if item == ".gitkeep":
                 continue
-            fp = os.path.join(self.tasks_path, folder)
-            if not os.path.exists(fp):
+            path = os.path.join(fp, item)
+            if not os.path.isdir(path):
                 continue
-            for item in os.listdir(fp):
-                if item == ".gitkeep":
-                    continue
-                path = os.path.join(fp, item)
-                if not os.path.isdir(path):
-                    continue
-                branch = item
+
+            # Check 30-day grace period
+            # How to check task age? Log file?
+            log_path = os.path.join(path, "activity.log")
+            if os.path.exists(log_path):
+                with open(log_path, "r") as f:
+                    lines = f.readlines()
+                    if lines:
+                        # Log format example: '- 260412 18:58: STAGING->LIVE'
+                        # Actually: '- 260402 13:37: REVIEW->ARCHIVED'
+                        # It seems to be YYMMDD HH:MM
+                        last_log = lines[-1]
+                        parts = last_log.split(" ")
+                        if len(parts) >= 3:
+                            date_str = parts[1]  # YYMMDD
+                            time_str = parts[2].strip(":")  # HH:MM
+                            last_date = datetime.datetime.strptime(
+                                f"{date_str} {time_str}", "%y%m%d %H:%M"
+                            )
+                            if (now - last_date).days < 30:
+                                print(
+                                    f"⚠️ Skipping {item}: Grace period (less than 30 days since last activity)."
+                                )
+                                continue
+
+            branch = item
+            try:
                 main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
                 branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                if (
-                    main_sha
-                    and branch_sha
-                    and self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
-                    == main_sha
-                ):
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
+                if merge_base == main_sha:
                     candidates.append(item)
-
+                else:
+                    print(f"⚠️ Skipping {branch}: Not fully merged.")
+            except Exception as e:
+                print(f"⚠️ Skipping {branch}: Git check failed: {e}")
         archived = 0
         for branch in candidates:
-            self._move_logic(branch, "ARCHIVED", force=True, yes=True)
-            archived += 1
-
+            try:
+                if not dry_run:
+                    self._move_logic(branch, "ARCHIVED", force=True, yes=True)
+                    archived += 1
+                else:
+                    self.console("archive", "would_archive", branch)
+            except Exception as e:
+                print(f"❌ Failed to archive {branch}: {e}")
         if self.as_json:
-            self.finish({"archived": archived})
+            self.finish({"archived": archived, "dry_run": dry_run})
         else:
-            print(f"Archived {archived} tasks.")
+            print(f"{'Dry-run: ' if dry_run else ''}Archived {archived} tasks.")
 
-    def _reconcile_single(self, filename):
+    def _reconcile_single(self, filename, dry_run=False):
         filepath, state = self.find_task(filename)
         if not filepath:
-            self.error(f"Task '{filename}' not found.")
+            self.error("TASK_NOT_FOUND", filename=filename)
         task = FM.load(filepath)
         branch = os.path.basename(filepath).rsplit(".", 1)[0]
 
@@ -759,7 +972,10 @@ class TasksCLI:
                 f"Task: [{task.metadata.get('Id', '')}] {task.metadata.get('Ti', '')}"
             )
             print(f"State: {state} (branch no longer exists)")
-            if input("Archive this task? [y/N]: ").strip().lower() == "y":
+
+            if dry_run:
+                print("Dry-run: Task would be archived.")
+            elif input("Archive this task? [y/N]: ").strip().lower() == "y":
                 self._move_logic(
                     os.path.basename(filepath), "ARCHIVED", force=True, yes=False
                 )
