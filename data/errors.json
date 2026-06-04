@@ -41,5 +41,6 @@
   "PIPELINE_VALIDATION_FAILED": "Pipeline validation failed.",
   "TEST_FAILURE": "Test failure detected.",
   "TASK_METADATA_CORRUPTED": "Task {detail}",
-  "AUDIT_FAILURE": "Audit failed: {audit_code}."
+  "AUDIT_FAILURE": "Audit failed: {audit_code}.",
+  "MAIN_DIVERGED": "Local main is out of sync with origin/main (Local: {local}, Remote: {remote})."
 }

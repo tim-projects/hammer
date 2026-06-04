@@ -45,6 +45,17 @@ STATE_FOLDERS = {
     "REJECTED": "rejected",
 }
 
+PIPELINE_STAGES = [
+    "BACKLOG",
+    "READY",
+    "PROGRESSING",
+    "TESTING",
+    "REVIEW",
+    "STAGING",
+    "DONE",
+    "ARCHIVED",
+]
+
 # The default workflow if no type-specific one is defined
 DEFAULT_ALLOWED_TRANSITIONS = {
     "BACKLOG": ["READY"],

@@ -88,6 +88,18 @@ class GitClient:
         res = self.run(["branch", "--merged", target])
         return branch in res.stdout
 
+    def check_main_divergence(self):
+        """Check if local main is out of sync with origin/main."""
+        self.run(["fetch", "origin"])
+        local_res = self.run(["rev-parse", "main"])
+        remote_res = self.run(["rev-parse", "origin/main"])
+        if local_res.returncode == 0 and remote_res.returncode == 0:
+            local = local_res.stdout.strip()
+            remote = remote_res.stdout.strip()
+            if local != remote:
+                return False, local, remote
+        return True, None, None
+
     def generate_review_diff(self, task_path: str, branch: str) -> str:
         """Generate a unified diff patch for the task branch against main including unstaged changes."""
         tasks_path = self.context.tasks_path

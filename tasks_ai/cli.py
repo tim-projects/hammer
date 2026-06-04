@@ -256,8 +256,10 @@ class TasksCLI:
     def _push_tasks_branch(self, branch="tasks", fatal=True):
         return self.git.push_tasks_branch(branch=branch, fatal=fatal)
 
-    def _git_merge_transition(self, task, target_state, yes=False):
-        return self.pipeline.git_merge_transition(task, target_state, yes=yes)
+    def _git_merge_transition(self, task, target_state, current_state=None, yes=False):
+        return self.pipeline.git_merge_transition(
+            task, target_state, current_state=current_state, yes=yes
+        )
 
     def _validate_pipeline_gate(self, task, target_state, task_path=None):
         if not task_path:

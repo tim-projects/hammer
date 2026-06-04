@@ -40,5 +40,6 @@
   "INTEGRITY_VIOLATION": "WHAT: Task location mismatch detected.\nWHY: TAMPERING DETECTED. Folder does not match state.\nHOW: 1. Do not move folders manually. 2. Run './hammer tasks doctor --fix'.\nCONSEQUENCE: Data corruption threat. LOCKING ACCESS.",
   "PIPELINE_VALIDATION_FAILED": "WHAT: Pipeline validation failed: {msg}.\nWHY: Governance rules broken.\nHOW: Run './hammer check all' to identify failure.\nCONSEQUENCE: Promotion halted. FIX FAILURES.",
   "TEST_FAILURE": "WHAT: Test failure: {msg}.\nWHY: Regression detected.\nHOW: Run 'pytest' to debug failure. 2. Fix test.\nCONSEQUENCE: Promotion halted. FIX TEST.",
-  "AUDIT_FAILURE": "WHAT: Audit failed: {audit_code}.\nWHY: Governance requirement unmet.\nHOW: Task moved back to PROGRESSING. Update criteria/plan for task {task_id} using 'hammer tasks modify {task_id} --criteria <new_criteria> --plan <new_plan>'.\nCONSEQUENCE: Promotion halted."
+  "AUDIT_FAILURE": "WHAT: Audit failed: {audit_code}.\nWHY: Governance requirement unmet.\nHOW: Task moved back to PROGRESSING. Update criteria/plan for task {task_id} using 'hammer tasks modify {task_id} --criteria <new_criteria> --plan <new_plan>'.\nCONSEQUENCE: Promotion halted.",
+  "MAIN_DIVERGED": "WHAT: Local main branch is out of sync.\nWHY: Divergence from origin/main detected.\nHOW: Run 'git fetch origin && git pull origin main' to sync local main before promoting.\nCONSEQUENCE: Promotion to main blocked."
   }

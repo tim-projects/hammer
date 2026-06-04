@@ -78,7 +78,9 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
     # Perform Git Merge if applicable
     if sync and not force:
-        cli._git_merge_transition(task, new_status, yes=yes)
+        cli._git_merge_transition(
+            task, new_status, current_state=current_state, yes=yes
+        )
 
     # Archived check: Enforce branch merge to main
     if new_status == "ARCHIVED" and not force:

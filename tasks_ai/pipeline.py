@@ -1,7 +1,7 @@
 import os
 import hashlib
 import re
-from .constants import get_workflows, DEFAULT_ALLOWED_TRANSITIONS
+from .constants import get_workflows, DEFAULT_ALLOWED_TRANSITIONS, PIPELINE_STAGES
 from .utils import parse_filename
 
 
@@ -147,21 +147,67 @@ class PipelineService:
                         task_id=task.metadata.get("Id"),
                     )
 
-    def git_merge_transition(self, task, target_state: str, yes: bool = False):
+        # 5. Check main divergence for terminal states
+        if target_state in ["DONE", "ARCHIVED"]:
+            synced, local, remote = self.git.check_main_divergence()
+            if not synced:
+                raise PipelineError("MAIN_DIVERGED", local=local, remote=remote)
+
+    def git_merge_transition(
+        self, task, target_state: str, current_state: str = None, yes: bool = False
+    ):
         """Perform the git merges associated with a pipeline transition."""
         branch = task.metadata.get("Br", "")
         if not branch:
             return
 
-        pipeline_map = {"TESTING": "testing", "STAGING": "staging", "DONE": "main"}
+        if current_state is None:
+            current_state = task.metadata.get("St", "BACKLOG")
 
+        # Determine if this is a promotion or demotion
+        try:
+            curr_idx = PIPELINE_STAGES.index(current_state)
+            target_idx = PIPELINE_STAGES.index(target_state)
+        except ValueError:
+            # If state not in stages (e.g. BLOCKED, REJECTED), default to promotion-like check
+            curr_idx = -1
+            target_idx = 0
+
+        if target_idx < curr_idx:
+            # DEMOTION: Sync higher branches back into feature branch
+            self.log(
+                f"Demoting task from {current_state} to {target_state}. Syncing higher branches back to {branch}..."
+            )
+            branches_to_sync = []
+            if target_state == "PROGRESSING":
+                branches_to_sync = ["staging", "testing"]
+            elif target_state in ["TESTING", "REVIEW"]:
+                branches_to_sync = ["staging"]
+
+            for b in branches_to_sync:
+                res = self.git.run(["rev-parse", "--verify", b])
+                if res.returncode == 0:
+                    self.log(f"Git: Syncing {b} -> {branch} (demotion)")
+                    self.git.run(["checkout", branch])
+                    self.git.run(
+                        ["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"]
+                    )
+            return
+
+        # PROMOTION: Traditional pipeline merge
+        pipeline_map = {"TESTING": "testing", "STAGING": "staging", "DONE": "main"}
         target_git_branch = pipeline_map.get(target_state)
         if not target_git_branch:
             return
 
-        # Special case: task -> testing
+        # Special case source branches
         src_branch = branch
         if target_state == "STAGING":
+            # If we're moving to STAGING, we might want to merge 'testing' into it
+            # But normally we move the feature branch into staging.
+            # However, the current logic says:
+            # src_branch = "testing" if target_state == "STAGING"
+            # This follows the pipeline flow: branch -> testing -> staging -> main
             src_branch = "testing"
         elif target_state == "DONE":
             src_branch = "staging"
@@ -169,10 +215,16 @@ class PipelineService:
         # Check if src_branch exists locally
         res = self.git.run(["rev-parse", "--verify", src_branch])
         if res.returncode != 0:
-            self.log(f"Branch {src_branch} does not exist locally. Skipping merge.")
-            return
+            if src_branch in ["testing", "staging"]:
+                self.log(
+                    f"Pipeline branch {src_branch} does not exist locally. Merging {branch} directly into {target_git_branch}."
+                )
+                src_branch = branch
+            else:
+                self.log(f"Branch {src_branch} does not exist locally. Skipping merge.")
+                return
 
-        self.log(f"Performing pipeline merge: {src_branch} -> {target_git_branch}")
+        self.log(f"Performing pipeline promotion: {src_branch} -> {target_git_branch}")
 
         # 1. Checkout target
         self.git.run(["checkout", target_git_branch])
