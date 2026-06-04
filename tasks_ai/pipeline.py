@@ -93,12 +93,13 @@ class PipelineService:
         ):
             raise PipelineError("UNFINISHED_CHECKBOXES")
 
-        # 2. Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires Rc to be set
+        # 2. Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires proof
         if "regression_check" in enabled_gates:
-            # Check if coming from a state that requires Rc
+            # Check if coming from a state that requires proof
             current_state = os.path.basename(os.path.dirname(task_path)).upper()
             if current_state in ["REVIEW", "TESTING", "STAGING", "DONE"]:
-                if not task.metadata.get("Rc"):
+                # Check for verification proof artifact
+                if not os.path.exists(os.path.join(task_path, "verification_proof.log")):
                     patch_path = f".tasks/review/{task_id}.patch"
                     raise PipelineError(
                         "REGRESSION_CHECK_NOT_PASSED",

@@ -189,72 +189,7 @@ def check_merged_to_testing(branch):
 
 
 def cmd_merge(src_input, target_input):
-    src = resolve_branch(src_input)
-    target = resolve_branch(target_input)
-
-    # Identify if src is a task branch
-    task_id = src.split("-")[0] if src.split("-")[0].isdigit() else None
-    cli = (
-        TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"])
-        if TasksCLI
-        else None
-    )
-
-    if task_id and cli:
-        path, _ = cli.find_task(task_id)
-        if path:
-            # Map git branch target to pipeline status
-            pipeline_to_status = {
-                "testing": "TESTING",
-                "staging": "STAGING",
-                "main": "DONE",
-            }
-            new_status = pipeline_to_status.get(target)
-            if new_status:
-                info(
-                    f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'..."
-                )
-                cli.move(task_id, new_status, yes=FLAGS["yes"])
-                return
-
-    if target not in PIPELINE:
-        if not FLAGS["yes"]:
-            msg = f"Merging between task branches (outside pipeline: {src} -> {target}). Continue?"
-            if not prompt_yes_no(msg):
-                log("Merge cancelled.")
-                return
-    ensure_pipeline_branch(target)
-    info(f"Merging {src.upper()} → {target.upper()}")
-    current = get_current_branch()
-    if current != src:
-        st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
-        if st:
-            warn(f"Uncommitted changes on {current.upper()}. Auto-committing...")
-            run(["git", "add", "."])
-            run(["git", "commit", "-m", f"WIP: Auto-commit {current}"])
-        run(["git", "checkout", src])
-    log(f"Merging {src} into {target}...")
-    run(["git", "checkout", target])
-    if check_remote_exists():
-        run(["git", "pull", PRIMARY_REMOTE, target], check=False)
-    else:
-        warn("No remote - skipping pull")
-    # Extract task ID if present in the branch name
-    match = re.match(r"^(\d+)-", src)
-    task_id = match.group(1) if match else None
-
-    commit_msg = (
-        f"Task {task_id}: merge: {src} into {target}"
-        if task_id
-        else f"merge: {src} into {target}"
-    )
-    run(["git", "merge", src, "-m", commit_msg])
-    if check_remote_exists():
-        if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
-            run(["git", "push", PRIMARY_REMOTE, target])
-    else:
-        warn("No remote - skipping push")
-    log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
+    error("Command 'repo merge' is deprecated and disabled. Use 'hammer tasks move' for all pipeline transitions to ensure state synchronization.")
 
 
 def cmd_commit(message):
