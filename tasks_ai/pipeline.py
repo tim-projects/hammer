@@ -61,7 +61,10 @@ class PipelineService:
 
                 # Calculate next valid state for help
                 next_valid_state = "unknown"
-                if current_state in allowed_transitions and allowed_transitions[current_state]:
+                if (
+                    current_state in allowed_transitions
+                    and allowed_transitions[current_state]
+                ):
                     next_valid_state = allowed_transitions[current_state][0]
 
                 # Single-step transition
@@ -75,17 +78,18 @@ class PipelineService:
                         return
 
                     # Extract ID from filename/filepath
-                    task_id = parse_filename(os.path.basename(filepath))[1] # Might be branch name, let's use filename
-                    task_id = os.path.basename(filepath).split('-')[0]
+                    task_id = parse_filename(os.path.basename(filepath))[
+                        1
+                    ]  # Might be branch name, let's use filename
+                    task_id = os.path.basename(filepath).split("-")[0]
 
                     cli.error(
                         "FORBIDDEN_TRANSITION",
                         from_state=current_state,
                         to_state=new_status,
                         task_id=task_id,
-                        next_valid_state=next_valid_state
+                        next_valid_state=next_valid_state,
                     )
-
 
     def validate_gate(self, task, target_state: str, task_path: str):
         """
@@ -137,7 +141,11 @@ class PipelineService:
             if branch:
                 # Check if branch is merged into main
                 if not self.git.is_merged(branch, "main"):
-                    raise PipelineError("BRANCH_NOT_MERGED", branch=branch)
+                    raise PipelineError(
+                        "BRANCH_NOT_MERGED",
+                        branch=branch,
+                        task_id=task.metadata.get("Id"),
+                    )
 
     def git_merge_transition(self, task, target_state: str, yes: bool = False):
         """Perform the git merges associated with a pipeline transition."""
@@ -208,7 +216,7 @@ class PipelineService:
         criteria_path = os.path.join(task_path, "criteria.md")
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
-        
+
         # Sibling files (patch/audit) are in .tasks/review/FOLDER_NAME/
         review_dir = os.path.join(self.context.tasks_path, "review")
         task_folder_name = os.path.basename(task_path)
@@ -217,7 +225,9 @@ class PipelineService:
         # Check for existence of all required files
         for path in [criteria_path, proof_path, audit_path]:
             if not os.path.exists(path):
-                self.log(f"DEBUG: update_audit_hash - skipping due to missing file: {path}")
+                self.log(
+                    f"DEBUG: update_audit_hash - skipping due to missing file: {path}"
+                )
                 return
 
         hasher = hashlib.md5()
