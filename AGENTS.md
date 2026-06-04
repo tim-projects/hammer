@@ -76,10 +76,6 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 - **Show Task Details**: Show full task details with `./hammer tasks show <id>`
 - **Show Only Specific Sections**: Use `./hammer tasks show <id> story|tech|criteria|plan|progress|repro`
 - **Use `--dev` for testing**: Always use `--dev` flag when testing or doing dry runs
-- **Multi-Step Moves**: Push a task through multiple states in ONE command:
-  ```bash
-  ./hammer tasks -j move <id> READY,PROGRESSING,TESTING
-  ```
 
 ## 📋 Useful Commands
 
