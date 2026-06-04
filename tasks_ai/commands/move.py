@@ -15,24 +15,6 @@ def run(cli, filename, new_status, yes=False):
     task_type, _ = parse_filename(os.path.basename(filepath))
     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
 
-    # Handle multi-step transitions
-    if "," in new_status:
-        steps = [s.strip() for s in new_status.split(",")]
-
-        # Perform each step individually, letting move_logic enforce gates
-        for step in steps:
-            # Re-fetch state for each step to validate current transition
-            _, current_state = cli.find_task(filename)
-            if current_state == step:
-                continue
-
-            # Perform individual move; move_logic now enforces ALL gates
-            move_logic(cli, filename, step, force=False, yes=yes, sync=True)
-
-        cli.log(f"Moved: [{cli.find_task(filename)[0].split('/')[-1]}] -> {new_status}")
-        cli.finish({"status": new_status})
-        return
-
     # Single-step transition
     cli.pipeline.check_transition(cli, filename, new_status)
 
