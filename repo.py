@@ -8,6 +8,7 @@ import subprocess
 import sys
 import os
 import json
+import re
 from pathlib import Path
 
 sys.path.append(os.getcwd())
@@ -238,7 +239,12 @@ def cmd_merge(src_input, target_input):
         run(["git", "pull", PRIMARY_REMOTE, target], check=False)
     else:
         warn("No remote - skipping pull")
-    run(["git", "merge", src, "-m", f"merge: {src} into {target}"])
+    # Extract task ID if present in the branch name
+    match = re.match(r'^(\d+)-', src)
+    task_id = match.group(1) if match else None
+    
+    commit_msg = f"Task {task_id}: merge: {src} into {target}" if task_id else f"merge: {src} into {target}"
+    run(["git", "merge", src, "-m", commit_msg])
     if check_remote_exists():
         if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
             run(["git", "push", PRIMARY_REMOTE, target])
