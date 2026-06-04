@@ -13,7 +13,7 @@
   "INIT_REQUIRED": "WHAT: Task not initialized.\nWHY: NO WORKTREE FOUND. HAMMER need foundation.\nHOW: Run './hammer tasks init'.\nCONSEQUENCE: Hammer BLADE-LESS. FIX FOUNDATION.",
   "INVALID_CONFIG_KEY": "WHAT: Invalid config key '{key}'.\nWHY: UNKNOWN CONFIGURATION. HAMMER ignore unknown.\nHOW: Allowed: {allowed_keys}. Run 'hammer tasks config list'.\nCONSEQUENCE: Configuration error. FIX KEY.",
   "AUTO_PROMOTE_FAIL": "WHAT: Auto-promotion fail.\nWHY: Repository integration break.\nHOW: Check git status/merge conflict.\nCONSEQUENCE: Promotion halted. FIX NOW.",
-  "FORBIDDEN_TRANSITION": "WHAT: Transition {from_state} -> {to_state} forbidden.\nWHY: Pipeline governance violation. Current state forbid this shift.\nHOW: Follow pipeline flow: BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED.\nCONSEQUENCE: Pipeline flow break. OBEY FLOW.",
+  "FORBIDDEN_TRANSITION": "WHAT: Transition {from_state} -> {to_state} forbidden.\nWHY: Pipeline governance violation.\nHOW: {task_id} is on {from_state}. Use 'hammer tasks move {task_id} {next_valid_state}' to proceed.\nCONSEQUENCE: Pipeline flow halted.",
   "LINK_TASK_NOT_FOUND": "WHAT: Link target missing.\nWHY: HAMMER cannot link to nothing.\nHOW: Verify both tasks exist with 'hammer tasks list'.\nCONSEQUENCE: Link chain broken. FIX ID.",
   "LINK_SELF": "WHAT: Link to self forbidden.\nWHY: SELF-REFERENCE IS WEAK. Loops break logic.\nHOW: Link to a different task.\nCONSEQUENCE: Logic corruption. AVOID IT.",
   "CIRCULAR_DEPENDENCY": "WHAT: Cycle detected: {filename} -> {blocked_by}.\nWHY: CIRCULAR DEPENDENCY DETECTED. HAMMER forbid loop.\nHOW: Break cycle by linking to non-dependent task.\nCONSEQUENCE: Pipeline deadlock. FIX LOGIC.",
@@ -22,7 +22,7 @@
   "UNKNOWN_SECTION": "WHAT: Unknown section '{section}'.\nWHY: SECTION DISOBEDIENCE. HAMMER do not know '{section}'.\nHOW: Use: story, tech, criteria, plan, repro, notes, progress.\nCONSEQUENCE: Output remain EMPTY. FIX SECTION.",
   "UNFINISHED_CHECKBOXES": "WHAT: Task contain unfinished checkbox (- [ ]).\nWHY: INCOMPLETE CRITERIA. HAMMER forbid promotion.\nHOW: Edit criteria.md, change '- [ ]' to '- [x]'.\nCONSEQUENCE: Pipeline halt. FIX CRITERIA.",
   "REGRESSION_CHECK_NOT_PASSED": "WHAT: Regression check not passed (Rc flag not set).\nWHY: Pipeline governance require regression check.\nHOW: 1. Audit the fragmented patches in '.tasks/review/{task_id}/patches/'. 2. Run './hammer tasks modify {task_id} --regression-check'.\nCONSEQUENCE: Promotion halted. FIX NOW.",
-  "BRANCH_NOT_MERGED": "WHAT: Task branch '{branch}' not merged to main.\nWHY: Integration rule broken.\nHOW: Run './hammer repo merge <branch> main'.\nCONSEQUENCE: Integration halted. FIX SYNC.",
+  "BRANCH_NOT_MERGED": "WHAT: Task branch '{branch}' not merged to main.\nWHY: Integration rule broken.\nHOW: Run './hammer tasks move {task_id} DONE' (must be in STAGING).\nCONSEQUENCE: Integration halted. FIX SYNC.",
   "AUDIT_PATCH_MISSING": "WHAT: Regression patches missing from {patches_dir}.\nWHY: Patch generation failure during REVIEW state.\nHOW: Move task back to TESTING and promote to REVIEW again.\nCONSEQUENCE: Audit impossible. FIX PATH.",
   "AUDIT_MISSING": "WHAT: Cryptographic audit missing: {audit_path}.\nWHY: Code review required.\nHOW: Run './hammer tasks audit {task_id}'.\nCONSEQUENCE: Audit chain broken. OBEY AUDIT.",
   "PROOF_MISSING": "WHAT: Verification proof missing: {proof_path}.\nWHY: The pipeline requires a formal record of criteria verification.\nHOW: 1. Review criteria at: /home/vscode/git/tasks-ai/.tasks/progressing/{task_id}/criteria.md.\n     2. Run \"./hammer tasks verify {task_id} --proof \"<your_brief_verification_statement>\"\".\nCONSEQUENCE: Promotion halted. SATISFY AUDIT.",
@@ -39,5 +39,6 @@
   "MISSING_PARTS": "WHAT: Mandatory task parameters are missing: {missing_parts}.\nWHY: HAMMER command is incomplete.\nHOW: Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'{issue_repro}.\nCONSEQUENCE: Command aborted. FIX INSTRUCTION.",
   "INTEGRITY_VIOLATION": "WHAT: Task location mismatch detected.\nWHY: TAMPERING DETECTED. Folder does not match state.\nHOW: 1. Do not move folders manually. 2. Run './hammer tasks doctor --fix'.\nCONSEQUENCE: Data corruption threat. LOCKING ACCESS.",
   "PIPELINE_VALIDATION_FAILED": "WHAT: Pipeline validation failed: {msg}.\nWHY: Governance rules broken.\nHOW: Run './hammer check all' to identify failure.\nCONSEQUENCE: Promotion halted. FIX FAILURES.",
-  "TEST_FAILURE": "WHAT: Test failure: {msg}.\nWHY: Regression detected.\nHOW: Run 'pytest' to debug failure. 2. Fix test.\nCONSEQUENCE: Promotion halted. FIX TEST."
-}
+  "TEST_FAILURE": "WHAT: Test failure: {msg}.\nWHY: Regression detected.\nHOW: Run 'pytest' to debug failure. 2. Fix test.\nCONSEQUENCE: Promotion halted. FIX TEST.",
+  "AUDIT_FAILURE": "WHAT: Audit failed: {audit_code}.\nWHY: Governance requirement unmet.\nHOW: Task moved back to PROGRESSING. Update criteria/plan for task {task_id} using 'hammer tasks modify {task_id} --criteria <new_criteria> --plan <new_plan>'.\nCONSEQUENCE: Promotion halted."
+  }
