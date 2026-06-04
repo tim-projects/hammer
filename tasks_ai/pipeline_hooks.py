@@ -33,7 +33,7 @@ class ValidationHook(PipelineHook):
             for required_file in ["criteria.md", "progress.md"]:
                 if not os.path.exists(os.path.join(filepath, required_file)):
                     cli.error(
-                        f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Create the missing {required_file} file | CONSEQUENCE: Transition halted."
+                        f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
                     )
 
             # run_tool calls cli.error (which sys.exits) on failure

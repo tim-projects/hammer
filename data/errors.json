@@ -40,5 +40,6 @@
   "INTEGRITY_VIOLATION": "Task location mismatch detected.",
   "PIPELINE_VALIDATION_FAILED": "Pipeline validation failed.",
   "TEST_FAILURE": "Test failure detected.",
-  "TASK_METADATA_CORRUPTED": "Task {detail}"
+  "TASK_METADATA_CORRUPTED": "Task {detail}",
+  "AUDIT_FAILURE": "Audit failed: {audit_code}."
 }

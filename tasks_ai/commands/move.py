@@ -2,6 +2,7 @@ import os
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename, perform_move
+from ..pipeline import PipelineError
 
 
 def run(cli, filename, new_status, yes=False):
@@ -13,7 +14,6 @@ def run(cli, filename, new_status, yes=False):
             hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
         )
     task_type, _ = parse_filename(os.path.basename(filepath))
-    allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
 
     # Single-step transition
     cli.pipeline.check_transition(cli, filename, new_status)
@@ -24,26 +24,6 @@ def run(cli, filename, new_status, yes=False):
     title = task.metadata.get("Ti", "")
     task_id_num = task.metadata.get("Id", "")
     tt, _ = parse_filename(fname)
-
-    # Chained auto-promotion
-    max_steps = 10
-    while (
-        new_status not in allowed_transitions.get(current_state_from_folder, [])
-        and current_state_from_folder != new_status
-        and max_steps > 0
-    ):
-        allowed = allowed_transitions.get(current_state_from_folder, [])
-        if not allowed:
-            break
-
-        next_step = allowed[0]
-        cli.log(f"Auto-promoting: {current_state_from_folder} -> {next_step}")
-        try:
-            move_logic(cli, filename, next_step, force=False, yes=yes, sync=True)
-            filepath, current_state_from_folder = cli.find_task(filename)
-            max_steps -= 1
-        except Exception as e:
-            cli.error(f"Auto-promotion failed: {e}")
 
     move_logic(cli, filename, new_status, yes=yes)
     cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
@@ -74,12 +54,21 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
             cli._validate_pipeline_gate(task, new_status, filepath_str)
         except PipelineError as e:
             # Handle audit failures: move back to PROGRESSING and instruct user
-            if e.code in ["AUDIT_MISSING", "AUDIT_PATCH_MISSING", "PROOF_MISSING", "HASH_MISSING", "AUDIT_MISMATCH", "INTEGRITY_MISMATCH"]:
+            if e.code in [
+                "AUDIT_MISSING",
+                "AUDIT_PATCH_MISSING",
+                "PROOF_MISSING",
+                "HASH_MISSING",
+                "AUDIT_MISMATCH",
+                "INTEGRITY_MISMATCH",
+            ]:
                 cli.log(f"Audit failed: {e.code}. Moving task back to PROGRESSING.")
                 perform_move(cli, task, current_state, "PROGRESSING", filepath_str)
                 cli.error(
                     "AUDIT_FAILURE",
-                    hint=f"Audit failed: {e.code}. Task moved back to PROGRESSING. Use 'hammer tasks modify {task.metadata.get('Id')} --criteria <new_criteria> --plan <new_plan>' to update task artifacts and try again."
+                    hint_code="AUDIT_FAILURE",
+                    audit_code=e.code,
+                    task_id=str(task.metadata.get("Id", "unknown")),
                 )
             else:
                 raise e

@@ -8,7 +8,6 @@ import subprocess
 import sys
 import os
 import json
-import re
 from pathlib import Path
 
 sys.path.append(os.getcwd())
@@ -189,7 +188,9 @@ def check_merged_to_testing(branch):
 
 
 def cmd_merge(src_input, target_input):
-    error("Command 'repo merge' is deprecated and disabled. Use 'hammer tasks move' for all pipeline transitions to ensure state synchronization.")
+    error(
+        "Command 'repo merge' is deprecated and disabled. Use 'hammer tasks move' for all pipeline transitions to ensure state synchronization."
+    )
 
 
 def cmd_commit(message):
