@@ -23,7 +23,9 @@ class HookRegistry:
         for hook in hooks:
             hook.execute(cli, task, current_state, new_status, filepath)
 
-    def run_exit_hooks(self, cli, task, current_state, new_status, filepath):
+    def run_exit_hooks(self, cli, task, current_state, new_status, filepath, force=False):
+        if force:
+            return
         hooks = self._exit_hooks.get(current_state, [])
         for hook in hooks:
             hook.execute(cli, task, current_state, new_status, filepath)

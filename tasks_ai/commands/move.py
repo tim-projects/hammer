@@ -76,23 +76,27 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     if current_state == new_status:
         return
 
+    # 1. Run Exit Hooks (Pre-move checks and actions)
+    cli.hook_registry.run_exit_hooks(
+        cli, task, current_state, new_status, filepath_str, force=force
+    )
+
+    if not force:
+        if new_status not in allowed_transitions.get(current_state, []):
+            cli.error(
+                "FORBIDDEN_TRANSITION", from_state=current_state, to_state=new_status
+            )
+
+        # Archived check: Enforce branch merge to main
+        if new_status == "ARCHIVED":
+            _, branch = parse_filename(os.path.basename(filepath_str))
+            if not cli.git.is_merged(branch, "main"):
+                cli.error("BRANCH_NOT_MERGED", branch=branch)
+
     # Perform Git Merge if applicable
     if sync and not force:
-        cli._git_merge_transition(
-            task, new_status, current_state=current_state, yes=yes
-        )
+        cli._git_merge_transition(task, new_status, current_state=current_state, yes=yes)
 
-    # Archived check: Enforce branch merge to main
-    if new_status == "ARCHIVED" and not force:
-        _, branch = parse_filename(os.path.basename(filepath_str))
-        if not cli.git.is_merged(branch, "main"):
-            cli.error("BRANCH_NOT_MERGED", branch=branch)
-
-    if new_status not in allowed_transitions.get(current_state, []) and not force:
-        cli.error("FORBIDDEN_TRANSITION", from_state=current_state, to_state=new_status)
-
-    # 1. Run Exit Hooks (Pre-move checks and actions)
-    cli.hook_registry.run_exit_hooks(cli, task, current_state, new_status, filepath_str)
 
     # 2. Final Execution (Physical move)
     new_task = perform_move(cli, task, current_state, new_status, filepath_str)

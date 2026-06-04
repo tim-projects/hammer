@@ -135,8 +135,8 @@ class PipelineService:
                     f"DEBUG: Skipping audit_integrity check for task {task_id} as Rc is 'PASSED'"
                 )
 
-        # 4. Merge verification for DONE/ARCHIVED
-        if "merge_check" in enabled_gates:
+        # 4. Merge verification for ARCHIVED
+        if "merge_check" in enabled_gates and target_state == "ARCHIVED":
             branch = task.metadata.get("Br", "")
             if branch:
                 # Check if branch is merged into main
@@ -152,6 +152,15 @@ class PipelineService:
             synced, local, remote = self.git.check_main_divergence()
             if not synced:
                 raise PipelineError("MAIN_DIVERGED", local=local, remote=remote)
+
+        # 6. Check if staging is synced with source for DONE
+        if target_state == "DONE":
+            branch = task.metadata.get("Br", "")
+            if branch:
+                # For DONE, we merge staging into main. 
+                # We should ensure 'staging' contains the branch commits.
+                if not self.git.is_merged(branch, "staging"):
+                     self.log(f"Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete.")
 
     def git_merge_transition(
         self, task, target_state: str, current_state: str = None, yes: bool = False
