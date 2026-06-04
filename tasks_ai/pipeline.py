@@ -57,22 +57,35 @@ class PipelineService:
                         to_state=next_state,
                     )
                     return
-                last_state = next_state
-            return
+                allowed_transitions = self.get_allowed_transitions(task_type)
 
-        if (
-            new_status not in allowed_transitions.get(current_state, [])
-            and current_state != new_status
-        ):
-            if current_state == "BACKLOG" and new_status == "PROGRESSING":
-                cli.log("Auto-promoting BACKLOG to READY before PROGRESSING.")
-                cli._move_logic(filename, "READY", yes=True)
-                return
-            cli.error(
-                "FORBIDDEN_TRANSITION",
-                from_state=current_state,
-                to_state=new_status,
-            )
+                # Calculate next valid state for help
+                next_valid_state = "unknown"
+                if current_state in allowed_transitions and allowed_transitions[current_state]:
+                    next_valid_state = allowed_transitions[current_state][0]
+
+                # Single-step transition
+                if (
+                    new_status not in allowed_transitions.get(current_state, [])
+                    and current_state != new_status
+                ):
+                    if current_state == "BACKLOG" and new_status == "PROGRESSING":
+                        cli.log("Auto-promoting BACKLOG to READY before PROGRESSING.")
+                        cli._move_logic(filename, "READY", yes=True)
+                        return
+
+                    # Extract ID from filename/filepath
+                    task_id = parse_filename(os.path.basename(filepath))[1] # Might be branch name, let's use filename
+                    task_id = os.path.basename(filepath).split('-')[0]
+
+                    cli.error(
+                        "FORBIDDEN_TRANSITION",
+                        from_state=current_state,
+                        to_state=new_status,
+                        task_id=task_id,
+                        next_valid_state=next_valid_state
+                    )
+
 
     def validate_gate(self, task, target_state: str, task_path: str):
         """
@@ -99,7 +112,9 @@ class PipelineService:
             current_state = os.path.basename(os.path.dirname(task_path)).upper()
             if current_state in ["REVIEW", "TESTING", "STAGING", "DONE"]:
                 # Check for verification proof artifact
-                if not os.path.exists(os.path.join(task_path, "verification_proof.log")):
+                if not os.path.exists(
+                    os.path.join(task_path, "verification_proof.log")
+                ):
                     patch_path = f".tasks/review/{task_id}.patch"
                     raise PipelineError(
                         "REGRESSION_CHECK_NOT_PASSED",
@@ -191,16 +206,19 @@ class PipelineService:
     def update_audit_hash(self, task_id: str, task_path: str):
         # Sibling files reside in the same directory as the criteria.md, proof, etc.
         criteria_path = os.path.join(task_path, "criteria.md")
-        self.log(
-            f"DEBUG: update_audit_hash task_path={task_path}, criteria_path={criteria_path}, exists={os.path.exists(criteria_path)}"
-        )
         proof_path = os.path.join(task_path, "verification_proof.log")
         hash_path = os.path.join(task_path, ".audit_hash")
-
+        
         # Sibling files (patch/audit) are in .tasks/review/FOLDER_NAME/
-        review_dir = os.path.dirname(task_path)
+        review_dir = os.path.join(self.context.tasks_path, "review")
         task_folder_name = os.path.basename(task_path)
         audit_path = os.path.join(review_dir, f"{task_folder_name}.audit")
+
+        # Check for existence of all required files
+        for path in [criteria_path, proof_path, audit_path]:
+            if not os.path.exists(path):
+                self.log(f"DEBUG: update_audit_hash - skipping due to missing file: {path}")
+                return
 
         hasher = hashlib.md5()
         with (

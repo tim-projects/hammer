@@ -70,7 +70,19 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
 
     if not force:
-        cli._validate_pipeline_gate(task, new_status, filepath_str)
+        try:
+            cli._validate_pipeline_gate(task, new_status, filepath_str)
+        except PipelineError as e:
+            # Handle audit failures: move back to PROGRESSING and instruct user
+            if e.code in ["AUDIT_MISSING", "AUDIT_PATCH_MISSING", "PROOF_MISSING", "HASH_MISSING", "AUDIT_MISMATCH", "INTEGRITY_MISMATCH"]:
+                cli.log(f"Audit failed: {e.code}. Moving task back to PROGRESSING.")
+                perform_move(cli, task, current_state, "PROGRESSING", filepath_str)
+                cli.error(
+                    "AUDIT_FAILURE",
+                    hint=f"Audit failed: {e.code}. Task moved back to PROGRESSING. Use 'hammer tasks modify {task.metadata.get('Id')} --criteria <new_criteria> --plan <new_plan>' to update task artifacts and try again."
+                )
+            else:
+                raise e
 
     if current_state == new_status:
         return
