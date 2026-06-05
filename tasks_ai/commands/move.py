@@ -95,8 +95,9 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
     # Perform Git Merge if applicable
     if sync and not force:
-        cli._git_merge_transition(task, new_status, current_state=current_state, yes=yes)
-
+        cli._git_merge_transition(
+            task, new_status, current_state=current_state, yes=yes
+        )
 
     # 2. Final Execution (Physical move)
     new_task = perform_move(cli, task, current_state, new_status, filepath_str)

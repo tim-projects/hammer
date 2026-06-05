@@ -362,8 +362,8 @@ class TasksCLI:
                 if item == ".gitkeep":
                     continue
                 path = os.path.join(dir_path, item)
+                task = FM.load(path)
                 try:
-                    task = FM.load(path)
                     if task and task.metadata and "DeleteCode" in task.metadata:
                         del task.metadata["DeleteCode"]
                         self._atomic_write(path, task)
@@ -768,7 +768,10 @@ class TasksCLI:
     def reconcile(self, target=None, all=False, dry_run=False):
         if not target and not all:
             self._reconcile_scan(dry_run=dry_run)
+        elif target:
+            self._reconcile_single(target, dry_run=dry_run)
         elif all:
+            self._reconcile_check_unmerged_done(dry_run=dry_run)
             self._reconcile_archive_all(dry_run=dry_run)
         else:
             self._reconcile_single(target, dry_run=dry_run)
@@ -792,10 +795,10 @@ class TasksCLI:
                 if os.path.isdir(path):
                     all_tasks.append((path, state, item))
 
-        # Second, verify all tasks
+                # Second, verify all tasks
+                task = FM.load(path)
         for path, state, item in all_tasks:
             try:
-                task = FM.load(path)
                 task_state = task.metadata.get(
                     "St", state
                 )  # Default to folder state if St missing
@@ -868,7 +871,67 @@ class TasksCLI:
                 title = c["title"][:38] if len(c["title"]) > 38 else c["title"]
                 print(f"{c['id']:>3} {c['state']:<12} {title:<40} {c['branch']}")
             print("\nTo archive a task, run: tasks reconcile <id>")
-            print("To archive all, run: tasks reconcile --all")
+
+    def _reconcile_check_unmerged_done(self, dry_run=False):
+        """Check for DONE tasks not merged to main."""
+        folder = STATE_FOLDERS.get("DONE")
+        fp = os.path.join(self.tasks_path, folder)
+        if not os.path.exists(fp):
+            return
+        for item in os.listdir(fp):
+            if item == ".gitkeep":
+                continue
+            path = os.path.join(fp, item)
+            try:
+                task = FM.load(path)
+            except Exception:
+                continue
+            if not os.path.isdir(path):
+                continue
+            branch = item
+            try:
+                branch_sha = self.pipeline.git.run(["rev-parse", branch]).stdout.strip()
+
+                merge_base = self.pipeline.git.run(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
+                is_merged = merge_base == branch_sha
+            except Exception:
+                is_merged = False
+            if not is_merged:
+                target = "STAGING" if task.metadata.get("Br") else "PROGRESSING"
+                print(
+                    f"⚠️ Task {item} in DONE but not merged to main. Moving to {target}."
+                )
+                if not dry_run:
+                    self._move_logic(item, target, force=True, yes=True)
+                continue
+            # Check if merged to local and remote main
+            try:
+                is_merged = False
+                # Re-verify: Check specifically if the commit in the branch is reachable from main
+                try:
+                    branch_sha = self.pipeline.git.run(
+                        ["rev-parse", branch]
+                    ).stdout.strip()
+
+                    merge_base = self.pipeline.git.run(
+                        ["merge-base", branch_sha, "main"]
+                    ).stdout.strip()
+                    is_merged = merge_base == branch_sha
+                except Exception:
+                    is_merged = False
+                if not is_merged:
+                    # Check if previously in STAGING
+                    # Pipeline keeps historical state in activity.log or meta? Let's assume STAGING if Br exists and it wasn't fully merged.
+                    target = "STAGING" if task.metadata.get("Br") else "PROGRESSING"
+                    print(
+                        f"⚠️ Task {item} in DONE but not merged to main. Moving to {target}."
+                    )
+                    if not dry_run:
+                        self._move_logic(item, target, force=True, yes=True)
+            except Exception as e:
+                print(f"⚠️ Could not check merge status for {item}: {e}")
 
     def _reconcile_archive_all(self, dry_run=False):
         candidates = []
@@ -904,6 +967,7 @@ class TasksCLI:
             if item == ".gitkeep":
                 continue
             path = os.path.join(fp, item)
+
             if not os.path.isdir(path):
                 continue
 
