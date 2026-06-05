@@ -177,12 +177,13 @@ def perform_move(cli, task, current_state, new_status, filepath):
         )
 
     # Ensure mandatory fields exist
-    for field in ["Id", "Ti"]:
-        if not task.metadata.get(field):
-            cli.error(
-                "TASK_METADATA_CORRUPTED",
-                detail=f"Task {task.metadata.get('Id')} is missing mandatory field: {field}",
-            )
+    if new_status == "DONE":
+        for field in ["Id", "Ti"]:
+            if not task.metadata.get(field):
+                cli.error(
+                    "TASK_METADATA_CORRUPTED",
+                    detail=f"Task {task.metadata.get('Id')} is missing mandatory field: {field}",
+                )
 
     new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
 

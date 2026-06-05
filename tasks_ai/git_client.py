@@ -85,8 +85,15 @@ class GitClient:
         return "main"
 
     def is_merged(self, branch: str, target: str = "main") -> bool:
-        res = self.run(["branch", "--merged", target])
-        return branch in res.stdout
+        # Check if the branch exists locally
+        branch_full = branch
+        if not branch.startswith("refs/heads/"):
+            branch_full = f"refs/heads/{branch}"
+        res = self.run(["rev-parse", "--verify", branch_full])
+        if res.returncode != 0:
+            return False
+        res = self.run(["merge-base", "--is-ancestor", branch, target])
+        return res.returncode == 0
 
     def check_main_divergence(self):
         """Check if local main is out of sync with origin/main."""

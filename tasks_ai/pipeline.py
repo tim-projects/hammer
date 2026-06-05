@@ -135,8 +135,8 @@ class PipelineService:
                     f"DEBUG: Skipping audit_integrity check for task {task_id} as Rc is 'PASSED'"
                 )
 
-        # 4. Merge verification for DONE/ARCHIVED
-        if "merge_check" in enabled_gates:
+        # 4. Merge verification for ARCHIVED
+        if "merge_check" in enabled_gates and target_state == "ARCHIVED":
             branch = task.metadata.get("Br", "")
             if branch:
                 # Check if branch is merged into main
@@ -152,6 +152,25 @@ class PipelineService:
             synced, local, remote = self.git.check_main_divergence()
             if not synced:
                 raise PipelineError("MAIN_DIVERGED", local=local, remote=remote)
+
+        # 6. Check if staging is synced with source for DONE
+        if target_state == "DONE":
+            branch = task.metadata.get("Br", "")
+            if branch:
+                # For DONE, we merge staging into main.
+                # We should ensure 'staging' contains the branch commits.
+                # Check if commit exists in main (local and remote)
+                if target_state == "DONE":
+                    if not self.git.is_merged(branch, "main"):
+                        self.error("BRANCH_NOT_MERGED", branch=branch)
+                    # Check remote main divergence
+                    synced, local, remote = self.git.check_main_divergence()
+                    if not synced:
+                        self.error("MAIN_DIVERGED", local=local, remote=remote)
+                if not self.git.is_merged(branch, "staging"):
+                    self.log(
+                        f"Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete."
+                    )
 
     def git_merge_transition(
         self, task, target_state: str, current_state: str = None, yes: bool = False
@@ -233,8 +252,15 @@ class PipelineService:
         self.git.run(["pull", "origin", target_git_branch])
 
         # 3. Merge src into target
+        task_id = task.metadata.get("Id", "unknown")
         merge_res = self.git.run(
-            ["merge", src_branch, "-m", f"merge: {src_branch} into {target_git_branch}"]
+            [
+                "merge",
+                "--no-ff",
+                src_branch,
+                "-m",
+                f"[{task_id}] merge: {src_branch} into {target_git_branch}",
+            ]
         )
         if merge_res.returncode != 0:
             raise RuntimeError(
@@ -242,8 +268,9 @@ class PipelineService:
             )
 
         # 4. Push target
-        if yes:
+        if yes or target_state == "DONE":
             self.git.run(["push", "origin", target_git_branch])
+            self.log(f"Git: Pushed {target_git_branch} to origin")
         else:
             self.log(
                 f"Merge successful. Manual 'git push origin {target_git_branch}' required or use -y."
