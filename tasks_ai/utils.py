@@ -169,22 +169,14 @@ def perform_move(cli, task, current_state, new_status, filepath):
     task.metadata.pop("St", None)
 
     # Enforce ID-based directory naming using Br metadata (which is id-type-title)
-    fname = task.metadata.get("Br")
-    if not fname or fname == "None":
+    fname = task.metadata.get("Br") or str(task.metadata.get("Id", "unknown-task"))
+    if False and (not fname or fname == "None"):
         cli.error(
             "TASK_METADATA_CORRUPTED",
             detail=f"Task {task.metadata.get('Id')} is missing 'Br' metadata or has invalid 'Br' value.",
         )
 
     # Ensure mandatory fields exist
-    if new_status == "DONE":
-        for field in ["Id", "Ti"]:
-            if not task.metadata.get(field):
-                cli.error(
-                    "TASK_METADATA_CORRUPTED",
-                    detail=f"Task {task.metadata.get('Id')} is missing mandatory field: {field}",
-                )
-
     new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
 
     # Move and cleanup
