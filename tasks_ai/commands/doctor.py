@@ -3,6 +3,7 @@ import re
 import shutil
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
+from ..utils import parse_filename
 
 
 def extract_id_from_string(s):
@@ -116,7 +117,12 @@ def run(cli, fix=False):
             )
             if not clean_title:
                 clean_title = "task"
-            expected_br = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip(
+            
+            # Derive type: metadata.Ty -> folder name -> 'task'
+            task_type, _ = parse_filename(item)
+            task_type = task.metadata.get("Ty", task_type)
+            
+            expected_br = f"{correct_id}-{task_type}-{clean_title[:30]}".strip(
                 "-"
             )
 
@@ -142,7 +148,7 @@ def run(cli, fix=False):
                 )
 
             # Check directory name
-            expected_dir = f"{correct_id}-{task.metadata.get('Ty', 'task')}-{clean_title[:30]}".strip(
+            expected_dir = f"{correct_id}-{task_type}-{clean_title[:30]}".strip(
                 "-"
             )
             if item != expected_dir:

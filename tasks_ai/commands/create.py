@@ -110,6 +110,7 @@ def run(
         metadata={
             "Id": numeric_id,
             "Ti": title,
+            "Ty": task_type,
             "Cr": datetime.now().strftime("%y%m%d %H:%M"),
             "Bl": [],
             "Pr": priority or (1 if task_type == "issue" else 2),
