@@ -113,7 +113,7 @@ class TestingToReviewGateHook(PipelineHook):
             )
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
-            
+
             if task.metadata.get("Rc") != "PASSED":
                 cli.log(
                     f"💡 HINT: Regression check required. \n"

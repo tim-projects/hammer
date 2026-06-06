@@ -117,14 +117,12 @@ def run(cli, fix=False):
             )
             if not clean_title:
                 clean_title = "task"
-            
+
             # Derive type: metadata.Ty -> folder name -> 'task'
             task_type, _ = parse_filename(item)
             task_type = task.metadata.get("Ty", task_type)
-            
-            expected_br = f"{correct_id}-{task_type}-{clean_title[:30]}".strip(
-                "-"
-            )
+
+            expected_br = f"{correct_id}-{task_type}-{clean_title[:30]}".strip("-")
 
             if not (
                 branch_from_metadata
@@ -148,9 +146,7 @@ def run(cli, fix=False):
                 )
 
             # Check directory name
-            expected_dir = f"{correct_id}-{task_type}-{clean_title[:30]}".strip(
-                "-"
-            )
+            expected_dir = f"{correct_id}-{task_type}-{clean_title[:30]}".strip("-")
             if item != expected_dir:
                 inconsistencies.append(("directory name", item, expected_dir))
 

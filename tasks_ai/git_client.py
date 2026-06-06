@@ -27,8 +27,10 @@ class GitClient:
     ) -> subprocess.CompletedProcess:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
+        env = os.environ.copy()
+        env["HAMMER_INTERNAL_CALL"] = "1"
         result = subprocess.run(
-            ["git"] + args, cwd=cwd, capture_output=capture, text=True
+            ["git"] + args, cwd=cwd, capture_output=capture, text=True, env=env
         )
 
         if check and result.returncode != 0:
