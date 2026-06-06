@@ -1,5 +1,6 @@
 import os
 import shutil
+from datetime import datetime
 from .hooks import PipelineHook
 from .constants import CURRENT_TASK_FILENAME
 from .models import Task
@@ -107,6 +108,9 @@ class TestingToReviewGateHook(PipelineHook):
                 task.metadata["Rc"] = "PASSED"
             else:
                 task.metadata["Rc"] = ""
+                # Record generation time for all patches
+                task.metadata["PatchGenTime"] = datetime.now().timestamp()
+                task.metadata["PatchFiles"] = patches
 
             cli.log(
                 f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}"
@@ -114,12 +118,13 @@ class TestingToReviewGateHook(PipelineHook):
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
 
-            if task.metadata.get("Rc") != "PASSED":
-                cli.log(
-                    f"💡 HINT: Regression check required. \n"
-                    f"1. Audit the fragmented patches in '.tasks/review/{os.path.basename(filepath)}/patches/'.\n"
-                    f"2. Run './hammer tasks modify {task_id} --regression-check' to pass the gate."
-                )
+            # PHASE 1: Manual Review
+            cli.log(
+                f"💡 HINT: Manual patch review required.\n"
+                f"1. Review all patches in: '.tasks/review/{os.path.basename(filepath)}/patches/'\n"
+                f"2. Mark review complete: './hammer tasks modify {task_id} --reviewed'\n"
+                f"Once reviewed, you will be prompted to run audit and regression check."
+            )
 
 
 class BranchCheckHook(PipelineHook):

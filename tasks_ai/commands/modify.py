@@ -22,6 +22,7 @@ def run(
     tests_passed=None,
     priority=None,
     regression_check=None,
+    reviewed=None,
 ):
     """Execution logic for 'tasks modify'."""
     filepath, _ = cli.find_task(filename)
@@ -87,6 +88,42 @@ def run(
     if tests_passed is not None:
         task.metadata["Tp"] = bool(tests_passed)
         updated = True
+
+    if reviewed is not None:
+        if reviewed:
+            # Verify all patches were accessed after generation
+            gen_time = task.metadata.get("PatchGenTime")
+            patch_files = task.metadata.get("PatchFiles", [])
+
+            if gen_time and patch_files:
+                from ..constants import STATE_FOLDERS
+
+                review_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["REVIEW"])
+                task_folder_name = os.path.basename(filepath)
+                patches_dir = os.path.join(review_dir, task_folder_name, "patches")
+
+                for patch in patch_files:
+                    patch_path = os.path.join(patches_dir, patch)
+                    if os.path.exists(patch_path):
+                        # Get last access time
+                        atime = os.path.getatime(patch_path)
+                        if atime < gen_time:
+                            cli.error(
+                                "Patch '{patch}' has not been reviewed since generation.",
+                                hint=f"Use 'cat {patch_path}' to confirm review of this patch file.",
+                            )
+                        else:
+                            cli.error(f"Patch file '{patch}' missing.")
+
+        task.metadata["Reviewed"] = bool(reviewed)
+        updated = True
+        if reviewed:
+            cli.log(
+                f"💡 HINT: Manual review confirmed.\n"
+                f"Now run:\n"
+                f"1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
+                f"2. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
+            )
 
     if priority is not None:
         task.metadata["Pr"] = priority
