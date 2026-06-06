@@ -151,6 +151,22 @@ class PipelineService:
         if current_state is None:
             current_state = task.metadata.get("St", "BACKLOG")
 
+        # 0. Auto-commit any uncommitted changes before transition
+        task_id = task.metadata.get("Id", "unknown")
+        status_res = self.git.run(["status", "--porcelain"])
+        if status_res.stdout.strip():
+            self.log(
+                f"Git: Detected uncommitted changes. Auto-committing before {target_state}..."
+            )
+            self.git.run(["add", "."])
+            self.git.run(
+                [
+                    "commit",
+                    "-m",
+                    f"[{task_id}] Auto-commit before {target_state} transition",
+                ]
+            )
+
         # Determine if this is a promotion or demotion
         try:
             curr_idx = PIPELINE_STAGES.index(current_state)
@@ -167,9 +183,9 @@ class PipelineService:
             )
             branches_to_sync = []
             if target_state == "PROGRESSING":
-                branches_to_sync = ["staging", "testing"]
+                branches_to_sync = ["main", "staging", "testing"]
             elif target_state in ["TESTING", "REVIEW"]:
-                branches_to_sync = ["staging"]
+                branches_to_sync = ["main", "staging"]
 
             self.git.run(["checkout", branch])
             for b in branches_to_sync:
@@ -205,22 +221,6 @@ class PipelineService:
             else:
                 self.log(f"Branch {src_branch} does not exist locally. Skipping merge.")
                 return
-
-        # Auto-commit any uncommitted changes before transition
-        task_id = task.metadata.get("Id", "unknown")
-        status_res = self.git.run(["status", "--porcelain"])
-        if status_res.stdout.strip():
-            self.log(
-                f"Git: Detected uncommitted changes. Auto-committing before {target_state}..."
-            )
-            self.git.run(["add", "."])
-            self.git.run(
-                [
-                    "commit",
-                    "-m",
-                    f"[{task_id}] Auto-commit before {target_state} transition",
-                ]
-            )
 
         self.log(f"Performing pipeline promotion: {src_branch} -> {target_git_branch}")
 
