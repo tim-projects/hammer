@@ -16,9 +16,13 @@ class MessageRegistry:
         with open(path, "r") as f:
             return json.load(f)
 
+    class SafeFormatter(dict):
+        def __missing__(self, key):
+            return "{" + key + "}"
+
     def get_error(self, code, **kwargs):
         msg = self.errors.get(code, f"Unknown error: {code}")
-        return msg.format(**kwargs)
+        return msg.format_map(self.SafeFormatter(kwargs))
 
     def get_hint(self, code, **kwargs):
-        return self.hints.get(code, "").format(**kwargs)
+        return self.hints.get(code, "").format_map(self.SafeFormatter(kwargs))
