@@ -93,7 +93,17 @@ def run(
         updated = True
 
     if regression_check is not None:
-        task.metadata["Rc"] = "PASSED" if regression_check else ""
+        if regression_check:
+            # Check if audit file exists in review folder
+            from ..constants import STATE_FOLDERS
+
+            review_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["REVIEW"])
+            audit_path = os.path.join(review_dir, f"{task_id}.audit")
+            if not os.path.exists(audit_path):
+                cli.error("AUDIT_MISSING", audit_path=audit_path)
+            task.metadata["Rc"] = "PASSED"
+        else:
+            task.metadata["Rc"] = ""
         updated = True
 
     if updated:
