@@ -93,7 +93,7 @@ def run(
         updated = True
 
     if regression_check is not None:
-        task.metadata["Rc"] = True if regression_check else ""
+        task.metadata["Rc"] = "PASSED" if regression_check else ""
         updated = True
 
     if updated:

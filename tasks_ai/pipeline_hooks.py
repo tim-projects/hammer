@@ -114,6 +114,13 @@ class TestingToReviewGateHook(PipelineHook):
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
 
+            if task.metadata.get("Rc") != "PASSED":
+                cli.log(
+                    f"💡 HINT: Regression check required. \n"
+                    f"1. Audit the fragmented patches in '.tasks/review/{os.path.basename(filepath)}/patches/'.\n"
+                    f"2. Run './hammer tasks modify {task_id} --regression-check' to pass the gate."
+                )
+
 
 class BranchCheckHook(PipelineHook):
     """Handles branch restoration and remote push verification."""
