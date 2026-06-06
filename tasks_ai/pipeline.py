@@ -108,7 +108,7 @@ class PipelineService:
         if "incomplete_checkboxes" in enabled_gates and self.has_incomplete_checkboxes(
             task_path
         ):
-            raise PipelineError("UNFINISHED_CHECKBOXES")
+            raise PipelineError("UNFINISHED_CHECKBOXES", task_id=task_id)
 
         # 2. Regression check gate: REVIEW/TESTING -> STAGING/DONE/ARCHIVED requires proof
         if "regression_check" in enabled_gates:
@@ -122,8 +122,8 @@ class PipelineService:
                     patch_path = f".tasks/review/{task_id}.patch"
                     raise PipelineError(
                         "REGRESSION_CHECK_NOT_PASSED",
-                        patch_path=patch_path,
                         task_id=task_id,
+                        patch_path=patch_path,
                     )
 
         # 3. Cryptographic Audit Integrity for STAGING/DONE
@@ -142,16 +142,16 @@ class PipelineService:
                 # Check if branch is merged into main
                 if not self.git.is_merged(branch, "main"):
                     raise PipelineError(
-                        "BRANCH_NOT_MERGED",
-                        branch=branch,
-                        task_id=task.metadata.get("Id"),
+                        "BRANCH_NOT_MERGED", task_id=task_id, branch=branch
                     )
 
         # 5. Check main divergence for terminal states
         if target_state in ["DONE", "ARCHIVED"]:
             synced, local, remote = self.git.check_main_divergence()
             if not synced:
-                raise PipelineError("MAIN_DIVERGED", local=local, remote=remote)
+                raise PipelineError(
+                    "MAIN_DIVERGED", task_id=task_id, local=local, remote=remote
+                )
 
         # 6. Check if staging is synced with source for DONE
         if target_state == "DONE":
@@ -162,11 +162,15 @@ class PipelineService:
                 # Check if commit exists in main (local and remote)
                 if target_state == "DONE":
                     if not self.git.is_merged(branch, "main"):
-                        self.error("BRANCH_NOT_MERGED", branch=branch)
+                        raise PipelineError(
+                            "BRANCH_NOT_MERGED", task_id=task_id, branch=branch
+                        )
                     # Check remote main divergence
                     synced, local, remote = self.git.check_main_divergence()
                     if not synced:
-                        self.error("MAIN_DIVERGED", local=local, remote=remote)
+                        raise PipelineError(
+                            "MAIN_DIVERGED", task_id=task_id, local=local, remote=remote
+                        )
                 if not self.git.is_merged(branch, "staging"):
                     self.log(
                         f"Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete."
@@ -231,6 +235,18 @@ class PipelineService:
         elif target_state == "DONE":
             src_branch = "staging"
 
+        # Check for uncommitted changes
+        status = self.git.run(["status", "--porcelain"])
+        if status.stdout.strip():
+            task_id = task.metadata.get("Id", "unknown")
+            self.git.run(["add", "."])
+            self.git.run(
+                [
+                    "commit",
+                    "-m",
+                    f"[{task_id}] Auto-commit before {target_state} transition",
+                ]
+            )
         # Check if src_branch exists locally
         res = self.git.run(["rev-parse", "--verify", src_branch])
         if res.returncode != 0:
@@ -346,15 +362,17 @@ class PipelineService:
             f"DEBUG: checking patches_dir={patches_dir}, exists={os.path.exists(patches_dir)}"
         )
         if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
-            raise PipelineError("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
+            raise PipelineError(
+                "AUDIT_PATCH_MISSING", task_id=task_id, patches_dir=patches_dir
+            )
 
         if not os.path.exists(audit_path):
             raise PipelineError("AUDIT_MISSING", audit_path=audit_path, task_id=task_id)
         if not os.path.exists(proof_path):
-            raise PipelineError("PROOF_MISSING", proof_path=proof_path)
+            raise PipelineError("PROOF_MISSING", task_id=task_id, proof_path=proof_path)
 
         if not os.path.exists(hash_path):
-            raise PipelineError("HASH_MISSING", hash_path=hash_path)
+            raise PipelineError("HASH_MISSING", task_id=task_id, hash_path=hash_path)
 
         # 2. Verify Audit vs Patches
         from .audit import verify_audit
