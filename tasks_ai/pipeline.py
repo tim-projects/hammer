@@ -249,6 +249,30 @@ class PipelineService:
         if yes or target_state == "DONE":
             self.git.run(["push", "origin", target_git_branch])
 
+    def update_audit_hash(self, task_id: str, task_path: str):
+        """Update the cryptographic hash of criteria and proof for integrity tracking."""
+        audit_path = os.path.join(os.path.dirname(task_path), "review", f"{task_id}.audit")
+        if not os.path.exists(audit_path):
+            audit_path = os.path.join(
+                os.path.dirname(task_path),
+                os.path.basename(task_path) + ".audit",
+            )
+
+        proof_path = os.path.join(task_path, "verification_proof.log")
+        hash_path = os.path.join(task_path, ".audit_hash")
+
+        hasher = hashlib.sha256()
+        with open(os.path.join(task_path, "criteria.md"), "rb") as f:
+            hasher.update(f.read())
+        with open(proof_path, "rb") as f:
+            hasher.update(f.read())
+        with open(audit_path, "rb") as f:
+            hasher.update(f.read())
+
+        with open(hash_path, "w") as f:
+            f.write(hasher.hexdigest())
+        self.log(f"Integrity hash updated for task {task_id}")
+
     def check_audit_integrity(self, task_id: str, task_path: str):
         """
         Verify that the task has a valid cryptographic audit and verification proof.
