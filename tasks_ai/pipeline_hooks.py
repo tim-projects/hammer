@@ -125,6 +125,8 @@ class TestingToReviewGateHook(PipelineHook):
                 f"2. Mark review complete: './hammer tasks modify {task_id} --reviewed'\n"
                 f"Once reviewed, you will be prompted to run audit and regression check."
             )
+
+
 class BranchCheckHook(PipelineHook):
     """Handles branch restoration and remote push verification."""
 
