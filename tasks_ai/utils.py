@@ -158,7 +158,7 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
 
 
 def perform_move(cli, task, current_state, new_status, filepath):
-    """Execute the physical move of task files on disk."""
+    """Execute the physical move of task files on disk, including auxiliary artifacts."""
     from .file_manager import FM
     from .constants import STATE_FOLDERS
 
@@ -170,24 +170,39 @@ def perform_move(cli, task, current_state, new_status, filepath):
 
     # Enforce ID-based directory naming using Br metadata (which is id-type-title)
     fname = task.metadata.get("Br") or str(task.metadata.get("Id", "unknown-task"))
-    if False and (not fname or fname == "None"):
-        cli.error(
-            "TASK_METADATA_CORRUPTED",
-            detail=f"Task {task.metadata.get('Id')} is missing 'Br' metadata or has invalid 'Br' value.",
-        )
 
     # Ensure mandatory fields exist
     new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
 
     # Move and cleanup
     if filepath_str != new_filepath:
-        if os.path.exists(new_filepath):
-            # If it's a directory, we can move contents or just remove and move
-            # But wait, if it exists, it might be because a hook created it (e.g. patches folder)
-            # So we should be careful.
-            pass
-
+        # Move the main task directory
         atomic_write(new_filepath, task, fm=FM)
+
+        # Migrate auxiliary artifacts from REVIEW/TESTING states if they exist
+        # Check for patches folder and audit files
+        task_folder_name = os.path.basename(filepath_str)
+
+        # Patches directory
+        patches_src = os.path.join(
+            cli.tasks_path, "review", task_folder_name, "patches"
+        )
+        patches_dst = os.path.join(
+            cli.tasks_path, STATE_FOLDERS[new_status], fname, "patches"
+        )
+        if os.path.exists(patches_src):
+            os.makedirs(os.path.dirname(patches_dst), exist_ok=True)
+            shutil.move(patches_src, patches_dst)
+            cli.log(f"Migrated patches directory to {new_status}")
+
+        # Audit file
+        audit_src = os.path.join(cli.tasks_path, "review", f"{task_folder_name}.audit")
+        audit_dst = os.path.join(
+            cli.tasks_path, STATE_FOLDERS[new_status], f"{fname}.audit"
+        )
+        if os.path.exists(audit_src):
+            shutil.move(audit_src, audit_dst)
+            cli.log(f"Migrated audit file to {new_status}")
 
         if os.path.exists(filepath_str):
             if os.path.isdir(filepath_str):
