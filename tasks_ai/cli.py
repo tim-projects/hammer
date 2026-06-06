@@ -100,7 +100,7 @@ class TasksCLI:
         self.root = self.context.repo_root or os.getcwd()
 
         self.git = GitClient(self.context, logger=self)
-        self.pipeline = PipelineService(self.context, self.git, logger=self)
+        self.pipeline = PipelineService(self.git, logger=self)
         self.validation = Validation(self)
         self.task_service = TaskService(self)
 
@@ -798,22 +798,17 @@ class TasksCLI:
         for path, state, item in all_tasks:
             try:
                 task = FM.load(path)
-                task_state = task.metadata.get(
-                    "St", state
-                )  # Default to folder state if St missing
+                task_state = task.metadata.get("St", state)
 
-                # Validate READY/BACKLOG tasks for uncommitted/untracked work
                 if task_state in ["READY", "BACKLOG"]:
-                    # Check git status for this branch
                     res = self._run_git(["status", "--porcelain", item], cwd=self.root)
                     if res.stdout.strip():
                         print(
-                            f"⚠️ Skipping {item}: Task in {task_state} has uncommitted/untracked work."
+                            f"⚠️ Skipping {item}: Task in {task_state} has uncommitted work."
                         )
                         continue
 
                 if task_state == "DONE":
-                    # Archive scan
                     branch = task.metadata.get("Br", item)
                     main_sha_res = self._run_git(["rev-parse", "main"])
                     branch_sha_res = self._run_git(["rev-parse", branch])
@@ -871,16 +866,16 @@ class TasksCLI:
             try:
                 task = FM.load(path)
                 branch = task.metadata.get("Br", item)
-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
+                main_sha_res = self._run_git(["rev-parse", "main"])
                 branch_sha_res = self._run_git(["rev-parse", branch])
-                if branch_sha_res.returncode != 0:
-                    continue
-                branch_sha = branch_sha_res.stdout.strip()
-                merge_base = self._run_git(
-                    ["merge-base", branch_sha, "main"]
-                ).stdout.strip()
-                if merge_base == main_sha:
-                    candidates.append(item)
+                if main_sha_res.returncode == 0 and branch_sha_res.returncode == 0:
+                    main_sha = main_sha_res.stdout.strip()
+                    branch_sha = branch_sha_res.stdout.strip()
+                    merge_base = self._run_git(
+                        ["merge-base", branch_sha, "main"]
+                    ).stdout.strip()
+                    if merge_base == main_sha:
+                        candidates.append(item)
             except Exception:
                 continue
 
