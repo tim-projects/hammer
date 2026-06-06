@@ -218,18 +218,22 @@ if __name__ == "__main__":
         "upgrade", help="Upgrade tasks to latest version (runs install.sh)."
     )
 
-    subparsers.add_parser(
-        "init-hooks", help="Update Git hooks without reinitializing tasks."
-    )
-
-    run_p = subparsers.add_parser("run", help="Run a configured tool.")
-    run_p.add_argument(
-        "tool",
+    # Check commands
+    check_p = subparsers.add_parser("check", help="Run validation checks.")
+    check_p.add_argument(
+        "command",
         nargs="?",
-        choices=["lint", "test", "typecheck", "format", "all"],
-        help="Tool to run.",
+        choices=["lint", "test", "typecheck", "format", "debug", "all"],
+        help="Specific check to run.",
     )
-    run_p.add_argument("--fix", action="store_true", help="Apply fixes if supported.")
+    check_p.add_argument("--lint", action="store_true", help="Run linter.")
+    check_p.add_argument("--test", action="store_true", help="Run tests.")
+    check_p.add_argument("--typecheck", action="store_true", help="Run type checker.")
+    check_p.add_argument("--format", action="store_true", help="Run formatter.")
+    check_p.add_argument("--debug", action="store_true", help="Run debug check.")
+    check_p.add_argument("--all", action="store_true", help="Run all checks.")
+    check_p.add_argument("--fix", action="store_true", help="Apply fixes.")
+    check_p.add_argument("--force", action="store_true", help="Force checks.")
 
     undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
@@ -334,5 +338,40 @@ if __name__ == "__main__":
         cli.verify(args.id, args.proof)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)
-    elif args.command == "undo":
-        cli.undo(args.filename)
+    elif args.command == "check":
+        # Import check module locally to avoid circular imports or heavy startup
+        import check
+
+        fix = args.fix
+        force = args.force
+
+        # Determine checks to run based on flags or positional argument
+        checks_to_run = []
+        if args.lint:
+            checks_to_run.append("lint")
+        if args.test:
+            checks_to_run.append("test")
+        if args.typecheck:
+            checks_to_run.append("typecheck")
+        if args.format:
+            checks_to_run.append("format")
+        if args.debug:
+            checks_to_run.append("debug")
+        if args.all or (not checks_to_run and args.command == "all"):
+            checks_to_run = ["all"]
+        elif args.command:
+            checks_to_run = [args.command]
+
+        exit_code = 0
+        for c in checks_to_run:
+            if c == "all":
+                code = check.run_all(
+                    fix=fix, as_json=args.json, dev=args.dev, force=force
+                )
+            elif c == "debug":
+                code = check.run_debug_check(fix=fix, as_json=args.json, dev=args.dev)
+            else:
+                code = check.run_check(c, fix=fix, as_json=args.json, dev=args.dev)
+            if code != 0:
+                exit_code = code
+        sys.exit(exit_code)

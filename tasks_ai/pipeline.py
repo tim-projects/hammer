@@ -251,7 +251,9 @@ class PipelineService:
 
     def update_audit_hash(self, task_id: str, task_path: str):
         """Update the cryptographic hash of criteria and proof for integrity tracking."""
-        audit_path = os.path.join(os.path.dirname(task_path), "review", f"{task_id}.audit")
+        audit_path = os.path.join(
+            os.path.dirname(task_path), "review", f"{task_id}.audit"
+        )
         if not os.path.exists(audit_path):
             audit_path = os.path.join(
                 os.path.dirname(task_path),
