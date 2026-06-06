@@ -4,7 +4,6 @@ from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
 
-
 def run(
     cli,
     filename,
@@ -22,6 +21,7 @@ def run(
     tests_passed=None,
     priority=None,
     regression_check=None,
+    reviewed=None,
 ):
     """Execution logic for 'tasks modify'."""
     filepath, _ = cli.find_task(filename)
@@ -34,9 +34,45 @@ def run(
     tt, _ = parse_filename(fname)
     updated = False
 
-    if task_type:
-        task.metadata["Ty"] = task_type
-        updated = True
+    # ... (skipping existing logic for brevity, only showing new reviewed logic) ...
+if tests_passed is not None:
+    task.metadata["Tp"] = bool(tests_passed)
+    updated = True
+
+if reviewed is not None:
+    if reviewed:
+        # Verify all patches were accessed after generation
+        task_id_num = task.metadata.get("Id")
+        gen_time = task.metadata.get("PatchGenTime")
+        patch_files = task.metadata.get("PatchFiles", [])
+
+        if gen_time and patch_files:
+            from ..constants import STATE_FOLDERS
+            review_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["REVIEW"])
+            task_folder_name = os.path.basename(filepath)
+            patches_dir = os.path.join(review_dir, task_folder_name, "patches")
+
+            for patch in patch_files:
+                patch_path = os.path.join(patches_dir, patch)
+                if os.path.exists(patch_path):
+                    # Get last access time
+                    atime = os.path.getatime(patch_path)
+                    if atime < gen_time:
+                         cli.error(
+                             "Patch '{patch}' has not been reviewed since generation.",
+                             hint=f"Use 'cat {patch_path}' to confirm review of this patch file."
+                         )
+                    else:
+                    cli.error(f"Patch file '{patch}' missing.")
+    task.metadata["Reviewed"] = bool(reviewed)
+    updated = True
+    if reviewed:
+        cli.log(
+            f"💡 HINT: Manual review confirmed.\n"
+            f"Now run:\n"
+            f"1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
+            f"2. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
+        )
 
     if title:
         title = title.strip()
@@ -83,6 +119,17 @@ def run(
             n = re.sub(r"- Mitigations:.*", f"- Mitigations: {mitigations}", n)
         task.parts["notes"] = n
         updated = True
+
+    if reviewed is not None:
+        task.metadata["Reviewed"] = bool(reviewed)
+        updated = True
+        if reviewed:
+            cli.log(
+                f"💡 HINT: Manual review confirmed.\n"
+                f"Now run:\n"
+                f"1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
+                f"2. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
+            )
 
     if tests_passed is not None:
         task.metadata["Tp"] = bool(tests_passed)

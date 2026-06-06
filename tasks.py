@@ -150,6 +150,9 @@ if __name__ == "__main__":
         "--tests-passed", action="store_true", help="Mark tests as passed."
     )
     mod_p.add_argument(
+        "--reviewed", action="store_true", help="Mark patch review as complete."
+    )
+    mod_p.add_argument(
         "--regression-check",
         action="store_true",
         help="Mark regression check as passed (enables STAGING from REVIEW).",
@@ -304,6 +307,7 @@ if __name__ == "__main__":
             tests_passed=args.tests_passed,
             priority=args.priority,
             regression_check=args.regression_check,
+            reviewed=args.reviewed,
         )
     elif args.command == "move":
         cli.move(args.filename, args.status, yes=args.yes)
