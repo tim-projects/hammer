@@ -102,18 +102,21 @@ def run(
                 task_folder_name = os.path.basename(filepath)
                 patches_dir = os.path.join(review_dir, task_folder_name, "patches")
 
-                for patch in patch_files:
-                    patch_path = os.path.join(patches_dir, patch)
+                for patch_info in patch_files:
+                    # audit.py constructs patch filename as file_path.replace(os.sep, '_') + '.patch'
+                    patch_filename = f"{patch_info['file'].replace(os.sep, '_')}.patch"
+                    patch_path = os.path.join(patches_dir, patch_filename)
                     if os.path.exists(patch_path):
                         # Get last access time
                         atime = os.path.getatime(patch_path)
                         if atime < gen_time:
-                            cli.error(
-                                "Patch '{patch}' has not been reviewed since generation.",
-                                hint=f"Use 'cat {patch_path}' to confirm review of this patch file.",
-                            )
-                        else:
-                            cli.error(f"Patch file '{patch}' missing.")
+                             cli.error(
+                                 f"Patch '{patch_filename}' has not been reviewed since generation.",
+                                 hint=f"Use 'cat {patch_path}' to confirm review of this patch file."
+                             )
+                    else:
+                        cli.error(f"Patch file '{patch_filename}' missing.")
+
 
         task.metadata["Reviewed"] = bool(reviewed)
         updated = True
