@@ -110,13 +110,12 @@ def run(
                         # Get last access time
                         atime = os.path.getatime(patch_path)
                         if atime < gen_time:
-                             cli.error(
-                                 f"Patch '{patch_filename}' has not been reviewed since generation.",
-                                 hint=f"Use 'cat {patch_path}' to confirm review of this patch file."
-                             )
+                            cli.error(
+                                f"Patch '{patch_filename}' has not been reviewed since generation.",
+                                hint=f"Use 'cat {patch_path}' to confirm review of this patch file.",
+                            )
                     else:
                         cli.error(f"Patch file '{patch_filename}' missing.")
-
 
         task.metadata["Reviewed"] = bool(reviewed)
         updated = True
