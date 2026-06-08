@@ -4,6 +4,7 @@ from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
 
+
 def run(
     cli,
     filename,
@@ -34,45 +35,9 @@ def run(
     tt, _ = parse_filename(fname)
     updated = False
 
-    # ... (skipping existing logic for brevity, only showing new reviewed logic) ...
-if tests_passed is not None:
-    task.metadata["Tp"] = bool(tests_passed)
-    updated = True
-
-if reviewed is not None:
-    if reviewed:
-        # Verify all patches were accessed after generation
-        task_id_num = task.metadata.get("Id")
-        gen_time = task.metadata.get("PatchGenTime")
-        patch_files = task.metadata.get("PatchFiles", [])
-
-        if gen_time and patch_files:
-            from ..constants import STATE_FOLDERS
-            review_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["REVIEW"])
-            task_folder_name = os.path.basename(filepath)
-            patches_dir = os.path.join(review_dir, task_folder_name, "patches")
-
-            for patch in patch_files:
-                patch_path = os.path.join(patches_dir, patch)
-                if os.path.exists(patch_path):
-                    # Get last access time
-                    atime = os.path.getatime(patch_path)
-                    if atime < gen_time:
-                         cli.error(
-                             "Patch '{patch}' has not been reviewed since generation.",
-                             hint=f"Use 'cat {patch_path}' to confirm review of this patch file."
-                         )
-                    else:
-                    cli.error(f"Patch file '{patch}' missing.")
-    task.metadata["Reviewed"] = bool(reviewed)
-    updated = True
-    if reviewed:
-        cli.log(
-            f"💡 HINT: Manual review confirmed.\n"
-            f"Now run:\n"
-            f"1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
-            f"2. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
-        )
+    if task_type:
+        task.metadata["Ty"] = task_type
+        updated = True
 
     if title:
         title = title.strip()
@@ -120,7 +85,38 @@ if reviewed is not None:
         task.parts["notes"] = n
         updated = True
 
+    if tests_passed is not None:
+        task.metadata["Tp"] = bool(tests_passed)
+        updated = True
+
     if reviewed is not None:
+        if reviewed:
+            # Verify all patches were accessed after generation
+            gen_time = task.metadata.get("PatchGenTime")
+            patch_files = task.metadata.get("PatchFiles", [])
+
+            if gen_time and patch_files:
+                from ..constants import STATE_FOLDERS
+
+                review_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["REVIEW"])
+                task_folder_name = os.path.basename(filepath)
+                patches_dir = os.path.join(review_dir, task_folder_name, "patches")
+
+                for patch_info in patch_files:
+                    # audit.py constructs patch filename as file_path.replace(os.sep, '_') + '.patch'
+                    patch_filename = f"{patch_info['file'].replace(os.sep, '_')}.patch"
+                    patch_path = os.path.join(patches_dir, patch_filename)
+                    if os.path.exists(patch_path):
+                        # Get last access time
+                        atime = os.path.getatime(patch_path)
+                        if atime < gen_time:
+                            cli.error(
+                                f"Patch '{patch_filename}' has not been reviewed since generation.",
+                                hint=f"Use 'cat {patch_path}' to confirm review of this patch file.",
+                            )
+                    else:
+                        cli.error(f"Patch file '{patch_filename}' missing.")
+
         task.metadata["Reviewed"] = bool(reviewed)
         updated = True
         if reviewed:
@@ -130,10 +126,6 @@ if reviewed is not None:
                 f"1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
                 f"2. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
             )
-
-    if tests_passed is not None:
-        task.metadata["Tp"] = bool(tests_passed)
-        updated = True
 
     if priority is not None:
         task.metadata["Pr"] = priority

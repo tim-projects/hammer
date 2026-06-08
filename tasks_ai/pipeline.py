@@ -50,6 +50,10 @@ class PipelineService:
         if not filepath:
             cli.error("TASK_NOT_FOUND", filename=filename)
 
+        if current_state == new_status:
+            cli.log(f"You are already on {new_status}")
+            return
+
         allowed = self.get_allowed_transitions().get(current_state, [])
         if new_status not in allowed:
             task_id = os.path.basename(filepath).split("-")[0]

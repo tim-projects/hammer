@@ -25,16 +25,22 @@ def run(cli, filename, new_status, yes=False):
     task_id_num = task.metadata.get("Id", "")
     tt, _ = parse_filename(fname)
 
-    move_logic(cli, filename, new_status, yes=yes)
-    cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
-    cli.finish(
-        {
-            "id": task_id_num,
-            "task_id": task_id,
-            "title": title,
-            "status": new_status,
-        }
-    )
+    # Check if we are already in the target state
+    _, current_state = cli.find_task(filename)
+    if current_state == new_status.upper():
+        cli.log(f"You are already on {new_status.upper()}")
+        return
+
+    if move_logic(cli, filename, new_status, yes=yes):
+        cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
+        cli.finish(
+            {
+                "id": task_id_num,
+                "task_id": task_id,
+                "title": title,
+                "status": new_status,
+            }
+        )
 
 
 def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
@@ -43,6 +49,10 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     filepath, current_state = cli.find_task(filename)
     if not filepath:
         cli.error(f"Task '{filename}' not found.")
+
+    if current_state == new_status:
+        cli.log(f"You are already on {new_status}")
+        return False
 
     filepath_str = str(filepath)
     task = FM.load(filepath_str)
@@ -72,9 +82,6 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                 )
             else:
                 raise e
-
-    if current_state == new_status:
-        return
 
     # 1. Run Exit Hooks (Pre-move checks and actions)
     cli.hook_registry.run_exit_hooks(
@@ -115,3 +122,4 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     cli.hook_registry.run_enter_hooks(
         cli, new_task, current_state, new_status, new_filepath
     )
+    return True
