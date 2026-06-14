@@ -232,6 +232,10 @@ if [ "$UPGRADE" == "true" ]; then
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh" -o "$DEST_DIR/install.sh"
     
     mkdir -p "$DEST_DIR/tasks_ai"
+    mkdir -p "$DEST_DIR/data"
+    for file in errors.json hints.json; do
+        curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/data/$file" -o "$DEST_DIR/data/$file"
+    done
     for module in cli.py help_text.py constants.py file_task.py task.py; do
         curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks_ai/$module" -o "$DEST_DIR/tasks_ai/$module"
     done
@@ -247,6 +251,10 @@ elif [ "$IS_LOCAL_REPO" == "true" ]; then
         rm -rf "$DEST_DIR/tasks_ai"
         cp -r "$SCRIPT_DIR/tasks_ai" "$DEST_DIR/"
     fi
+    if [ -d "$SCRIPT_DIR/data" ]; then
+        rm -rf "$DEST_DIR/data"
+        cp -r "$SCRIPT_DIR/data" "$DEST_DIR/"
+    fi
 else
     echo "Downloading from GitHub..."
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks.py" -o "$DEST_DIR/tasks.py"
@@ -256,6 +264,10 @@ else
     curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/install.sh" -o "$DEST_DIR/install.sh"
     
     mkdir -p "$DEST_DIR/tasks_ai"
+    mkdir -p "$DEST_DIR/data"
+    for file in errors.json hints.json; do
+        curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/data/$file" -o "$DEST_DIR/data/$file"
+    done
     for module in cli.py help_text.py constants.py file_task.py task.py; do
         curl -sSL "https://raw.githubusercontent.com/tim-projects/hammer/main/tasks_ai/$module" -o "$DEST_DIR/tasks_ai/$module"
     done

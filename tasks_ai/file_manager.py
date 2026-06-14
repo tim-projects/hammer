@@ -114,8 +114,12 @@ class FM:
                 "verification_proof.log",
                 ".audit_hash",
             ]:
+                if isinstance(content, list):
+                    content = "\n".join(content)
                 _atomic_write(os.path.join(path, name), content)
             else:
+                if isinstance(content, list):
+                    content = "\n".join(content)
                 _atomic_write(os.path.join(path, f"{name}.md"), content)
 
     @staticmethod
