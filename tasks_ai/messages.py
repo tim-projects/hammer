@@ -8,7 +8,7 @@ class MessageRegistry:
         # This assumes tasks_ai is in the same directory as the data/ folder.
         package_dir = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(os.path.dirname(package_dir), data_dir)
-        
+
         self.errors = self._load_json(os.path.join(data_path, "errors.json"))
         self.hints = self._load_json(os.path.join(data_path, "hints.json"))
 
