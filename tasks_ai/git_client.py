@@ -87,19 +87,25 @@ class GitClient:
         return "main"
 
     def is_merged(self, branch: str, target: str = "main") -> bool:
-        # 1. Proactively refresh remote references
-        self.run(["fetch", "origin"])
+        # 1. Proactively refresh all remote references to avoid stale state
+        self.run(["fetch", "--all"])
 
-        # 2. Check if the branch exists locally
-        branch_full = branch
-        if not branch.startswith("refs/heads/"):
-            branch_full = f"refs/heads/{branch}"
-        res = self.run(["rev-parse", "--verify", branch_full])
+        # 2. Check if the branch exists locally (or as a remote tracking branch)
+        res = self.run(["rev-parse", "--verify", branch])
         if res.returncode != 0:
-            return False
+            # Maybe it's a remote branch name, try searching for origin/branch
+            res = self.run(["rev-parse", "--verify", f"origin/{branch}"])
+            if res.returncode != 0:
+                return False
 
-        # 3. Check ancestry against target
-        res = self.run(["merge-base", "--is-ancestor", branch, target])
+        # 3. Check ancestry against target's remote tracking branch
+        target_ref = f"origin/{target}"
+
+        # Verify target ref exists
+        if self.run(["rev-parse", "--verify", target_ref]).returncode != 0:
+            target_ref = target  # fallback to local if remote missing
+
+        res = self.run(["merge-base", "--is-ancestor", branch, target_ref])
         return res.returncode == 0
 
     def check_main_divergence(self):
