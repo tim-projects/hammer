@@ -9,10 +9,7 @@ def run(cli, filename, new_status, yes=False):
     """Execution logic for 'tasks move'."""
     filepath, current_state_from_folder = cli.find_task(filename)
     if not filepath:
-        cli.error(
-            f"Task '{filename}' not found.",
-            hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
-        )
+        cli.error("TASK_NOT_FOUND", filename=filename)
     task_type, _ = parse_filename(os.path.basename(filepath))
 
     # Single-step transition
@@ -48,7 +45,7 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     new_status = new_status.upper()
     filepath, current_state = cli.find_task(filename)
     if not filepath:
-        cli.error(f"Task '{filename}' not found.")
+        cli.error("TASK_NOT_FOUND", filename=filename)
 
     if current_state == new_status:
         cli.log(f"You are already on {new_status}")
