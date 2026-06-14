@@ -169,13 +169,13 @@ class ReviewDiffHook(PipelineHook):
             task_id = task.metadata.get("Id")
 
             # Check if patches exist on disk and metadata is populated
-            patches_dir = os.path.join(cli.tasks_path, "review", os.path.basename(filepath), "patches")
 
             # Idempotent patch generation
             patches = generate_file_patches(cli, str(task_id), filepath, branch)
             task.metadata["PatchFiles"] = patches
             cli._atomic_write(filepath, task)
             cli.log("DEBUG: ReviewDiffHook: patches verified and generated.")
+
 
 class ArchivedCommitHook(PipelineHook):
     """Commits and pushes the tasks worktree when entering ARCHIVED."""
