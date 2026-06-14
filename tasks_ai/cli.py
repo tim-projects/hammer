@@ -37,6 +37,7 @@ from .pipeline_hooks import (
     ProgressUpdateHook,
     CleanupReviewArtifactsHook,
     BranchExistsHook,
+    PatchMigrationHook,
 )
 
 
@@ -77,6 +78,7 @@ class TasksCLI:
         self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
         self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
         self.hook_registry.register_enter_hook("STAGING", BranchCheckHook())
+        self.hook_registry.register_exit_hook("REVIEW", PatchMigrationHook())
         self.hook_registry.register_enter_hook("STAGING", CleanWorkspaceHook())
         self.hook_registry.register_enter_hook("DONE", BranchCheckHook())
         self.hook_registry.register_enter_hook("ARCHIVED", BranchCheckHook())
