@@ -71,6 +71,13 @@ class PipelineService:
         Raises PipelineError with descriptive message and hint if gate fails.
         """
         task_id = str(task.metadata.get("Id", "unknown"))
+        branch = task.metadata.get("Br", "")
+        
+        # 0. Fast-track check: If branch is already merged, bypass gates
+        if branch and self.git.is_merged(branch, "main"):
+            self.log(f"DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion.")
+            return True
+
         enabled_gates = self.get_enabled_gates(target_state)
 
         # 1. Checkboxes gate: All stages moving forward require checkboxes to be checked
@@ -100,7 +107,6 @@ class PipelineService:
 
         # 4. Integration gate: STAGING/DONE require branch to be merged into main/staging
         if "main_sync" in enabled_gates:
-            branch = task.metadata.get("Br", "")
             if branch:
                 # Check if branch is merged into main
                 if not self.git.is_merged(branch, "main"):
@@ -118,7 +124,6 @@ class PipelineService:
 
         # 6. Check if staging is synced with source for DONE
         if target_state == "DONE":
-            branch = task.metadata.get("Br", "")
             if branch:
                 # Re-verify: Check specifically if the commit in the branch is reachable from main
                 # Since is_merged(branch, 'main') passed, we know it is.

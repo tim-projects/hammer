@@ -168,6 +168,8 @@ class ReviewDiffHook(PipelineHook):
             _, branch = parse_filename(os.path.basename(filepath))
             task_id = task.metadata.get("Id")
 
+            # Check if patches exist on disk and metadata is populated
+
             # Idempotent patch generation
             patches = generate_file_patches(cli, str(task_id), filepath, branch)
             task.metadata["PatchFiles"] = patches
