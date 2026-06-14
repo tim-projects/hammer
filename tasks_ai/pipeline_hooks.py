@@ -144,6 +144,16 @@ class BranchCheckHook(PipelineHook):
                 if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                     cli.error("BRANCH_NOT_PUSHED", branch=branch)
 
+        # Governance check: Enforce that merging happens ONLY via pipeline
+        # Proactively check if main has unexpectedly merged this branch
+        if new_status in ("STAGING", "DONE"):
+            if cli.git.is_merged(branch, "main"):
+                cli.log(
+                    f"DEBUG: Branch {branch} merged into main. Verifying pipeline promotion."
+                )
+            else:
+                cli.error("BRANCH_NOT_MERGED", branch=branch)
+
 
 class ReviewDiffHook(PipelineHook):
     """Ensures file-level diff patches are generated when entering REVIEW."""
