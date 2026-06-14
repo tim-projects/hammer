@@ -103,7 +103,7 @@ class GitClient:
 
         # Verify target ref exists
         if self.run(["rev-parse", "--verify", target_ref]).returncode != 0:
-            target_ref = target # fallback to local if remote missing
+            target_ref = target  # fallback to local if remote missing
 
         res = self.run(["merge-base", "--is-ancestor", branch, target_ref])
         return res.returncode == 0
