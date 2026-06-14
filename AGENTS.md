@@ -107,6 +107,7 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 - Do NOT disable lint/typecheck rules  
 - Do NOT modify validation config to hide errors
 - Do NOT comment out failing tests
+- **NEVER** manually run `git` merge or `git push` to bypass pipeline gates. If the pipeline is stuck or incorrectly blocking promotion, stop immediately and report the issue to the user.
 
 If validation fails:
 1. **Fix the actual issue** - Not the validation tool
