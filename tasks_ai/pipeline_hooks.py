@@ -92,25 +92,12 @@ class TestingToReviewGateHook(PipelineHook):
                     hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed.",
                 )
 
-            # Patch generation check
-            from .audit import generate_file_patches
-
-            _, branch = parse_filename(os.path.basename(filepath))
-            task_id = task.metadata.get("Id")
-
-            patches = generate_file_patches(cli, str(task_id), filepath, branch)
-
             # Robust check: if patches is empty, auto-pass regression check
-            if not patches:
-                cli.log(
-                    f"DEBUG: No patches found for branch {branch}. Auto-passing regression check."
-                )
-                task.metadata["Rc"] = "PASSED"
-            else:
-                task.metadata["Rc"] = ""
-                # Record generation time for all patches
-                task.metadata["PatchGenTime"] = datetime.now().timestamp()
-                task.metadata["PatchFiles"] = patches
+            # Rc is managed by ReviewDiffHook now
+            task_id = task.metadata.get("Id")
+            task.metadata["Rc"] = ""
+            # Record generation time
+            task.metadata["PatchGenTime"] = datetime.now().timestamp()
 
             cli.log(
                 f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}"
@@ -159,17 +146,23 @@ class BranchCheckHook(PipelineHook):
 
 
 class ReviewDiffHook(PipelineHook):
-    """Generates a file-level diff patches and resets Rc when entering REVIEW."""
+    """Ensures file-level diff patches are generated when entering REVIEW."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "REVIEW":
             cli.log(
-                f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}"
+                f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
             )
-            # Patch generation is now handled in TestingToReviewGateHook to ensure Rc is set correctly.
-            cli.log(
-                "DEBUG: ReviewDiffHook: patches already generated in TestingToReviewGateHook"
-            )
+            from .audit import generate_file_patches
+
+            _, branch = parse_filename(os.path.basename(filepath))
+            task_id = task.metadata.get("Id")
+
+            # Idempotent patch generation
+            patches = generate_file_patches(cli, str(task_id), filepath, branch)
+            task.metadata["PatchFiles"] = patches
+            cli._atomic_write(filepath, task)
+            cli.log("DEBUG: ReviewDiffHook: patches verified and generated.")
 
 
 class ArchivedCommitHook(PipelineHook):
