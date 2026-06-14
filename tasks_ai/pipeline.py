@@ -72,11 +72,15 @@ class PipelineService:
         """
         task_id = str(task.metadata.get("Id", "unknown"))
         branch = task.metadata.get("Br", "")
-        
+
         # 0. Fast-track check: If branch is already merged, bypass gates
-        if branch and self.git.is_merged(branch, "main"):
-            self.log(f"DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion.")
-            return True
+        # Apply to REVIEW, STAGING, and DONE transitions
+        if target_state in ["REVIEW", "STAGING", "DONE"]:
+            if branch and self.git.is_merged(branch, "main"):
+                self.log(
+                    f"DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion to {target_state}."
+                )
+                return True
 
         enabled_gates = self.get_enabled_gates(target_state)
 
