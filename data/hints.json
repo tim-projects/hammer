@@ -41,5 +41,6 @@
   "PIPELINE_VALIDATION_FAILED": "WHAT: Pipeline validation failed: {msg}.\nWHY: Governance rules broken.\nHOW: Run './hammer check all' to identify failure.\nCONSEQUENCE: Promotion halted. FIX FAILURES.",
   "TEST_FAILURE": "WHAT: Test failure: {msg}.\nWHY: Regression detected.\nHOW: Run 'pytest' to debug failure. 2. Fix test.\nCONSEQUENCE: Promotion halted. FIX TEST.",
   "AUDIT_FAILURE": "WHAT: Audit failed: {audit_code}.\nWHY: Governance requirement unmet.\nHOW: Task moved back to PROGRESSING. Update criteria/plan for task {task_id} using 'hammer tasks modify {task_id} --criteria <new_criteria> --plan <new_plan>'.\nCONSEQUENCE: Promotion halted.",
-  "MAIN_DIVERGED": "WHAT: Local main branch is out of sync.\nWHY: Divergence from origin/main detected.\nHOW: Run 'git fetch origin && git pull origin main' to sync local main before promoting.\nCONSEQUENCE: Promotion to main blocked."
+  "MAIN_DIVERGED": "WHAT: Local main branch is out of sync.\nWHY: Divergence from origin/main detected.\nHOW: Run 'git fetch origin && git pull origin main' to sync local main before promoting.\nCONSEQUENCE: Promotion to main blocked.",
+  "CLEANUP_BRANCH_INVALID": "WHAT: Cleanup run from wrong branch: {current_branch}.\nWHY: HAMMER require stable integration branch.\nHOW: Run from {default_branch}, staging, or testing branch.\nCONSEQUENCE: Cleanup blocked. OBEY BRANCH."
   }
