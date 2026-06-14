@@ -163,9 +163,16 @@ if __name__ == "__main__":
     mv_p.add_argument(
         "filename", help="Task Id (or filename). Use numeric Id from 'list' output."
     )
-    mv_p.add_argument(
+    group = mv_p.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         "status",
+        nargs="?",
         help="Target state. Pipeline: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. Use comma-separated for multi-step.",
+    )
+    group.add_argument(
+        "--to",
+        dest="status",
+        help="Alias for target state.",
     )
     mv_p.add_argument(
         "-y",
