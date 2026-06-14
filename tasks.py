@@ -110,8 +110,8 @@ if __name__ == "__main__":
         help="Task type: task or issue or docs.",
     )
     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
-    cr_p.add_argument("--story", help="User story description.")
-    cr_p.add_argument("--tech", help="Technical background.")
+    cr_p.add_argument("--story", nargs="+", help="User story description.")
+    cr_p.add_argument("--tech", nargs="+", help="Technical background.")
     cr_p.add_argument("--criteria", nargs="+", help="Acceptance criteria (list).")
     cr_p.add_argument("--plan", nargs="+", help="Implementation plan (list).")
     cr_p.add_argument(
