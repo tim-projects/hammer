@@ -531,11 +531,11 @@ class TasksCLI:
         # pre-merge hook
         with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
             f.write(
-                '#!/bin/bash\n\n'
+                "#!/bin/bash\n\n"
                 'if [ "$HAMMER_INTERNAL_CALL" != "1" ]; then\n'
-                '    echo "❌ Manual git merge detected. Pipeline governance strictly requires using \'.\/hammer tasks move\' to perform merges."\n'
-                '    exit 1\n'
-                'fi\n'
+                "    echo \"❌ Manual git merge detected. Pipeline governance strictly requires using '.\/hammer tasks move' to perform merges.\"\n"
+                "    exit 1\n"
+                "fi\n"
             )
         os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
 
