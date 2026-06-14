@@ -38,6 +38,7 @@ from .pipeline_hooks import (
     CleanupReviewArtifactsHook,
     BranchExistsHook,
     PatchMigrationHook,
+    VerifyArtifactsHook,
 )
 
 
@@ -60,6 +61,7 @@ class TasksCLI:
         self.hook_registry.register_exit_hook("TESTING", ValidationHook())
         self.hook_registry.register_exit_hook("TESTING", BranchSyncOnExitTestingHook())
         self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
+        self.hook_registry.register_exit_hook("REVIEW", VerifyArtifactsHook())
         self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
 
         # Register ENTER hooks (Post-move actions)

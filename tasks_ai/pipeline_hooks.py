@@ -428,6 +428,38 @@ class PatchMigrationHook(PipelineHook):
                 cli.log(f"DEBUG: No patches found in {src_patches_dir} to migrate.")
 
 
+class VerifyArtifactsHook(PipelineHook):
+    """Proactively verifies that artifacts tracked in metadata exist on disk."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status in ["STAGING", "DONE"]:
+            patch_files = task.metadata.get("PatchFiles", [])
+            task_id = task.metadata.get("Id")
+
+            # Check if all patches exist
+            missing_patches = False
+            for patch_info in patch_files:
+                if not os.path.exists(patch_info.get("patch_path", "")):
+                    missing_patches = True
+                    break
+
+            if missing_patches:
+                cli.log(
+                    f"DEBUG: Artifacts missing for task {task_id}. Re-generating patches."
+                )
+                from .audit import generate_file_patches
+
+                _, branch = parse_filename(os.path.basename(filepath))
+
+                # Regenerate all patches
+                new_patches = generate_file_patches(cli, str(task_id), filepath, branch)
+
+                # Update task metadata
+                task.metadata["PatchFiles"] = new_patches
+                cli._atomic_write(filepath, task)
+                cli.log("DEBUG: Artifacts re-generated successfully.")
+
+
 class BranchExistsHook(PipelineHook):
     """Checks if the task branch exists; if not, moves back to PROGRESSING."""
 
