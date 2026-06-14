@@ -87,13 +87,18 @@ class GitClient:
         return "main"
 
     def is_merged(self, branch: str, target: str = "main") -> bool:
-        # Check if the branch exists locally
+        # 1. Proactively refresh remote references
+        self.run(["fetch", "origin"])
+        
+        # 2. Check if the branch exists locally
         branch_full = branch
         if not branch.startswith("refs/heads/"):
             branch_full = f"refs/heads/{branch}"
         res = self.run(["rev-parse", "--verify", branch_full])
         if res.returncode != 0:
             return False
+            
+        # 3. Check ancestry against target
         res = self.run(["merge-base", "--is-ancestor", branch, target])
         return res.returncode == 0
 
