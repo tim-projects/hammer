@@ -111,16 +111,7 @@ class TestingToReviewGateHook(PipelineHook):
                 # Record generation time for all patches
                 task.metadata["PatchGenTime"] = datetime.now().timestamp()
                 task.metadata["PatchFiles"] = patches
-            
-            # Explicitly migrate patches to staging-ready location to ensure consistency
-            task_folder_name = os.path.basename(filepath)
-            src_patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
-            dst_patches_dir = os.path.join(cli.tasks_path, "staging", task_folder_name, "patches")
-            
-            # This is a bit speculative as 'staging' dir might not exist yet, 
-            # but this hook runs when transitioning TO REVIEW, not STAGING.
-            # The patches must persist in 'review' until STAGING transition.
-            
+
             cli.log(
                 f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}"
             )
@@ -410,23 +401,32 @@ class CleanupReviewArtifactsHook(PipelineHook):
             cli._atomic_write(filepath, task)
 
 
-
 class PatchMigrationHook(PipelineHook):
     """Ensures patches are migrated from REVIEW to STAGING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if current_state == "REVIEW" and new_status == "STAGING":
             task_folder_name = os.path.basename(filepath)
-            src_patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
-            dst_patches_dir = os.path.join(cli.tasks_path, "staging", task_folder_name, "patches")
-            
+            src_patches_dir = os.path.join(
+                cli.tasks_path, "review", task_folder_name, "patches"
+            )
+            dst_patches_dir = os.path.join(
+                cli.tasks_path, "staging", task_folder_name, "patches"
+            )
+
             if os.path.exists(src_patches_dir):
-                cli.log(f"DEBUG: Migrating patches from {src_patches_dir} to {dst_patches_dir}")
+                cli.log(
+                    f"DEBUG: Migrating patches from {src_patches_dir} to {dst_patches_dir}"
+                )
                 os.makedirs(dst_patches_dir, exist_ok=True)
                 for item in os.listdir(src_patches_dir):
-                    shutil.copy2(os.path.join(src_patches_dir, item), os.path.join(dst_patches_dir, item))
+                    shutil.copy2(
+                        os.path.join(src_patches_dir, item),
+                        os.path.join(dst_patches_dir, item),
+                    )
             else:
                 cli.log(f"DEBUG: No patches found in {src_patches_dir} to migrate.")
+
 
 class BranchExistsHook(PipelineHook):
     """Checks if the task branch exists; if not, moves back to PROGRESSING."""
@@ -449,4 +449,3 @@ class BranchExistsHook(PipelineHook):
 
             # 3. Raise error to inform user
             cli.error("BRANCH_MISSING_AUTO_DEMOTED", branch=branch)
-
