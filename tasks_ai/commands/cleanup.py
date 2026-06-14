@@ -11,8 +11,10 @@ def run(cli, dry_run=False, yes=False):
                 }
             )
         else:
-            print(
-                f"Error: Cleanup must be run from {default_branch}, staging, or testing branch.\nCurrently on: {current_branch}"
+            cli.error(
+                "CLEANUP_BRANCH_INVALID",
+                default_branch=default_branch,
+                current_branch=current_branch,
             )
         return
 
