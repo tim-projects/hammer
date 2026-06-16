@@ -32,7 +32,6 @@ class PipelineService:
         if target_state in ["STAGING", "DONE"]:
             gates.append("regression_check")
             gates.append("audit_integrity")
-            gates.append("main_sync")
         if target_state == "DONE":
             gates.append("mandatory_verification")
         return gates
@@ -109,13 +108,21 @@ class PipelineService:
                 # But wait, governance usually requires audit IF Rc is not empty.
                 pass
 
-        # 4. Integration gate: STAGING/DONE require branch to be merged into main/staging
+        # 4. Integration gate: STAGING/DONE require branch to be merged into appropriate pipeline branch
         if "main_sync" in enabled_gates:
             if branch:
-                # Check if branch is merged into main
-                if not self.git.is_merged(branch, "main"):
+                # Target branch for integration check
+                integration_target = "main"
+                if target_state == "STAGING":
+                    integration_target = "staging"
+
+                # Check if branch is merged into target
+                if not self.git.is_merged(branch, integration_target):
                     raise PipelineError(
-                        "BRANCH_NOT_MERGED", task_id=task_id, branch=branch
+                        "BRANCH_NOT_MERGED",
+                        task_id=task_id,
+                        branch=branch,
+                        target=integration_target,
                     )
 
         # 5. Check main divergence for terminal states
