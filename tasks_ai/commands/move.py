@@ -13,7 +13,7 @@ def run(cli, filename, new_status=None, yes=False):
         cli.error("TASK_NOT_FOUND", filename=filename)
 
     task = FM.load(filepath)
-    
+
     # 1. Derive target status if not provided
     if not new_status:
         new_status = cli.git.get_next_logical_state(current_state)
@@ -29,18 +29,22 @@ def run(cli, filename, new_status=None, yes=False):
                 grace_period = 7 * 24 * 60 * 60
                 if elapsed < grace_period:
                     days_left = round((grace_period - elapsed) / (24 * 3600), 1)
-                    cli.log(f"Task {filename} is DONE. Auto-archiving in {days_left} days.")
+                    cli.log(
+                        f"Task {filename} is DONE. Auto-archiving in {days_left} days."
+                    )
                     return
             else:
                 # If DoneAt is missing, set it now and wait 7 days
                 task.metadata["DoneAt"] = datetime.now().timestamp()
                 cli._atomic_write(filepath, task)
-                cli.log(f"Task {filename} marked as DONE today. Auto-archiving in 7 days.")
+                cli.log(
+                    f"Task {filename} marked as DONE today. Auto-archiving in 7 days."
+                )
                 return
 
     # Single-step transition
     cli.pipeline.check_transition(cli, filename, new_status)
-    
+
     fname = os.path.basename(filepath)
     task_id = fname.rsplit(".", 1)[0]
     title = task.metadata.get("Ti", "")

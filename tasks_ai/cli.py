@@ -86,6 +86,7 @@ class TasksCLI:
 
         # Post-move generic hooks
         self.hook_registry.register_enter_hook("DONE", DoneAtHook())
+        self.hook_registry.register_enter_hook("DONE", AutoArchiveHook())
         for state in [
             "BACKLOG",
             "READY",

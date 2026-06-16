@@ -273,8 +273,10 @@ def cmd_promote(src_input, original_task_id=None):
     DEPRECATED: Promote a branch through the pipeline.
     This command is legacy. Use 'hammer tasks move' instead.
     """
-    warn("'repo promote' is DEPRECATED. Please use 'hammer tasks move' for unified task promotion.")
-    
+    warn(
+        "'repo promote' is DEPRECATED. Please use 'hammer tasks move' for unified task promotion."
+    )
+
     src = resolve_branch(src_input)
     task_id = original_task_id or (
         src.split("-")[0] if src.split("-")[0].isdigit() else None
@@ -289,7 +291,9 @@ def cmd_promote(src_input, original_task_id=None):
         subprocess.run(cmd)
         return
 
-    error("Promotion of non-task branches is not supported via this legacy command. Use 'git merge' manually.")
+    error(
+        "Promotion of non-task branches is not supported via this legacy command. Use 'git merge' manually."
+    )
 
 
 def cmd_demote(task_id_input, target_state):

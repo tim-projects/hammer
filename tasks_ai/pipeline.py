@@ -171,7 +171,9 @@ class PipelineService:
         if target_idx < curr_idx:
             return self.git.demote_task(task, target_state, current_state=current_state)
         else:
-            return self.git.promote_task(task, target_state, current_state=current_state, yes=yes)
+            return self.git.promote_task(
+                task, target_state, current_state=current_state, yes=yes
+            )
 
     def update_audit_hash(self, task_id: str, task_path: str):
         """Update the cryptographic hash of criteria and proof for integrity tracking."""
