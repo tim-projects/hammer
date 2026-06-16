@@ -163,7 +163,7 @@ if __name__ == "__main__":
     mv_p.add_argument(
         "filename", help="Task Id (or filename). Use numeric Id from 'list' output."
     )
-    group = mv_p.add_mutually_exclusive_group(required=True)
+    group = mv_p.add_mutually_exclusive_group(required=False)
     group.add_argument(
         "status",
         nargs="?",

@@ -1,7 +1,7 @@
 def run(cli, dry_run=False, yes=False):
     """Execution logic for 'tasks cleanup'."""
-    current_branch = cli._run_git(["rev-parse", "--abbrev-ref", "HEAD"]).stdout.strip()
-    default_branch = cli._get_default_branch()
+    current_branch = cli.git.get_current_branch()
+    default_branch = cli.git.get_default_branch()
 
     if current_branch not in ("main", "master", "staging", "testing"):
         if cli.as_json:
@@ -18,13 +18,13 @@ def run(cli, dry_run=False, yes=False):
             )
         return
 
-    main_sha = cli._run_git(["rev-parse", default_branch]).stdout.strip()
+    main_sha = cli.git.run(["rev-parse", default_branch]).stdout.strip()
     if not main_sha:
         cli.finish({"cleaned": [], "archived": [], "count": 0})
         return
 
     branches = (
-        cli._run_git(["branch", "--format", "%(refname:short)"])
+        cli.git.run(["branch", "--format", "%(refname:short)"])
         .stdout.strip()
         .splitlines()
     )
@@ -37,10 +37,10 @@ def run(cli, dry_run=False, yes=False):
             continue
 
         # Check if merged
-        res = cli._run_git(["merge-base", "--is-ancestor", branch, default_branch])
+        res = cli.git.run(["merge-base", "--is-ancestor", branch, default_branch])
         if res.returncode == 0:
             # SAFETY CHECK: Verify branch is clean
-            status_res = cli._run_git(["status", "--porcelain", branch])
+            status_res = cli.git.run(["status", "--porcelain", branch])
             if status_res.stdout.strip():
                 print(
                     f"⚠️ Skipping {branch}: Uncommitted/untracked changes detected. Clean up work first."
@@ -50,7 +50,7 @@ def run(cli, dry_run=False, yes=False):
             if dry_run:
                 cleaned.append(branch)
             else:
-                cli._run_git(["branch", "-d", branch])
+                cli.git.run(["branch", "-d", branch])
                 cleaned.append(branch)
 
     if not dry_run:

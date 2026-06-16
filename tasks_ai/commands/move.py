@@ -1,21 +1,50 @@
 import os
+from datetime import datetime
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename, perform_move
 from ..pipeline import PipelineError
 
 
-def run(cli, filename, new_status, yes=False):
+def run(cli, filename, new_status=None, yes=False):
     """Execution logic for 'tasks move'."""
-    filepath, current_state_from_folder = cli.find_task(filename)
+    filepath, current_state = cli.find_task(filename)
     if not filepath:
         cli.error("TASK_NOT_FOUND", filename=filename)
-    task_type, _ = parse_filename(os.path.basename(filepath))
+
+    task = FM.load(filepath)
+
+    # 1. Derive target status if not provided
+    if not new_status:
+        new_status = cli.git.get_next_logical_state(current_state)
+        if not new_status:
+            cli.log(f"Task {filename} is already in terminal state {current_state}.")
+            return
+
+        # Special case: DONE -> ARCHIVED requires 7-day grace period
+        if current_state == "DONE" and new_status == "ARCHIVED":
+            done_at = task.metadata.get("DoneAt")
+            if done_at:
+                elapsed = datetime.now().timestamp() - done_at
+                grace_period = 7 * 24 * 60 * 60
+                if elapsed < grace_period:
+                    days_left = round((grace_period - elapsed) / (24 * 3600), 1)
+                    cli.log(
+                        f"Task {filename} is DONE. Auto-archiving in {days_left} days."
+                    )
+                    return
+            else:
+                # If DoneAt is missing, set it now and wait 7 days
+                task.metadata["DoneAt"] = datetime.now().timestamp()
+                cli._atomic_write(filepath, task)
+                cli.log(
+                    f"Task {filename} marked as DONE today. Auto-archiving in 7 days."
+                )
+                return
 
     # Single-step transition
     cli.pipeline.check_transition(cli, filename, new_status)
 
-    task = FM.load(filepath)
     fname = os.path.basename(filepath)
     task_id = fname.rsplit(".", 1)[0]
     title = task.metadata.get("Ti", "")
@@ -23,7 +52,6 @@ def run(cli, filename, new_status, yes=False):
     tt, _ = parse_filename(fname)
 
     # Check if we are already in the target state
-    _, current_state = cli.find_task(filename)
     if current_state == new_status.upper():
         cli.log(f"You are already on {new_status.upper()}")
         return
