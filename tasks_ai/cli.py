@@ -869,7 +869,9 @@ class TasksCLI:
             try:
                 main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
                 branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
-                merge_base = self._run_git(["merge-base", branch_sha, "main"]).stdout.strip()
+                merge_base = self._run_git(
+                    ["merge-base", branch_sha, "main"]
+                ).stdout.strip()
                 if merge_base == main_sha:
                     candidates.append(item)
                 else:

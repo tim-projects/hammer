@@ -19,7 +19,9 @@ def run(cli, task_id):
     # Load task metadata correctly
     task = FM.load(current_path)
     if task.metadata.get("Rc") == "PASSED":
-        cli.log(f"✅ No changes detected for task {task_id} (already merged or empty diff). Skipping audit.")
+        cli.log(
+            f"✅ No changes detected for task {task_id} (already merged or empty diff). Skipping audit."
+        )
         return
 
     review_dir = os.path.join(cli.tasks_path, "review")
