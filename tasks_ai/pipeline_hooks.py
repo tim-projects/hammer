@@ -510,5 +510,7 @@ class AutoArchiveHook(PipelineHook):
             grace_period = 7 * 24 * 60 * 60  # 7 days in seconds
 
             if elapsed >= grace_period:
-                cli.log(f"Grace period expired for task {task.metadata.get('Id')}. Archiving...")
+                cli.log(
+                    f"Grace period expired for task {task.metadata.get('Id')}. Archiving..."
+                )
                 cli.move(task.metadata.get("Id"), "ARCHIVED")

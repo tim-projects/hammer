@@ -217,10 +217,12 @@ class GitService:
         self.merge_branches("testing", "staging", yes=yes)
         self.merge_branches("staging", "main", yes=yes)
 
-    def merge_branches(self, src: str, target: str, message: Optional[str] = None, yes=False):
+    def merge_branches(
+        self, src: str, target: str, message: Optional[str] = None, yes=False
+    ):
         """Robustly merge one branch into another with pull/push orchestration."""
         self.log(f"Merging {src} -> {target}...")
-        
+
         # 1. Ensure src and target exist
         if not self.branch_exists(src) or not self.branch_exists(target):
             self.log(f"Skipping merge: {src} or {target} does not exist.")
@@ -228,17 +230,17 @@ class GitService:
 
         # 2. Checkout target
         self.run(["checkout", target])
-        
+
         # 3. Pull latest
         self.run(["pull", "origin", target], check=False)
-        
+
         # 4. Merge
         msg = message or f"merge: {src} into {target}"
         merge_res = self.run(["merge", "--no-ff", src, "-m", msg])
-        
+
         if merge_res.returncode != 0:
             raise RuntimeError(f"Merge conflict {src} -> {target}. Resolve manually.")
-            
+
         # 5. Push if confirmed
         if yes:
             self.run(["push", "origin", target])
@@ -246,7 +248,9 @@ class GitService:
     def branch_exists(self, name: str) -> bool:
         return self.run(["rev-parse", "--verify", name], check=False).returncode == 0
 
-    def promote_task(self, task, target_state: str, current_state: str = None, yes: bool = False):
+    def promote_task(
+        self, task, target_state: str, current_state: str = None, yes: bool = False
+    ):
         """Perform the git merges associated with a pipeline promotion."""
         branch = task.metadata.get("Br", "")
         if not branch:
@@ -297,10 +301,10 @@ class GitService:
 
         # Use unified merge logic
         self.merge_branches(
-            src_branch, 
-            target_git_branch, 
+            src_branch,
+            target_git_branch,
             message=f"[{task_id}] merge: {src_branch} into {target_git_branch}",
-            yes=yes or target_state == "DONE"
+            yes=yes or target_state == "DONE",
         )
 
     def demote_task(self, task, target_state: str, current_state: str = None):
@@ -309,9 +313,10 @@ class GitService:
         if not branch:
             return
 
-        task_id = task.metadata.get("Id", "unknown")
-        self.log(f"Demoting task from {current_state} to {target_state}. Syncing higher branches back to {branch}...")
-        
+        self.log(
+            f"Demoting task from {current_state} to {target_state}. Syncing higher branches back to {branch}..."
+        )
+
         branches_to_sync = []
         if target_state == "PROGRESSING":
             branches_to_sync = ["main", "staging", "testing"]
@@ -322,6 +327,4 @@ class GitService:
         for b in branches_to_sync:
             if self.branch_exists(b):
                 self.log(f"Git: Syncing {b} -> {branch} (demotion)")
-                self.run(
-                    ["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"]
-                )
+                self.run(["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"])
