@@ -11,7 +11,7 @@ from typing import cast
 
 from .constants import TASKS_DIR, STATE_FOLDERS, CURRENT_TASK_FILENAME
 from .context import ProjectContext
-from .git_client import GitClient
+from .git_service import GitService
 from .pipeline import PipelineService
 from .validation import Validation
 from .task_service import TaskService
@@ -37,6 +37,8 @@ from .pipeline_hooks import (
     ProgressUpdateHook,
     CleanupReviewArtifactsHook,
     BranchExistsHook,
+    DoneAtHook,
+    AutoArchiveHook,
 )
 
 
@@ -83,6 +85,7 @@ class TasksCLI:
         self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
 
         # Post-move generic hooks
+        self.hook_registry.register_enter_hook("DONE", DoneAtHook())
         for state in [
             "BACKLOG",
             "READY",
@@ -99,7 +102,7 @@ class TasksCLI:
         self.context = ProjectContext(dev=dev)
         self.root = self.context.repo_root or os.getcwd()
 
-        self.git = GitClient(self.context, logger=self)
+        self.git = GitService(self.context, logger=self)
         self.pipeline = PipelineService(self.git, logger=self)
         self.validation = Validation(self)
         self.task_service = TaskService(self)

@@ -486,3 +486,29 @@ class BranchExistsHook(PipelineHook):
 
             # 3. Raise error to inform user
             cli.error("BRANCH_MISSING_AUTO_DEMOTED", branch=branch)
+
+
+class DoneAtHook(PipelineHook):
+    """Records the timestamp when a task reaches DONE state."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "DONE" and not task.metadata.get("DoneAt"):
+            task.metadata["DoneAt"] = datetime.now().timestamp()
+            cli._atomic_write(filepath, task)
+
+
+class AutoArchiveHook(PipelineHook):
+    """Automatically moves a task from DONE to ARCHIVED after a 7-day grace period."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "DONE":
+            done_at = task.metadata.get("DoneAt")
+            if not done_at:
+                return
+
+            elapsed = datetime.now().timestamp() - done_at
+            grace_period = 7 * 24 * 60 * 60  # 7 days in seconds
+
+            if elapsed >= grace_period:
+                cli.log(f"Grace period expired for task {task.metadata.get('Id')}. Archiving...")
+                cli.move(task.metadata.get("Id"), "ARCHIVED")
