@@ -130,7 +130,9 @@ class TasksCLI:
 
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
         if dev:
-            self.context.tasks_path = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
+            self.context.tasks_path = os.environ.get(
+                "HAMMER_DEV_TASKS_DIR", "/tmp/.tasks"
+            )
             if not os.path.exists(self.context.tasks_path):
                 os.makedirs(self.context.tasks_path, exist_ok=True)
         elif os.path.isabs(self.tasks_dir):

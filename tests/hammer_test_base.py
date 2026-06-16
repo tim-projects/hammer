@@ -16,10 +16,15 @@ class MockGitRemote:
     def __enter__(self):
         # Configure the repo to use this as origin
         subprocess.run(
-            ["git", "remote", "remove", "origin"], cwd=self.repo_dir, check=False, capture_output=True
+            ["git", "remote", "remove", "origin"],
+            cwd=self.repo_dir,
+            check=False,
+            capture_output=True,
         )
         subprocess.run(
-            ["git", "remote", "add", "origin", self.remote_dir], cwd=self.repo_dir, check=True
+            ["git", "remote", "add", "origin", self.remote_dir],
+            cwd=self.repo_dir,
+            check=True,
         )
         return self.remote_dir
 
@@ -32,7 +37,7 @@ class HammerTestBase(unittest.TestCase):
         self.test_root = tempfile.mkdtemp(prefix="hammer_test_")
         self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
         os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
-        
+
         self.repo_path = os.path.join(self.test_root, "repo")
         # Use full local clone
         subprocess.run(
@@ -44,7 +49,7 @@ class HammerTestBase(unittest.TestCase):
         tasks_clone_path = os.path.join(self.repo_path, ".tasks")
         if os.path.exists(tasks_clone_path):
             shutil.rmtree(tasks_clone_path)
-            
+
         self.script_path = os.path.join(self.repo_path, "tasks.py")
 
         # Configure isolated dev environment
