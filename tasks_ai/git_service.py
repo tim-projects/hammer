@@ -27,11 +27,13 @@ class GitService:
     ) -> subprocess.CompletedProcess:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
+        print(f"DEBUG: Running git {' '.join(args)} in {cwd}")
         env = os.environ.copy()
-        env["HAMMER_INTERNAL_CALL"] = "1"
+        # env["HAMMER_INTERNAL_CALL"] = "1"
         result = subprocess.run(
             ["git"] + args, cwd=cwd, capture_output=capture, text=True, env=env
         )
+        print(f"DEBUG: Git result: {result.returncode}, stdout: {result.stdout.strip()}")
 
         if check and result.returncode != 0:
             raise subprocess.CalledProcessError(
@@ -45,6 +47,7 @@ class GitService:
             self._handle_command_logging(args)
 
         return result
+
 
     def _handle_command_logging(self, args: List[str]):
         """Standardized logging for common git operations."""
@@ -177,6 +180,7 @@ class GitService:
             return None
 
         remotes = self.run(["remote", "-v"], cwd=tasks_path)
+        self.log(f"DEBUG: Remotes stdout in {tasks_path}: '{remotes.stdout}'")
         if not remotes.stdout.strip():
             self.log("No remote configured - skipping push (local-only mode)")
             return {"branch": branch, "remote": None}
