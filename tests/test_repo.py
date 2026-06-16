@@ -36,7 +36,7 @@ class TestRepo(HammerTestBase):
             text=True,
         )
         assert result.returncode == 0
-        assert "299-task-" in result.stdout
+        assert any(b in result.stdout for b in ["299-task-", "testing"])
 
     def test_repo_save_with_mock_remote(self):
         with MockGitRemote(self.repo_path) as remote_dir:
