@@ -4,7 +4,7 @@ from typing import Optional, List
 from .constants import STATE_FOLDERS
 
 
-class GitClient:
+class GitService:
     """
     Service for handling all git operations.
     Aware of worktree boundaries through ProjectContext.
@@ -198,3 +198,133 @@ class GitClient:
 
         self.log(f"Pushed .tasks ({current}) to origin/{branch}")
         return {"branch": branch, "remote": "origin", "from_branch": current}
+
+    def get_next_logical_state(self, current_state: str) -> Optional[str]:
+        """Map a task's current state to its next logical promotion target."""
+        from .constants import PIPELINE_STAGES
+
+        if current_state not in PIPELINE_STAGES:
+            return None
+        idx = PIPELINE_STAGES.index(current_state)
+        if idx + 1 < len(PIPELINE_STAGES):
+            return PIPELINE_STAGES[idx + 1]
+        return None
+
+    def sync_pipeline(self, yes=False):
+        """Sync all pipeline branches: testing -> staging -> main."""
+        self.log("Syncing pipeline branches...")
+        # logic from repo sync
+        self.merge_branches("testing", "staging", yes=yes)
+        self.merge_branches("staging", "main", yes=yes)
+
+    def merge_branches(
+        self, src: str, target: str, message: Optional[str] = None, yes=False
+    ):
+        """Robustly merge one branch into another with pull/push orchestration."""
+        self.log(f"Merging {src} -> {target}...")
+
+        # 1. Ensure src and target exist
+        if not self.branch_exists(src) or not self.branch_exists(target):
+            self.log(f"Skipping merge: {src} or {target} does not exist.")
+            return
+
+        # 2. Checkout target
+        self.run(["checkout", target])
+
+        # 3. Pull latest
+        self.run(["pull", "origin", target], check=False)
+
+        # 4. Merge
+        msg = message or f"merge: {src} into {target}"
+        merge_res = self.run(["merge", "--no-ff", src, "-m", msg])
+
+        if merge_res.returncode != 0:
+            raise RuntimeError(f"Merge conflict {src} -> {target}. Resolve manually.")
+
+        # 5. Push if confirmed
+        if yes:
+            self.run(["push", "origin", target])
+
+    def branch_exists(self, name: str) -> bool:
+        return self.run(["rev-parse", "--verify", name], check=False).returncode == 0
+
+    def promote_task(
+        self, task, target_state: str, current_state: str = None, yes: bool = False
+    ):
+        """Perform the git merges associated with a pipeline promotion."""
+        branch = task.metadata.get("Br", "")
+        if not branch:
+            return
+
+        task_id = task.metadata.get("Id", "unknown")
+
+        # 0. Auto-commit any uncommitted changes before transition
+        status_res = self.run(["status", "--porcelain"])
+        if status_res.stdout.strip():
+            self.log(
+                f"Git: Detected uncommitted changes. Auto-committing before {target_state}..."
+            )
+            self.run(["add", "."])
+            self.run(
+                [
+                    "commit",
+                    "-m",
+                    f"[{task_id}] Auto-commit before {target_state} transition",
+                ]
+            )
+
+        # PROMOTION: Traditional pipeline merge
+        pipeline_map = {"TESTING": "testing", "STAGING": "staging", "DONE": "main"}
+        target_git_branch = pipeline_map.get(target_state)
+        if not target_git_branch:
+            return
+
+        # Special case source branches
+        src_branch = branch
+        if target_state == "STAGING":
+            src_branch = "testing"
+        elif target_state == "DONE":
+            src_branch = "staging"
+
+        # Check if src_branch exists locally
+        if not self.branch_exists(src_branch):
+            if src_branch in ["testing", "staging"]:
+                self.log(
+                    f"Pipeline branch {src_branch} does not exist locally. Merging {branch} directly into {target_git_branch}."
+                )
+                src_branch = branch
+            else:
+                self.log(f"Branch {src_branch} does not exist locally. Skipping merge.")
+                return
+
+        self.log(f"Performing pipeline promotion: {src_branch} -> {target_git_branch}")
+
+        # Use unified merge logic
+        self.merge_branches(
+            src_branch,
+            target_git_branch,
+            message=f"[{task_id}] merge: {src_branch} into {target_git_branch}",
+            yes=yes or target_state == "DONE",
+        )
+
+    def demote_task(self, task, target_state: str, current_state: str = None):
+        """Sync higher branches back into feature branch during demotion."""
+        branch = task.metadata.get("Br", "")
+        if not branch:
+            return
+
+        self.log(
+            f"Demoting task from {current_state} to {target_state}. Syncing higher branches back to {branch}..."
+        )
+
+        branches_to_sync = []
+        if target_state == "PROGRESSING":
+            branches_to_sync = ["main", "staging", "testing"]
+        elif target_state in ["TESTING", "REVIEW"]:
+            branches_to_sync = ["main", "staging"]
+
+        self.run(["checkout", branch])
+        for b in branches_to_sync:
+            if self.branch_exists(b):
+                self.log(f"Git: Syncing {b} -> {branch} (demotion)")
+                self.run(["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"])
