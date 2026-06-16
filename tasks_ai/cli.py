@@ -100,7 +100,7 @@ class TasksCLI:
         self.root = self.context.repo_root or os.getcwd()
 
         self.git = GitClient(self.context, logger=self)
-        self.pipeline = PipelineService(self.context, self.git, logger=self)
+        self.pipeline = PipelineService(self.git, logger=self)
         self.validation = Validation(self)
         self.task_service = TaskService(self)
 
