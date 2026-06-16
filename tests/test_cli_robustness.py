@@ -36,7 +36,7 @@ class TestCLIRobustness(unittest.TestCase):
         )
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("MISSING_PARTS", result.stderr)
+        self.assertIn("Missing:", result.stderr)
 
     def test_create_validation_short_fields(self):
         """Task create should fail if fields are too short."""
@@ -68,7 +68,7 @@ class TestCLIRobustness(unittest.TestCase):
         )
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("TOO_SHORT", result.stderr)
+        self.assertIn("Too short:", result.stderr)
 
 
 if __name__ == "__main__":

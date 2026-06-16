@@ -45,6 +45,17 @@ STATE_FOLDERS = {
     "REJECTED": "rejected",
 }
 
+PIPELINE_STAGES = [
+    "BACKLOG",
+    "READY",
+    "PROGRESSING",
+    "TESTING",
+    "REVIEW",
+    "STAGING",
+    "DONE",
+    "ARCHIVED",
+]
+
 # The default workflow if no type-specific one is defined
 DEFAULT_ALLOWED_TRANSITIONS = {
     "BACKLOG": ["READY"],
@@ -53,7 +64,7 @@ DEFAULT_ALLOWED_TRANSITIONS = {
     "TESTING": ["REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
     "REVIEW": ["STAGING", "TESTING", "BLOCKED", "PROGRESSING"],
     "STAGING": ["DONE", "ARCHIVED", "REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
-    "DONE": ["ARCHIVED", "STAGING", "TESTING", "BLOCKED"],
+    "DONE": ["ARCHIVED", "STAGING", "TESTING", "BLOCKED", "PROGRESSING"],
     "BLOCKED": ["READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"],
     "ARCHIVED": ["READY", "TESTING"],
     "REJECTED": ["PROGRESSING"],
@@ -95,8 +106,7 @@ AGENT OPERATIONAL PROTOCOL:
    Schema: {"success": bool, "error": str|null, "messages": [str], "data": {}}
 2. TASK REFERENCES: Use the numeric Id (e.g., "1") instead of the filename for all operations. 
    Run 'list' to see task Ids alongside titles.
-3. MULTI-STEP MOVES: Push a task through multiple states in ONE command using comma-separated statuses.
-   Example: 'tasks move 1 READY,PROGRESSING,TESTING' moves from BACKLOG directly to TESTING.
+
    This bypasses the need for 3 separate move commands.
 4. CREATION: 'create' requires --story, --tech, --criteria, and --plan. 
    --repro is mandatory for --type issue. Titles must be >= 10 chars.

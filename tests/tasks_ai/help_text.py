@@ -7,9 +7,6 @@ For help on any command, use tasks <command> -h
 TASK REFERENCES: Use the numeric Id (e.g., "17") instead of the filename for all operations. 
 Run 'tasks list' to see task Ids alongside titles.
 
-MULTI-STEP MOVES: Push a task through multiple states in ONE command using comma-separated statuses.
-Example: 'tasks move 1 READY,PROGRESSING,TESTING' moves from BACKLOG directly to TESTING.
-
 USEFUL COMMANDS:
   tasks list                   List all tasks with Id, Priority, Summary, Type, Branch
   tasks show <id>              Show full task details

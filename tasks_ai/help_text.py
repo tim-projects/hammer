@@ -4,6 +4,13 @@ AGENT_GUIDANCE = """
 IMPORTANT: Always use -j for JSON output (machine-parseable for agents).
 For help on any command, use tasks <command> -h
 
+### 1. Pipeline Structure
+The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED).
+
+* Automation Engine: The mechanism that executes the Pipeline.
+* Automation Rule: The Automation Engine will chain all Jobs within a Stage automatically.
+* Halt Policy: The Pipeline halts only when a Check fails or Manual Intervention (e.g., audit) is required.
+
 Pipeline Commands:
   init              - Construct foundation: Create .tasks directory and configure git.
                       Run this first to initialize workspace storage.
@@ -17,13 +24,10 @@ Pipeline Commands:
 TASK REFERENCES: Use the numeric Id (e.g., "17") instead of the filename for all operations. 
 Run 'tasks list' to see task Ids alongside titles.
 
-MULTI-STEP MOVES: Push a task through multiple states in ONE command using comma-separated statuses.
-Example: 'tasks move 1 READY,PROGRESSING,TESTING' moves from BACKLOG directly to TESTING.
-
 USEFUL COMMANDS:
   tasks list                   List all tasks with Id, Priority, Summary, Type, Branch
   tasks show <id>              Show full task details
-  tasks move <id> <state>      Move task to new state (use comma-separated for multi-step)
+  tasks move <id> <state>      Move task to new state.
   tasks modify <id> --regression-check  Mark regression check as passed (enables STAGING)
   tasks reconcile --all        Clean up merged branches and archive tasks
   tasks cleanup                Clean up merged branches, push to remote, delete local, archive tasks

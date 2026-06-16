@@ -1,5 +1,6 @@
 import os
 import shutil
+from datetime import datetime
 from .hooks import PipelineHook
 from .constants import CURRENT_TASK_FILENAME
 from .models import Task
@@ -28,6 +29,13 @@ class ValidationHook(PipelineHook):
             cli.console(
                 "validate", "pre-transition", f"{current_state} -> {new_status}"
             )
+
+            # Enforce presence of essential files
+            for required_file in ["criteria.md", "progress.md"]:
+                if not os.path.exists(os.path.join(filepath, required_file)):
+                    cli.error(
+                        f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
+                    )
 
             # run_tool calls cli.error (which sys.exits) on failure
             cli.run_tool("all")
@@ -84,39 +92,26 @@ class TestingToReviewGateHook(PipelineHook):
                     hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed.",
                 )
 
-            # Patch generation check
-            from .audit import generate_file_patches
-
-            _, branch = parse_filename(os.path.basename(filepath))
+            # Robust check: if patches is empty, auto-pass regression check
+            # Rc is managed by ReviewDiffHook now
             task_id = task.metadata.get("Id")
-
-            patches = generate_file_patches(cli, str(task_id), filepath, branch)
-
-            # Robust check: if patches is empty, verify if branch is merged and workspace is clean
-            if not patches:
-                is_merged = cli.git.is_merged(branch, "main")
-                status = cli.git.run(
-                    ["status", "--porcelain"], cwd=cli.root
-                ).stdout.strip()
-
-                if is_merged and not status:
-                    cli.log(
-                        f"DEBUG: Branch {branch} merged and workspace clean, auto-passing regression check."
-                    )
-                    task.metadata["Rc"] = "PASSED"
-                else:
-                    cli.log(
-                        f"DEBUG: No patches found, but branch not merged or workspace dirty. is_merged={is_merged}, status='{status}'"
-                    )
-                    task.metadata["Rc"] = ""
-            else:
-                task.metadata["Rc"] = ""
+            task.metadata["Rc"] = ""
+            # Record generation time
+            task.metadata["PatchGenTime"] = datetime.now().timestamp()
 
             cli.log(
                 f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}"
             )
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
+
+            # PHASE 1: Manual Review
+            cli.log(
+                f"💡 HINT: Manual patch review required.\n"
+                f"1. Review all patches in: '.tasks/review/{os.path.basename(filepath)}/patches/'\n"
+                f"2. Mark review complete: './hammer tasks modify {task_id} --reviewed'\n"
+                f"Once reviewed, you will be prompted to run audit and regression check."
+            )
 
 
 class BranchCheckHook(PipelineHook):
@@ -149,19 +144,37 @@ class BranchCheckHook(PipelineHook):
                 if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                     cli.error("BRANCH_NOT_PUSHED", branch=branch)
 
+        # Governance check: Enforce that merging happens ONLY via pipeline
+        # Proactively check if main has unexpectedly merged this branch
+        if new_status in ("STAGING", "DONE"):
+            if cli.git.is_merged(branch, "main"):
+                cli.log(
+                    f"DEBUG: Branch {branch} merged into main. Verifying pipeline promotion."
+                )
+            else:
+                cli.error("BRANCH_NOT_MERGED", branch=branch)
+
 
 class ReviewDiffHook(PipelineHook):
-    """Generates a file-level diff patches and resets Rc when entering REVIEW."""
+    """Ensures file-level diff patches are generated when entering REVIEW."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "REVIEW":
             cli.log(
-                f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}"
+                f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
             )
-            # Patch generation is now handled in TestingToReviewGateHook to ensure Rc is set correctly.
-            cli.log(
-                "DEBUG: ReviewDiffHook: patches already generated in TestingToReviewGateHook"
-            )
+            from .audit import generate_file_patches
+
+            _, branch = parse_filename(os.path.basename(filepath))
+            task_id = task.metadata.get("Id")
+
+            # Check if patches exist on disk and metadata is populated
+
+            # Idempotent patch generation
+            patches = generate_file_patches(cli, str(task_id), filepath, branch)
+            task.metadata["PatchFiles"] = patches
+            cli._atomic_write(filepath, task)
+            cli.log("DEBUG: ReviewDiffHook: patches verified and generated.")
 
 
 class ArchivedCommitHook(PipelineHook):
@@ -391,6 +404,65 @@ class CleanupReviewArtifactsHook(PipelineHook):
 
             # Update the task file
             cli._atomic_write(filepath, task)
+
+
+class PatchMigrationHook(PipelineHook):
+    """Ensures patches are migrated from REVIEW to STAGING."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if current_state == "REVIEW" and new_status == "STAGING":
+            task_folder_name = os.path.basename(filepath)
+            src_patches_dir = os.path.join(
+                cli.tasks_path, "review", task_folder_name, "patches"
+            )
+            dst_patches_dir = os.path.join(
+                cli.tasks_path, "staging", task_folder_name, "patches"
+            )
+
+            if os.path.exists(src_patches_dir):
+                cli.log(
+                    f"DEBUG: Migrating patches from {src_patches_dir} to {dst_patches_dir}"
+                )
+                os.makedirs(dst_patches_dir, exist_ok=True)
+                for item in os.listdir(src_patches_dir):
+                    shutil.copy2(
+                        os.path.join(src_patches_dir, item),
+                        os.path.join(dst_patches_dir, item),
+                    )
+            else:
+                cli.log(f"DEBUG: No patches found in {src_patches_dir} to migrate.")
+
+
+class VerifyArtifactsHook(PipelineHook):
+    """Proactively verifies that artifacts tracked in metadata exist on disk."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status in ["STAGING", "DONE"]:
+            patch_files = task.metadata.get("PatchFiles", [])
+            task_id = task.metadata.get("Id")
+
+            # Check if all patches exist
+            missing_patches = False
+            for patch_info in patch_files:
+                if not os.path.exists(patch_info.get("patch_path", "")):
+                    missing_patches = True
+                    break
+
+            if missing_patches:
+                cli.log(
+                    f"DEBUG: Artifacts missing for task {task_id}. Re-generating patches."
+                )
+                from .audit import generate_file_patches
+
+                _, branch = parse_filename(os.path.basename(filepath))
+
+                # Regenerate all patches
+                new_patches = generate_file_patches(cli, str(task_id), filepath, branch)
+
+                # Update task metadata
+                task.metadata["PatchFiles"] = new_patches
+                cli._atomic_write(filepath, task)
+                cli.log("DEBUG: Artifacts re-generated successfully.")
 
 
 class BranchExistsHook(PipelineHook):

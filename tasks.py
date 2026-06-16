@@ -97,6 +97,9 @@ if __name__ == "__main__":
     lk_p.add_argument("filename", help="Task Id (or filename) to block.")
     lk_p.add_argument("blocked_by", help="Task Id (or filename) that is blocking.")
 
+    un_p = subparsers.add_parser("unarchive", help="Unarchive a task.")
+    un_p.add_argument("filename", help="Task Id (or filename).")
+
     cr_p = subparsers.add_parser("create", help="Create task.")
     cr_p.add_argument("title", help="Task title (min 10 chars).")
     cr_p.add_argument(
@@ -107,8 +110,8 @@ if __name__ == "__main__":
         help="Task type: task or issue or docs.",
     )
     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
-    cr_p.add_argument("--story", help="User story description.")
-    cr_p.add_argument("--tech", help="Technical background.")
+    cr_p.add_argument("--story", nargs="+", help="User story description.")
+    cr_p.add_argument("--tech", nargs="+", help="Technical background.")
     cr_p.add_argument("--criteria", nargs="+", help="Acceptance criteria (list).")
     cr_p.add_argument("--plan", nargs="+", help="Implementation plan (list).")
     cr_p.add_argument(
@@ -147,6 +150,9 @@ if __name__ == "__main__":
         "--tests-passed", action="store_true", help="Mark tests as passed."
     )
     mod_p.add_argument(
+        "--reviewed", action="store_true", help="Mark patch review as complete."
+    )
+    mod_p.add_argument(
         "--regression-check",
         action="store_true",
         help="Mark regression check as passed (enables STAGING from REVIEW).",
@@ -157,9 +163,16 @@ if __name__ == "__main__":
     mv_p.add_argument(
         "filename", help="Task Id (or filename). Use numeric Id from 'list' output."
     )
-    mv_p.add_argument(
+    group = mv_p.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         "status",
+        nargs="?",
         help="Target state. Pipeline: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. Use comma-separated for multi-step.",
+    )
+    group.add_argument(
+        "--to",
+        dest="status",
+        help="Alias for target state.",
     )
     mv_p.add_argument(
         "-y",
@@ -215,18 +228,22 @@ if __name__ == "__main__":
         "upgrade", help="Upgrade tasks to latest version (runs install.sh)."
     )
 
-    subparsers.add_parser(
-        "init-hooks", help="Update Git hooks without reinitializing tasks."
-    )
-
-    run_p = subparsers.add_parser("run", help="Run a configured tool.")
-    run_p.add_argument(
-        "tool",
+    # Check commands
+    check_p = subparsers.add_parser("check", help="Run validation checks.")
+    check_p.add_argument(
+        "command",
         nargs="?",
-        choices=["lint", "test", "typecheck", "format", "all"],
-        help="Tool to run.",
+        choices=["lint", "test", "typecheck", "format", "debug", "all"],
+        help="Specific check to run.",
     )
-    run_p.add_argument("--fix", action="store_true", help="Apply fixes if supported.")
+    check_p.add_argument("--lint", action="store_true", help="Run linter.")
+    check_p.add_argument("--test", action="store_true", help="Run tests.")
+    check_p.add_argument("--typecheck", action="store_true", help="Run type checker.")
+    check_p.add_argument("--format", action="store_true", help="Run formatter.")
+    check_p.add_argument("--debug", action="store_true", help="Run debug check.")
+    check_p.add_argument("--all", action="store_true", help="Run all checks.")
+    check_p.add_argument("--fix", action="store_true", help="Apply fixes.")
+    check_p.add_argument("--force", action="store_true", help="Force checks.")
 
     undo_p = subparsers.add_parser("undo", help="Undo last operation on a task.")
     undo_p.add_argument("filename", help="Task Id (or filename) to undo.")
@@ -241,8 +258,9 @@ if __name__ == "__main__":
     doc_p = subparsers.add_parser("doctor", help="Diagnose task data and git state.")
     doc_p.add_argument(
         "--fix",
-        action="store_true",
-        help="Attempt to fix issues automatically.",
+        nargs="?",
+        const=True,
+        help="Attempt to fix issues automatically (optionally specify task ID).",
     )
 
     args = parser.parse_args()
@@ -296,6 +314,7 @@ if __name__ == "__main__":
             tests_passed=args.tests_passed,
             priority=args.priority,
             regression_check=args.regression_check,
+            reviewed=args.reviewed,
         )
     elif args.command == "move":
         cli.move(args.filename, args.status, yes=args.yes)
@@ -316,6 +335,8 @@ if __name__ == "__main__":
         cli.link(args.filename, args.blocked_by)
     elif args.command == "reconcile":
         cli.reconcile(args.target, all=args.all, dry_run=args.dry_run)
+    elif args.command == "unarchive":
+        cli.unarchive(args.filename)
     elif args.command == "cleanup":
         cli.cleanup(dry_run=args.dry_run, yes=args.yes)
     elif args.command == "config":
@@ -328,5 +349,40 @@ if __name__ == "__main__":
         cli.verify(args.id, args.proof)
     elif args.command == "doctor":
         cli.doctor(fix=args.fix)
-    elif args.command == "undo":
-        cli.undo(args.filename)
+    elif args.command == "check":
+        # Import check module locally to avoid circular imports or heavy startup
+        import check
+
+        fix = args.fix
+        force = args.force
+
+        # Determine checks to run based on flags or positional argument
+        checks_to_run = []
+        if args.lint:
+            checks_to_run.append("lint")
+        if args.test:
+            checks_to_run.append("test")
+        if args.typecheck:
+            checks_to_run.append("typecheck")
+        if args.format:
+            checks_to_run.append("format")
+        if args.debug:
+            checks_to_run.append("debug")
+        if args.all or (not checks_to_run and args.command == "all"):
+            checks_to_run = ["all"]
+        elif args.command:
+            checks_to_run = [args.command]
+
+        exit_code = 0
+        for c in checks_to_run:
+            if c == "all":
+                code = check.run_all(
+                    fix=fix, as_json=args.json, dev=args.dev, force=force
+                )
+            elif c == "debug":
+                code = check.run_debug_check(fix=fix, as_json=args.json, dev=args.dev)
+            else:
+                code = check.run_check(c, fix=fix, as_json=args.json, dev=args.dev)
+            if code != 0:
+                exit_code = code
+        sys.exit(exit_code)

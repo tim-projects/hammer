@@ -61,8 +61,7 @@ AGENT OPERATIONAL PROTOCOL:
    Schema: {"success": bool, "error": str|null, "messages": [str], "data": {}}
 2. TASK REFERENCES: Use the numeric Id (e.g., "1") instead of the filename for all operations. 
    Run 'list' to see task Ids alongside titles.
-3. MULTI-STEP MOVES: Push a task through multiple states in ONE command using comma-separated statuses.
-   Example: 'tasks move 1 READY,PROGRESSING,TESTING' moves from BACKLOG directly to TESTING.
+
    This bypasses the need for 3 separate move commands.
 4. CREATION: 'create' requires --story, --tech, --criteria, and --plan. 
    --repro is mandatory for --type issue. Titles must be >= 10 chars.

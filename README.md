@@ -42,7 +42,27 @@ Agent autonomously runs:
 2. `hammer tasks list` / `hammer tasks create` - Discover/create tasks
 3. `hammer tasks move` - Move through Git-native state machine
 
-## 🔨 HAMMER STATE MACHINE
+## 🔨 HAMMER PIPELINE
+
+**HAMMER DRIVES THE PIPELINE. WEAK CODE GETS SMASHED.**
+
+The Hammer Pipeline forces code through mandatory **Stages**, ensuring compliance through automated **Checks (Guardrails)** and atomic **Jobs**.
+
+| Terminology | Hammer's "Brutalist" Twist |
+| :--- | :--- |
+| **Pipeline** | The forced path to production. |
+| **Stage** | A mandatory segment that *must* be completed. |
+| **Job** | An atomic action—the tool executes with maximum force. |
+| **Check** | A validation "Guardrail"—the pipeline halts if these fail. |
+
+### 1. Pipeline Structure
+The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED).
+
+* **Automation Engine:** The mechanism that executes the Pipeline.
+* **Automation Rule:** The Automation Engine will chain all Jobs within a Stage automatically.
+* **Halt Policy:** The Pipeline halts only when a Check fails or Manual Intervention (e.g., audit) is required.
+
+## 🔨 HAMMER PIPELINE STAGES
 
 ```
 BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED
@@ -50,8 +70,8 @@ BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE �
                                   REJECTED              REJECTED
 ```
 
-**HAMMER GATES BLOCK WEAK CODE:**
-| Gate | Requirement |
+**HAMMER CHECKS BLOCK WEAK CODE:**
+| Stage | Check Requirement |
 |------|-------------|
 | PROGRESSING | Complete story/tech/plan |
 | TESTING | `hammer check all` PASSES |
@@ -65,9 +85,9 @@ BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE �
 | Without HAMMER | With HAMMER |
 |----------------|-------------|
 | Scattered notes | **HAMMER AUDIT!** Git log every smash |
-| Manual updates | **HAMMER STATE MACHINE!** Gates block weak code |
+| Manual updates | **HAMMER PIPELINE!** Checks block weak code |
 | Lost context | **HAMMER HISTORY FULL!** Every change tracked |
-| "What's ready?" | **HAMMER PIPELINE CLEAR!** Testing → Live order |
+| "What's ready?" | **HAMMER PIPELINE CLEAR!** Stages enforced |
 | Agent chaos | **HAMMER ATOMIC ID!** Blockers + branch lock |
 
 ## 🛠️ HAMMER COMMANDS
@@ -81,7 +101,7 @@ hammer tasks show 42                  # METAL DETAIL!
 hammer tasks current                  # ACTIVE METAL!
 ```
 
-### POUND THROUGH GATES
+### POUND THROUGH STAGES
 ```bash
 hammer tasks move 42 PROGRESSING     # START SMASH! (Creates branch)
 hammer tasks move 42 TESTING         # ✅ HAMMER LIKE! MOVE → TESTING ⚔️🔨

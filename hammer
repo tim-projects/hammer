@@ -7,21 +7,19 @@ Usage: hammer <tool> <command> [args]
 Tools:
   tasks <command>     - Task management (list, create, move, etc.)
   check <command>     - Quality checks (lint, test, all, etc.)
-  repo <command>      - Repo management (promote, merge, sync, etc.)
+  repo <command>      - Repo management (merge, sync, etc.)
 
 Examples:
   hammer tasks list
   hammer tasks move 42 PROGRESSING
   hammer check all
   hammer check lint --fix
-  hammer repo promote 42
   hammer repo sync
   # Auto-detected examples:
   hammer list
   hammer move 42 PROGRESSING
   hammer all
   hammer lint --fix
-  hammer promote 42
 """
 
 import sys
@@ -70,8 +68,6 @@ COMMAND_TO_TOOL = {
     "all": "check",
     # repo commands
     "merge": "repo",
-    "promote": "repo",
-    "demote": "repo",
     "sync": "repo",
     "commit": "repo",
     "git": "repo",

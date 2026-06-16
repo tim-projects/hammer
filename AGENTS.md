@@ -1,18 +1,21 @@
 ## ⚠️ Error Handling
 
-When using any tool (`tasks.py`, `repo.py`, `check.py`) and it errors or fails:
+When using ./hammer and it errors or fails:
 1. **STOP immediately** - Do not continue with further commands
 2. **Report the error** - Tell the user what happened and the error message
 3. **Wait for instruction** - Do not try to fix or work around the error without asking
-
-## ⚠️ Important: Use Local tasks
-
-This repo has a local `tasks.py` that should be used instead of the system-installed `tasks` binary. The local version may be newer or has modifications.
 
 ```bash
 # Use this repo's version (recommended)
 ./hammer tasks -j list
 ```
+
+### 🏗️ Pipeline Structure
+The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED).
+
+* **Automation Engine:** The mechanism that executes the Pipeline.
+* **Automation Rule:** The Automation Engine will chain all Jobs within a Stage automatically.
+* **Halt Policy:** The Pipeline halts only when a Check fails or Manual Intervention (e.g., audit) is required.
 
 ### 🛠️ Development & Testing
 
@@ -59,7 +62,7 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 
 ## ⚠️ Operational Rules
 
-- **Use `repo.py` for all merges**: You MUST use the `./hammer repo promote` or `./hammer repo merge` commands for all pipeline transitions. Manual Git merges are forbidden.
+- **Use `./hammer` for all pipeline transitions**: You MUST use the `./hammer tasks move` commands for all pipeline transitions. Manual Git merges are forbidden.
 - **Resolve Validation Errors**: All validation errors (lint, test, typecheck) related to your changes MUST be resolved before promotion.
 - **Unrelated Errors**: If validation fails due to pre-existing errors unrelated to your task, you MUST create a new task to address them before merging to `main`. Do not bypass errors.
 - **Use `--dev` for testing**: You MUST use the `--dev` flag for all tool experimentation, "dry runs", or any task operation that is not directly part of the active project's workflow. This protects the real `.tasks` worktree.
@@ -73,10 +76,6 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 - **Show Task Details**: Show full task details with `./hammer tasks show <id>`
 - **Show Only Specific Sections**: Use `./hammer tasks show <id> story|tech|criteria|plan|progress|repro`
 - **Use `--dev` for testing**: Always use `--dev` flag when testing or doing dry runs
-- **Multi-Step Moves**: Push a task through multiple states in ONE command:
-  ```bash
-  ./hammer tasks -j move <id> READY,PROGRESSING,TESTING
-  ```
 
 ## 📋 Useful Commands
 
@@ -108,6 +107,7 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 - Do NOT disable lint/typecheck rules  
 - Do NOT modify validation config to hide errors
 - Do NOT comment out failing tests
+- **NEVER** manually run `git` merge or `git push` to bypass pipeline gates. If the pipeline is stuck or incorrectly blocking promotion, stop immediately and report the issue to the user.
 
 If validation fails:
 1. **Fix the actual issue** - Not the validation tool

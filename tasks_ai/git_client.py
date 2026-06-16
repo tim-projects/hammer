@@ -27,8 +27,10 @@ class GitClient:
     ) -> subprocess.CompletedProcess:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
+        env = os.environ.copy()
+        env["HAMMER_INTERNAL_CALL"] = "1"
         result = subprocess.run(
-            ["git"] + args, cwd=cwd, capture_output=capture, text=True
+            ["git"] + args, cwd=cwd, capture_output=capture, text=True, env=env
         )
 
         if check and result.returncode != 0:
@@ -85,8 +87,38 @@ class GitClient:
         return "main"
 
     def is_merged(self, branch: str, target: str = "main") -> bool:
-        res = self.run(["branch", "--merged", target])
-        return branch in res.stdout
+        # 1. Proactively refresh all remote references to avoid stale state
+        self.run(["fetch", "--all"])
+
+        # 2. Check if the branch exists locally (or as a remote tracking branch)
+        res = self.run(["rev-parse", "--verify", branch])
+        if res.returncode != 0:
+            # Maybe it's a remote branch name, try searching for origin/branch
+            res = self.run(["rev-parse", "--verify", f"origin/{branch}"])
+            if res.returncode != 0:
+                return False
+
+        # 3. Check ancestry against target's remote tracking branch
+        target_ref = f"origin/{target}"
+
+        # Verify target ref exists
+        if self.run(["rev-parse", "--verify", target_ref]).returncode != 0:
+            target_ref = target  # fallback to local if remote missing
+
+        res = self.run(["merge-base", "--is-ancestor", branch, target_ref])
+        return res.returncode == 0
+
+    def check_main_divergence(self):
+        """Check if local main is out of sync with origin/main."""
+        self.run(["fetch", "origin"])
+        local_res = self.run(["rev-parse", "main"])
+        remote_res = self.run(["rev-parse", "origin/main"])
+        if local_res.returncode == 0 and remote_res.returncode == 0:
+            local = local_res.stdout.strip()
+            remote = remote_res.stdout.strip()
+            if local != remote:
+                return False, local, remote
+        return True, None, None
 
     def generate_review_diff(self, task_path: str, branch: str) -> str:
         """Generate a unified diff patch for the task branch against main including unstaged changes."""

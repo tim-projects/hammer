@@ -2,36 +2,15 @@ import os
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename, perform_move
+from ..pipeline import PipelineError
 
 
 def run(cli, filename, new_status, yes=False):
     """Execution logic for 'tasks move'."""
     filepath, current_state_from_folder = cli.find_task(filename)
     if not filepath:
-        cli.error(
-            f"Task '{filename}' not found.",
-            hint="Use 'hammer tasks list' to see all available task filenames/IDs.",
-        )
+        cli.error("TASK_NOT_FOUND", filename=filename)
     task_type, _ = parse_filename(os.path.basename(filepath))
-    allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
-
-    # Handle multi-step transitions
-    if "," in new_status:
-        steps = [s.strip() for s in new_status.split(",")]
-
-        # Perform each step individually, letting move_logic enforce gates
-        for step in steps:
-            # Re-fetch state for each step to validate current transition
-            _, current_state = cli.find_task(filename)
-            if current_state == step:
-                continue
-
-            # Perform individual move; move_logic now enforces ALL gates
-            move_logic(cli, filename, step, force=False, yes=yes, sync=True)
-
-        cli.log(f"Moved: [{cli.find_task(filename)[0].split('/')[-1]}] -> {new_status}")
-        cli.finish({"status": new_status})
-        return
 
     # Single-step transition
     cli.pipeline.check_transition(cli, filename, new_status)
@@ -43,36 +22,22 @@ def run(cli, filename, new_status, yes=False):
     task_id_num = task.metadata.get("Id", "")
     tt, _ = parse_filename(fname)
 
-    # Chained auto-promotion
-    max_steps = 10
-    while (
-        new_status not in allowed_transitions.get(current_state_from_folder, [])
-        and current_state_from_folder != new_status
-        and max_steps > 0
-    ):
-        allowed = allowed_transitions.get(current_state_from_folder, [])
-        if not allowed:
-            break
+    # Check if we are already in the target state
+    _, current_state = cli.find_task(filename)
+    if current_state == new_status.upper():
+        cli.log(f"You are already on {new_status.upper()}")
+        return
 
-        next_step = allowed[0]
-        cli.log(f"Auto-promoting: {current_state_from_folder} -> {next_step}")
-        try:
-            move_logic(cli, filename, next_step, force=False, yes=yes, sync=True)
-            filepath, current_state_from_folder = cli.find_task(filename)
-            max_steps -= 1
-        except Exception as e:
-            cli.error(f"Auto-promotion failed: {e}")
-
-    move_logic(cli, filename, new_status, yes=yes)
-    cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
-    cli.finish(
-        {
-            "id": task_id_num,
-            "task_id": task_id,
-            "title": title,
-            "status": new_status,
-        }
-    )
+    if move_logic(cli, filename, new_status, yes=yes):
+        cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
+        cli.finish(
+            {
+                "id": task_id_num,
+                "task_id": task_id,
+                "title": title,
+                "status": new_status,
+            }
+        )
 
 
 def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
@@ -80,7 +45,11 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     new_status = new_status.upper()
     filepath, current_state = cli.find_task(filename)
     if not filepath:
-        cli.error(f"Task '{filename}' not found.")
+        cli.error("TASK_NOT_FOUND", filename=filename)
+
+    if current_state == new_status:
+        cli.log(f"You are already on {new_status}")
+        return False
 
     filepath_str = str(filepath)
     task = FM.load(filepath_str)
@@ -88,26 +57,55 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
 
     if not force:
-        cli._validate_pipeline_gate(task, new_status, filepath_str)
+        try:
+            cli._validate_pipeline_gate(task, new_status, filepath_str)
+        except PipelineError as e:
+            # Handle audit failures: move back to PROGRESSING and instruct user
+            if e.code in [
+                "AUDIT_MISSING",
+                "AUDIT_PATCH_MISSING",
+                "PROOF_MISSING",
+                "HASH_MISSING",
+                "AUDIT_MISMATCH",
+                "INTEGRITY_MISMATCH",
+            ]:
+                cli.log(f"Audit failed: {e.code}. Moving task back to PROGRESSING.")
+                perform_move(cli, task, current_state, "PROGRESSING", filepath_str)
+                cli.error(
+                    "AUDIT_FAILURE",
+                    hint_code="AUDIT_FAILURE",
+                    audit_code=e.code,
+                    task_id=str(task.metadata.get("Id", "unknown")),
+                )
+            else:
+                raise e
 
-    if current_state == new_status:
-        return
+    # 1. Run Exit Hooks (Pre-move checks and actions)
+    cli.hook_registry.run_exit_hooks(
+        cli, task, current_state, new_status, filepath_str, force=force
+    )
+
+    if not force:
+        if new_status not in allowed_transitions.get(current_state, []):
+            cli.error(
+                "FORBIDDEN_TRANSITION",
+                from_state=current_state,
+                to_state=new_status,
+                task_id=os.path.basename(filepath_str).split("-")[0],
+                next_valid_state="PROGRESSING",
+            )
+
+        # Archived check: Enforce branch merge to main
+        if new_status == "ARCHIVED":
+            _, branch = parse_filename(os.path.basename(filepath_str))
+            if not cli.git.is_merged(branch, "main"):
+                cli.error("BRANCH_NOT_MERGED", branch=branch)
 
     # Perform Git Merge if applicable
     if sync and not force:
-        cli._git_merge_transition(task, new_status, yes=yes)
-
-    # Archived check: Enforce branch merge to main
-    if new_status == "ARCHIVED" and not force:
-        _, branch = parse_filename(os.path.basename(filepath_str))
-        if not cli.git.is_merged(branch, "main"):
-            cli.error("BRANCH_NOT_MERGED", branch=branch)
-
-    if new_status not in allowed_transitions.get(current_state, []) and not force:
-        cli.error("FORBIDDEN_TRANSITION", from_state=current_state, to_state=new_status)
-
-    # 1. Run Exit Hooks (Pre-move checks and actions)
-    cli.hook_registry.run_exit_hooks(cli, task, current_state, new_status, filepath_str)
+        cli._git_merge_transition(
+            task, new_status, current_state=current_state, yes=yes
+        )
 
     # 2. Final Execution (Physical move)
     new_task = perform_move(cli, task, current_state, new_status, filepath_str)
@@ -121,3 +119,4 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     cli.hook_registry.run_enter_hooks(
         cli, new_task, current_state, new_status, new_filepath
     )
+    return True

@@ -31,7 +31,7 @@
   "INTEGRITY_MISMATCH": "Integrity mismatch: Criteria, proof, or audit has changed.",
   "BRANCH_CHECKOUT_FAIL": "Failed to checkout branch '{branch}'.",
   "MERGE_CONFLICT": "Merge conflict while syncing '{branch}' with '{default}'.",
-  "MAIN_BRANCH_PROTECTION": "Direct work on '{default_branch}' detected!",
+  "MAIN_BRANCH_PROTECTION": "Forbidden operation on '{default_branch}' branch.",
   "NO_PROGRESS_UPDATE": "No progress updates detected!",
   "INIT_EXPLANATION": "Initialize workspace storage.",
   "TOO_SHORT": "Too short: {too_short}.",
@@ -39,5 +39,9 @@
   "MISSING_PARTS": "Missing: {missing_parts}.",
   "INTEGRITY_VIOLATION": "Task location mismatch detected.",
   "PIPELINE_VALIDATION_FAILED": "Pipeline validation failed.",
-  "TEST_FAILURE": "Test failure detected."
+  "TEST_FAILURE": "Test failure detected.",
+  "TASK_METADATA_CORRUPTED": "Task {detail}",
+  "AUDIT_FAILURE": "Audit failed: {audit_code}.",
+  "MAIN_DIVERGED": "Local main is out of sync with origin/main (Local: {local}, Remote: {remote}).",
+  "CLEANUP_BRANCH_INVALID": "Cleanup must be run from {default_branch}, staging, or testing branch. Currently on: {current_branch}"
 }
