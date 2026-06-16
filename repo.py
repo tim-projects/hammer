@@ -270,121 +270,26 @@ def cmd_commit(message):
 
 def cmd_promote(src_input, original_task_id=None):
     """
-    Promote a branch through the pipeline.
-    This is now an alias for 'hammer tasks move' with appropriate state mapping.
+    DEPRECATED: Promote a branch through the pipeline.
+    This command is legacy. Use 'hammer tasks move' instead.
     """
+    warn("'repo promote' is DEPRECATED. Please use 'hammer tasks move' for unified task promotion.")
+    
     src = resolve_branch(src_input)
     task_id = original_task_id or (
         src.split("-")[0] if src.split("-")[0].isdigit() else None
     )
 
-    # For task branches, we need to determine the next state in the workflow
-    # For non-task branches, we fall back to the original pipeline logic
     if task_id and TasksCLI:
-        cli = TasksCLI(
-            quiet=FLAGS.get("quiet", False), dev=FLAGS["dev"], yes=FLAGS["yes"]
-        )
-        path, current_status = cli.find_task(task_id)
-        if path and current_status:
-            # Map current status to the next state for promotion
-            # Note: The workflow is BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED
-            status_to_next_state = {
-                "PROGRESSING": "TESTING",
-                "TESTING": "REVIEW",
-                "REVIEW": "STAGING",
-                "STAGING": "DONE",
-                # Note: We don't handle BACKLOG or READY here as they're not typically "promoted"
-                # but if needed, they would map to READY and PROGRESSING respectively
-            }
-            next_state = status_to_next_state.get(current_status)
-            if next_state:
-                # Use tasks move to handle the transition
-                cli.move(task_id, next_state)
-                log(
-                    f"✅ Successfully promoted {src.upper()} → {next_state.upper()} via tasks move"
-                )
-                # If we moved to DONE (which comes after STAGING), we should archive the task
-                if next_state == "DONE":
-                    log(
-                        f"Task {task_id} successfully promoted to DONE. Auto-archiving branch and task."
-                    )
-                    cli.move(task_id, "ARCHIVED")
-                    run(["git", "branch", "-d", src], check=False)
-                return
-            # If we couldn't determine next state, fall through to non-task logic
-
-    # Fallback to original logic for non-task branches or if we couldn't determine task state
-    target = None
-    if task_id and TasksCLI and current_status:
-        if current_status in ["PROGRESSING"]:
-            target = "testing"
-        elif current_status == "TESTING":
-            target = "staging"
-        elif current_status == "REVIEW":
-            target = "staging"
-        elif current_status == "STAGING":
-            target = "main"
-
-    # Fallback to existing logic if no target found
-    if not target:
-        target = (
-            "testing"
-            if src not in PIPELINE
-            else ("staging" if src == "testing" else "main")
-        )
-
-    if src == target:
-        info(f"Branch '{src}' is already the terminal point. Nothing to promote.")
+        # Redirect to hammer tasks move
+        log(f"Redirecting promotion of task {task_id} to 'tasks move'...")
+        cmd = ["./hammer", "tasks", "move", task_id]
+        if FLAGS["yes"]:
+            cmd.append("-y")
+        subprocess.run(cmd)
         return
 
-    # Perform gate checks
-    if task_id and TasksCLI and path:
-        from tasks_ai.file_manager import FM
-
-        task = FM.load(path)
-        # Use CLI's robust gate validation
-        cli._validate_pipeline_gate(task, target.upper(), path)
-    needs_move = False
-    if task_id and TasksCLI and current_status:
-        if target == "testing" and current_status == "PROGRESSING":
-            needs_move = True
-        elif target == "staging" and current_status == "REVIEW":
-            needs_move = True
-        elif target == "main":
-            needs_move = True
-    if src not in PIPELINE or needs_move:
-        cmd_merge(src, target)
-    if task_id and TasksCLI and needs_move:
-        cli = (
-            TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])
-            if TasksCLI
-            else None
-        )
-        new_status = None
-        if target == "testing":
-            new_status = "TESTING"
-        elif target == "staging":
-            new_status = "STAGING"
-        elif target == "main":
-            new_status = "DONE"
-        if new_status:
-            status = cli.find_task(task_id)[1]
-            if status != new_status:
-                cli.move(task_id, new_status)
-    log(f"✅ Successfully promoted {src.upper()} → {target.upper()}")
-    if target == "main":
-        log(f"Merged to main complete. Current branch: {get_current_branch()}")
-    if target == "main" and task_id and TasksCLI:
-        log(
-            f"Task {task_id} successfully promoted to MAIN. Auto-archiving branch and task."
-        )
-        cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=True)
-        cli.move(task_id, "ARCHIVED")
-        run(["git", "branch", "-d", src], check=False)
-    if target != "main" and original_task_id is not None:
-        log(
-            f"Task {task_id} moved to {target.upper()}. Run 'repo promote {src}' to continue."
-        )
+    error("Promotion of non-task branches is not supported via this legacy command. Use 'git merge' manually.")
 
 
 def cmd_demote(task_id_input, target_state):
