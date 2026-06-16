@@ -56,19 +56,23 @@ class HammerTestBase(unittest.TestCase):
         if os.path.exists(self.dev_tasks_dir):
             shutil.rmtree(self.dev_tasks_dir)
         os.makedirs(self.dev_tasks_dir, exist_ok=True)
-        os.makedirs(os.path.join(self.repo_path, ".tasks"), exist_ok=True)
-        with open(os.path.join(self.repo_path, ".tasks", "config.yaml"), "w") as f:
-            json.dump(
-                {
-                    "repo": {
-                        "lint": "/bin/true",
-                        "test": "/bin/true",
-                        "type_check": "/bin/true",
-                        "format": "/bin/true",
-                    }
-                },
-                f,
-            )
+        
+        # Copy config to the dev tasks directory
+        config_data = {
+            "repo": {
+                "lint": "/bin/true",
+                "test": "/bin/true",
+                "type_check": "/bin/true",
+                "format": "/bin/true",
+            }
+        }
+        with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
+            json.dump(config_data, f)
+        
+        # Also copy to /tmp/.tasks if it's different
+        if os.path.exists("/tmp/.tasks"):
+             with open(os.path.join("/tmp/.tasks", "config.yaml"), "w") as f:
+                json.dump(config_data, f)
 
         subprocess.run(
             [sys.executable, self.script_path, "--dev", "init", "--force"],
