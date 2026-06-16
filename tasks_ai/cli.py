@@ -38,6 +38,7 @@ from .pipeline_hooks import (
     CleanupReviewArtifactsHook,
     BranchExistsHook,
     DoneAtHook,
+    AutoArchiveHook,
 )
 
 
