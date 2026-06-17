@@ -56,23 +56,25 @@ class HammerTestBase(unittest.TestCase):
         if os.path.exists(self.dev_tasks_dir):
             shutil.rmtree(self.dev_tasks_dir)
         os.makedirs(self.dev_tasks_dir, exist_ok=True)
-        
-        # Copy config to the dev tasks directory
+
+        # Write config to dev_tasks_dir
         config_data = {
             "repo": {
-                "lint": "/bin/true",
+                "lint": "ruff",
                 "test": "/bin/true",
                 "type_check": "/bin/true",
-                "format": "/bin/true",
+                "format": "ruff",
             }
         }
         with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
             json.dump(config_data, f)
-        
-        # Also copy to /tmp/.tasks if it's different
-        if os.path.exists("/tmp/.tasks"):
-             with open(os.path.join("/tmp/.tasks", "config.yaml"), "w") as f:
-                json.dump(config_data, f)
+
+        # Ensure .tasks config is minimal or doesn't conflict
+        tasks_dir = os.path.join(self.repo_path, ".tasks")
+        os.makedirs(tasks_dir, exist_ok=True)
+        # We want hammer to use HAMMER_DEV_TASKS_DIR, so ensure config doesn't override it
+        with open(os.path.join(tasks_dir, "config.yaml"), "w") as f:
+            json.dump({}, f)
 
         subprocess.run(
             [sys.executable, self.script_path, "--dev", "init", "--force"],
