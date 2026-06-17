@@ -37,6 +37,7 @@ from .pipeline_hooks import (
     ProgressUpdateHook,
     CleanupReviewArtifactsHook,
     BranchExistsHook,
+    TaskRepairHook,
     DoneAtHook,
     AutoArchiveHook,
 )
@@ -69,6 +70,7 @@ class TasksCLI:
         self.hook_registry.register_enter_hook(
             "PROGRESSING", CleanupReviewArtifactsHook()
         )
+        self.hook_registry.register_enter_hook("PROGRESSING", TaskRepairHook())
         self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())

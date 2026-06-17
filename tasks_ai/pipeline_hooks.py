@@ -7,6 +7,25 @@ from .models import Task
 from .utils import parse_filename
 
 
+class TaskRepairHook(PipelineHook):
+    """Resets governance metadata when a task is moved to PROGRESSING."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "PROGRESSING":
+            cli.log(
+                f"DEBUG: Repairing task {task.metadata.get('Id')} metadata (demotion to PROGRESSING)."
+            )
+            # Explicitly reset sensitive governance flags
+            task.metadata["Reviewed"] = False
+            task.metadata["Rc"] = ""
+            task.metadata["AuditPassed"] = False
+            task.metadata["PatchGenTime"] = None
+            task.metadata["DoneAt"] = None
+
+            # Save the repaired metadata
+            cli._atomic_write(filepath, task)
+
+
 class SaveProgressHook(PipelineHook):
     """Saves progress notes to current-task.md in the task directory."""
 
