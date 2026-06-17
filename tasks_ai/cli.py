@@ -37,6 +37,7 @@ from .pipeline_hooks import (
     ProgressUpdateHook,
     CleanupReviewArtifactsHook,
     BranchExistsHook,
+    TaskRepairHook,
     DoneAtHook,
     AutoArchiveHook,
 )
@@ -69,6 +70,7 @@ class TasksCLI:
         self.hook_registry.register_enter_hook(
             "PROGRESSING", CleanupReviewArtifactsHook()
         )
+        self.hook_registry.register_enter_hook("PROGRESSING", TaskRepairHook())
         self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
@@ -272,7 +274,7 @@ class TasksCLI:
         if not task_path:
             return
         try:
-            return self.pipeline.validate_gate(task, target_state, task_path)
+            return self.pipeline.validate_gate(self, task, target_state, task_path)
         except Exception as e:
             if hasattr(e, "code"):
                 self.error(e.code, **e.kwargs)

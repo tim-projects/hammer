@@ -64,7 +64,7 @@ class PipelineService:
                 next_valid_state="PROGRESSING",
             )
 
-    def validate_gate(self, task, target_state: str, task_path: str):
+    def validate_gate(self, cli, task, target_state: str, task_path: str):
         """
         Enforce pipeline gates for a given task and target state.
         Raises PipelineError with descriptive message and hint if gate fails.
@@ -146,7 +146,7 @@ class PipelineService:
 
         # 7. Mandatory Verification for DONE
         if "mandatory_verification" in enabled_gates:
-            self.check_audit_integrity(task_id, task_path)
+            self.check_audit_integrity(cli, task_id, task_path)
 
         return True
 
@@ -208,7 +208,7 @@ class PipelineService:
             f.write(hasher.hexdigest())
         self.log(f"Integrity hash updated for task {task_id}")
 
-    def check_audit_integrity(self, task_id: str, task_path: str):
+    def check_audit_integrity(self, cli, task_id: str, task_path: str):
         """
         Verify that the task has a valid cryptographic audit and verification proof.
         Raises PipelineError with descriptive message and hint if integrity check fails.
@@ -237,8 +237,11 @@ class PipelineService:
         # In REVIEW, files might be in the parent dir of patches or sibling?
         # Actually, audit files stay in the state folder where they were created.
 
-        # Look for patches folder
-        patches_dir = os.path.join(task_path, "patches")
+        # Look for patches folder (same place as ReviewDiffHook)
+        task_folder_name = os.path.basename(task_path)
+        patches_dir = os.path.join(
+            cli.tasks_path, "review", task_folder_name, "patches"
+        )
 
         from .audit import verify_audit
 
@@ -258,7 +261,7 @@ class PipelineService:
         if not os.path.exists(hash_path):
             raise PipelineError("HASH_MISSING", task_id=task_id, hash_path=hash_path)
 
-        if not verify_audit(patches_dir, audit_path):
+        if not verify_audit(task_path, patches_dir, audit_path):
             raise PipelineError("AUDIT_MISMATCH", task_id=task_id)
 
         # Check hash of criteria and proof
