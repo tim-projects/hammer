@@ -130,7 +130,9 @@ class TasksCLI:
 
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
         if dev:
-            self.context.tasks_path = "/tmp/.tasks"
+            self.context.tasks_path = os.environ.get(
+                "HAMMER_DEV_TASKS_DIR", "/tmp/.tasks"
+            )
             if not os.path.exists(self.context.tasks_path):
                 os.makedirs(self.context.tasks_path, exist_ok=True)
         elif os.path.isabs(self.tasks_dir):
@@ -142,18 +144,18 @@ class TasksCLI:
             self.tasks_path = os.path.join(self.root, ".tasks")
             self.context.tasks_path = self.tasks_path
 
-        # Load config to override tasks_dir if not in dev mode
-        if not dev:
-            cfg = self._get_config()
-            if cfg and isinstance(cfg, dict) and "tasks_dir" in cfg:
-                td = cfg["tasks_dir"]
-                if td:
-                    self.tasks_dir = str(td)
-                    if os.path.isabs(self.tasks_dir):
-                        self.tasks_path = self.tasks_dir
-                    else:
-                        self.tasks_path = self.context.resolve_path(self.tasks_dir)
-                    self.context.tasks_path = self.tasks_path
+        # Load config to override tasks_dir (works in dev and prod)
+        cfg = self._get_config()
+        self.log(f"DEBUG: Loading config from {self.tasks_path}")
+        if cfg and isinstance(cfg, dict) and "tasks_dir" in cfg:
+            td = cfg["tasks_dir"]
+            if td:
+                self.tasks_dir = str(td)
+                if os.path.isabs(self.tasks_dir):
+                    self.tasks_path = self.tasks_dir
+                else:
+                    self.tasks_path = self.context.resolve_path(self.tasks_dir)
+                self.context.tasks_path = self.tasks_path
 
         self.logs_path = os.path.join(self.tasks_path, "logs")
 

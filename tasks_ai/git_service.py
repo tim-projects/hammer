@@ -28,7 +28,7 @@ class GitService:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
         env = os.environ.copy()
-        env["HAMMER_INTERNAL_CALL"] = "1"
+        # env["HAMMER_INTERNAL_CALL"] = "1"
         result = subprocess.run(
             ["git"] + args, cwd=cwd, capture_output=capture, text=True, env=env
         )
@@ -177,6 +177,7 @@ class GitService:
             return None
 
         remotes = self.run(["remote", "-v"], cwd=tasks_path)
+        self.log(f"DEBUG: Remotes stdout in {tasks_path}: '{remotes.stdout}'")
         if not remotes.stdout.strip():
             self.log("No remote configured - skipping push (local-only mode)")
             return {"branch": branch, "remote": None}
