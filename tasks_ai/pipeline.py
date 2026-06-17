@@ -258,7 +258,7 @@ class PipelineService:
         if not os.path.exists(hash_path):
             raise PipelineError("HASH_MISSING", task_id=task_id, hash_path=hash_path)
 
-        if not verify_audit(patches_dir, audit_path):
+        if not verify_audit(task_path, patches_dir, audit_path):
             raise PipelineError("AUDIT_MISMATCH", task_id=task_id)
 
         # Check hash of criteria and proof
