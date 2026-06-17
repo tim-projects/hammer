@@ -237,8 +237,9 @@ class PipelineService:
         # In REVIEW, files might be in the parent dir of patches or sibling?
         # Actually, audit files stay in the state folder where they were created.
 
-        # Look for patches folder
-        patches_dir = os.path.join(task_path, "patches")
+        # Look for patches folder (same place as ReviewDiffHook)
+        task_folder_name = os.path.basename(task_path)
+        patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
 
         from .audit import verify_audit
 
