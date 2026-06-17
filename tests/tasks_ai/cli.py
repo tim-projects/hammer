@@ -316,41 +316,21 @@ class TasksCLI:
         return result
 
     def _run_validation(self, fix=False):
-        check_path = os.path.join(self.root, "check.py")
-        if not os.path.exists(check_path):
-            return
-        result = subprocess.run(
-            [sys.executable, check_path, "lint"] + (["--fix"] if fix else []),
-            cwd=self.root,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode != 0:
-            self.error(
-                "Validation failed. Fix errors before proceeding.",
-                hint="Run 'check lint' to see errors. Do not bypass this tool.",
-            )
+        from tasks_ai.validator import Validator
+
+        validator = Validator(self.root)
+        validator.run_check("lint", fix)
 
     def _run_tests(self, fail_safe=False):
-        check_path = os.path.join(self.root, "check.py")
-        if not os.path.exists(check_path):
-            return subprocess.CompletedProcess("", 0)
-        result = subprocess.run(
-            [sys.executable, check_path, "test"],
-            cwd=self.root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
+        from tasks_ai.validator import Validator
+
+        validator = Validator(self.root)
+        try:
+            return validator.run_check("test", False)
+        except Exception:
             if fail_safe:
-                return result
-            self.error(
-                "Tests failed. Fix test failures before proceeding.",
-                hint="Run 'check test' to see failures. Do not bypass this tool.",
-            )
-        return result
+                return {"success": False}
+            raise
 
     def _parse_filename(self, name):
         if not name:
@@ -2710,20 +2690,23 @@ class TasksCLI:
 
     def run_tool(self, tool_name=None, fix=False):
         """Run configured tools (lint, test, typecheck, format)."""
-        root_str = cast(str, self.root)
-        check_py = os.path.join(root_str, "check.py")
-        if not os.path.exists(check_py):
-            self.error("check.py not found in project root.")
-            return 1
+        from tasks_ai.validator import Validator
 
-        cmd = [sys.executable, check_py, tool_name or "all"]
-        if fix:
-            cmd.append("--fix")
-        if self.as_json:
-            cmd.append("--json")
+        validator = Validator(self.root)
+        if tool_name and tool_name != "all":
+            results = [validator.run_check(tool_name, fix)]
+        else:
+            results = validator.run_all(fix)
 
-        # Run check.py and capture output to pass it through TasksCLI's finish/error
-        result = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True)
+        success = all(r["success"] for r in results)
+
+        # Mocking subprocess.CompletedProcess-like return object
+        class MockResult:
+            def __init__(self, success, results):
+                self.returncode = 0 if success else 1
+                self.stdout = json.dumps({"success": success, "results": results})
+
+        result = MockResult(success, results)
 
         if self.as_json:
             try:

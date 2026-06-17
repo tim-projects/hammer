@@ -1,20 +1,27 @@
 import subprocess
 import os
 
-# Create a patch for the task
-# Use repo.py directly if needed, but for now let's try tasks audit
-# Wait, audit requires a patch to exist.
-# The previous list showed .patch files in .tasks/review/
-# So first I need to move the task to REVIEW so that a patch is generated.
+# The original script attempted an invalid multi-state jump.
+# We will perform incremental moves to reach the REVIEW state.
 
-subprocess.run(
-    ["python3", "tasks.py", "move", "163", "READY,PROGRESSING,TESTING,REVIEW"],
-    check=True,
-)
-# This will generate a patch in .tasks/review/
-# Let's check if it exists
-if os.path.exists(".tasks/review/163.patch"):
-    print("Patch created successfully")
-    subprocess.run(["python3", "tasks.py", "audit", "163"], check=True)
-else:
-    print("Patch NOT created")
+tasks = ["PROGRESSING", "TESTING", "REVIEW"]
+
+try:
+    for state in tasks:
+        print(f"Moving 163 to {state}...")
+        subprocess.run(
+            ["./hammer", "tasks", "move", "163", state],
+            check=True,
+        )
+
+    # After moving, a patch should be generated in .tasks/review/
+    if os.path.exists(".tasks/review/163.patch"):
+        print("Patch created successfully")
+        subprocess.run(["./hammer", "tasks", "audit", "163"], check=True)
+    else:
+        print("Patch NOT created")
+        # Exit with error to satisfy test expectations if it was supposed to create it
+        exit(1)
+except subprocess.CalledProcessError as e:
+    print(f"Move failed: {e}")
+    exit(1)
