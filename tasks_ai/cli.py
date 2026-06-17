@@ -274,7 +274,7 @@ class TasksCLI:
         if not task_path:
             return
         try:
-            return self.pipeline.validate_gate(task, target_state, task_path)
+            return self.pipeline.validate_gate(self, task, target_state, task_path)
         except Exception as e:
             if hasattr(e, "code"):
                 self.error(e.code, **e.kwargs)
