@@ -2,16 +2,16 @@
   "['create']": {
     "has_hint": false,
     "stdout": "",
-    "stderr": "usage: tasks create [-h] [--type {task,issue,docs}] [--priority PRIORITY]\n                    [--story STORY] [--tech TECH]\n                    [--criteria CRITERIA [CRITERIA ...]]\n                    [--plan PLAN [PLAN ...]] [--repro REPRO [REPRO ...]]\n                    [--branch]\n                    title\ntasks create: error: the following arguments are required: title"
+    "stderr": "usage: tasks create [-h] [--type {task,issue,docs}]\n                    [--priority PRIORITY]\n                    [--story STORY [STORY ...]]\n                    [--tech TECH [TECH ...]]\n                    [--criteria CRITERIA [CRITERIA ...]]\n                    [--plan PLAN [PLAN ...]]\n                    [--repro REPRO [REPRO ...]]\n                    [--branch]\n                    title\ntasks create: error: the following arguments are required: title"
   },
   "['move', '999', 'DONE']": {
     "has_hint": true,
-    "stdout": "",
+    "stdout": "DEBUG: Loading config from /tmp/.tasks",
     "stderr": "Error: Task '999' not found. | HINT: WHAT: Task '999' missing.\nWHY: HAMMER cannot operate on ghost. \nHOW: Run 'hammer tasks list' to see all existing task ID.\nCONSEQUENCE: Pipeline remain BROKEN. SMASH BUG NOW."
   },
   "['link', '1', '1']": {
     "has_hint": true,
-    "stdout": "",
+    "stdout": "DEBUG: Loading config from /tmp/.tasks",
     "stderr": "Error: One or both task not found. | HINT: WHAT: Link target missing.\nWHY: HAMMER cannot link to nothing.\nHOW: Verify both tasks exist with 'hammer tasks list'.\nCONSEQUENCE: Link chain broken. FIX ID."
   }
 }

@@ -3,6 +3,9 @@ __version__ = "0.1.0"
 
 import argparse
 import sys
+import os
+# Ensure project root is the first entry to resolve imports correctly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tasks_ai.cli import TasksCLI
 from tasks_ai.help_text import get_help_text
 

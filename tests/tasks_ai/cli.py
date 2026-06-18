@@ -1,6 +1,7 @@
 # tasks_ai/cli.py
 import os
 import sys  # type: ignore[attr-defined]
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import subprocess
 import tempfile
 import re
@@ -316,14 +317,20 @@ class TasksCLI:
         return result
 
     def _run_validation(self, fix=False):
+        import sys
+        import os
+        # Add project root to path
+        sys.path.insert(0, "/home/vscode/git/tasks-ai")
         from tasks_ai.validator import Validator
-
         validator = Validator(self.root)
         validator.run_check("lint", fix)
 
     def _run_tests(self, fail_safe=False):
+        import sys
+        import os
+        # Add project root to path
+        sys.path.insert(0, "/home/vscode/git/tasks-ai")
         from tasks_ai.validator import Validator
-
         validator = Validator(self.root)
         try:
             return validator.run_check("test", False)
@@ -2690,23 +2697,20 @@ class TasksCLI:
 
     def run_tool(self, tool_name=None, fix=False):
         """Run configured tools (lint, test, typecheck, format)."""
-        from tasks_ai.validator import Validator
+        root_str = cast(str, self.root)
+        check_py = os.path.join(root_str, "check.py")
+        if not os.path.exists(check_py):
+            self.error("check.py not found in project root.")
+            return 1
 
-        validator = Validator(self.root)
-        if tool_name and tool_name != "all":
-            results = [validator.run_check(tool_name, fix)]
-        else:
-            results = validator.run_all(fix)
+        cmd = [sys.executable, check_py, tool_name or "all"]
+        if fix:
+            cmd.append("--fix")
+        if self.as_json:
+            cmd.append("--json")
 
-        success = all(r["success"] for r in results)
-
-        # Mocking subprocess.CompletedProcess-like return object
-        class MockResult:
-            def __init__(self, success, results):
-                self.returncode = 0 if success else 1
-                self.stdout = json.dumps({"success": success, "results": results})
-
-        result = MockResult(success, results)
+        # Run check.py and capture output to pass it through TasksCLI's finish/error
+        result = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True)
 
         if self.as_json:
             try:
