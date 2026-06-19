@@ -25,9 +25,15 @@ class TestTasksAI(unittest.TestCase):
             f.write("# Test Repo")
         subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)
         subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)
-        # Compute absolute path to tasks.py based on this file's location
-        self.script_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "tasks.py"
+        # Use hammer CLI entry point instead of the removed tasks.py
+        # Use local './hammer' CLI entry point
+        # Use absolute path to the local './hammer' script in the repository
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.script_path = os.path.abspath(os.path.join(self.repo_dir, "hammer"))
+        os.symlink(os.path.join(project_root, "hammer"), self.script_path)
+        subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Add hammer"], cwd=self.repo_dir, capture_output=True
         )
 
         # Setup config - use skip_push to avoid remote operations
@@ -78,8 +84,10 @@ class TestTasksAI(unittest.TestCase):
         env = os.environ.copy()
         # Add current directory to PYTHONPATH and project root
         env["PYTHONPATH"] = os.getcwd() + ":" + os.path.dirname(os.getcwd()) + ":" + env.get("PYTHONPATH", "")
+        # Build command through the hammer wrapper and request JSON from tasks.py.
+        cmd = [self.script_path, "tasks", "-j"] + args
         result = subprocess.run(
-            [sys.executable, self.script_path, "-j"] + args,
+            cmd,
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
