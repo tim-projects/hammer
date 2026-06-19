@@ -74,6 +74,19 @@ class TestTasksAI(unittest.TestCase):
         else:
             print(f"DEBUG: Criteria path NOT found: {criteria_path}", file=sys.stderr)
 
+    def complete_current_criteria(self, file):
+        """Mark the criteria file in the task's current pipeline stage as done."""
+        tasks_root = os.path.join(self.repo_dir, ".tasks")
+        for dirpath, _, filenames in os.walk(tasks_root):
+            if "criteria.md" not in filenames:
+                continue
+            criteria_path = os.path.join(dirpath, "criteria.md")
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
+            return
+
     def generate_audit(self, file, stage):
         """Helper to generate a mock audit file."""
         audit_path = os.path.join(self.repo_dir, ".tasks", stage, f"{file}.audit")
@@ -265,7 +278,9 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"], res)
 
         # Now unblocked
-        res = self.run_cmd(["move", task_file, "READY,PROGRESSING"])
+        res = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(res["success"], res)
+        res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(res["success"], res)
 
     def test_auto_archival(self):
@@ -453,6 +468,7 @@ class TestTasksAI(unittest.TestCase):
         self.assertFalse(status_check.stdout.strip(), "Working tree should be clean")
 
         # Attempt to move to TESTING: should fail because no unstaged changes and no newer commits
+        self.complete_current_criteria(task_file)
         res = self.run_cmd(["move", task_file, "TESTING"])
         self.assertFalse(
             res["success"],
@@ -467,6 +483,7 @@ class TestTasksAI(unittest.TestCase):
         with open(work_file, "a") as f:
             f.write("additional unstaged work\n")
         # Don't git add or commit
+        self.complete_current_criteria(task_file)
         res = self.run_cmd(["move", task_file, "TESTING"])
         self.assertTrue(
             res["success"],
@@ -495,7 +512,10 @@ class TestTasksAI(unittest.TestCase):
         branch = task_file
 
         # Move back to PROGRESSING
-        res = self.run_cmd(["move", task_file, "READY,PROGRESSING"])
+        res = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(res["success"], res)
+        res = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertTrue(res["success"], res)
 
         # Create a code file and commit on the task branch
         code_file = os.path.join(self.repo_dir, "feature.py")
@@ -511,6 +531,7 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Move to TESTING (requires branch ahead of testing)
+        self.complete_current_criteria(task_file)
         res = self.run_cmd(["move", task_file, "TESTING"])
         self.assertTrue(res["success"], f"Move to TESTING failed: {res}")
 
@@ -579,6 +600,7 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Move to TESTING
+        self.complete_current_criteria(task_file)
         res = self.run_cmd(["move", task_file, "TESTING"])
         self.assertTrue(res["success"])
 
@@ -650,6 +672,7 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Move to TESTING
+        self.complete_current_criteria(task_file)
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Setup testing branch
@@ -720,6 +743,7 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Move to TESTING
+        self.complete_current_criteria(task_file)
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Setup testing branch (merge initial commit)
@@ -770,6 +794,7 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Move to TESTING (branch ahead)
+        self.complete_current_criteria(task_file)
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Update testing to include fix (fast-forward merge)

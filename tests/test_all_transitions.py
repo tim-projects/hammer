@@ -1,10 +1,22 @@
 import unittest
 import json
+import os
 from hammer_test_base import HammerTestBase
 from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
 
 
 class TestAllTransitions(HammerTestBase):
+    def complete_criteria(self, task_file):
+        for dirpath, _, filenames in os.walk(self.dev_tasks_dir):
+            if "criteria.md" not in filenames:
+                continue
+            criteria_path = os.path.join(dirpath, "criteria.md")
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
+            return
+
     def test_transitions(self):
         res = self.run_tasks(
             [
@@ -21,7 +33,9 @@ class TestAllTransitions(HammerTestBase):
             ]
         )
         print("DEBUG: CREATE RES:", res.stdout)
-        task_id = json.loads(res.stdout).get("data", {}).get("id")
+        create_data = json.loads(res.stdout).get("data", {})
+        task_id = create_data.get("id")
+        task_file = create_data.get("file")
         print(f"DEBUG: Task ID is {task_id}")
 
         self.run_tasks(["move", str(task_id), "READY"])
@@ -32,6 +46,9 @@ class TestAllTransitions(HammerTestBase):
         for target in states_to_test:
             if target == current:
                 continue
+
+            if target == "TESTING":
+                self.complete_criteria(task_file)
 
             res = self.run_tasks(["move", str(task_id), target])
             output = json.loads(res.stdout)

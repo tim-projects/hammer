@@ -19,7 +19,7 @@ class Validator:
     def _load_config(self) -> Dict:
         """Load configuration from .tasks/config.yaml or pyproject.toml."""
         config_path_yaml = (
-            "/tmp/.tasks/config.yaml"
+            Path(os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")) / "config.yaml"
             if self.dev
             else (self.project_root / ".tasks" / "config.yaml")
         )
