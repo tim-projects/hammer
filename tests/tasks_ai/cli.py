@@ -2659,7 +2659,7 @@ class TasksCLI:
                 )
                 print(
                     "      tasks config set repo.format "
-                    + detected.get("format", "<tool>")
+                    + "<path to format tool>"
                 )
 
         return detected
