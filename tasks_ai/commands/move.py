@@ -165,7 +165,17 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
         # Commit: Physical move
         os.makedirs(os.path.dirname(new_filepath), exist_ok=True)
-        os.rename(staged_task_path, new_filepath)
+        if os.path.exists(new_filepath):
+            for item in os.listdir(staged_task_path):
+                src = os.path.join(staged_task_path, item)
+                dst = os.path.join(new_filepath, item)
+                if os.path.isdir(src):
+                    shutil.copytree(src, dst, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(src, dst)
+            shutil.rmtree(staged_task_path)
+        else:
+            os.rename(staged_task_path, new_filepath)
 
         # Cleanup original
         if os.path.exists(filepath_str):
