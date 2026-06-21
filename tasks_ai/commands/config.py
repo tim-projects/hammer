@@ -15,9 +15,7 @@ def run(cli, action=None, key=None, value=None, save=False):
             cfg = load_config(cli.tasks_path)
             for k, v in detected.items():
                 key_name = (
-                    f"repo.{k}"
-                    if k in ["lint", "test", "type_check", "format"]
-                    else k
+                    f"repo.{k}" if k in ["lint", "test", "type_check", "format"] else k
                 )
                 if v:
                     cfg[key_name] = v
@@ -36,21 +34,15 @@ def run(cli, action=None, key=None, value=None, save=False):
                 cli.log(f"  {k}: {v}")
             cli.log("")
             cli.log("Would you like to save this configuration?")
-            cli.log(
-                "Run: tasks config set repo.lint " + detected.get("lint", "<tool>")
-            )
+            cli.log("Run: tasks config set repo.lint " + detected.get("lint", "<tool>"))
             cli.log(
                 "      tasks config set repo.type_check "
                 + detected.get("type_check", "<tool>")
             )
             cli.log(
-                "      tasks config set repo.test "
-                + detected.get("test", "<tool>")
+                "      tasks config set repo.test " + detected.get("test", "<tool>")
             )
-            cli.log(
-                "      tasks config set repo.format "
-                + "<path to format tool>"
-            )
+            cli.log("      tasks config set repo.format " + "<path to format tool>")
 
         cli.finish({"detected": detected})
         return
