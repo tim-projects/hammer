@@ -1,7 +1,6 @@
 # tasks_ai/cli.py
 import os
 import sys  # type: ignore[attr-defined]
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import subprocess
 import tempfile
 import re
@@ -317,27 +316,41 @@ class TasksCLI:
         return result
 
     def _run_validation(self, fix=False):
-        import sys
-        import os
-        # Add project root to path
-        sys.path.insert(0, "/home/vscode/git/tasks-ai")
-        from tasks_ai.validator import Validator
-        validator = Validator(self.root)
-        validator.run_check("lint", fix)
+        check_path = os.path.join(self.root, "check.py")
+        if not os.path.exists(check_path):
+            return
+        result = subprocess.run(
+            [sys.executable, check_path, "lint"] + (["--fix"] if fix else []),
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            self.error(
+                "Validation failed. Fix errors before proceeding.",
+                hint="Run 'check lint' to see errors. Do not bypass this tool.",
+            )
 
     def _run_tests(self, fail_safe=False):
-        import sys
-        import os
-        # Add project root to path
-        sys.path.insert(0, "/home/vscode/git/tasks-ai")
-        from tasks_ai.validator import Validator
-        validator = Validator(self.root)
-        try:
-            return validator.run_check("test", False)
-        except Exception:
+        check_path = os.path.join(self.root, "check.py")
+        if not os.path.exists(check_path):
+            return subprocess.CompletedProcess("", 0)
+        result = subprocess.run(
+            [sys.executable, check_path, "test"],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
             if fail_safe:
-                return {"success": False}
-            raise
+                return result
+            self.error(
+                "Tests failed. Fix test failures before proceeding.",
+                hint="Run 'check test' to see failures. Do not bypass this tool.",
+            )
+        return result
 
     def _parse_filename(self, name):
         if not name:
@@ -2657,10 +2670,7 @@ class TasksCLI:
                 print(
                     "      tasks config set repo.test " + detected.get("test", "<tool>")
                 )
-                print(
-                    "      tasks config set repo.format "
-                    + "<path to format tool>"
-                )
+                print("      tasks config set repo.format " + "<path to format tool>")
 
         return detected
 
