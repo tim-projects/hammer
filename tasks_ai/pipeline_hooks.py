@@ -56,8 +56,14 @@ class ValidationHook(PipelineHook):
                         f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
                     )
 
+            # Temporarily disable JSON mode to prevent early exit during transition
             # run_tool calls cli.error (which sys.exits) on failure
-            cli.run_tool("all")
+            orig_json = cli.as_json
+            cli.as_json = False
+            try:
+                cli.run_tool("all")
+            finally:
+                cli.as_json = orig_json
 
             # If we reach here, all checks passed
             task.metadata["Tp"] = True
