@@ -63,17 +63,20 @@ class Validator:
                 "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
                 "golangci-lint": ["golangci-lint", "run", "./..."]
                 + (["--fix"] if fix else []),
+                "true": ["/bin/true"],
             },
             "test": {
                 "pytest": ["pytest"],
                 "go test": ["go", "test", "./..."],
                 "cargo test": ["cargo", "test"],
                 "npm test": ["npm", "test"],
+                "true": ["/bin/true"],
             },
             "typecheck": {
                 "mypy": ["mypy", "."],
                 "pyright": ["npx", "pyright"],
                 "typescript": ["npx", "tsc", "--noEmit"],
+                "true": ["/bin/true"],
             },
             "format": {
                 "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
@@ -81,10 +84,11 @@ class Validator:
                 if fix
                 else ["npx", "prettier", "--check", "."],
                 "rustfmt": ["cargo", "fmt"] + (["--check"] if not fix else []),
+                "true": ["/bin/true"],
             },
         }
 
-    def run_check(self, tool_type: str, fix: bool = False) -> Dict:
+    def run_check(self, tool_type: str, fix: bool = False, timeout: int = 60) -> Dict:
         """Run a specific validation tool."""
         commands = self._get_commands(fix)
         tool_config_key = {
@@ -94,7 +98,14 @@ class Validator:
             "format": "repo.format",
         }.get(tool_type)
 
+        # Handle both nested and flat config formats
         tool = self.config.get(tool_config_key)
+        if tool is None:
+            tool = self.config.get("repo", {}).get(tool_config_key.replace("repo.", ""))
+
+        # Normalize tool name (handle /bin/true style paths)
+        if tool and tool.startswith("/bin/"):
+            tool = "true"
 
         # Look up the actual command list for this tool
         cmd_list = commands.get(tool_type, {}).get(tool)
@@ -117,9 +128,18 @@ class Validator:
 
         cmd[0] = cmd0
 
-        result = subprocess.run(
-            cmd, cwd=self.project_root, capture_output=True, text=True
-        )
+        # Suppress npm/npx interactive prompts and update notifiers in CI/automated contexts
+        run_env = os.environ.copy()
+        run_env["NPM_CONFIG_UPDATE_NOTIFIER"] = "false"
+        run_env["CI"] = "true"
+
+        try:
+            result = subprocess.run(
+                cmd, cwd=self.project_root, capture_output=True, text=True, env=run_env, timeout=timeout
+            )
+        except subprocess.TimeoutExpired:
+            raise ValidationError(f"Tool '{tool}' timed out after {timeout} seconds.")
+
         return {
             "success": result.returncode == 0,
             "tool": tool_type,
