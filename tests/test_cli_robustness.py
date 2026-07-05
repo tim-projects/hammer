@@ -1,6 +1,5 @@
 import unittest
 import subprocess
-import sys
 import os
 import shutil
 import tempfile
@@ -9,7 +8,9 @@ import tempfile
 class TestCLIRobustness(unittest.TestCase):
     def setUp(self):
         self.repo_dir = tempfile.mkdtemp()
-        self.tasks_py = os.path.join(os.getcwd(), "tasks.py")
+        self.hammer_path = os.path.abspath(os.path.join(self.repo_dir, "hammer"))
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.symlink(os.path.join(project_root, "hammer"), self.hammer_path)
 
     def tearDown(self):
         shutil.rmtree(self.repo_dir)
@@ -17,7 +18,7 @@ class TestCLIRobustness(unittest.TestCase):
     def test_create_validation_missing_fields(self):
         """Task create should fail if required fields are missing."""
         subprocess.run(
-            [sys.executable, self.tasks_py, "init"],
+            [self.hammer_path, "init"],
             cwd=self.repo_dir,
             capture_output=True,
         )
@@ -25,8 +26,7 @@ class TestCLIRobustness(unittest.TestCase):
         # Test with missing fields
         result = subprocess.run(
             [
-                sys.executable,
-                self.tasks_py,
+                self.hammer_path,
                 "create",
                 "Valid Task Title Here",
             ],
@@ -41,7 +41,7 @@ class TestCLIRobustness(unittest.TestCase):
     def test_create_validation_short_fields(self):
         """Task create should fail if fields are too short."""
         subprocess.run(
-            [sys.executable, self.tasks_py, "init"],
+            [self.hammer_path, "init"],
             cwd=self.repo_dir,
             capture_output=True,
         )
@@ -49,8 +49,7 @@ class TestCLIRobustness(unittest.TestCase):
         # Test with too short fields
         result = subprocess.run(
             [
-                sys.executable,
-                self.tasks_py,
+                self.hammer_path,
                 "create",
                 "Valid Task Title Here",
                 "--story",

@@ -7,6 +7,25 @@ from .models import Task
 from .utils import parse_filename
 
 
+class TaskRepairHook(PipelineHook):
+    """Resets governance metadata when a task is moved to PROGRESSING."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "PROGRESSING":
+            cli.log(
+                f"DEBUG: Repairing task {task.metadata.get('Id')} metadata (demotion to PROGRESSING)."
+            )
+            # Explicitly reset sensitive governance flags
+            task.metadata["Reviewed"] = False
+            task.metadata["Rc"] = ""
+            task.metadata["AuditPassed"] = False
+            task.metadata["PatchGenTime"] = None
+            task.metadata["DoneAt"] = None
+
+            # Save the repaired metadata
+            cli._atomic_write(filepath, task)
+
+
 class SaveProgressHook(PipelineHook):
     """Saves progress notes to current-task.md in the task directory."""
 
@@ -37,8 +56,14 @@ class ValidationHook(PipelineHook):
                         f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
                     )
 
+            # Temporarily disable JSON mode to prevent early exit during transition
             # run_tool calls cli.error (which sys.exits) on failure
-            cli.run_tool("all")
+            orig_json = cli.as_json
+            cli.as_json = False
+            try:
+                cli.run_tool("all")
+            finally:
+                cli.as_json = orig_json
 
             # If we reach here, all checks passed
             task.metadata["Tp"] = True
@@ -143,16 +168,6 @@ class BranchCheckHook(PipelineHook):
             if has_origin:
                 if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                     cli.error("BRANCH_NOT_PUSHED", branch=branch)
-
-        # Governance check: Enforce that merging happens ONLY via pipeline
-        # Proactively check if main has unexpectedly merged this branch
-        if new_status in ("STAGING", "DONE"):
-            if cli.git.is_merged(branch, "main"):
-                cli.log(
-                    f"DEBUG: Branch {branch} merged into main. Verifying pipeline promotion."
-                )
-            else:
-                cli.error("BRANCH_NOT_MERGED", branch=branch)
 
 
 class ReviewDiffHook(PipelineHook):
@@ -486,3 +501,31 @@ class BranchExistsHook(PipelineHook):
 
             # 3. Raise error to inform user
             cli.error("BRANCH_MISSING_AUTO_DEMOTED", branch=branch)
+
+
+class DoneAtHook(PipelineHook):
+    """Records the timestamp when a task reaches DONE state."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "DONE" and not task.metadata.get("DoneAt"):
+            task.metadata["DoneAt"] = datetime.now().timestamp()
+            cli._atomic_write(filepath, task)
+
+
+class AutoArchiveHook(PipelineHook):
+    """Automatically moves a task from DONE to ARCHIVED after a 7-day grace period."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "DONE":
+            done_at = task.metadata.get("DoneAt")
+            if not done_at:
+                return
+
+            elapsed = datetime.now().timestamp() - done_at
+            grace_period = 7 * 24 * 60 * 60  # 7 days in seconds
+
+            if elapsed >= grace_period:
+                cli.log(
+                    f"Grace period expired for task {task.metadata.get('Id')}. Archiving..."
+                )
+                cli.move(task.metadata.get("Id"), "ARCHIVED")

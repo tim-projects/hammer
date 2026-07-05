@@ -3,7 +3,7 @@ from pathlib import Path
 
 from .constants import TASKS_DIR
 from .context import ProjectContext
-from .git_client import GitClient
+from .git_service import GitService
 from .pipeline import PipelineService
 from .cli_io import log, error, finish
 from .file_manager import FM
@@ -22,7 +22,7 @@ class TasksCLI:
         self.root = self.context.repo_root or os.getcwd()
 
         # Phase 2: Logic Extraction (Modularization)
-        self.git = GitClient(self.context, logger=self)
+        self.git = GitService(self.context, logger=self)
         self.pipeline = PipelineService(self.context, self.git, logger=self)
 
         # Resolve absolute path to repo.py (works for both source checkout and system install)

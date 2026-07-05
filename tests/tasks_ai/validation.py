@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -14,40 +13,22 @@ class Validation:
     def run_lint(self, fix=False):
         if os.environ.get("TASKS_TESTING") == "1":
             return
-        check_path = os.path.join(self.cli.root, "check.py")
-        if not os.path.exists(check_path):
-            return
-        result = subprocess.run(
-            [sys.executable, check_path, "lint"] + (["--fix"] if fix else []),
-            cwd=self.cli.root,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode != 0:
-            self.cli.error(
-                "❌ HAMMER SAY NO! VALIDATION BROKEN! FIX NOW! 🔨",
-                hint="RUN 'check lint' TO SEE ERRORS. HAMMER NO BYPASS TOOL!",
-            )
+        from tasks_ai.validator import Validator
+        validator = Validator(self.cli.root)
+        validator.run_check("lint", fix)
 
     def run_tests(self, fail_safe=False):
         if os.environ.get("TASKS_TESTING") == "1":
             return subprocess.CompletedProcess("", 0)
-        check_path = os.path.join(self.cli.root, "check.py")
-        if not os.path.exists(check_path):
-            return subprocess.CompletedProcess("", 0)
-        result = subprocess.run(
-            [sys.executable, check_path, "test"],
-            cwd=self.cli.root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
+        from tasks_ai.validator import Validator
+        validator = Validator(self.cli.root)
+        try:
+            return validator.run_check("test", False)
+        except Exception:
             if fail_safe:
-                return result
+                return subprocess.CompletedProcess("", 1)
             self.cli.error(
                 "❌ TEST BREAK! HAMMER SAY NO! FIX NOW! 🔨",
                 hint="RUN 'check test' TO SEE FAILURES. HAMMER NO BYPASS TOOL!",
             )
-        return result
+            return subprocess.CompletedProcess("", 1)

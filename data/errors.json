@@ -30,7 +30,7 @@
   "AUDIT_MISMATCH": "Audit mismatch: The code has changed since the last audit.",
   "INTEGRITY_MISMATCH": "Integrity mismatch: Criteria, proof, or audit has changed.",
   "BRANCH_CHECKOUT_FAIL": "Failed to checkout branch '{branch}'.",
-  "MERGE_CONFLICT": "Merge conflict while syncing '{branch}' with '{default}'.",
+  "MERGE_CONFLICT": "[{task_id}] Merge conflict while syncing '{branch}' with '{default}'.",
   "MAIN_BRANCH_PROTECTION": "Forbidden operation on '{default_branch}' branch.",
   "NO_PROGRESS_UPDATE": "No progress updates detected!",
   "INIT_EXPLANATION": "Initialize workspace storage.",

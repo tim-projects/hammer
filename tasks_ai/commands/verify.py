@@ -31,7 +31,7 @@ def run(cli, task_id, proof):
 
         from ..audit import verify_audit
 
-        if not verify_audit(patches_dir, audit_file):
+        if not verify_audit(task_path, patches_dir, audit_file):
             cli.error("AUDIT_MISMATCH", task_id=task_id)
 
     # Write the verification proof

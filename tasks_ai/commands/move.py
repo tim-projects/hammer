@@ -1,40 +1,69 @@
 import os
+import shutil
+from datetime import datetime
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename, perform_move
 from ..pipeline import PipelineError
+from ..cli_errors import PipelineMergeConflict
 
 
-def run(cli, filename, new_status, yes=False):
+def run(cli, filename, new_status=None, yes=False):
     """Execution logic for 'tasks move'."""
-    filepath, current_state_from_folder = cli.find_task(filename)
+    filepath, current_state = cli.find_task(filename)
     if not filepath:
         cli.error("TASK_NOT_FOUND", filename=filename)
-    task_type, _ = parse_filename(os.path.basename(filepath))
-
-    # Single-step transition
-    cli.pipeline.check_transition(cli, filename, new_status)
 
     task = FM.load(filepath)
-    fname = os.path.basename(filepath)
-    task_id = fname.rsplit(".", 1)[0]
-    title = task.metadata.get("Ti", "")
-    task_id_num = task.metadata.get("Id", "")
-    tt, _ = parse_filename(fname)
 
-    # Check if we are already in the target state
-    _, current_state = cli.find_task(filename)
-    if current_state == new_status.upper():
-        cli.log(f"You are already on {new_status.upper()}")
-        return
+    # 1. Derive target status if not provided
+    if not new_status:
+        new_status = cli.git.get_next_logical_state(current_state)
+        if not new_status:
+            cli.log(f"Task {filename} is already in terminal state {current_state}.")
+            return
 
-    if move_logic(cli, filename, new_status, yes=yes):
+        # Special case: DONE -> ARCHIVED requires 7-day grace period
+        if current_state == "DONE" and new_status == "ARCHIVED":
+            done_at = task.metadata.get("DoneAt")
+            if done_at:
+                elapsed = datetime.now().timestamp() - done_at
+                grace_period = 7 * 24 * 60 * 60
+                if elapsed < grace_period:
+                    days_left = round((grace_period - elapsed) / (24 * 3600), 1)
+                    cli.log(
+                        f"Task {filename} is DONE. Auto-archiving in {days_left} days."
+                    )
+                    return
+            else:
+                # If DoneAt is missing, set it now and wait 7 days
+                task.metadata["DoneAt"] = datetime.now().timestamp()
+                cli._atomic_write(filepath, task)
+                cli.log(
+                    f"Task {filename} marked as DONE today. Auto-archiving in 7 days."
+                )
+                return
+
+    # 2. Execute transition atomically
+    try:
+        # Perform physical move and run ALL enter/exit hooks
+        success = move_logic(cli, filename, new_status, yes=yes)
+    except Exception as e:
+        # If transition fails, the move_logic should have handled partial state cleanup.
+        # We re-raise to ensure CLI reports the failure.
+        raise e
+
+    # 3. If everything succeeded, perform success reporting only now
+    if success:
+        fname = os.path.basename(filepath)
+        task_id_num = task.metadata.get("Id", "")
+        title = task.metadata.get("Ti", "")
+        tt, _ = parse_filename(fname)
+
         cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {new_status}")
         cli.finish(
             {
                 "id": task_id_num,
-                "task_id": task_id,
-                "title": title,
                 "status": new_status,
             }
         )
@@ -103,20 +132,61 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
     # Perform Git Merge if applicable
     if sync and not force:
-        cli._git_merge_transition(
-            task, new_status, current_state=current_state, yes=yes
+        try:
+            cli._git_merge_transition(task, new_status, yes=yes)
+        except PipelineMergeConflict as e:
+            task_id = str(task.metadata.get("Id", "unknown"))
+            cli.error(
+                "MERGE_CONFLICT", branch=e.branch, default=e.default, task_id=task_id
+            )
+            return False
+
+    # 2. Final Execution (Atomic staged transition)
+    staging_path = os.path.join(cli.tasks_path, ".ops", "staging")
+    os.makedirs(staging_path, exist_ok=True)
+    staged_task_path = os.path.join(staging_path, os.path.basename(filepath_str))
+
+    try:
+        # Stage: Physically move/copy the task directory
+        shutil.copytree(filepath_str, staged_task_path)
+
+        # Validate: Re-load task from staged path and run enter hooks
+        new_task = FM.load(staged_task_path)
+        new_filepath = os.path.join(
+            cli.tasks_path,
+            STATE_FOLDERS[new_status],
+            os.path.basename(filepath_str),
         )
 
-    # 2. Final Execution (Physical move)
-    new_task = perform_move(cli, task, current_state, new_status, filepath_str)
+        # Run Enter Hooks (Post-move actions)
+        cli.hook_registry.run_enter_hooks(
+            cli, new_task, current_state, new_status, staged_task_path
+        )
 
-    # 3. Run Enter Hooks (Post-move actions)
-    new_filepath = os.path.join(
-        cli.tasks_path,
-        STATE_FOLDERS[new_status],
-        os.path.basename(filepath_str),
-    )
-    cli.hook_registry.run_enter_hooks(
-        cli, new_task, current_state, new_status, new_filepath
-    )
+        # Commit: Physical move
+        os.makedirs(os.path.dirname(new_filepath), exist_ok=True)
+        if os.path.exists(new_filepath):
+            for item in os.listdir(staged_task_path):
+                src = os.path.join(staged_task_path, item)
+                dst = os.path.join(new_filepath, item)
+                if os.path.isdir(src):
+                    shutil.copytree(src, dst, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(src, dst)
+            shutil.rmtree(staged_task_path)
+        else:
+            os.rename(staged_task_path, new_filepath)
+
+        # Cleanup original
+        if os.path.exists(filepath_str):
+            if os.path.isdir(filepath_str):
+                shutil.rmtree(filepath_str)
+            else:
+                os.remove(filepath_str)
+    except Exception as e:
+        # Cleanup staging on failure
+        if os.path.exists(staged_task_path):
+            shutil.rmtree(staged_task_path)
+        raise e
+
     return True
