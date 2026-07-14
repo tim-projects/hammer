@@ -3,7 +3,6 @@ venv/
 
 .tasks/
 .tasks.bak/
-.tasks.backup
 
 __pycache__/
 *.pyc

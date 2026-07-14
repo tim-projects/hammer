@@ -1,5 +1,8 @@
 import os
+import sys
+import subprocess
 import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional
 
 if TYPE_CHECKING:
@@ -95,35 +98,66 @@ class Validation:
 
     def run_tool(self, tool_name: Optional[str] = None, fix: bool = False):
         """Run configured tools (lint, test, typecheck, format)."""
-        from .validator import Validator, ValidationError
+        # Resolve project root independently of CWD using the same logic as repo_script
+        install_dir = Path(__file__).resolve().parent.parent
+        check_py = install_dir / "check.py"
 
-        root = self.cli.context.repo_root or os.getcwd()
-        validator = Validator(root, dev=self.cli.dev)
+        if not check_py.exists():
+            self.cli.error("check.py not found in project root.")
+            return
 
-        try:
-            if tool_name and tool_name != "all":
-                result = validator.run_check(tool_name, fix)
-                results = [result]
-            else:
-                results = validator.run_all(fix)
+        cmd = [sys.executable, str(check_py), tool_name or "all"]
+        if fix:
+            cmd.append("--fix")
+        if self.cli.as_json:
+            cmd.append("--json")
+        if self.cli.dev:
+            cmd.append("--dev")
 
-            success = all(r["success"] for r in results)
+        # repo_root is still needed for execution context
+        repo_root = self.cli.context.repo_root or os.getcwd()
+        capture = self.cli.as_json or self.cli.quiet
+        run_env = os.environ.copy()
+        run_env["HAMMER_DEV_TASKS_DIR"] = self.cli.context.tasks_path or "/tmp/.tasks"
+        result = subprocess.run(cmd, cwd=repo_root, capture_output=capture, text=True, env=run_env)
 
-            if self.cli.as_json:
-                data = {"success": success, "results": results}
-                if success:
+        if self.cli.as_json:
+            try:
+                # Handle potential JSON Lines (multiple JSON objects)
+                lines = [
+                    json.loads(line)
+                    for line in result.stdout.strip().splitlines()
+                    if line.strip()
+                ]
+                if len(lines) == 1:
+                    data = lines[0]
+                else:
+                    # Aggregate results
+                    data = {
+                        "success": all(line.get("success", False) for line in lines),
+                        "results": lines,
+                    }
+
+                if result.returncode == 0:
                     self.cli.finish(data)
                 else:
-                    self.cli.error("Validation failed", hint=json.dumps(results))
-            else:
-                for r in results:
-                    print(r.get("stdout", ""))
+                    # Try to extract a meaningful error
+                    error_msg = "Tool execution failed"
+                    for line in lines:
+                        if not line.get("success", True):
+                            error_msg = line.get("error", error_msg)
+                            break
+                    self.cli.error(
+                        f"Tool execution failed: {tool_name or 'all'}", hint=error_msg
+                    )
+            except json.JSONDecodeError:
+                self.cli.error(f"Failed to parse tool output: {result.stdout}")
+        else:
+            if capture:
+                print(result.stdout)
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr)
 
-                if success:
-                    print("✅ Validation passed")
-                else:
-                    print("❌ Validation failed")
-                    self.cli.error("Pipeline validation failed.")
-
-        except ValidationError as e:
-            self.cli.error(str(e))
+            if result.returncode != 0:
+                self.cli.error(f"Tool execution failed: {tool_name or 'all'}")
+        return result

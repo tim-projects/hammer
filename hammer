@@ -31,7 +31,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 
 TOOLS = {
     "tasks": SCRIPT_DIR / "tasks.py",
-    "check": SCRIPT_DIR / "tasks_ai" / "check_wrapper.py",
+    "check": SCRIPT_DIR / "check.py",
     "repo": SCRIPT_DIR / "repo.py",
 }
 
