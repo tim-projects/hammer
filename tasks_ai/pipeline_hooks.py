@@ -297,10 +297,20 @@ class BranchSyncHook(PipelineHook):
 
             # 2. Fetch latest main
             default_branch = cli.git.get_default_branch()
-            cli.git.run(["fetch", "origin", default_branch])
+            fetch_res = cli.git.run(["fetch", "origin", default_branch], check=False)
 
-            # 3. Attempt merge
-            merge_res = cli.git.run(["merge", f"origin/{default_branch}"])
+            # 3. Determine merge source: prefer origin/default_branch, fallback to local default_branch
+            merge_source = f"origin/{default_branch}"
+            if fetch_res.returncode != 0:
+                local_res = cli.git.run(["rev-parse", "--verify", default_branch], check=False)
+                if local_res.returncode == 0:
+                    merge_source = default_branch
+                else:
+                    cli.console("git", "sync", "skipped (no remote/main)")
+                    return
+
+            # 4. Attempt merge
+            merge_res = cli.git.run(["merge", merge_source])
             if merge_res.returncode != 0:
                 cli.console("git", "merge", "conflict")
                 cli.git.run(["merge", "--abort"])
@@ -372,11 +382,12 @@ class BranchSyncOnExitTestingHook(PipelineHook):
             _, branch = parse_filename(os.path.basename(filepath))
 
             # Detect divergence
+            default_branch = cli.git.get_default_branch()
             cli.console("git", "check", "divergence")
-            res = cli.git.run(["rev-list", f"main..{branch}", "--count"])
+            res = cli.git.run(["rev-list", f"{default_branch}..{branch}", "--count"])
             if res.stdout.strip() != "0":
                 cli.console("git", "merge", "missing commit")
-                cli.git.run(["merge", "main"])
+                cli.git.run(["merge", default_branch])
 
 
 class CleanupReviewArtifactsHook(PipelineHook):

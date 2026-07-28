@@ -116,7 +116,7 @@ class Validation:
 
         # repo_root is still needed for execution context
         repo_root = self.cli.context.repo_root or os.getcwd()
-        capture = self.cli.as_json or self.cli.quiet
+        capture = True
         run_env = os.environ.copy()
         run_env["HAMMER_DEV_TASKS_DIR"] = self.cli.context.tasks_path or "/tmp/.tasks"
         result = subprocess.run(cmd, cwd=repo_root, capture_output=capture, text=True, env=run_env)
@@ -153,10 +153,10 @@ class Validation:
             except json.JSONDecodeError:
                 self.cli.error(f"Failed to parse tool output: {result.stdout}")
         else:
-            if capture:
-                print(result.stdout)
-                if result.stderr:
-                    print(result.stderr, file=sys.stderr)
+            if result.stdout:
+                print(result.stdout, file=sys.stderr)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
 
             if result.returncode != 0:
                 self.cli.error(f"Tool execution failed: {tool_name or 'all'}")
