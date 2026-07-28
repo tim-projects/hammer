@@ -43,13 +43,21 @@ def generate_file_patches(cli, task_id, task_path, branch):
 
 
 def generate_audit(task_id, task_path, patches_dir, output_path):
-    """Generate audit file based on all patches."""
+    """Generate audit file based on patches, meta.json, and criteria.md."""
     hasher = hashlib.md5()
 
+    # Hash patches
     patch_files = sorted([f for f in os.listdir(patches_dir) if f.endswith(".patch")])
     for patch_file in patch_files:
         with open(os.path.join(patches_dir, patch_file), "rb") as f:
             hasher.update(f.read())
+
+    # Hash meta.json and criteria.md
+    for filename in ["meta.json", "criteria.md"]:
+        filepath = os.path.join(task_path, filename)
+        if os.path.exists(filepath):
+            with open(filepath, "rb") as f:
+                hasher.update(f.read())
 
     audit_data = {
         "task_id": task_id,
@@ -63,15 +71,23 @@ def generate_audit(task_id, task_path, patches_dir, output_path):
     print(f"Audit file generated at {output_path}")
 
 
-def verify_audit(patches_dir, audit_path):
+def verify_audit(task_path, patches_dir, audit_path):
     if not os.path.exists(audit_path):
         return False
 
     hasher = hashlib.md5()
+    # Hash patches
     patch_files = sorted([f for f in os.listdir(patches_dir) if f.endswith(".patch")])
     for patch_file in patch_files:
         with open(os.path.join(patches_dir, patch_file), "rb") as f:
             hasher.update(f.read())
+
+    # Hash meta.json and criteria.md
+    for filename in ["meta.json", "criteria.md"]:
+        filepath = os.path.join(task_path, filename)
+        if os.path.exists(filepath):
+            with open(filepath, "rb") as f:
+                hasher.update(f.read())
 
     with open(audit_path, "r") as f:
         audit_data = json.load(f)

@@ -188,9 +188,63 @@ def check_merged_to_testing(branch):
 
 
 def cmd_merge(src_input, target_input):
-    error(
-        "Command 'repo merge' is deprecated and disabled. Use 'hammer tasks move' for all pipeline transitions to ensure state synchronization."
+    src = resolve_branch(src_input)
+    target = resolve_branch(target_input)
+
+    # Identify if src is a task branch
+    task_id = src.split("-")[0] if src.split("-")[0].isdigit() else None
+    cli = (
+        TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"])
+        if TasksCLI
+        else None
     )
+
+    if task_id and cli:
+        path, _ = cli.find_task(task_id)
+        if path:
+            # Map git branch target to pipeline status
+            pipeline_to_status = {
+                "testing": "TESTING",
+                "staging": "STAGING",
+                "main": "DONE",
+            }
+            new_status = pipeline_to_status.get(target)
+            if new_status:
+                info(
+                    f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'..."
+                )
+                cli.move(task_id, new_status, yes=FLAGS["yes"])
+                return
+
+    if target not in PIPELINE:
+        if not FLAGS["yes"]:
+            msg = f"Merging between task branches (outside pipeline: {src} -> {target}). Continue?"
+            if not prompt_yes_no(msg):
+                log("Merge cancelled.")
+                return
+    ensure_pipeline_branch(target)
+    info(f"Merging {src.upper()} → {target.upper()}")
+    current = get_current_branch()
+    if current != src:
+        st = run(["git", "status", "--porcelain"], capture=True).stdout.strip()
+        if st:
+            warn(f"Uncommitted changes on {current.upper()}. Auto-committing...")
+            run(["git", "add", "."])
+            run(["git", "commit", "-m", f"WIP: Auto-commit {current}"])
+        run(["git", "checkout", src])
+    log(f"Merging {src} into {target}...")
+    run(["git", "checkout", target])
+    if check_remote_exists():
+        run(["git", "pull", PRIMARY_REMOTE, target], check=False)
+    else:
+        warn("No remote - skipping pull")
+    run(["git", "merge", src, "-m", f"merge: {src} into {target}"])
+    if check_remote_exists():
+        if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+            run(["git", "push", PRIMARY_REMOTE, target])
+    else:
+        warn("No remote - skipping push")
+    log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
 
 
 def cmd_commit(message):
@@ -214,67 +268,60 @@ def cmd_commit(message):
         warn("No changes to commit")
 
 
-def check_main_divergence():
-    run(["git", "fetch", "origin"])
-    local = run(["git", "rev-parse", "main"], capture=True).stdout.strip()
-    remote = run(["git", "rev-parse", "origin/main"], capture=True).stdout.strip()
-    if local != remote:
-        error(
-            "Local main is out of sync with origin/main. Run git pull or resolve divergence manually.",
-            hint="Run git fetch origin && git log main..origin/main to see missing commits.",
-        )
-
-
 def cmd_promote(src_input, original_task_id=None):
     """
-    Promote a branch through the pipeline.
-    This is now an alias for 'hammer tasks move' with appropriate state mapping.
+    DEPRECATED: Promote a branch through the pipeline.
+    This command is legacy. Use 'hammer tasks move' instead.
     """
+    warn(
+        "'repo promote' is DEPRECATED. Please use 'hammer tasks move' for unified task promotion."
+    )
+
     src = resolve_branch(src_input)
     task_id = original_task_id or (
         src.split("-")[0] if src.split("-")[0].isdigit() else None
     )
 
     if task_id and TasksCLI:
-        cli = TasksCLI(
-            quiet=FLAGS.get("quiet", False), dev=FLAGS["dev"], yes=FLAGS["yes"]
-        )
-        path, current_status = cli.find_task(task_id)
-        if path and current_status:
-            status_to_next_state = {
-                "PROGRESSING": "TESTING",
-                "TESTING": "REVIEW",
-                "REVIEW": "STAGING",
-                "STAGING": "DONE",
-            }
-            next_state = status_to_next_state.get(current_status)
-            if next_state:
-                cli.move(task_id, next_state)
-                log(
-                    f"✅ Successfully promoted {src.upper()} → {next_state.upper()} via tasks move"
-                )
-                if next_state == "DONE":
-                    cli.move(task_id, "ARCHIVED")
-                    run(["git", "branch", "-d", src], check=False)
-                return
+        # Redirect to hammer tasks move
+        log(f"Redirecting promotion of task {task_id} to 'tasks move'...")
+        cmd = ["./hammer", "tasks", "move", task_id]
+        if FLAGS["yes"]:
+            cmd.append("-y")
+        subprocess.run(cmd)
+        return
 
-    # Fallback for non-task branches (very basic)
-    error(f"Cannot promote non-task branch '{src}' automatically. Use git merge.")
+    error(
+        "Promotion of non-task branches is not supported via this legacy command. Use 'git merge' manually."
+    )
 
 
 def cmd_demote(task_id_input, target_state):
+    from tasks_ai.file_manager import FM
+
     task_id = task_id_input.split("-")[0]
     cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"]) if TasksCLI else None
-    if not cli:
+    if cli:
+        path, _ = cli.find_task(task_id)
+    else:
         error("TasksCLI not initialized")
-
-    path, current_status = cli.find_task(task_id)
-    if not path:
-        error(f"Task {task_id} not found.")
-
-    info(f"Demoting {task_id} to {target_state} via tasks move...")
+    task = FM.load(path)
+    branch = task.metadata.get("Br")
+    info(f"Demoting {task_id} to {target_state}...")
+    branches_to_sync = (
+        ["staging", "testing"] if target_state == "PROGRESSING" else ["staging"]
+    )
+    for b in branches_to_sync:
+        if branch_exists(b):
+            run(["git", "checkout", branch])
+            run(
+                ["git", "merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
+                check=False,
+            )
     cli.move(task_id, target_state)
-    log(f"✅ Successfully demoted {task_id} to {target_state}")
+    task.metadata["Rc"] = ""
+    FM.dump(task, path)
+    log("✅ Successfully demoted.")
 
 
 def resolve_branch(name):

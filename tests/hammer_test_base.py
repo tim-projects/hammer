@@ -56,18 +56,6 @@ class HammerTestBase(unittest.TestCase):
             shutil.rmtree(self.dev_tasks_dir)
         os.makedirs(self.dev_tasks_dir, exist_ok=True)
 
-        # Write config to dev_tasks_dir
-        config_data = {
-            "repo": {
-                "lint": "ruff",
-                "test": "/bin/true",
-                "type_check": "/bin/true",
-                "format": "ruff",
-            }
-        }
-        with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
-            json.dump(config_data, f)
-
         # Ensure .tasks config is minimal or doesn't conflict
         tasks_dir = os.path.join(self.repo_path, ".tasks")
         os.makedirs(tasks_dir, exist_ok=True)
@@ -81,6 +69,18 @@ class HammerTestBase(unittest.TestCase):
             check=True,
             capture_output=True,
         )
+
+        # Re-write config after init --force (init deletes and recreates dev_tasks_dir)
+        config_data = {
+            "repo": {
+                "lint": "ruff",
+                "test": "/bin/true",
+                "type_check": "/bin/true",
+                "format": "ruff",
+            }
+        }
+        with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
+            json.dump(config_data, f)
 
     def tearDown(self):
         shutil.rmtree(self.test_root)

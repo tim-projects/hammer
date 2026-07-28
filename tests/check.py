@@ -123,6 +123,7 @@ def get_commands(fix=False):
             "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
             "pylint": ["pylint", "."],
             "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
+            "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
             "golangci-lint": ["golangci-lint", "run", "./..."]
             + (["--fix"] if fix else []),
         },
