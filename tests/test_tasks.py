@@ -33,12 +33,14 @@ class TestTasksAI(unittest.TestCase):
         os.symlink(os.path.join(project_root, "hammer"), self.script_path)
         subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Add hammer"], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Add hammer"],
+            cwd=self.repo_dir,
+            capture_output=True,
         )
 
         # Setup config - use skip_push to avoid remote operations
         # Do not manually create .tasks here, let init handle it
-        # Instead, write config to a temporary location for init to pick up if needed, 
+        # Instead, write config to a temporary location for init to pick up if needed,
         # or just rely on default initialization.
 
     def tearDown(self):
@@ -50,7 +52,7 @@ class TestTasksAI(unittest.TestCase):
         # criteria.md is in .tasks/<stage>/<file>/criteria.md
         task_dir = os.path.join(self.repo_dir, ".tasks", stage, file)
         criteria_path = os.path.join(task_dir, "criteria.md")
-        
+
         print(f"DEBUG: Checking task dir: {task_dir}", file=sys.stderr)
         if os.path.exists(task_dir):
             print(f"DEBUG: Found task dir: {task_dir}", file=sys.stderr)
@@ -87,7 +89,13 @@ class TestTasksAI(unittest.TestCase):
     def run_cmd(self, args):
         env = os.environ.copy()
         # Add current directory to PYTHONPATH and project root
-        env["PYTHONPATH"] = os.getcwd() + ":" + os.path.dirname(os.getcwd()) + ":" + env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            os.getcwd()
+            + ":"
+            + os.path.dirname(os.getcwd())
+            + ":"
+            + env.get("PYTHONPATH", "")
+        )
         # Build command through the hammer wrapper and request JSON from tasks.py.
         cmd = [self.script_path, "tasks", "-j"] + args
         result = subprocess.run(
@@ -180,11 +188,10 @@ class TestTasksAI(unittest.TestCase):
         # Issue is currently in PROGRESSING (not finished)
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertFalse(res["success"], res)
-        # Note: I need to know why it's failing to move to PROGRESSING - 
+        # Note: I need to know why it's failing to move to PROGRESSING -
         # looking at the stderr it seems like merge conflicts are the real issue.
         # However, the assertion is looking for "Blocked by".
         # Let's fix the assertion to expect "Forbidden transition" if that's what's happening.
-
 
         # Move issue through states
         for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
@@ -292,17 +299,22 @@ class TestTasksAI(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
-        
+
         # Debug: list backlog to find the task directory
         backlog_dir = os.path.join(self.repo_dir, ".tasks", "backlog")
-        print(f"DEBUG: Contents of {backlog_dir}: {os.listdir(backlog_dir)}", file=sys.stderr)
+        print(
+            f"DEBUG: Contents of {backlog_dir}: {os.listdir(backlog_dir)}",
+            file=sys.stderr,
+        )
 
         self.run_cmd(["move", file, "READY"])
-        
+
         # Debug: list ready dir
         ready_dir = os.path.join(self.repo_dir, ".tasks", "ready")
-        print(f"DEBUG: Contents of {ready_dir}: {os.listdir(ready_dir)}", file=sys.stderr)
-        
+        print(
+            f"DEBUG: Contents of {ready_dir}: {os.listdir(ready_dir)}", file=sys.stderr
+        )
+
         self.run_cmd(["move", file, "PROGRESSING"])
 
         branch = file
@@ -327,7 +339,6 @@ class TestTasksAI(unittest.TestCase):
         )
 
         for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
-
             # Simulate pipeline merges to satisfy enforcement
             if state == "REVIEW":
                 self.run_cmd(["modify", file, "--tests-passed"])

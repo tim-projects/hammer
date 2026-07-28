@@ -63,7 +63,11 @@ class TestAllTransitions(HammerTestBase):
             )
             is_gate_error = any(
                 msg.lower() in error.lower()
-                for msg in ["Forbidden transition", "Auto-promotion failed", "Regression check not passed"]
+                for msg in [
+                    "Forbidden transition",
+                    "Auto-promotion failed",
+                    "Regression check not passed",
+                ]
             )
 
             if is_allowed:
