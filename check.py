@@ -122,16 +122,17 @@ def get_tool(config, tool_type):
     return tool
 
 
-def get_commands(fix=False):
-    return {
-        "lint": {
-            "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
-            "pylint": ["pylint", "."],
-            "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
-            "golangci-lint": ["golangci-lint", "run", "./..."]
-            + (["--fix"] if fix else []),
-            "true": ["/bin/true"],
-        },
+    def get_commands(fix=False):
+        return {
+            "lint": {
+                "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
+                "pylint": ["pylint", "."],
+                "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
+                "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
+                "golangci-lint": ["golangci-lint", "run", "./..."]
+                + (["--fix"] if fix else []),
+                "true": ["/bin/true"],
+            },
         "test": {
             "pytest": ["pytest"],
             "go test": ["go", "test", "./..."],
