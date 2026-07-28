@@ -83,7 +83,7 @@ def load_config(dev=False):
                 config.update(yaml.safe_load(f) or {})
         except ImportError:
             pass
-        except Exception as e:
+        except Exception:
             pass
 
     if os.path.exists(config_path_toml):
