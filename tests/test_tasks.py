@@ -38,15 +38,6 @@ class TestTasksAI(unittest.TestCase):
 
         # Setup config - use skip_push to avoid remote operations
         # Do not manually create .tasks here, let init handle it
-        config_data = {
-            "repo": {
-                "lint": "/bin/true",
-                "test": "/bin/true",
-                "type_check": "/bin/true",
-                "format": "/bin/true",
-                "skip_push": True,
-            }
-        }
         # Instead, write config to a temporary location for init to pick up if needed, 
         # or just rely on default initialization.
 
