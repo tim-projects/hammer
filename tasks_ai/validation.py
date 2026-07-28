@@ -111,11 +111,15 @@ class Validation:
             cmd.append("--fix")
         if self.cli.as_json:
             cmd.append("--json")
+        if self.cli.dev:
+            cmd.append("--dev")
 
         # repo_root is still needed for execution context
         repo_root = self.cli.context.repo_root or os.getcwd()
         capture = self.cli.as_json or self.cli.quiet
-        result = subprocess.run(cmd, cwd=repo_root, capture_output=capture, text=True)
+        run_env = os.environ.copy()
+        run_env["HAMMER_DEV_TASKS_DIR"] = self.cli.context.tasks_path or "/tmp/.tasks"
+        result = subprocess.run(cmd, cwd=repo_root, capture_output=capture, text=True, env=run_env)
 
         if self.cli.as_json:
             try:

@@ -3,7 +3,6 @@ import subprocess
 import os
 import shutil
 import tempfile
-import sys
 import json
 
 
@@ -50,7 +49,7 @@ class HammerTestBase(unittest.TestCase):
         if os.path.exists(tasks_clone_path):
             shutil.rmtree(tasks_clone_path)
 
-        self.script_path = os.path.join(self.repo_path, "tasks.py")
+        self.script_path = os.path.join(self.repo_path, "hammer")
 
         # Configure isolated dev environment
         if os.path.exists(self.dev_tasks_dir):
@@ -77,7 +76,7 @@ class HammerTestBase(unittest.TestCase):
             json.dump({}, f)
 
         subprocess.run(
-            [sys.executable, self.script_path, "--dev", "init", "--force"],
+            [self.script_path, "tasks", "--dev", "init", "--force"],
             cwd=self.repo_path,
             check=True,
             capture_output=True,
@@ -90,7 +89,7 @@ class HammerTestBase(unittest.TestCase):
 
     def run_tasks(self, args):
         return subprocess.run(
-            [sys.executable, self.script_path, "-j", "--dev"] + args,
+            [self.script_path, "tasks", "-j", "--dev"] + args,
             cwd=self.repo_path,
             capture_output=True,
             text=True,

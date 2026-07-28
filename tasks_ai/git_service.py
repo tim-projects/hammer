@@ -308,7 +308,7 @@ class GitService:
             yes=yes or target_state == "DONE",
         )
 
-    def demote_task(self, task, target_state: str, current_state: str = None):
+    def demote_task(self, task, target_state: str, current_state: str = None, force: bool = False):
         """Sync higher branches back into feature branch during demotion."""
         branch = task.metadata.get("Br", "")
         if not branch:
@@ -323,6 +323,13 @@ class GitService:
             branches_to_sync = ["main", "staging", "testing"]
         elif target_state in ["TESTING", "REVIEW"]:
             branches_to_sync = ["main", "staging"]
+
+        if not self.branch_exists(branch):
+            if target_state == "REJECTED" or force:
+                self.log(f"Branch {branch} does not exist locally. Skipping demotion sync for {target_state} transition.")
+                return
+            else:
+                raise RuntimeError(f"Branch {branch} does not exist locally.")
 
         self.run(["checkout", branch])
         for b in branches_to_sync:
