@@ -144,7 +144,12 @@ def run(cli, fix=False):
                 ).returncode
                 != 0
             )
-            if branch_missing and state in ("PROGRESSING", "TESTING", "REVIEW", "STAGING"):
+            if branch_missing and state in (
+                "PROGRESSING",
+                "TESTING",
+                "REVIEW",
+                "STAGING",
+            ):
                 inconsistencies.append(
                     ("git branch", branch_from_metadata, "Branch missing locally")
                 )
