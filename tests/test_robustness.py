@@ -27,7 +27,9 @@ class TestRobustness(unittest.TestCase):
         os.symlink(os.path.join(project_root, "hammer"), self.script_path)
         subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", "Add hammer"], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Add hammer"],
+            cwd=self.repo_dir,
+            capture_output=True,
         )
 
         # Setup config

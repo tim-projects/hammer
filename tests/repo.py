@@ -131,20 +131,22 @@ def prompt_yes_no(prompt):
 class ToolRunner:
     def run_validation(self, fix=False, dev=False, cwd=None):
         import sys
+
         # Add project root to path for validator import
         project_root = "/home/vscode/git/tasks-ai"
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
         from tasks_ai.validator import Validator
+
         git_root = cwd or find_project_root()
         validator = Validator(git_root, dev=dev)
         results = validator.run_all(fix)
-        success = all(r['success'] for r in results)
+        success = all(r["success"] for r in results)
         return subprocess.CompletedProcess(
             args=[],
             returncode=0 if success else 1,
             stdout="\n".join(r.get("stdout", "") for r in results),
-            stderr="\n".join(r.get("stderr", "") for r in results)
+            stderr="\n".join(r.get("stderr", "") for r in results),
         )
 
 

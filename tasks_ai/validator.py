@@ -135,7 +135,12 @@ class Validator:
 
         try:
             result = subprocess.run(
-                cmd, cwd=self.project_root, capture_output=True, text=True, env=run_env, timeout=timeout
+                cmd,
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                env=run_env,
+                timeout=timeout,
             )
         except subprocess.TimeoutExpired:
             raise ValidationError(f"Tool '{tool}' timed out after {timeout} seconds.")

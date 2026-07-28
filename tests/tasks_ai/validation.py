@@ -14,6 +14,7 @@ class Validation:
         if os.environ.get("TASKS_TESTING") == "1":
             return
         from tasks_ai.validator import Validator
+
         validator = Validator(self.cli.root)
         validator.run_check("lint", fix)
 
@@ -21,6 +22,7 @@ class Validation:
         if os.environ.get("TASKS_TESTING") == "1":
             return subprocess.CompletedProcess("", 0)
         from tasks_ai.validator import Validator
+
         validator = Validator(self.cli.root)
         try:
             return validator.run_check("test", False)

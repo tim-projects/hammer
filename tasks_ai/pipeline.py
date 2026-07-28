@@ -154,7 +154,7 @@ class PipelineService:
             return "- [ ]" in content
 
     def git_merge_transition(
-        self, task, target_state: str, current_state: str = None, yes: bool = False
+        self, task, target_state: str, current_state: str = None, yes: bool = False, force: bool = False
     ):
         """Perform the git merges associated with a pipeline transition."""
         branch = task.metadata.get("Br", "")
@@ -203,7 +203,9 @@ class PipelineService:
             # Check if branch exists - skip demotion sync if missing and target is REJECTED
             if not self.git.branch_exists(branch):
                 if target_state == "REJECTED":
-                    self.log(f"Branch {branch} does not exist locally. Skipping demotion sync for {target_state} transition.")
+                    self.log(
+                        f"Branch {branch} does not exist locally. Skipping demotion sync for {target_state} transition."
+                    )
                     return
 
             self.git.run(["checkout", branch])
