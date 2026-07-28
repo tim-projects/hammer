@@ -161,7 +161,12 @@ class PipelineService:
             return "- [ ]" in content
 
     def git_merge_transition(
-        self, task, target_state: str, current_state: str = None, yes: bool = False, force: bool = False
+        self,
+        task,
+        target_state: str,
+        current_state: str = None,
+        yes: bool = False,
+        force: bool = False,
     ):
         """Perform the git merges associated with a pipeline transition."""
         if current_state is None:
@@ -176,7 +181,9 @@ class PipelineService:
             target_idx = 0
 
         if target_idx < curr_idx:
-            return self.git.demote_task(task, target_state, current_state=current_state, force=force)
+            return self.git.demote_task(
+                task, target_state, current_state=current_state, force=force
+            )
         else:
             return self.git.promote_task(
                 task, target_state, current_state=current_state, yes=yes

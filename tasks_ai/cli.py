@@ -265,7 +265,9 @@ class TasksCLI:
         return self.git.push_tasks_branch(branch=branch, fatal=fatal)
 
     def _git_merge_transition(self, task, target_state, yes=False, force=False):
-        return self.pipeline.git_merge_transition(task, target_state, yes=yes, force=force)
+        return self.pipeline.git_merge_transition(
+            task, target_state, yes=yes, force=force
+        )
 
     def _validate_pipeline_gate(self, task, target_state, task_path=None):
         if not task_path:
@@ -526,7 +528,7 @@ class TasksCLI:
         # pre-commit hook
         with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
             f.write(
-                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# 1. Block direct commits to main\nif [ "$target_branch" == "main" ]; then\n    echo "❌ Direct commits to \'main\' are blocked."\n    echo "Use \'staging\' branch to merge code to \'main\'."\n    echo "Use \'hammer tasks create\' to create a feature branch and move it through the workflow."\n    exit 1\nfi\n\n# 2. Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
+                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# Allow pipeline branches (main, staging, testing)\nif [[ "$target_branch" == "main" || "$target_branch" == "staging" || "$target_branch" == "testing" ]]; then\n    exit 0\nfi\n\n# Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
             )
         os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
 
