@@ -58,12 +58,12 @@ class TestAllTransitions(HammerTestBase):
 
             is_allowed = target in ALLOWED_TRANSITIONS.get(current, [])
             is_validation_error = any(
-                msg in error
+                msg.lower() in error.lower()
                 for msg in ["Validation failed", "regression check", "lint"]
             )
             is_gate_error = any(
-                msg in error
-                for msg in ["Forbidden transition", "Auto-promotion failed"]
+                msg.lower() in error.lower()
+                for msg in ["Forbidden transition", "Auto-promotion failed", "Regression check not passed"]
             )
 
             if is_allowed:
