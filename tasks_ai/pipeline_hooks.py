@@ -302,7 +302,9 @@ class BranchSyncHook(PipelineHook):
             # 3. Determine merge source: prefer origin/default_branch, fallback to local default_branch
             merge_source = f"origin/{default_branch}"
             if fetch_res.returncode != 0:
-                local_res = cli.git.run(["rev-parse", "--verify", default_branch], check=False)
+                local_res = cli.git.run(
+                    ["rev-parse", "--verify", default_branch], check=False
+                )
                 if local_res.returncode == 0:
                     merge_source = default_branch
                 else:

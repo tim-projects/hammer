@@ -119,7 +119,9 @@ class Validation:
         capture = True
         run_env = os.environ.copy()
         run_env["HAMMER_DEV_TASKS_DIR"] = self.cli.context.tasks_path or "/tmp/.tasks"
-        result = subprocess.run(cmd, cwd=repo_root, capture_output=capture, text=True, env=run_env)
+        result = subprocess.run(
+            cmd, cwd=repo_root, capture_output=capture, text=True, env=run_env
+        )
 
         if self.cli.as_json:
             try:
