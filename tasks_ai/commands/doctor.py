@@ -134,15 +134,19 @@ def run(cli, fix=False):
                 )
 
             # Add state transition inconsistency check
-            if (
+            # Only check branch existence for active states; archived/rejected tasks
+            # may have had their branches cleaned up by `hammer tasks cleanup`.
+            branch_missing = (
                 branch_from_metadata
-                and not cli._run_git(
+                and isinstance(branch_from_metadata, str)
+                and cli._run_git(
                     ["rev-parse", "--verify", branch_from_metadata]
                 ).returncode
-                == 0
-            ):
+                != 0
+            )
+            if branch_missing and state in ("PROGRESSING", "TESTING", "REVIEW", "STAGING"):
                 inconsistencies.append(
-                    ("git branch", branch_from_metadata, "Branch exists")
+                    ("git branch", branch_from_metadata, "Branch missing locally")
                 )
 
             # Check directory name
@@ -184,15 +188,25 @@ def run(cli, fix=False):
                         ]
 
                 # Fix metadata.Id if wrong
+                id_changed = False
                 if not (
                     metadata_id
                     and str(metadata_id).isdigit()
                     and int(metadata_id) == correct_id
                 ):
                     task.metadata["Id"] = correct_id
-                    # Also update metadata.Br to be consistent
-                    task.metadata["Br"] = expected_br
+                    id_changed = True
 
+                # Fix metadata.Br if wrong (independent of Id fix)
+                if not (
+                    branch_from_metadata
+                    and isinstance(branch_from_metadata, str)
+                    and branch_from_metadata == expected_br
+                ):
+                    task.metadata["Br"] = expected_br
+                    id_changed = True
+
+                if id_changed:
                     # Save the fixed metadata
                     FM.dump(task, item_path)
                     cli.log(
