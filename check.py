@@ -68,7 +68,9 @@ def load_config(dev=False):
     project_root = find_project_root()
     # Prioritize project_root/.tasks/config.yaml (or HAMMER_DEV_TASKS_DIR/config.yaml if dev), then project_root/pyproject.toml
     if dev:
-        config_path_yaml = os.path.join(os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks"), "config.yaml")
+        config_path_yaml = os.path.join(
+            os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks"), "config.yaml"
+        )
     else:
         config_path_yaml = os.path.join(project_root, ".tasks", "config.yaml")
 
