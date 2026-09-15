@@ -1,3 +1,5 @@
+import json
+import os
 import subprocess
 
 
@@ -10,9 +12,24 @@ def run_dev(cmd, force=False):
     return result
 
 
+def setup_dev_config():
+    dev_tasks_dir = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
+    config_data = {
+        "repo": {
+            "lint": "ruff",
+            "test": "/bin/true",
+            "type_check": "/bin/true",
+            "format": "ruff",
+        }
+    }
+    with open(os.path.join(dev_tasks_dir, "config.yaml"), "w") as f:
+        json.dump(config_data, f, indent=2)
+
+
 def test_pipeline_audit_verify_gates():
     # 1. Init dev env with force to clean up
     run_dev(["init"], force=True)
+    setup_dev_config()
 
     # 2. Create task
     run_dev(
