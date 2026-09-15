@@ -18,11 +18,11 @@ Options:
 """
 
 import argparse
+import json
 import os
+import shutil
 import subprocess
 import sys
-import json
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -36,7 +36,7 @@ def get_git_root():
             .decode()
             .strip()
         )
-    except Exception:
+    except subprocess.CalledProcessError:
         return os.getcwd()
 
 
@@ -85,8 +85,8 @@ def load_config(dev=False):
                 config.update(yaml.safe_load(f) or {})
         except ImportError:
             pass
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: Could not parse YAML config: {e}", file=sys.stderr)
 
     if os.path.exists(config_path_toml):
         try:
@@ -243,7 +243,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
             print(f"Error: {msg}")
         return 1
     except Exception as e:
-        msg = f"Failed to run debug check: {str(e)}"
+        msg = f"Failed to run debug check: {e!s}"
         if as_json:
             print(
                 json.dumps(

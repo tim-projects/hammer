@@ -44,7 +44,31 @@ def run(cli, filename, new_status=None, yes=False):
                 )
                 return
 
-    # 2. Execute transition atomically
+    # 2. Support comma-separated state chains
+    if isinstance(new_status, str) and "," in new_status:
+        states = [s.strip().upper() for s in new_status.split(",") if s.strip()]
+        for state in states:
+            try:
+                success = move_logic(cli, filename, state, yes=yes)
+            except Exception as e:
+                cli.error(str(e))
+            if not success:
+                return
+        _, final_state = cli.find_task(filename)
+        fname = os.path.basename(filepath)
+        task_id_num = task.metadata.get("Id", "")
+        title = task.metadata.get("Ti", "")
+        tt, _ = parse_filename(fname)
+        cli.log(f"Moved: [{task_id_num}] {tt} | {title} -> {final_state}")
+        cli.finish(
+            {
+                "id": task_id_num,
+                "status": final_state,
+            }
+        )
+        return
+
+    # 3. Execute transition atomically
     try:
         # Perform physical move and run ALL enter/exit hooks
         success = move_logic(cli, filename, new_status, yes=yes)
@@ -53,7 +77,7 @@ def run(cli, filename, new_status=None, yes=False):
         # We re-raise to ensure CLI reports the failure.
         raise e
 
-    # 3. If everything succeeded, perform success reporting only now
+    # 4. If everything succeeded, perform success reporting only now
     if success:
         fname = os.path.basename(filepath)
         task_id_num = task.metadata.get("Id", "")
