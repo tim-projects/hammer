@@ -319,6 +319,8 @@ class MainBranchProtectionHook(PipelineHook):
     """Prevents transitions if the user is working directly on the main branch."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
+        if cli.dev:
+            return
         # We only care about blocking work if they are trying to progress or move towards completion
         if new_status in ["PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"]:
             current_git_branch = cli.git.get_current_branch()
