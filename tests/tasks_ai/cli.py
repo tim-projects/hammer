@@ -1,28 +1,28 @@
 # tasks_ai/cli.py
-import os
-import sys  # type: ignore[attr-defined]
-import subprocess
-import tempfile
-import re
-import textwrap
-import json
-import shutil
 import fcntl
-from typing import cast
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys  # type: ignore[attr-defined]
+import tempfile
+import textwrap
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import cast
 
 from .constants import (
-    TASKS_DIR,
-    TASKS_BRANCH,
-    CURRENT_TASK_FILENAME,
-    STATE_FOLDERS,
-    ALLOWED_TRANSITIONS,
-    KEY_MAP,
     ALLOWED_CONFIG_KEYS,
+    ALLOWED_TRANSITIONS,
+    CURRENT_TASK_FILENAME,
+    KEY_MAP,
+    STATE_FOLDERS,
+    TASKS_BRANCH,
+    TASKS_DIR,
 )
-from .models import Task
 from .file_manager import FM
+from .models import Task
 
 
 def get_terminal_width():
@@ -1167,7 +1167,7 @@ class TasksCLI:
                         if str(meta.get("Id")) == str(start_id):
                             task_file = task_dir_path
                             break
-                    except (json.JSONDecodeError, IOError):
+                    except (OSError, json.JSONDecodeError):
                         pass
             if task_file:
                 break
@@ -1865,7 +1865,7 @@ class TasksCLI:
 
             # NOW call cmd_promote - task is already in TESTING so no recursive call
             if new_status == "TESTING":
-                from repo import cmd_promote, FLAGS
+                from repo import FLAGS, cmd_promote
 
                 FLAGS["yes"] = yes
                 FLAGS["quiet"] = self.quiet
@@ -2594,9 +2594,7 @@ class TasksCLI:
             elif os.path.exists("pnpm-lock.yaml"):
                 detected["package_manager"] = "pnpm"
 
-        if os.path.exists("pyproject.toml"):
-            detected["package_manager"] = "pip"
-        elif os.path.exists("requirements.txt"):
+        if os.path.exists("pyproject.toml") or os.path.exists("requirements.txt"):
             detected["package_manager"] = "pip"
         elif os.path.exists("Pipfile"):
             detected["package_manager"] = "pipenv"
@@ -3019,7 +3017,7 @@ class TasksCLI:
                                                     "title": f"Invalid YAML in {md_file} for task '{item}'",
                                                     "repro": f"Parsing YAML from {folder}/{item}/{md_file}",
                                                     "expected": "Valid YAML frontmatter",
-                                                    "actual": f"YAML parse error: {str(e)}",
+                                                    "actual": f"YAML parse error: {e!s}",
                                                 }
                                             )
                                 except Exception as e:
@@ -3029,7 +3027,7 @@ class TasksCLI:
                                             "title": f"Cannot read {md_file} for task '{item}'",
                                             "repro": f"Attempting to read {folder}/{item}/{md_file}",
                                             "expected": "File should be readable",
-                                            "actual": f"Error: {str(e)}",
+                                            "actual": f"Error: {e!s}",
                                         }
                                     )
 
@@ -3148,7 +3146,7 @@ class TasksCLI:
                             try:
                                 with open(meta_path, "r") as f:
                                     meta = json.load(f)
-                                    if "Br" in meta and meta["Br"]:
+                                    if meta.get("Br"):
                                         task_branches.add(meta["Br"])
                             except Exception:
                                 pass

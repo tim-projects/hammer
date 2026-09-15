@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
 
+from .cli_io import error, finish, log
 from .constants import TASKS_DIR
 from .context import ProjectContext
+from .file_manager import FM
 from .git_service import GitService
 from .pipeline import PipelineService
-from .cli_io import log, error, finish
-from .file_manager import FM
 
 
 class TasksCLI:
@@ -117,8 +117,7 @@ class TasksCLI:
                         parts = item.split("-", 1)
                         if parts[0].isdigit():
                             task_id = int(parts[0])
-                            if task_id > max_id:
-                                max_id = task_id
+                            max_id = max(max_id, task_id)
             return max_id
         except Exception:
             return 0
@@ -135,8 +134,8 @@ class TasksCLI:
         return os.path.exists(path) and len(os.listdir(path)) > 0
 
     def find_task(self, filename):
-        from .file_manager import FM
         from .constants import STATE_FOLDERS
+        from .file_manager import FM
 
         for _, folder in STATE_FOLDERS.items():
             path = os.path.join(self.tasks_path, folder, filename)

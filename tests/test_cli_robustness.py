@@ -1,8 +1,8 @@
-import unittest
-import subprocess
 import os
 import shutil
+import subprocess
 import tempfile
+import unittest
 
 
 class TestCLIRobustness(unittest.TestCase):

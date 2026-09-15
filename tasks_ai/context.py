@@ -1,6 +1,5 @@
 import os
 import subprocess
-from typing import Optional
 
 
 class ProjectContext:
@@ -9,7 +8,7 @@ class ProjectContext:
     Supports standard git repositories and git worktrees.
     """
 
-    def __init__(self, dev: bool = False, tasks_dir_override: Optional[str] = None):
+    def __init__(self, dev: bool = False, tasks_dir_override: str | None = None):
         self.dev = dev
         self.repo_root = self._get_git_root()
         self.main_repo_root = self._get_main_repo_root()

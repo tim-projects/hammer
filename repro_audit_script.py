@@ -1,5 +1,5 @@
-import subprocess
 import os
+import subprocess
 
 # The original script attempted an invalid multi-state jump.
 # We will perform incremental moves to reach the REVIEW state.

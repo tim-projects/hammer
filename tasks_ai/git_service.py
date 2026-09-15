@@ -1,6 +1,6 @@
-import subprocess
 import os
-from typing import Optional, List
+import subprocess
+
 from .constants import STATE_FOLDERS
 
 
@@ -20,8 +20,8 @@ class GitService:
 
     def run(
         self,
-        args: List[str],
-        cwd: Optional[str] = None,
+        args: list[str],
+        cwd: str | None = None,
         capture: bool = True,
         check: bool = False,
     ) -> subprocess.CompletedProcess:
@@ -46,7 +46,7 @@ class GitService:
 
         return result
 
-    def _handle_command_logging(self, args: List[str]):
+    def _handle_command_logging(self, args: list[str]):
         """Standardized logging for common git operations."""
         if not args:
             return
@@ -200,7 +200,7 @@ class GitService:
         self.log(f"Pushed .tasks ({current}) to origin/{branch}")
         return {"branch": branch, "remote": "origin", "from_branch": current}
 
-    def get_next_logical_state(self, current_state: str) -> Optional[str]:
+    def get_next_logical_state(self, current_state: str) -> str | None:
         """Map a task's current state to its next logical promotion target."""
         from .constants import PIPELINE_STAGES
 
@@ -219,7 +219,7 @@ class GitService:
         self.merge_branches("staging", "main", yes=yes)
 
     def merge_branches(
-        self, src: str, target: str, message: Optional[str] = None, yes=False
+        self, src: str, target: str, message: str | None = None, yes=False
     ):
         """Robustly merge one branch into another with pull/push orchestration."""
         self.log(f"Merging {src} -> {target}...")

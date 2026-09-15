@@ -1,6 +1,7 @@
 import os
+
 from ..file_manager import FM
-from ..utils import parse_filename, has_path
+from ..utils import has_path, parse_filename
 
 
 def run(cli, filename, blocked_by_filename):

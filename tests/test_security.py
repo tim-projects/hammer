@@ -1,7 +1,8 @@
-import unittest
 import os
 import shutil
 import tempfile
+import unittest
+
 from tasks_ai.cli import TasksCLI
 
 

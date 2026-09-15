@@ -1,46 +1,46 @@
-import os
-import sys
-import shutil
 import hashlib
-import subprocess
-import tempfile
+import os
 import re
-from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import cast
 
-from .constants import TASKS_DIR, STATE_FOLDERS, CURRENT_TASK_FILENAME
+from .cli_io import error, finish, log
+from .constants import CURRENT_TASK_FILENAME, STATE_FOLDERS, TASKS_DIR
 from .context import ProjectContext
-from .git_service import GitService
-from .pipeline import PipelineService
-from .validation import Validation
-from .task_service import TaskService
-from .cli_io import log, error, finish
 from .file_manager import FM
+from .git_service import GitService
 from .hooks import HookRegistry
 from .messages import MessageRegistry
+from .pipeline import PipelineService
 from .pipeline_hooks import (
-    BranchSyncOnExitTestingHook,
-    SaveProgressHook,
-    ValidationHook,
-    ContentSufficiencyHook,
-    BlockerCheckHook,
-    TestingToReviewGateHook,
-    ReviewDiffHook,
     ArchivedCommitHook,
-    PostMoveCommitHook,
-    ValidationPassedMarkHook,
-    BranchCheckHook,
-    CleanWorkspaceHook,
-    BranchSyncHook,
-    MainBranchProtectionHook,
-    ProgressUpdateHook,
-    CleanupReviewArtifactsHook,
-    BranchExistsHook,
-    TaskRepairHook,
-    DoneAtHook,
     AutoArchiveHook,
+    BlockerCheckHook,
+    BranchCheckHook,
+    BranchExistsHook,
+    BranchSyncHook,
+    BranchSyncOnExitTestingHook,
+    CleanupReviewArtifactsHook,
+    CleanWorkspaceHook,
+    ContentSufficiencyHook,
+    DoneAtHook,
+    MainBranchProtectionHook,
+    PostMoveCommitHook,
+    ProgressUpdateHook,
+    ReviewDiffHook,
+    SaveProgressHook,
+    TaskRepairHook,
+    TestingToReviewGateHook,
+    ValidationHook,
+    ValidationPassedMarkHook,
 )
+from .task_service import TaskService
+from .validation import Validation
 
 
 class TasksCLI:
@@ -1122,8 +1122,7 @@ class TasksCLI:
                         parts = item.split("-", 1)
                         if parts[0].isdigit():
                             task_id = int(parts[0])
-                            if task_id > max_id:
-                                max_id = task_id
+                            max_id = max(max_id, task_id)
                     # Also check metadata.json for ID as fallback
                     meta_path = os.path.join(item_path, "meta.json")
                     if os.path.exists(meta_path):
@@ -1135,8 +1134,7 @@ class TasksCLI:
                             meta_id = meta.get("Id")
                             if meta_id and str(meta_id).isdigit():
                                 task_id = int(meta_id)
-                                if task_id > max_id:
-                                    max_id = task_id
+                                max_id = max(max_id, task_id)
                         except Exception:
                             pass
             # Also check remote branches for higher IDs
@@ -1159,8 +1157,7 @@ class TasksCLI:
                                     branch_parts = branch_name.split("-", 1)
                                     if branch_parts[0].isdigit():
                                         branch_id = int(branch_parts[0])
-                                        if branch_id > max_id:
-                                            max_id = branch_id
+                                        max_id = max(max_id, branch_id)
             except Exception:
                 pass  # Fail silently for remote check
 
@@ -1207,5 +1204,5 @@ class TasksCLI:
     def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         from .commands import move as move_cmd
 
-        move_logic = getattr(move_cmd, "move_logic")
+        move_logic = move_cmd.move_logic
         move_logic(self, filename, new_status, force=force, yes=yes, sync=sync)

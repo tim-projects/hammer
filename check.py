@@ -18,11 +18,11 @@ Options:
 """
 
 import argparse
+import json
 import os
+import shutil
 import subprocess
 import sys
-import json
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -101,7 +101,8 @@ def load_config(dev=False):
         except ImportError:
             pass
         except Exception as e:
-            print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
+            if not dev:
+                print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
 
     return config
 
@@ -244,7 +245,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
             print(f"Error: {msg}")
         return 1
     except Exception as e:
-        msg = f"Failed to run debug check: {str(e)}"
+        msg = f"Failed to run debug check: {e!s}"
         if as_json:
             print(
                 json.dumps(

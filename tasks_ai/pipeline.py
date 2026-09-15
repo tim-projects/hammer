@@ -1,6 +1,6 @@
-import os
 import hashlib
-from typing import List, Dict
+import os
+
 from .constants import PIPELINE_STAGES
 
 
@@ -24,7 +24,7 @@ class PipelineService:
         if self.logger:
             self.logger.log(message)
 
-    def get_enabled_gates(self, target_state: str) -> List[str]:
+    def get_enabled_gates(self, target_state: str) -> list[str]:
         """Determine which gates are enabled for a target state."""
         gates = []
         if target_state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
@@ -36,7 +36,7 @@ class PipelineService:
             gates.append("mandatory_verification")
         return gates
 
-    def get_allowed_transitions(self, task_type: str = "task") -> Dict[str, List[str]]:
+    def get_allowed_transitions(self, task_type: str = "task") -> dict[str, list[str]]:
         """Get the allowed state transitions for a task type."""
         # For now, return default transitions. Could be expanded for type-specific workflows.
         from .constants import DEFAULT_ALLOWED_TRANSITIONS

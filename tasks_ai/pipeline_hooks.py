@@ -1,8 +1,9 @@
 import os
 import shutil
 from datetime import datetime
-from .hooks import PipelineHook
+
 from .constants import CURRENT_TASK_FILENAME
+from .hooks import PipelineHook
 from .models import Task
 from .utils import parse_filename
 
@@ -56,14 +57,7 @@ class ValidationHook(PipelineHook):
                         f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
                     )
 
-            # Temporarily disable JSON mode to prevent early exit during transition
-            # run_tool calls cli.error (which sys.exits) on failure
-            orig_json = cli.as_json
-            cli.as_json = False
-            try:
-                cli.run_tool("all")
-            finally:
-                cli.as_json = orig_json
+            cli.run_tool("all")
 
             # If we reach here, all checks passed
             task.metadata["Tp"] = True

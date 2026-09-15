@@ -1,11 +1,12 @@
-from tasks_ai.file_manager import FM
 import os
 import shutil
 import tempfile
-from typing import Tuple, Any
+from typing import Any
+
+from tasks_ai.file_manager import FM
 
 
-def parse_filename(name: str) -> Tuple[str, str]:
+def parse_filename(name: str) -> tuple[str, str]:
     """Parse task filename to extract type and slug."""
     if not name:
         return "task", ""
@@ -159,8 +160,8 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
 
 def perform_move(cli, task, current_state, new_status, filepath):
     """Execute the physical move of task files on disk, including auxiliary artifacts."""
-    from .file_manager import FM
     from .constants import STATE_FOLDERS
+    from .file_manager import FM
 
     if not filepath:
         cli.error("Invalid task path.")
@@ -219,8 +220,9 @@ def perform_move(cli, task, current_state, new_status, filepath):
 
 def has_path(start_id: str, target_id: str, tasks_path: str, fm, visited=None) -> bool:
     """Check if there's a path from start_id to target_id via BlockedBy links."""
-    from .constants import STATE_FOLDERS
     import json
+
+    from .constants import STATE_FOLDERS
 
     if visited is None:
         visited = set()
@@ -247,7 +249,7 @@ def has_path(start_id: str, target_id: str, tasks_path: str, fm, visited=None) -
                     if str(meta.get("Id")) == str(start_id):
                         task_file = task_dir_path
                         break
-                except (json.JSONDecodeError, IOError):
+                except (OSError, json.JSONDecodeError):
                     pass
         if task_file:
             break
