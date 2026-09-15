@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
-import unittest
 import tempfile
+import unittest
+
 from tasks_ai.cli import TasksCLI
 from tasks_ai.models import Task
 
@@ -39,7 +40,6 @@ class TestArtifactHealing(unittest.TestCase):
 
         # Here, it will try to call generate_file_patches which requires git.
         # Given this environment, this test will fail unless we mock generate_file_patches.
-        pass
 
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
+import json
 import os
-import subprocess
 import shutil
+import subprocess
 import tempfile
 import unittest
-import json
 
 
 class TestRobustness(unittest.TestCase):

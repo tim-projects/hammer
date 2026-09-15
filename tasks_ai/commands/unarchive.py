@@ -1,6 +1,7 @@
-import os
 import json
+import os
 from datetime import datetime
+
 from ..constants import STATE_FOLDERS
 
 

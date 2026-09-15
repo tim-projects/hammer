@@ -23,10 +23,10 @@ Options:
   -h, --help                 Show this help
 """
 
+import json
+import os
 import subprocess
 import sys
-import os
-import json
 from pathlib import Path
 
 sys.path.append(os.getcwd())
@@ -282,11 +282,7 @@ def cmd_promote(src_input, original_task_id=None):
 
     needs_move = False
     if task_id and TasksCLI and current_status:
-        if target == "testing" and current_status == "PROGRESSING":
-            needs_move = True
-        elif target == "staging" and current_status == "REVIEW":
-            needs_move = True
-        elif target == "main":
+        if target == "testing" and current_status == "PROGRESSING" or target == "staging" and current_status == "REVIEW" or target == "main":
             needs_move = True
 
     if src not in PIPELINE or needs_move:

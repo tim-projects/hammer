@@ -1,11 +1,12 @@
 import os
 import shutil
 from datetime import datetime
+
+from ..cli_errors import PipelineMergeConflict
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
-from ..utils import parse_filename, perform_move
 from ..pipeline import PipelineError
-from ..cli_errors import PipelineMergeConflict
+from ..utils import parse_filename, perform_move
 
 
 def run(cli, filename, new_status=None, yes=False):
@@ -72,10 +73,10 @@ def run(cli, filename, new_status=None, yes=False):
     try:
         # Perform physical move and run ALL enter/exit hooks
         success = move_logic(cli, filename, new_status, yes=yes)
-    except Exception as e:
+    except Exception:
         # If transition fails, the move_logic should have handled partial state cleanup.
         # We re-raise to ensure CLI reports the failure.
-        raise e
+        raise
 
     # 4. If everything succeeded, perform success reporting only now
     if success:
@@ -131,7 +132,7 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                     task_id=str(task.metadata.get("Id", "unknown")),
                 )
             else:
-                raise e
+                raise
 
     # 1. Run Exit Hooks (Pre-move checks and actions)
     cli.hook_registry.run_exit_hooks(
@@ -207,10 +208,10 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                 shutil.rmtree(filepath_str)
             else:
                 os.remove(filepath_str)
-    except Exception as e:
+    except Exception:
         # Cleanup staging on failure
         if os.path.exists(staged_task_path):
             shutil.rmtree(staged_task_path)
-        raise e
+        raise
 
     return True

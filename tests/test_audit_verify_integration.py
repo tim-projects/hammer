@@ -16,10 +16,10 @@ def setup_dev_config():
     dev_tasks_dir = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
     config_data = {
         "repo": {
-            "lint": "ruff",
-            "test": "/bin/true",
-            "type_check": "/bin/true",
-            "format": "ruff",
+            "lint": "true",
+            "test": "true",
+            "type_check": "true",
+            "format": "true",
         }
     }
     with open(os.path.join(dev_tasks_dir, "config.yaml"), "w") as f:

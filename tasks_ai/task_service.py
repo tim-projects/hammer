@@ -1,6 +1,7 @@
 import os
-from .file_manager import FM
+
 from .constants import STATE_FOLDERS
+from .file_manager import FM
 
 
 class TaskService:

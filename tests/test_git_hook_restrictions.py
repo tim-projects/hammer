@@ -1,8 +1,9 @@
-import unittest
 import os
 import shutil
-import tempfile
 import subprocess
+import tempfile
+import unittest
+
 from tasks_ai.cli import TasksCLI
 
 
@@ -35,7 +36,6 @@ class TestGitHookRestrictions(unittest.TestCase):
 
         # We expect a custom hook (yet to be implemented) to reject this
         # This is a placeholder test for task 166
-        pass
 
 
 if __name__ == "__main__":

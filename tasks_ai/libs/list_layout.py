@@ -4,7 +4,7 @@ from ..cli_utils import format_table
 def render_table(all_data):
     headers = ["#", "P", "Summary", "Status", "Type", "Branch"]
     rows = []
-    for state, tasks in all_data.items():
+    for tasks in all_data.values():
         for t in tasks:
             rows.append(
                 [t["id"], t["p"], t["summary"], t["state"], t["type"], t["branch"]]

@@ -1,9 +1,10 @@
 import os
 import re
 from datetime import datetime
+
 from ..constants import STATE_FOLDERS
-from ..models import Task
 from ..file_manager import FM
+from ..models import Task
 
 
 def run(

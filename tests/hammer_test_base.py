@@ -1,9 +1,9 @@
-import unittest
-import subprocess
+import json
 import os
 import shutil
+import subprocess
 import tempfile
-import json
+import unittest
 
 
 class MockGitRemote:

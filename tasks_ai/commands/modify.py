@@ -1,5 +1,6 @@
 import os
 import re
+
 from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
@@ -167,7 +168,7 @@ def run(
             f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
         )
 
-        _, branch = parse_filename(os.path.basename(filepath))
+        _, _branch = parse_filename(os.path.basename(filepath))
         # Ensure branch exists logic if needed
     else:
         cli.log("No changes.")

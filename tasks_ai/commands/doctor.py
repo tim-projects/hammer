@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename
@@ -136,10 +137,7 @@ def run(cli, fix=False):
             # Add state transition inconsistency check
             if (
                 branch_from_metadata
-                and not cli._run_git(
-                    ["rev-parse", "--verify", branch_from_metadata]
-                ).returncode
-                == 0
+                and cli._run_git(["rev-parse", "--verify", branch_from_metadata]).returncode != 0
             ):
                 inconsistencies.append(
                     ("git branch", branch_from_metadata, "Branch exists")
