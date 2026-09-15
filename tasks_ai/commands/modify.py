@@ -1,5 +1,6 @@
 import os
 import re
+
 from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
@@ -55,7 +56,10 @@ def run(
     if criteria:
         # Overwrite existing criteria completely
         if isinstance(criteria, list):
-            task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+            task.parts["criteria"] = "\n".join(
+                c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                for c in criteria
+            )
         else:
             task.parts["criteria"] = criteria
         updated = True
@@ -164,7 +168,7 @@ def run(
             f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
         )
 
-        _, branch = parse_filename(os.path.basename(filepath))
+        _, _branch = parse_filename(os.path.basename(filepath))
         # Ensure branch exists logic if needed
     else:
         cli.log("No changes.")

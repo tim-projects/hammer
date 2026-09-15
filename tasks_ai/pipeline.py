@@ -1,6 +1,6 @@
-import os
 import hashlib
-from typing import List, Dict
+import os
+
 from .constants import PIPELINE_STAGES
 
 
@@ -24,7 +24,7 @@ class PipelineService:
         if self.logger:
             self.logger.log(message)
 
-    def get_enabled_gates(self, target_state: str) -> List[str]:
+    def get_enabled_gates(self, target_state: str) -> list[str]:
         """Determine which gates are enabled for a target state."""
         gates = []
         if target_state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
@@ -36,7 +36,7 @@ class PipelineService:
             gates.append("mandatory_verification")
         return gates
 
-    def get_allowed_transitions(self, task_type: str = "task") -> Dict[str, List[str]]:
+    def get_allowed_transitions(self, task_type: str = "task") -> dict[str, list[str]]:
         """Get the allowed state transitions for a task type."""
         # For now, return default transitions. Could be expanded for type-specific workflows.
         from .constants import DEFAULT_ALLOWED_TRANSITIONS
@@ -109,21 +109,20 @@ class PipelineService:
                 pass
 
         # 4. Integration gate: STAGING/DONE require branch to be merged into appropriate pipeline branch
-        if "main_sync" in enabled_gates:
-            if branch:
-                # Target branch for integration check
-                integration_target = "main"
-                if target_state == "STAGING":
-                    integration_target = "staging"
+        if "main_sync" in enabled_gates and branch:
+            # Target branch for integration check
+            integration_target = "main"
+            if target_state == "STAGING":
+                integration_target = "staging"
 
-                # Check if branch is merged into target
-                if not self.git.is_merged(branch, integration_target):
-                    raise PipelineError(
-                        "BRANCH_NOT_MERGED",
-                        task_id=task_id,
-                        branch=branch,
-                        target=integration_target,
-                    )
+            # Check if branch is merged into target
+            if not self.git.is_merged(branch, integration_target):
+                raise PipelineError(
+                    "BRANCH_NOT_MERGED",
+                    task_id=task_id,
+                    branch=branch,
+                    target=integration_target,
+                )
 
         # 5. Check main divergence for terminal states
         if target_state in ["DONE", "ARCHIVED"]:
@@ -164,7 +163,7 @@ class PipelineService:
         self,
         task,
         target_state: str,
-        current_state: str = None,
+        current_state: str | None = None,
         yes: bool = False,
         force: bool = False,
     ):

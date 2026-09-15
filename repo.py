@@ -4,10 +4,10 @@ repo - Repository management wrapper script
 Usage: repo <command> [args]
 """
 
+import json
+import os
 import subprocess
 import sys
-import os
-import json
 from pathlib import Path
 
 sys.path.append(os.getcwd())

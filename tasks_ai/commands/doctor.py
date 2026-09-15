@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename
@@ -138,6 +139,7 @@ def run(cli, fix=False):
             # may have had their branches cleaned up by `hammer tasks cleanup`.
             branch_missing = (
                 branch_from_metadata
+<<<<<<< HEAD
                 and isinstance(branch_from_metadata, str)
                 and cli._run_git(
                     ["rev-parse", "--verify", branch_from_metadata]
@@ -149,6 +151,9 @@ def run(cli, fix=False):
                 "TESTING",
                 "REVIEW",
                 "STAGING",
+=======
+                and cli._run_git(["rev-parse", "--verify", branch_from_metadata]).returncode != 0
+>>>>>>> 1-task-integration-test-task
             ):
                 inconsistencies.append(
                     ("git branch", branch_from_metadata, "Branch missing locally")

@@ -1,9 +1,11 @@
-import pytest
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
-import subprocess
+
+import pytest
+
 from tasks_ai.cli import TasksCLI
 
 

@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 
 
 def get_terminal_width():

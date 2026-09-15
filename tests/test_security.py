@@ -1,7 +1,8 @@
-import unittest
 import os
 import shutil
 import tempfile
+import unittest
+
 from tasks_ai.cli import TasksCLI
 
 
@@ -30,7 +31,7 @@ class TestSecurity(unittest.TestCase):
         self.assertIsNone(path)
 
         # Try with a valid-looking name but traversal content
-        path, state = self.cli.find_task(".._.._etc_passwd")
+        path, _state = self.cli.find_task(".._.._etc_passwd")
         self.assertIsNone(path)
 
     def test_invalid_task_ids(self):
@@ -43,7 +44,7 @@ class TestSecurity(unittest.TestCase):
             "task\0null",
         ]
         for tid in invalid_ids:
-            path, state = self.cli.find_task(tid)
+            path, _state = self.cli.find_task(tid)
             self.assertIsNone(path, f"ID '{tid}' should be rejected")
 
     def test_id_cleaning_on_create(self):

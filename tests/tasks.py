@@ -2,8 +2,8 @@
 __version__ = "0.1.0"
 
 import argparse
-import sys
 import os
+import sys
 
 # Ensure project root is the first entry to resolve imports correctly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

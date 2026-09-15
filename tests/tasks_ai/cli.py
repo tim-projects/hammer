@@ -1,28 +1,28 @@
 # tasks_ai/cli.py
-import os
-import sys  # type: ignore[attr-defined]
-import subprocess
-import tempfile
-import re
-import textwrap
-import json
-import shutil
 import fcntl
-from typing import cast
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys  # type: ignore[attr-defined]
+import tempfile
+import textwrap
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import cast
 
 from .constants import (
-    TASKS_DIR,
-    TASKS_BRANCH,
-    CURRENT_TASK_FILENAME,
-    STATE_FOLDERS,
-    ALLOWED_TRANSITIONS,
-    KEY_MAP,
     ALLOWED_CONFIG_KEYS,
+    ALLOWED_TRANSITIONS,
+    CURRENT_TASK_FILENAME,
+    KEY_MAP,
+    STATE_FOLDERS,
+    TASKS_BRANCH,
+    TASKS_DIR,
 )
-from .models import Task
 from .file_manager import FM
+from .models import Task
 
 
 def get_terminal_width():
@@ -150,7 +150,7 @@ class TasksCLI:
 
     def _clear_delete_marks(self):
         updated = False
-        for state, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             dir_path = os.path.join(self.tasks_path, folder)
             if not os.path.exists(dir_path):
                 continue
@@ -380,10 +380,10 @@ class TasksCLI:
                         else:
                             f.write(task_or_content.decode("utf-8"))
                 os.replace(temp_path, path)
-            except Exception as e:
+            except Exception:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-                raise e
+                raise
             return
 
         temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
@@ -393,10 +393,10 @@ class TasksCLI:
             if os.path.exists(path):
                 shutil.rmtree(path)
             os.rename(temp_dir, path)
-        except Exception as e:
+        except Exception:
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
-            raise e
+            raise
 
     def log(self, message):
         if self.as_json:
@@ -1159,7 +1159,7 @@ class TasksCLI:
                         if str(meta.get("Id")) == str(start_id):
                             task_file = task_dir_path
                             break
-                    except (json.JSONDecodeError, IOError):
+                    except (OSError, json.JSONDecodeError):
                         pass
             if task_file:
                 break
@@ -1498,13 +1498,7 @@ class TasksCLI:
             ):
                 return False
             type_part, _ = self._parse_filename(fn)
-            if type_part == "issue":
-                if (
-                    not t.parts.get("repro")
-                    or len(str(t.parts.get("repro", "")).strip()) < 10
-                ):
-                    return False
-            return True
+            return not (type_part == "issue" and (not t.parts.get("repro") or len(str(t.parts.get("repro", "")).strip()) < 10))
 
         if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
             if not _has_complete_content(task, fname):
@@ -1530,12 +1524,11 @@ class TasksCLI:
                 ):
                     missing.append("plan")
                 tt, _ = self._parse_filename(fname)
-                if tt == "issue":
-                    if (
-                        not task.parts.get("repro")
-                        or len(str(task.parts.get("repro", "")).strip()) < 10
-                    ):
-                        missing.append("repro")
+                if tt == "issue" and (
+                    not task.parts.get("repro")
+                    or len(str(task.parts.get("repro", "")).strip()) < 10
+                ):
+                    missing.append("repro")
                 self.error(
                     f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
                     hint='Use \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro. Do not bypass this tool.',
@@ -1575,12 +1568,11 @@ class TasksCLI:
                 missing.append("plan")
 
             tt, _ = self._parse_filename(fname)
-            if tt == "issue":
-                if (
-                    not task.parts.get("repro")
-                    or len(str(task.parts.get("repro", "")).strip()) < 10
-                ):
-                    missing.append("repro")
+            if tt == "issue" and (
+                not task.parts.get("repro")
+                or len(str(task.parts.get("repro", "")).strip()) < 10
+            ):
+                missing.append("repro")
 
             if missing:
                 self.error(
@@ -1727,14 +1719,13 @@ class TasksCLI:
                 branch_commit = branch_sha
                 if not branch_commit and branch_exists:
                     branch_commit = self._run_git(["rev-parse", branch]).stdout.strip()
-                if not branch_commit:
-                    if self._run_git(
-                        ["ls-remote", "--heads", "origin", branch]
-                    ).stdout.strip():
-                        self._run_git(["fetch", "origin", branch], cwd=self.root)
-                        branch_commit = self._run_git(
-                            ["rev-parse", f"origin/{branch}"]
-                        ).stdout.strip()
+                if not branch_commit and self._run_git(
+                    ["ls-remote", "--heads", "origin", branch]
+                ).stdout.strip():
+                    self._run_git(["fetch", "origin", branch], cwd=self.root)
+                    branch_commit = self._run_git(
+                        ["rev-parse", f"origin/{branch}"]
+                    ).stdout.strip()
                 if not branch_commit:
                     branch_commit = main_sha
                 if main_sha and branch_commit:
@@ -1857,7 +1848,7 @@ class TasksCLI:
 
             # NOW call cmd_promote - task is already in TESTING so no recursive call
             if new_status == "TESTING":
-                from repo import cmd_promote, FLAGS
+                from repo import FLAGS, cmd_promote
 
                 FLAGS["yes"] = yes
                 FLAGS["quiet"] = self.quiet
@@ -2586,9 +2577,7 @@ class TasksCLI:
             elif os.path.exists("pnpm-lock.yaml"):
                 detected["package_manager"] = "pnpm"
 
-        if os.path.exists("pyproject.toml"):
-            detected["package_manager"] = "pip"
-        elif os.path.exists("requirements.txt"):
+        if os.path.exists("pyproject.toml") or os.path.exists("requirements.txt"):
             detected["package_manager"] = "pip"
         elif os.path.exists("Pipfile"):
             detected["package_manager"] = "pipenv"
@@ -2750,7 +2739,7 @@ class TasksCLI:
 
     def undo(self, filename):
         """Undo the last operation on a task by restoring previous state from git."""
-        filepath, current_state = self.find_task(filename)
+        filepath, _current_state = self.find_task(filename)
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
@@ -2948,7 +2937,7 @@ class TasksCLI:
                     self.log(f"Created missing folders: {', '.join(missing)}")
 
         def check_yaml_metadata():
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -2984,7 +2973,7 @@ class TasksCLI:
                         )
 
         def check_markdown_content():
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3011,7 +3000,7 @@ class TasksCLI:
                                                     "title": f"Invalid YAML in {md_file} for task '{item}'",
                                                     "repro": f"Parsing YAML from {folder}/{item}/{md_file}",
                                                     "expected": "Valid YAML frontmatter",
-                                                    "actual": f"YAML parse error: {str(e)}",
+                                                    "actual": f"YAML parse error: {e!s}",
                                                 }
                                             )
                                 except Exception as e:
@@ -3021,7 +3010,7 @@ class TasksCLI:
                                             "title": f"Cannot read {md_file} for task '{item}'",
                                             "repro": f"Attempting to read {folder}/{item}/{md_file}",
                                             "expected": "File should be readable",
-                                            "actual": f"Error: {str(e)}",
+                                            "actual": f"Error: {e!s}",
                                         }
                                     )
 
@@ -3078,7 +3067,7 @@ class TasksCLI:
                 counter_value = int(f.read().strip())
 
             max_id = 0
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3126,7 +3115,7 @@ class TasksCLI:
 
         def check_orphaned_tasks():
             task_branches = set()
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3140,7 +3129,7 @@ class TasksCLI:
                             try:
                                 with open(meta_path, "r") as f:
                                     meta = json.load(f)
-                                    if "Br" in meta and meta["Br"]:
+                                    if meta.get("Br"):
                                         task_branches.add(meta["Br"])
                             except Exception:
                                 pass

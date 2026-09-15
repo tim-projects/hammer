@@ -1,8 +1,9 @@
 import os
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
-from ..utils import parse_filename
 from ..libs.list_layout import render_table
+from ..utils import parse_filename
 
 
 def run(cli, show_all=False):

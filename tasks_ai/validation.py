@@ -1,9 +1,9 @@
-import os
-import sys
-import subprocess
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .cli_engine import TasksCLI
@@ -13,7 +13,7 @@ class Validation:
     def __init__(self, cli: "TasksCLI"):
         self.cli = cli
 
-    def detect_tools(self) -> Dict[str, str]:
+    def detect_tools(self) -> dict[str, str]:
         """Detect project type and suggest/create config."""
         detected = {}
         # Ensure we use the actual repo root
@@ -99,7 +99,7 @@ class Validation:
         self.cli.error(f"Path outside repository: {path}")
         return False
 
-    def run_tool(self, tool_name: Optional[str] = None, fix: bool = False):
+    def run_tool(self, tool_name: str | None = None, fix: bool = False):
         """Run configured tools (lint, test, typecheck, format)."""
         # Resolve project root independently of CWD using the same logic as repo_script
         install_dir = Path(__file__).resolve().parent.parent
@@ -153,10 +153,16 @@ class Validation:
                             error_msg = line.get("error", error_msg)
                             break
                     self.cli.error(
-                        f"Tool execution failed: {tool_name or 'all'}", hint=error_msg
+                        "PIPELINE_VALIDATION_FAILED",
+                        hint_code="PIPELINE_VALIDATION_FAILED",
+                        msg=error_msg,
                     )
             except json.JSONDecodeError:
-                self.cli.error(f"Failed to parse tool output: {result.stdout}")
+                self.cli.error(
+                    "PIPELINE_VALIDATION_FAILED",
+                    hint_code="PIPELINE_VALIDATION_FAILED",
+                    msg=f"Failed to parse tool output: {result.stdout}",
+                )
         else:
             if result.stdout:
                 print(result.stdout, file=sys.stderr)
@@ -164,5 +170,9 @@ class Validation:
                 print(result.stderr, file=sys.stderr)
 
             if result.returncode != 0:
-                self.cli.error(f"Tool execution failed: {tool_name or 'all'}")
+                self.cli.error(
+                    "PIPELINE_VALIDATION_FAILED",
+                    hint_code="PIPELINE_VALIDATION_FAILED",
+                    msg=result.stderr or result.stdout,
+                )
         return result

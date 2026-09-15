@@ -1,9 +1,9 @@
-import unittest
-import subprocess
+import json
 import os
 import shutil
+import subprocess
 import tempfile
-import json
+import unittest
 
 
 class MockGitRemote:
@@ -93,4 +93,5 @@ class HammerTestBase(unittest.TestCase):
             cwd=self.repo_path,
             capture_output=True,
             text=True,
+            check=False,
         )

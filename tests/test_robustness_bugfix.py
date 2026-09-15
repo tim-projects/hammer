@@ -1,9 +1,9 @@
+import json
 import os
-import subprocess
 import shutil
+import subprocess
 import tempfile
 import unittest
-import json
 
 
 class TestRobustnessBugfix(unittest.TestCase):

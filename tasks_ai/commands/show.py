@@ -1,5 +1,6 @@
 import os
-from ..constants import KEY_MAP, CURRENT_TASK_FILENAME
+
+from ..constants import CURRENT_TASK_FILENAME, KEY_MAP
 from ..file_manager import FM
 from ..utils import parse_filename
 

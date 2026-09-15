@@ -1,8 +1,9 @@
 import os
 import shutil
 from datetime import datetime
-from .hooks import PipelineHook
+
 from .constants import CURRENT_TASK_FILENAME
+from .hooks import PipelineHook
 from .models import Task
 from .utils import parse_filename
 
@@ -79,11 +80,7 @@ class ContentSufficiencyHook(PipelineHook):
                 if not t.parts.get(part) or len(str(t.parts.get(part)).strip()) < 10:
                     return False
             tt, _ = parse_filename(fn)
-            if tt == "issue" and (
-                not t.parts.get("repro") or len(str(t.parts.get("repro")).strip()) < 10
-            ):
-                return False
-            return True
+            return not (tt == "issue" and (not t.parts.get("repro") or len(str(t.parts.get("repro")).strip()) < 10))
 
         if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
             if not has_complete_content(task, os.path.basename(filepath)):
@@ -152,16 +149,15 @@ class BranchCheckHook(PipelineHook):
             branch_sha = (
                 branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
             )
-            if not branch_sha:
-                if has_origin:
-                    remote_check = cli._run_git(
-                        ["ls-remote", "--heads", "origin", branch]
+            if not branch_sha and has_origin:
+                remote_check = cli._run_git(
+                    ["ls-remote", "--heads", "origin", branch]
+                )
+                if remote_check.stdout.strip():
+                    cli.console("git", "restore", f"{branch} from origin")
+                    cli._run_git(
+                        ["checkout", "-b", branch, f"origin/{branch}"], cwd=cli.root
                     )
-                    if remote_check.stdout.strip():
-                        cli.console("git", "restore", f"{branch} from origin")
-                        cli._run_git(
-                            ["checkout", "-b", branch, f"origin/{branch}"], cwd=cli.root
-                        )
 
         # Remote push check
         if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):
@@ -357,7 +353,7 @@ class ProgressUpdateHook(PipelineHook):
                 )
 
             # Get last commit version of the file
-            _, branch = parse_filename(os.path.basename(filepath))
+            _, _branch = parse_filename(os.path.basename(filepath))
             git_res = cli.git.run(
                 ["show", f"HEAD:{os.path.relpath(progress_file, cli.tasks_path)}"],
                 capture=True,
