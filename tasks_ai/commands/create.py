@@ -120,7 +120,10 @@ def run(
             "story": story or "",
             "tech": tech or "",
             "criteria": (
-                "\n".join(f"- [ ] {c}" for c in criteria)
+                "\n".join(
+                    c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                    for c in criteria
+                )
                 if isinstance(criteria, list)
                 else f"{criteria}"
             )

@@ -55,7 +55,10 @@ def run(
     if criteria:
         # Overwrite existing criteria completely
         if isinstance(criteria, list):
-            task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+            task.parts["criteria"] = "\n".join(
+                c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                for c in criteria
+            )
         else:
             task.parts["criteria"] = criteria
         updated = True
