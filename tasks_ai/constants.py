@@ -58,7 +58,7 @@ PIPELINE_STAGES = [
 
 # The default workflow if no type-specific one is defined
 DEFAULT_ALLOWED_TRANSITIONS = {
-    "BACKLOG": ["READY"],
+    "BACKLOG": ["READY", "REJECTED"],
     "READY": ["PROGRESSING"],
     "PROGRESSING": ["TESTING", "BLOCKED", "REJECTED"],
     "TESTING": ["REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
