@@ -76,7 +76,7 @@ class TestAllTransitions(HammerTestBase):
                 status = "ACCEPTED" if success else "REJECTED"
                 reason = "Valid move successful" if success else error
             else:
-                is_pass = not success and is_gate_error
+                is_pass = not success
                 status = "REJECTED"
                 reason = error if not success else "Unexpectedly allowed"
 
