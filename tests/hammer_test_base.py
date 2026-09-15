@@ -93,4 +93,5 @@ class HammerTestBase(unittest.TestCase):
             cwd=self.repo_path,
             capture_output=True,
             text=True,
+            check=False,
         )

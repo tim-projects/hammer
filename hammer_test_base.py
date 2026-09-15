@@ -1,9 +1,9 @@
-import unittest
-import subprocess
-import os
-import tempfile
-import sys
 import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
 
 
 class HammerTestBase(unittest.TestCase):
