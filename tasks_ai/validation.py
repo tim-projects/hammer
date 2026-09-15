@@ -150,10 +150,16 @@ class Validation:
                             error_msg = line.get("error", error_msg)
                             break
                     self.cli.error(
-                        f"Tool execution failed: {tool_name or 'all'}", hint=error_msg
+                        "PIPELINE_VALIDATION_FAILED",
+                        hint_code="PIPELINE_VALIDATION_FAILED",
+                        msg=error_msg,
                     )
             except json.JSONDecodeError:
-                self.cli.error(f"Failed to parse tool output: {result.stdout}")
+                self.cli.error(
+                    "PIPELINE_VALIDATION_FAILED",
+                    hint_code="PIPELINE_VALIDATION_FAILED",
+                    msg=f"Failed to parse tool output: {result.stdout}",
+                )
         else:
             if result.stdout:
                 print(result.stdout, file=sys.stderr)
@@ -161,5 +167,9 @@ class Validation:
                 print(result.stderr, file=sys.stderr)
 
             if result.returncode != 0:
-                self.cli.error(f"Tool execution failed: {tool_name or 'all'}")
+                self.cli.error(
+                    "PIPELINE_VALIDATION_FAILED",
+                    hint_code="PIPELINE_VALIDATION_FAILED",
+                    msg=result.stderr or result.stdout,
+                )
         return result

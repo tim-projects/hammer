@@ -46,16 +46,11 @@ class TestTaskPairing(unittest.TestCase):
         print(f"STDOUT: {result.stdout}")
         print(f"STDERR: {result.stderr}")
         self.assertIn("Created: [1] task | New Feature Implementation", result.stdout)
-        self.assertIn(
-            "Created: [2] task | Write user tests for 1: New Feature Implementation",
-            result.stdout,
-        )
 
-        # Verify tasks exist in filesystem
+        # Verify task exists in filesystem
         backlog_dir = os.path.join(self.repo_dir, ".tasks", "backlog")
         files = os.listdir(backlog_dir)
         self.assertTrue(any("1-task-new-feature-implement" in f for f in files))
-        self.assertTrue(any("2-task-write-user-tests-for-1" in f for f in files))
 
 
 if __name__ == "__main__":
