@@ -96,7 +96,7 @@ class TasksCLI:
 
         try:
             max_id = 0
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 state_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(state_path):
                     continue
@@ -137,7 +137,7 @@ class TasksCLI:
         from .constants import STATE_FOLDERS
         from .file_manager import FM
 
-        for _, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             path = os.path.join(self.tasks_path, folder, filename)
             if os.path.exists(path):
                 return path, FM.load(path)

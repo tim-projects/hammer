@@ -250,7 +250,7 @@ class GitService:
         return self.run(["rev-parse", "--verify", name], check=False).returncode == 0
 
     def promote_task(
-        self, task, target_state: str, current_state: str = None, yes: bool = False
+        self, task, target_state: str, current_state: str | None = None, yes: bool = False
     ):
         """Perform the git merges associated with a pipeline promotion."""
         branch = task.metadata.get("Br", "")
@@ -309,7 +309,7 @@ class GitService:
         )
 
     def demote_task(
-        self, task, target_state: str, current_state: str = None, force: bool = False
+        self, task, target_state: str, current_state: str | None = None, force: bool = False
     ):
         """Sync higher branches back into feature branch during demotion."""
         branch = task.metadata.get("Br", "")

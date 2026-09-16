@@ -36,7 +36,7 @@ def get_git_root():
             .decode()
             .strip()
         )
-    except Exception:
+    except subprocess.CalledProcessError:
         return os.getcwd()
 
 
@@ -85,8 +85,8 @@ def load_config(dev=False):
                 config.update(yaml.safe_load(f) or {})
         except ImportError:
             pass
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001
+            print(f"Warning: Could not parse YAML config: {e}", file=sys.stderr)
 
     if os.path.exists(config_path_toml):
         try:
@@ -100,9 +100,14 @@ def load_config(dev=False):
                 config.update(config_section)
         except ImportError:
             pass
+<<<<<<< HEAD
         except Exception as e:
             if not dev:
                 print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
+=======
+        except Exception as e:  # noqa: BLE001
+            print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
+>>>>>>> 1-task-integration-test-task
 
     return config
 
@@ -201,6 +206,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
 
         if as_json:
@@ -244,7 +250,11 @@ def run_debug_check(fix=False, as_json=False, dev=False):
         else:
             print(f"Error: {msg}")
         return 1
+<<<<<<< HEAD
     except Exception as e:
+=======
+    except Exception as e:  # noqa: BLE001
+>>>>>>> 1-task-integration-test-task
         msg = f"Failed to run debug check: {e!s}"
         if as_json:
             print(
@@ -309,6 +319,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 cwd=project_root,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             # Reload config and try again
             config = load_config(dev)
@@ -404,6 +415,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                     stderr=stderr_file,
                     timeout=300,
                     env=env,
+                    check=False,
                 )
                 stdout_file.seek(0)
                 stderr_file.seek(0)
@@ -413,7 +425,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             try:
                 os.unlink(stdout_file.name)
                 os.unlink(stderr_file.name)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
         else:
             # Stream output directly to console to avoid deadlocks
@@ -422,6 +434,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 cwd=project_root,
                 timeout=300,
                 env=env,
+                check=False,
             )
             stdout_content = ""
             stderr_content = ""
@@ -485,7 +498,7 @@ def get_current_hash():
             .decode()
             .strip()
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 

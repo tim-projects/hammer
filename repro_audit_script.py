@@ -1,5 +1,9 @@
 import os
 import subprocess
+<<<<<<< HEAD
+=======
+import sys
+>>>>>>> 1-task-integration-test-task
 
 # The original script attempted an invalid multi-state jump.
 # We will perform incremental moves to reach the REVIEW state.
@@ -21,7 +25,7 @@ try:
     else:
         print("Patch NOT created")
         # Exit with error to satisfy test expectations if it was supposed to create it
-        exit(1)
+        sys.exit(1)
 except subprocess.CalledProcessError as e:
     print(f"Move failed: {e}")
-    exit(1)
+    sys.exit(1)

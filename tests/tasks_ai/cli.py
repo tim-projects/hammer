@@ -150,7 +150,7 @@ class TasksCLI:
 
     def _clear_delete_marks(self):
         updated = False
-        for state, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             dir_path = os.path.join(self.tasks_path, folder)
             if not os.path.exists(dir_path):
                 continue
@@ -380,10 +380,10 @@ class TasksCLI:
                         else:
                             f.write(task_or_content.decode("utf-8"))
                 os.replace(temp_path, path)
-            except Exception as e:
+            except Exception:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-                raise e
+                raise
             return
 
         temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
@@ -393,10 +393,10 @@ class TasksCLI:
             if os.path.exists(path):
                 shutil.rmtree(path)
             os.rename(temp_dir, path)
-        except Exception as e:
+        except Exception:
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
-            raise e
+            raise
 
     def log(self, message):
         if self.as_json:
@@ -1506,13 +1506,7 @@ class TasksCLI:
             ):
                 return False
             type_part, _ = self._parse_filename(fn)
-            if type_part == "issue":
-                if (
-                    not t.parts.get("repro")
-                    or len(str(t.parts.get("repro", "")).strip()) < 10
-                ):
-                    return False
-            return True
+            return not (type_part == "issue" and (not t.parts.get("repro") or len(str(t.parts.get("repro", "")).strip()) < 10))
 
         if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
             if not _has_complete_content(task, fname):
@@ -1538,12 +1532,11 @@ class TasksCLI:
                 ):
                     missing.append("plan")
                 tt, _ = self._parse_filename(fname)
-                if tt == "issue":
-                    if (
-                        not task.parts.get("repro")
-                        or len(str(task.parts.get("repro", "")).strip()) < 10
-                    ):
-                        missing.append("repro")
+                if tt == "issue" and (
+                    not task.parts.get("repro")
+                    or len(str(task.parts.get("repro", "")).strip()) < 10
+                ):
+                    missing.append("repro")
                 self.error(
                     f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
                     hint='Use \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro. Do not bypass this tool.',
@@ -1583,12 +1576,11 @@ class TasksCLI:
                 missing.append("plan")
 
             tt, _ = self._parse_filename(fname)
-            if tt == "issue":
-                if (
-                    not task.parts.get("repro")
-                    or len(str(task.parts.get("repro", "")).strip()) < 10
-                ):
-                    missing.append("repro")
+            if tt == "issue" and (
+                not task.parts.get("repro")
+                or len(str(task.parts.get("repro", "")).strip()) < 10
+            ):
+                missing.append("repro")
 
             if missing:
                 self.error(
@@ -1735,14 +1727,13 @@ class TasksCLI:
                 branch_commit = branch_sha
                 if not branch_commit and branch_exists:
                     branch_commit = self._run_git(["rev-parse", branch]).stdout.strip()
-                if not branch_commit:
-                    if self._run_git(
-                        ["ls-remote", "--heads", "origin", branch]
-                    ).stdout.strip():
-                        self._run_git(["fetch", "origin", branch], cwd=self.root)
-                        branch_commit = self._run_git(
-                            ["rev-parse", f"origin/{branch}"]
-                        ).stdout.strip()
+                if not branch_commit and self._run_git(
+                    ["ls-remote", "--heads", "origin", branch]
+                ).stdout.strip():
+                    self._run_git(["fetch", "origin", branch], cwd=self.root)
+                    branch_commit = self._run_git(
+                        ["rev-parse", f"origin/{branch}"]
+                    ).stdout.strip()
                 if not branch_commit:
                     branch_commit = main_sha
                 if main_sha and branch_commit:
@@ -2756,7 +2747,7 @@ class TasksCLI:
 
     def undo(self, filename):
         """Undo the last operation on a task by restoring previous state from git."""
-        filepath, current_state = self.find_task(filename)
+        filepath, _current_state = self.find_task(filename)
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
@@ -2954,7 +2945,7 @@ class TasksCLI:
                     self.log(f"Created missing folders: {', '.join(missing)}")
 
         def check_yaml_metadata():
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -2990,7 +2981,7 @@ class TasksCLI:
                         )
 
         def check_markdown_content():
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3084,7 +3075,7 @@ class TasksCLI:
                 counter_value = int(f.read().strip())
 
             max_id = 0
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3132,7 +3123,7 @@ class TasksCLI:
 
         def check_orphaned_tasks():
             task_branches = set()
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue

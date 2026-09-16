@@ -65,10 +65,10 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
                     else:
                         os.remove(path)
                 os.rename(temp_dir, path)
-            except Exception as e:
+            except Exception:
                 if os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
-                raise e
+                raise
     else:
         # It's raw content (string or bytes)
         content = task_or_content
@@ -87,10 +87,10 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
             with os.fdopen(fd, "w") as f:
                 f.write(content)
             os.replace(temp_path, path)
-        except Exception as e:
+        except Exception:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
-            raise e
+            raise
 
 
 def sync_task_content(cli, filepath, task, is_final=False) -> bool:

@@ -217,10 +217,10 @@ class TasksCLI:
                         else:
                             os.remove(path)
                     os.rename(temp_dir, path)
-                except Exception as e:
+                except Exception:
                     if os.path.exists(temp_dir):
                         shutil.rmtree(temp_dir)
-                    raise e
+                    raise
         else:
             # It's raw content (string or bytes)
             content = task_or_content
@@ -239,10 +239,10 @@ class TasksCLI:
                 with os.fdopen(fd, "w") as f:
                     f.write(content)
                 os.replace(temp_path, path)
-            except Exception as e:
+            except Exception:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-                raise e
+                raise
 
     def _append_log(self, path, message, section="progress"):
         FM.append_log(path, message, section=section)
@@ -362,7 +362,7 @@ class TasksCLI:
 
     def _clear_delete_marks(self):
         updated = False
-        for state, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             dir_path = os.path.join(self.tasks_path, folder)
             if not os.path.exists(dir_path):
                 continue
@@ -963,7 +963,7 @@ class TasksCLI:
 
     def undo(self, filename):
         """Undo the last operation on a task by restoring previous state from git."""
-        filepath, current_state = self.find_task(filename)
+        filepath, _current_state = self.find_task(filename)
         if not filepath:
             self.error(f"Task '{filename}' not found.")
 
@@ -1051,10 +1051,10 @@ class TasksCLI:
             self._append_log(target_dir, "Und")
             self.log(f"Undone: restored to {prev_state}")
             self.finish({"success": True, "previous_state": prev_state})
-        except Exception as e:
+        except Exception:
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
-            raise e
+            raise
 
     def upgrade(self):
         import subprocess
@@ -1100,7 +1100,7 @@ class TasksCLI:
         try:
             max_id = 0
             # Scan all state folders for existing tasks
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 state_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(state_path):
                     continue
@@ -1197,9 +1197,7 @@ class TasksCLI:
                 return True
         # Check for logs directory with any content
         logs_path = os.path.join(path, "logs")
-        if os.path.isdir(logs_path) and os.listdir(logs_path):
-            return True
-        return False
+        return bool(os.path.isdir(logs_path) and os.listdir(logs_path))
 
     def _move_logic(self, filename, new_status, force=False, yes=False, sync=True):
         from .commands import move as move_cmd

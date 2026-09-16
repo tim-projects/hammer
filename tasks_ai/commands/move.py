@@ -69,7 +69,7 @@ def run(cli, filename, new_status=None, yes=False):
         )
         return
 
-    # 3. Execute transition atomically
+# 3. Execute transition atomically
     try:
         success = move_logic(cli, filename, new_status, yes=yes)
     except Exception as e:
@@ -129,7 +129,7 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                     task_id=str(task.metadata.get("Id", "unknown")),
                 )
             else:
-                raise e
+                raise
 
     # 1. Run Exit Hooks (Pre-move checks and actions)
     cli.hook_registry.run_exit_hooks(
@@ -205,10 +205,10 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                 shutil.rmtree(filepath_str)
             else:
                 os.remove(filepath_str)
-    except Exception as e:
+    except Exception:
         # Cleanup staging on failure
         if os.path.exists(staged_task_path):
             shutil.rmtree(staged_task_path)
-        raise e
+        raise
 
     return True

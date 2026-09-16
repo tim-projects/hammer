@@ -109,21 +109,20 @@ class PipelineService:
                 pass
 
         # 4. Integration gate: STAGING/DONE require branch to be merged into appropriate pipeline branch
-        if "main_sync" in enabled_gates:
-            if branch:
-                # Target branch for integration check
-                integration_target = "main"
-                if target_state == "STAGING":
-                    integration_target = "staging"
+        if "main_sync" in enabled_gates and branch:
+            # Target branch for integration check
+            integration_target = "main"
+            if target_state == "STAGING":
+                integration_target = "staging"
 
-                # Check if branch is merged into target
-                if not self.git.is_merged(branch, integration_target):
-                    raise PipelineError(
-                        "BRANCH_NOT_MERGED",
-                        task_id=task_id,
-                        branch=branch,
-                        target=integration_target,
-                    )
+            # Check if branch is merged into target
+            if not self.git.is_merged(branch, integration_target):
+                raise PipelineError(
+                    "BRANCH_NOT_MERGED",
+                    task_id=task_id,
+                    branch=branch,
+                    target=integration_target,
+                )
 
         # 5. Check main divergence for terminal states
         if target_state in ["DONE", "ARCHIVED"]:
@@ -164,7 +163,7 @@ class PipelineService:
         self,
         task,
         target_state: str,
-        current_state: str = None,
+        current_state: str | None = None,
         yes: bool = False,
         force: bool = False,
     ):

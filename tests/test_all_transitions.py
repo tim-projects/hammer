@@ -42,7 +42,7 @@ class TestAllTransitions(HammerTestBase):
         self.run_tasks(["move", str(task_id), "READY"])
         current = "READY"
 
-        states_to_test = [s for s in STATE_FOLDERS.keys() if s not in ["BACKLOG"]]
+        states_to_test = [s for s in STATE_FOLDERS if s not in ["BACKLOG"]]
 
         for target in states_to_test:
             if target == current:
@@ -62,7 +62,7 @@ class TestAllTransitions(HammerTestBase):
                 msg.lower() in error.lower()
                 for msg in ["Validation failed", "regression check", "lint"]
             )
-            is_gate_error = any(
+            any(
                 msg.lower() in error.lower()
                 for msg in [
                     "Forbidden transition",
