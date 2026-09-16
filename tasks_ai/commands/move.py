@@ -69,14 +69,11 @@ def run(cli, filename, new_status=None, yes=False):
         )
         return
 
-    # 3. Execute transition atomically
+# 3. Execute transition atomically
     try:
-        # Perform physical move and run ALL enter/exit hooks
         success = move_logic(cli, filename, new_status, yes=yes)
-    except Exception:
-        # If transition fails, the move_logic should have handled partial state cleanup.
-        # We re-raise to ensure CLI reports the failure.
-        raise
+    except Exception as e:
+        cli.error(str(e))
 
     # 4. If everything succeeded, perform success reporting only now
     if success:

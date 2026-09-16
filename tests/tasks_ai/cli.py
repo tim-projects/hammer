@@ -530,9 +530,11 @@ class TasksCLI:
             self._run_git(["reset", "--hard"])
             self._run_git(["commit", "--allow-empty", "-m", "Initial tasks commit"])
             if original_branch:
-                self._run_git(["checkout", original_branch])
+                result = self._run_git(["checkout", original_branch])
+                if result.returncode != 0:
+                    self._run_git(["checkout", "-b", "main"])
             else:
-                self._run_git(["checkout", "-"])
+                self._run_git(["checkout", "-b", "main"])
         is_worktree = False
         if os.path.exists(self.tasks_path):
             wt_res = self._run_git(["worktree", "list", "--porcelain"])
@@ -810,7 +812,10 @@ class TasksCLI:
                 "story": story or "",
                 "tech": tech or "",
                 "criteria": (
-                    "\n".join(f"- [ ] {c}" for c in criteria)
+                    "\n".join(
+                        c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                        for c in criteria
+                    )
                     if isinstance(criteria, list)
                     else f"- [ ] {criteria}"
                 )
@@ -903,7 +908,10 @@ class TasksCLI:
             updated = True
         if criteria:
             if isinstance(criteria, list):
-                task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+                task.parts["criteria"] = "\n".join(
+                    c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                    for c in criteria
+                )
             else:
                 task.parts["criteria"] = criteria
             updated = True

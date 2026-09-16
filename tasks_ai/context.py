@@ -19,7 +19,7 @@ class ProjectContext:
         # Determine the base tasks directory
         if self.dev:
             # For testing backward compatibility, we use a fixed path structure
-            self.tasks_path = "/tmp/.tasks"
+            self.tasks_path = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
         elif tasks_dir_override:
             if os.path.isabs(tasks_dir_override):
                 self.tasks_path = tasks_dir_override

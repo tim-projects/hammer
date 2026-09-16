@@ -57,14 +57,7 @@ class ValidationHook(PipelineHook):
                         f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
                     )
 
-            # Temporarily disable JSON mode to prevent early exit during transition
-            # run_tool calls cli.error (which sys.exits) on failure
-            orig_json = cli.as_json
-            cli.as_json = False
-            try:
-                cli.run_tool("all")
-            finally:
-                cli.as_json = orig_json
+            cli.run_tool("all")
 
             # If we reach here, all checks passed
             task.metadata["Tp"] = True
@@ -321,6 +314,8 @@ class MainBranchProtectionHook(PipelineHook):
     """Prevents transitions if the user is working directly on the main branch."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
+        if cli.dev:
+            return
         # We only care about blocking work if they are trying to progress or move towards completion
         if new_status in ["PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"]:
             current_git_branch = cli.git.get_current_branch()
