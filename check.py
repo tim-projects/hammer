@@ -100,14 +100,8 @@ def load_config(dev=False):
                 config.update(config_section)
         except ImportError:
             pass
-<<<<<<< HEAD
-        except Exception as e:
-            if not dev:
-                print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
-=======
         except Exception as e:  # noqa: BLE001
             print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
->>>>>>> 1-task-integration-test-task
 
     return config
 
@@ -250,11 +244,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
         else:
             print(f"Error: {msg}")
         return 1
-<<<<<<< HEAD
-    except Exception as e:
-=======
     except Exception as e:  # noqa: BLE001
->>>>>>> 1-task-integration-test-task
         msg = f"Failed to run debug check: {e!s}"
         if as_json:
             print(
