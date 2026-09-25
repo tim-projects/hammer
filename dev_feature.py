@@ -1,2 +1,2 @@
 def dev_feature():
-    return "dev"
+    return 'dev'
