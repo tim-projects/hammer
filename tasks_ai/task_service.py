@@ -54,7 +54,7 @@ class TaskService:
                             task = FM.load(path)
                             if str(task.metadata.get("Id")) == task_id:
                                 matches.append((path, state))
-                        except Exception:
+                        except Exception:  # noqa: BLE001, S112
                             continue
 
         if not matches:

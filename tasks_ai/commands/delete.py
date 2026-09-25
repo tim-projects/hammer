@@ -64,7 +64,7 @@ def run(cli, filename, confirm=None):
         cli.log(
             f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         cli.error(str(e))
 
     cli.finish(

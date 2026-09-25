@@ -12,12 +12,12 @@ class TestGitHookRestrictions(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.old_cwd = os.getcwd()
         os.chdir(self.tmp_dir)
-        subprocess.run(["git", "init"], capture_output=True)
+        subprocess.run(["git", "init"], capture_output=True)  # noqa: PLW1510
         # Create a dummy main file
         with open("README.md", "w") as f:
             f.write("# Main branch")
-        subprocess.run(["git", "add", "README.md"], capture_output=True)
-        subprocess.run(["git", "commit", "-m", "Initial commit"], capture_output=True)
+        subprocess.run(["git", "add", "README.md"], capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "commit", "-m", "Initial commit"], capture_output=True)  # noqa: PLW1510
         self.cli = TasksCLI(quiet=True)
         # Mock finish to avoid sys.exit(0)
         self.cli.finish = lambda data=None: None
@@ -32,7 +32,7 @@ class TestGitHookRestrictions(unittest.TestCase):
         # For now, verify the test environment can detect the commit
         with open("main_file.txt", "w") as f:
             f.write("direct commit")
-        subprocess.run(["git", "add", "main_file.txt"], capture_output=True)
+        subprocess.run(["git", "add", "main_file.txt"], capture_output=True)  # noqa: PLW1510
 
         # We expect a custom hook (yet to be implemented) to reject this
         # This is a placeholder test for task 166

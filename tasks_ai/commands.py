@@ -18,7 +18,7 @@ class Commands:
                 try:
                     with open(config_path, "r") as f:
                         return yaml.safe_load(f) or {}
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return {}
             return {}
 
@@ -26,7 +26,7 @@ class Commands:
             try:
                 with open(config_path, "w") as f:
                     yaml.safe_dump(cfg, f)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.cli.error(f"❌ CONFIG SAVE FAIL! {e}! 🔨")
 
         if action == "detect":

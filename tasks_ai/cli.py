@@ -127,7 +127,7 @@ class TasksCLI:
                             .get("tasks_ai", {})
                             .get("tasks_dir", self.tasks_dir)
                         )
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
@@ -277,7 +277,7 @@ class TasksCLI:
             return
         try:
             return self.pipeline.validate_gate(self, task, target_state, task_path)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             if hasattr(e, "code"):
                 self.error(e.code, **e.kwargs)
             else:
@@ -357,7 +357,7 @@ class TasksCLI:
                         self._run_git(["rm", "-rf", "live"], cwd=self.tasks_path)
                     if os.path.exists(live_dir):
                         shutil.rmtree(live_dir)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
     def _clear_delete_marks(self):
@@ -376,7 +376,7 @@ class TasksCLI:
                         del task.metadata["DeleteCode"]
                         self._atomic_write(path, task)
                         updated = True
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.log(f"Warning: Failed to load task at {path}: {e}")
         if updated:
             self._run_git(["add", "--all"], cwd=self.tasks_path)
@@ -395,7 +395,7 @@ class TasksCLI:
         repo_path = os.path.join(self.root, "repo")
         if not os.path.exists(repo_path):
             repo_path = self.repo_script
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [repo_path] + args, cwd=cwd, capture_output=True, text=True
         )
         return result
@@ -420,7 +420,7 @@ class TasksCLI:
             target_dir = os.path.join(self.tasks_path, folder)
             if not os.path.exists(target_dir):
                 continue
-            now = datetime.now()
+            now = datetime.now()  # noqa: DTZ005
             for item in os.listdir(target_dir):
                 if item == ".gitkeep":
                     continue
@@ -435,7 +435,7 @@ class TasksCLI:
                             if "->DONE" in line:
                                 match = re.search(r"- (\d{6} \d{2}:\d{2}):", line)
                                 if match:
-                                    done_date = datetime.strptime(
+                                    done_date = datetime.strptime(  # noqa: DTZ007
                                         match.group(1), "%y%m%d %H:%M"
                                     )
                                     break
@@ -510,7 +510,7 @@ class TasksCLI:
                     return True
                 if self._has_path(blocker_id, target_id, visited):
                     return True
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
         return False
 
@@ -586,7 +586,7 @@ class TasksCLI:
             # MANDATORY BACKUP for production before reset
             from datetime import datetime
 
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")  # noqa: DTZ005
             backup_path = f"{self.tasks_path}.bak_{timestamp}"
             self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
             shutil.copytree(self.tasks_path, backup_path)
@@ -639,7 +639,7 @@ class TasksCLI:
                 if self._tasks_directory_has_data(self.tasks_path):
                     from datetime import datetime
 
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")  # noqa: DTZ005
                     backup_path = f"/tmp/.tasks.bak_{timestamp}"
                     self.log(f"Backing up existing .tasks to {backup_path}...")
                     shutil.copytree(self.tasks_path, backup_path)
@@ -675,7 +675,7 @@ class TasksCLI:
             self._run_git(["commit", "-m", "Init task counter"], cwd=self.tasks_path)
 
         self.install_hooks()
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "config", "--global", "merge.message", "merge: auto-merge"],
             cwd=self.root,
         )
@@ -841,7 +841,7 @@ class TasksCLI:
                                 "state": "DONE",
                             }
                         )
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         if not candidates:
@@ -886,7 +886,7 @@ class TasksCLI:
                     candidates.append(item)
                 else:
                     print(f"⚠️ Skipping {branch}: Not fully merged.")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"⚠️ Skipping {branch}: Git check failed: {e}")
         archived = 0
         for branch in candidates:
@@ -896,7 +896,7 @@ class TasksCLI:
                     archived += 1
                 else:
                     self.console("archive", "would_archive", branch)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"❌ Failed to archive {branch}: {e}")
         if self.as_json:
             self.finish({"archived": archived, "dry_run": dry_run})
@@ -1060,7 +1060,7 @@ class TasksCLI:
         import subprocess
 
         self.log("Upgrading tasks...")
-        subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])
+        subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])  # noqa: PLW1510
 
     # --- Internals ---
     def _calculate_file_hash(self, filepath):
@@ -1071,7 +1071,7 @@ class TasksCLI:
                 for chunk in iter(lambda: f.read(4096), b""):
                     hash_md5.update(chunk)
             return hash_md5.hexdigest()
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
 
     def _write_counter_hash(self, counter_file, hash_file):
@@ -1080,7 +1080,7 @@ class TasksCLI:
             file_hash = self._calculate_file_hash(counter_file)
             if file_hash:
                 self._atomic_write(hash_file, file_hash)
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass  # Fail silently for hash writing
 
     def _verify_counter_hash(self, counter_file, hash_file):
@@ -1092,7 +1092,7 @@ class TasksCLI:
                 stored_hash = f.read().strip()
             calculated_hash = self._calculate_file_hash(counter_file)
             return stored_hash == calculated_hash
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
 
     def _recover_task_counter_from_tasks(self):
@@ -1135,7 +1135,7 @@ class TasksCLI:
                             if meta_id and str(meta_id).isdigit():
                                 task_id = int(meta_id)
                                 max_id = max(max_id, task_id)
-                        except Exception:
+                        except Exception:  # noqa: BLE001, S110
                             pass
             # Also check remote branches for higher IDs
             try:
@@ -1158,11 +1158,11 @@ class TasksCLI:
                                     if branch_parts[0].isdigit():
                                         branch_id = int(branch_parts[0])
                                         max_id = max(max_id, branch_id)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass  # Fail silently for remote check
 
             return max_id
-        except Exception:
+        except Exception:  # noqa: BLE001
             return 0
 
     def _get_git_root(self):

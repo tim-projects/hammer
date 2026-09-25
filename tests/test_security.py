@@ -17,7 +17,7 @@ class TestSecurity(unittest.TestCase):
         os.chdir(self.tmp_dir)
         import subprocess
 
-        subprocess.run(["git", "init"], capture_output=True)
+        subprocess.run(["git", "init"], capture_output=True)  # noqa: PLW1510
         self.cli = TasksCLI(quiet=True)
         self.cli.init()
 
@@ -27,7 +27,7 @@ class TestSecurity(unittest.TestCase):
 
     def test_directory_traversal(self):
         # Try to find a task outside the tasks directory
-        path, state = self.cli.find_task("../../../etc/passwd")
+        path, _state = self.cli.find_task("../../../etc/passwd")
         self.assertIsNone(path)
 
         # Try with a valid-looking name but traversal content

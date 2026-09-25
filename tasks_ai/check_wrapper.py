@@ -12,7 +12,7 @@ def main():
         validator = Validator(".")
         results = validator.run_all(False)
         print(f"Results: {results}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error: {e}")
 
 

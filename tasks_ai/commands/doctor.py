@@ -137,7 +137,10 @@ def run(cli, fix=False):
             # Add state transition inconsistency check
             if (
                 branch_from_metadata
-                and cli._run_git(["rev-parse", "--verify", branch_from_metadata]).returncode != 0
+                and cli._run_git(
+                    ["rev-parse", "--verify", branch_from_metadata]
+                ).returncode
+                != 0
             ):
                 inconsistencies.append(
                     ("git branch", branch_from_metadata, "Branch exists")
@@ -213,7 +216,7 @@ def run(cli, fix=False):
                         ],
                         cwd=cli.tasks_path,
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     cli.log(f"Warning: Could not commit fixes: {e}")
 
             # Report bugs (whether fixed or not)

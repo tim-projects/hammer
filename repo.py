@@ -36,7 +36,7 @@ def get_primary_remote():
         if not remotes:
             return "origin"
         return "origin" if "origin" in remotes else remotes[0]
-    except Exception:
+    except Exception:  # noqa: BLE001
         return "origin"
 
 
@@ -131,7 +131,7 @@ class ToolRunner:
             cmd.append("--fix")
         if dev:
             cmd.append("--dev")
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=git_root)  # noqa: PLW1510
         if result.returncode != 0:
             warn("Validation failed")
             if result.stdout:
@@ -216,7 +216,7 @@ def cmd_merge(src_input, target_input):
                 cli.move(task_id, new_status, yes=FLAGS["yes"])
                 return
 
-    if target not in PIPELINE:
+    if target not in PIPELINE:  # noqa: SIM102
         if not FLAGS["yes"]:
             msg = f"Merging between task branches (outside pipeline: {src} -> {target}). Continue?"
             if not prompt_yes_no(msg):
@@ -288,7 +288,7 @@ def cmd_promote(src_input, original_task_id=None):
         cmd = ["./hammer", "tasks", "move", task_id]
         if FLAGS["yes"]:
             cmd.append("-y")
-        subprocess.run(cmd)
+        subprocess.run(cmd)  # noqa: PLW1510
         return
 
     error(
@@ -356,7 +356,7 @@ def ensure_pipeline_branch(name):
 
 
 def main():
-    global FLAGS
+    global FLAGS  # noqa: PLW0602
     args = []
     for arg in sys.argv[1:]:
         if arg in ["-y", "--yes"]:

@@ -45,7 +45,7 @@ class TasksCLI:
                             .get("tasks_ai", {})
                             .get("tasks_dir", self.tasks_dir)
                         )
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
         # Update context with potentially overridden tasks_dir
@@ -119,7 +119,7 @@ class TasksCLI:
                             task_id = int(parts[0])
                             max_id = max(max_id, task_id)
             return max_id
-        except Exception:
+        except Exception:  # noqa: BLE001
             return 0
 
     def _verify_counter_hash(self, counter_file, hash_file):

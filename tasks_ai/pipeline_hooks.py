@@ -80,13 +80,19 @@ class ContentSufficiencyHook(PipelineHook):
                 if not t.parts.get(part) or len(str(t.parts.get(part)).strip()) < 10:
                     return False
             tt, _ = parse_filename(fn)
-            return not (tt == "issue" and (not t.parts.get("repro") or len(str(t.parts.get("repro")).strip()) < 10))
+            return not (
+                tt == "issue"
+                and (
+                    not t.parts.get("repro")
+                    or len(str(t.parts.get("repro")).strip()) < 10
+                )
+            )
 
-        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
+        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):  # noqa: SIM102
             if not has_complete_content(task, os.path.basename(filepath)):
                 cli.error("Task lacks required content to leave BACKLOG.")
 
-        if new_status == "PROGRESSING":
+        if new_status == "PROGRESSING":  # noqa: SIM102
             if not has_complete_content(task, os.path.basename(filepath)):
                 cli.error("Task lacks sufficient detail to move to PROGRESSING.")
 
@@ -119,7 +125,7 @@ class TestingToReviewGateHook(PipelineHook):
             task_id = task.metadata.get("Id")
             task.metadata["Rc"] = ""
             # Record generation time
-            task.metadata["PatchGenTime"] = datetime.now().timestamp()
+            task.metadata["PatchGenTime"] = datetime.now().timestamp()  # noqa: DTZ005
 
             cli.log(
                 f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}"
@@ -150,9 +156,7 @@ class BranchCheckHook(PipelineHook):
                 branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
             )
             if not branch_sha and has_origin:
-                remote_check = cli._run_git(
-                    ["ls-remote", "--heads", "origin", branch]
-                )
+                remote_check = cli._run_git(["ls-remote", "--heads", "origin", branch])
                 if remote_check.stdout.strip():
                     cli.console("git", "restore", f"{branch} from origin")
                     cli._run_git(
@@ -160,8 +164,8 @@ class BranchCheckHook(PipelineHook):
                     )
 
         # Remote push check
-        if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):
-            if has_origin:
+        if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):  # noqa: SIM102
+            if has_origin:  # noqa: SIM102
                 if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                     cli.error("BRANCH_NOT_PUSHED", branch=branch)
 
@@ -204,7 +208,7 @@ class ArchivedCommitHook(PipelineHook):
             )
             try:
                 cli._push_tasks_branch("tasks", fatal=False)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
 
@@ -517,7 +521,7 @@ class DoneAtHook(PipelineHook):
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "DONE" and not task.metadata.get("DoneAt"):
-            task.metadata["DoneAt"] = datetime.now().timestamp()
+            task.metadata["DoneAt"] = datetime.now().timestamp()  # noqa: DTZ005
             cli._atomic_write(filepath, task)
 
 
@@ -530,7 +534,7 @@ class AutoArchiveHook(PipelineHook):
             if not done_at:
                 return
 
-            elapsed = datetime.now().timestamp() - done_at
+            elapsed = datetime.now().timestamp() - done_at  # noqa: DTZ005
             grace_period = 7 * 24 * 60 * 60  # 7 days in seconds
 
             if elapsed >= grace_period:

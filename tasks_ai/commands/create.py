@@ -112,7 +112,7 @@ def run(
             "Id": numeric_id,
             "Ti": title,
             "Ty": task_type,
-            "Cr": datetime.now().strftime("%y%m%d %H:%M"),
+            "Cr": datetime.now().strftime("%y%m%d %H:%M"),  # noqa: DTZ005
             "Bl": [],
             "Pr": priority or (1 if task_type == "issue" else 2),
             "Br": task_id,
@@ -182,5 +182,5 @@ def run(
                 "current_branch": current_branch,
             }
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         cli.error(str(e))
