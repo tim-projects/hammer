@@ -152,7 +152,7 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
             if task.parts.get(part_name) != content:
                 task.parts[part_name] = content
                 updated = True
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
     return updated
@@ -275,7 +275,7 @@ def has_path(start_id: str, target_id: str, tasks_path: str, fm, visited=None) -
             # Recursively check indirect paths
             if has_path(blocker_id, target_id, tasks_path, fm, visited):
                 return True
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
     return False

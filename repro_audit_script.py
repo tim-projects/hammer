@@ -1,9 +1,6 @@
 import os
 import subprocess
-<<<<<<< HEAD
-=======
 import sys
->>>>>>> 1-task-integration-test-task
 
 # The original script attempted an invalid multi-state jump.
 # We will perform incremental moves to reach the REVIEW state.

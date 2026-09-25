@@ -8,7 +8,6 @@ class ValidationError(Exception):
     """Exception raised for validation errors."""
 
 
-
 class Validator:
     def __init__(self, project_root: str, dev: bool = False):
         self.project_root = Path(project_root).resolve()
@@ -133,7 +132,7 @@ class Validator:
         run_env["CI"] = "true"
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510
                 cmd,
                 cwd=self.project_root,
                 capture_output=True,
@@ -194,7 +193,7 @@ class Validator:
                 .decode()
                 .strip()
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return ""
 
     def _update_hash(self):
@@ -211,7 +210,7 @@ class Validator:
         if not script_path.exists():
             raise ValidationError(f"Debug check script not found at {script_path}")
 
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [str(script_path)], cwd=self.project_root, capture_output=True, text=True
         )
         return {

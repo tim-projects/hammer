@@ -28,7 +28,7 @@ def run(cli, filename, new_status=None, yes=False):
         if current_state == "DONE" and new_status == "ARCHIVED":
             done_at = task.metadata.get("DoneAt")
             if done_at:
-                elapsed = datetime.now().timestamp() - done_at
+                elapsed = datetime.now().timestamp() - done_at  # noqa: DTZ005
                 grace_period = 7 * 24 * 60 * 60
                 if elapsed < grace_period:
                     days_left = round((grace_period - elapsed) / (24 * 3600), 1)
@@ -38,7 +38,7 @@ def run(cli, filename, new_status=None, yes=False):
                     return
             else:
                 # If DoneAt is missing, set it now and wait 7 days
-                task.metadata["DoneAt"] = datetime.now().timestamp()
+                task.metadata["DoneAt"] = datetime.now().timestamp()  # noqa: DTZ005
                 cli._atomic_write(filepath, task)
                 cli.log(
                     f"Task {filename} marked as DONE today. Auto-archiving in 7 days."
@@ -51,7 +51,7 @@ def run(cli, filename, new_status=None, yes=False):
         for state in states:
             try:
                 success = move_logic(cli, filename, state, yes=yes)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 cli.error(str(e))
             if not success:
                 return
@@ -69,11 +69,9 @@ def run(cli, filename, new_status=None, yes=False):
         )
         return
 
-# 3. Execute transition atomically
-    try:
-        success = move_logic(cli, filename, new_status, yes=yes)
-    except Exception as e:
-        cli.error(str(e))
+    # 3. Execute transition atomically
+    # Perform physical move and run ALL enter/exit hooks
+    success = move_logic(cli, filename, new_status, yes=yes)
 
     # 4. If everything succeeded, perform success reporting only now
     if success:

@@ -26,7 +26,7 @@ class Validation:
         validator = Validator(self.cli.root)
         try:
             return validator.run_check("test", False)
-        except Exception:
+        except Exception:  # noqa: BLE001
             if fail_safe:
                 return subprocess.CompletedProcess("", 1)
             self.cli.error(

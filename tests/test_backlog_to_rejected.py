@@ -3,7 +3,7 @@ import os
 import unittest
 
 from hammer_test_base import HammerTestBase
-from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
+from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS  # noqa: F401
 
 
 class TestBacklogToRejected(HammerTestBase):
@@ -39,10 +39,17 @@ class TestBacklogToRejected(HammerTestBase):
 
         res = self.run_tasks(["move", str(task_id), "REJECTED"])
         output = json.loads(res.stdout)
-        self.assertTrue(output.get("success", False), f"Move to REJECTED failed: {output}")
+        self.assertTrue(
+            output.get("success", False), f"Move to REJECTED failed: {output}"
+        )
 
-        task_dir = os.path.join(self.dev_tasks_dir, "rejected", os.path.basename(task_file))
-        self.assertTrue(os.path.exists(task_dir), f"Task directory not found in rejected: {task_dir}")
+        task_dir = os.path.join(
+            self.dev_tasks_dir, "rejected", os.path.basename(task_file)
+        )
+        self.assertTrue(
+            os.path.exists(task_dir),
+            f"Task directory not found in rejected: {task_dir}",
+        )
 
         meta_path = os.path.join(task_dir, "meta.json")
         self.assertTrue(os.path.exists(meta_path), f"meta.json not found in {task_dir}")

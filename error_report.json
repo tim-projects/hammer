@@ -5,9 +5,9 @@
     "stderr": "usage: tasks create [-h] [--type {task,issue,docs}] [--priority PRIORITY]\n                    [--story STORY [STORY ...]] [--tech TECH [TECH ...]]\n                    [--criteria CRITERIA [CRITERIA ...]]\n                    [--plan PLAN [PLAN ...]] [--repro REPRO [REPRO ...]]\n                    [--branch]\n                    title\ntasks create: error: the following arguments are required: title"
   },
   "['move', '999', 'DONE']": {
-    "has_hint": true,
+    "has_hint": false,
     "stdout": "DEBUG: Loading config from /tmp/.tasks",
-    "stderr": "Error: Task '999' not found. | HINT: WHAT: Task '999' missing.\nWHY: HAMMER cannot operate on ghost. \nHOW: Run 'hammer tasks list' to see all existing task ID.\nCONSEQUENCE: Pipeline remain BROKEN. SMASH BUG NOW."
+    "stderr": "Traceback (most recent call last):\n  File \"/home/vscode/git/tasks-ai/tasks.py\", line 321, in <module>\n    cli.move(args.filename, args.status, yes=args.yes)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/vscode/git/tasks-ai/tasks_ai/cli.py\", line 762, in move\n    from .commands import move as move_cmd\n  File \"/home/vscode/git/tasks-ai/tasks_ai/commands/move.py\", line 72\n    <<<<<<< HEAD\n    ^^\nSyntaxError: invalid syntax"
   },
   "['link', '1', '1']": {
     "has_hint": true,

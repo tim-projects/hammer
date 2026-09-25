@@ -44,7 +44,7 @@ class HammerTestBase(unittest.TestCase):
         pass
 
     def run_tasks(self, args):
-        return subprocess.run(
+        return subprocess.run(  # noqa: PLW1510
             [sys.executable, self.script_path, "-j", "--dev"] + args,
             cwd=self.repo_path,
             capture_output=True,

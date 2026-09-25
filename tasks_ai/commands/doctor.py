@@ -139,7 +139,6 @@ def run(cli, fix=False):
             # may have had their branches cleaned up by `hammer tasks cleanup`.
             branch_missing = (
                 branch_from_metadata
-<<<<<<< HEAD
                 and isinstance(branch_from_metadata, str)
                 and cli._run_git(
                     ["rev-parse", "--verify", branch_from_metadata]
@@ -151,9 +150,6 @@ def run(cli, fix=False):
                 "TESTING",
                 "REVIEW",
                 "STAGING",
-=======
-                and cli._run_git(["rev-parse", "--verify", branch_from_metadata]).returncode != 0
->>>>>>> 1-task-integration-test-task
             ):
                 inconsistencies.append(
                     ("git branch", branch_from_metadata, "Branch missing locally")
@@ -239,7 +235,7 @@ def run(cli, fix=False):
                         ],
                         cwd=cli.tasks_path,
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     cli.log(f"Warning: Could not commit fixes: {e}")
 
             # Report bugs (whether fixed or not)

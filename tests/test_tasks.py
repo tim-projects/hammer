@@ -16,23 +16,23 @@ class TestTasksAI(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
-        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
         )
-        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
         with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
-        subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)
-        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)
+        subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)  # noqa: PLW1510
+        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)  # noqa: PLW1510
         # Use hammer CLI entry point instead of the removed tasks.py
         # Use local './hammer' CLI entry point
         # Use absolute path to the local './hammer' script in the repository
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.script_path = os.path.abspath(os.path.join(self.repo_dir, "hammer"))
         os.symlink(os.path.join(project_root, "hammer"), self.script_path)
-        subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Add hammer"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -98,7 +98,7 @@ class TestTasksAI(unittest.TestCase):
         )
         # Build command through the hammer wrapper and request JSON from tasks.py.
         cmd = [self.script_path, "tasks", "-j"] + args
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             cmd,
             cwd=self.repo_dir,
             capture_output=True,
@@ -196,48 +196,48 @@ class TestTasksAI(unittest.TestCase):
         # Move issue through states
         for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
             branch = issue_file
-            subprocess.run(
+            subprocess.run(  # noqa: PLW1510
                 ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
             )
             with open(os.path.join(self.repo_dir, "fix.txt"), "a") as f:
                 f.write("fixed\n")
-            subprocess.run(
+            subprocess.run(  # noqa: PLW1510
                 ["git", "add", "fix.txt"], cwd=self.repo_dir, capture_output=True
             )
-            subprocess.run(
+            subprocess.run(  # noqa: PLW1510
                 ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
             )
-            subprocess.run(
+            subprocess.run(  # noqa: PLW1510
                 ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
             )
 
             # Simulate pipeline merges to satisfy enforcement
             if state == "REVIEW":
                 self.run_cmd(["modify", issue_file, "--tests-passed"])
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "checkout", "-b", "testing"],
                     cwd=self.repo_dir,
                     capture_output=True,
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "merge", branch], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
                 )
             elif state == "DONE":
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "checkout", "-b", "staging"],
                     cwd=self.repo_dir,
                     capture_output=True,
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
                 )
                 # Complete checkboxes before DONE move (write to staging folder)
@@ -318,23 +318,23 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", file, "PROGRESSING"])
 
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         # Rebase or merge main into the branch to avoid conflicts
-        subprocess.run(["git", "merge", "main"], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", "main"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -342,15 +342,15 @@ class TestTasksAI(unittest.TestCase):
             # Simulate pipeline merges to satisfy enforcement
             if state == "REVIEW":
                 self.run_cmd(["modify", file, "--tests-passed"])
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "checkout", "-b", "testing"],
                     cwd=self.repo_dir,
                     capture_output=True,
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "merge", branch], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
                 )
 
@@ -373,7 +373,7 @@ class TestTasksAI(unittest.TestCase):
 
         # Backdate log
         log_path = os.path.join(self.repo_dir, ".tasks", "done", file, "activity.log")
-        old_date = (datetime.now() - timedelta(days=8)).strftime("%y%m%d %H:%M")
+        old_date = (datetime.now() - timedelta(days=8)).strftime("%y%m%d %H:%M")  # noqa: DTZ005
         with open(log_path, "w") as f:
             f.write(f"- {old_date}: STAGING->DONE\n")
 
@@ -461,7 +461,7 @@ class TestTasksAI(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        status_check = subprocess.run(
+        status_check = subprocess.run(  # noqa: PLW1510
             ["git", "status", "--porcelain"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -523,10 +523,10 @@ class TestTasksAI(unittest.TestCase):
         code_file = os.path.join(self.repo_dir, "feature.py")
         with open(code_file, "w") as f:
             f.write("def new_feature():\n    return 42\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "feature.py"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Add new feature implementation"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -538,14 +538,14 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"], f"Move to TESTING failed: {res}")
 
         # Prepare testing branch: go to main, create testing, merge task, back to main
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -594,10 +594,10 @@ class TestTasksAI(unittest.TestCase):
         code_file = os.path.join(self.repo_dir, "code.py")
         with open(code_file, "w") as f:
             f.write("def func():\n    pass\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.py"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Add code"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -607,14 +607,14 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"])
 
         # Setup testing branch merge
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -666,10 +666,10 @@ class TestTasksAI(unittest.TestCase):
         code_file = os.path.join(self.repo_dir, "file.txt")
         with open(code_file, "w") as f:
             f.write("content\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "file.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Add file"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -678,14 +678,14 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Setup testing branch
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -735,10 +735,10 @@ class TestTasksAI(unittest.TestCase):
 
         with open(os.path.join(self.repo_dir, "initial.txt"), "w") as f:
             f.write("initial\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "initial.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Initial commit"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -749,14 +749,14 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Setup testing branch (merge initial commit)
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -781,15 +781,15 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Create fix commit on task branch
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "fix.txt"), "w") as f:
             f.write("fixed\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "fix.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Fix regression issue"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -800,14 +800,14 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Update testing to include fix (fast-forward merge)
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 

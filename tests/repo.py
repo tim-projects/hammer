@@ -261,7 +261,7 @@ def cmd_promote(src_input, original_task_id=None):
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"])  # type: ignore[reportOptionalCall]
         path, current_status = cli.find_task(task_id)
-        if path:
+        if path:  # noqa: SIM102
             if target in ("staging", "main"):
                 if current_status == "TESTING":
                     info(f"Task {task_id} in TESTING. Moving to REVIEW for audit.")
@@ -281,8 +281,14 @@ def cmd_promote(src_input, original_task_id=None):
                         )
 
     needs_move = False
-    if task_id and TasksCLI and current_status:
-        if target == "testing" and current_status == "PROGRESSING" or target == "staging" and current_status == "REVIEW" or target == "main":
+    if task_id and TasksCLI and current_status:  # noqa: SIM102
+        if (
+            target == "testing"
+            and current_status == "PROGRESSING"
+            or target == "staging"
+            and current_status == "REVIEW"
+            or target == "main"
+        ):
             needs_move = True
 
     if src not in PIPELINE or needs_move:
@@ -338,7 +344,7 @@ def cmd_demote(task_id_input, target_state):
 
 
 def main():
-    global FLAGS
+    global FLAGS  # noqa: PLW0602
     args = []
     for arg in sys.argv[1:]:
         if arg in ["-y", "--yes"]:

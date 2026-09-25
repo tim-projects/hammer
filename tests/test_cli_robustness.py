@@ -17,14 +17,14 @@ class TestCLIRobustness(unittest.TestCase):
 
     def test_create_validation_missing_fields(self):
         """Task create should fail if required fields are missing."""
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             [self.hammer_path, "init"],
             cwd=self.repo_dir,
             capture_output=True,
         )
 
         # Test with missing fields
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [
                 self.hammer_path,
                 "create",
@@ -40,14 +40,14 @@ class TestCLIRobustness(unittest.TestCase):
 
     def test_create_validation_short_fields(self):
         """Task create should fail if fields are too short."""
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             [self.hammer_path, "init"],
             cwd=self.repo_dir,
             capture_output=True,
         )
 
         # Test with too short fields
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [
                 self.hammer_path,
                 "create",

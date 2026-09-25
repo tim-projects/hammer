@@ -8,7 +8,7 @@ def run_dev(cmd, force=False):
     full_cmd = ["./hammer", "tasks", "--dev"] + cmd
     if force and cmd and cmd[0] == "init":
         full_cmd.append("--force")
-    result = subprocess.run(full_cmd, capture_output=True, text=True)
+    result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
     return result
 
 
@@ -49,7 +49,14 @@ def test_pipeline_audit_verify_gates():
     task_id = "1"
 
     # 3. Mark criteria as done
-    run_dev(["modify", task_id, "--criteria", "- [x] Sufficiently long acceptance criteria here to pass validation"])
+    run_dev(
+        [
+            "modify",
+            task_id,
+            "--criteria",
+            "- [x] Sufficiently long acceptance criteria here to pass validation",
+        ]
+    )
 
     # 4. Multi-step move
     run_dev(["move", task_id, "READY,PROGRESSING,TESTING,REVIEW"])
