@@ -5,13 +5,13 @@
     "stderr": "usage: tasks create [-h] [--type {task,issue,docs}] [--priority PRIORITY]\n                    [--story STORY [STORY ...]] [--tech TECH [TECH ...]]\n                    [--criteria CRITERIA [CRITERIA ...]]\n                    [--plan PLAN [PLAN ...]] [--repro REPRO [REPRO ...]]\n                    [--branch]\n                    title\ntasks create: error: the following arguments are required: title"
   },
   "['move', '999', 'DONE']": {
-    "has_hint": false,
+    "has_hint": true,
     "stdout": "DEBUG: Loading config from /tmp/.tasks",
-    "stderr": "Traceback (most recent call last):\n  File \"/home/vscode/git/tasks-ai/tasks.py\", line 321, in <module>\n    cli.move(args.filename, args.status, yes=args.yes)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/vscode/git/tasks-ai/tasks_ai/cli.py\", line 762, in move\n    from .commands import move as move_cmd\n  File \"/home/vscode/git/tasks-ai/tasks_ai/commands/move.py\", line 72\n    <<<<<<< HEAD\n    ^^\nSyntaxError: invalid syntax"
+    "stderr": "Error: Task '999' not found. | HINT: WHAT: Task '999' missing.\nWHY: HAMMER cannot operate on ghost. \nHOW: Run 'hammer tasks list' to see all existing task ID.\nCONSEQUENCE: Pipeline remain BROKEN. SMASH BUG NOW."
   },
   "['link', '1', '1']": {
     "has_hint": true,
     "stdout": "DEBUG: Loading config from /tmp/.tasks",
-    "stderr": "Error: One or both task not found. | HINT: WHAT: Link target missing.\nWHY: HAMMER cannot link to nothing.\nHOW: Verify both tasks exist with 'hammer tasks list'.\nCONSEQUENCE: Link chain broken. FIX ID."
+    "stderr": "Error: Cannot link task to itself. | HINT: WHAT: Link to self forbidden.\nWHY: SELF-REFERENCE IS WEAK. Loops break logic.\nHOW: Link to a different task.\nCONSEQUENCE: Logic corruption. AVOID IT."
   }
 }

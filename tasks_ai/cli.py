@@ -131,7 +131,7 @@ class TasksCLI:
                     pass
 
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
-        if dev:
+        if dev or os.environ.get("HAMMER_DEV_TASKS_DIR"):
             self.context.tasks_path = os.environ.get(
                 "HAMMER_DEV_TASKS_DIR", "/tmp/.tasks"
             )
