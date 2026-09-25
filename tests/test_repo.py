@@ -1,5 +1,7 @@
 import subprocess
+
 from tests.hammer_test_base import HammerTestBase, MockGitRemote
+
 
 class TestRepo(HammerTestBase):
 

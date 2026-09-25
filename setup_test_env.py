@@ -1,6 +1,7 @@
 import os
 import shutil
 
+
 def setup_test_repo(repo_dir):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     check_py = os.path.join(base_dir, 'check.py')

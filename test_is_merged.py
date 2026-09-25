@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
+
 from tasks_ai.git_service import GitService
+
 context = MagicMock()
 context.repo_root = '.'
 git = GitService(context)

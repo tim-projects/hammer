@@ -1,6 +1,8 @@
 import hashlib
 import os
+
 from tasks_ai.audit import generate_audit, verify_audit
+
 
 def test_md5_hashing_consistency(tmp_path):
     """Test that hashing files produces consistent MD5 hashes."""

@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import unittest
 
+
 class TestTaskPairing(unittest.TestCase):
 
     def setUp(self):
@@ -27,6 +28,6 @@ class TestTaskPairing(unittest.TestCase):
         self.assertIn('Created: [1] task | New Feature Implementation', result.stdout)
         backlog_dir = os.path.join(self.repo_dir, '.tasks', 'backlog')
         files = os.listdir(backlog_dir)
-        self.assertTrue(any(('1-task-new-feature-implement' in f for f in files)))
+        self.assertTrue(any('1-task-new-feature-implement' in f for f in files))
 if __name__ == '__main__':
     unittest.main()

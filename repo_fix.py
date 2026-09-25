@@ -1,4 +1,5 @@
-lines = open('repo.py', 'r').readlines()
+with open('repo.py', 'r') as f:
+    lines = f.readlines()
 new_lines = []
 skip = False
 for i, line in enumerate(lines):

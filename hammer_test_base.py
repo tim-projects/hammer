@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 
+
 class HammerTestBase(unittest.TestCase):
 
     def setUp(self):

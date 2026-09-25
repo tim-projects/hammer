@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
 import os
 import tempfile
 import unittest
+
 from tasks_ai.cli import TasksCLI
 from tasks_ai.models import Task
+
 
 class TestArtifactHealing(unittest.TestCase):
 

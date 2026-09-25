@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import unittest
 
+
 class TestCLIRobustness(unittest.TestCase):
 
     def setUp(self):

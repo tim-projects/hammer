@@ -1,8 +1,9 @@
 import json
 import os
 import unittest
+
 from hammer_test_base import HammerTestBase
-from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
+
 
 class TestBacklogToRejected(HammerTestBase):
 

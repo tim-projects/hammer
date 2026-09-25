@@ -3,7 +3,9 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+
 from tasks_ai.cli import TasksCLI
+
 
 class TestGitHookRestrictions(unittest.TestCase):
 

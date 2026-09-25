@@ -1,6 +1,8 @@
 import hashlib
 import os
+
 from .constants import PIPELINE_STAGES
+
 
 class PipelineError(Exception):
 
@@ -59,22 +61,18 @@ class PipelineService:
         """
         task_id = str(task.metadata.get('Id', 'unknown'))
         branch = task.metadata.get('Br', '')
-        if target_state in ['REVIEW', 'STAGING', 'DONE']:
-            if branch and self.git.is_merged(branch, 'main'):
-                self.log(f'DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion to {target_state}.')
-                return True
+        if target_state in ['REVIEW', 'STAGING', 'DONE'] and branch and self.git.is_merged(branch, 'main'):
+            self.log(f'DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion to {target_state}.')
+            return True
         enabled_gates = self.get_enabled_gates(target_state)
-        if 'checkboxes' in enabled_gates:
-            if self.has_unfinished_checkboxes(task_path):
-                raise PipelineError('UNFINISHED_CHECKBOXES', task_id=task_id)
+        if 'checkboxes' in enabled_gates and self.has_unfinished_checkboxes(task_path):
+            raise PipelineError('UNFINISHED_CHECKBOXES', task_id=task_id)
         if 'regression_check' in enabled_gates:
             current_state = os.path.basename(os.path.dirname(task_path)).upper()
-            if current_state in ['REVIEW', 'TESTING']:
-                if task.metadata.get('Rc') != 'PASSED':
-                    patch_path = f'.tasks/review/{task_id}.patch'
-                    raise PipelineError('REGRESSION_CHECK_NOT_PASSED', task_id=task_id, patch_path=patch_path)
-        if 'audit_integrity' in enabled_gates:
-            if task.metadata.get('Rc') != 'PASSED':
+            if current_state in ['REVIEW', 'TESTING'] and task.metadata.get('Rc') != 'PASSED':
+                patch_path = f'.tasks/review/{task_id}.patch'
+                raise PipelineError('REGRESSION_CHECK_NOT_PASSED', task_id=task_id, patch_path=patch_path)
+        if 'audit_integrity' in enabled_gates and task.metadata.get('Rc') != 'PASSED':
                 pass
         if 'main_sync' in enabled_gates and branch:
             integration_target = 'main'
@@ -86,10 +84,8 @@ class PipelineService:
             synced, local, remote = self.git.check_main_divergence()
             if not synced:
                 raise PipelineError('MAIN_DIVERGED', task_id=task_id, local=local, remote=remote)
-        if target_state == 'DONE':
-            if branch:
-                if not self.git.is_merged(branch, 'staging'):
-                    self.log(f'Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete.')
+        if target_state == 'DONE' and branch and not self.git.is_merged(branch, 'staging'):
+            self.log(f'Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete.')
         if 'mandatory_verification' in enabled_gates:
             self.check_audit_integrity(cli, task_id, task_path)
         return True

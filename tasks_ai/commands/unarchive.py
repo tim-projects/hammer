@@ -1,7 +1,9 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
+
 from ..constants import STATE_FOLDERS
+
 
 def run(cli, task_id):
     """Isolated unarchive logic: ARCHIVED -> PROGRESSING"""
@@ -40,5 +42,5 @@ def run(cli, task_id):
         json.dump(meta, f, indent=2)
     log_path = os.path.join(new_dir, 'activity.log')
     with open(log_path, 'a') as f:
-        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ARCHIVED->PROGRESSING (UNARCHIVE)\n")
+        f.write(f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}] ARCHIVED->PROGRESSING (UNARCHIVE)\n")
     print(f'Task {task_id} successfully unarchived to PROGRESSING.')

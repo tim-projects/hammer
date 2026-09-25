@@ -1,8 +1,10 @@
 import os
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..libs.list_layout import render_table
 from ..utils import parse_filename
+
 
 def run(cli, show_all=False):
     """Execution logic for 'tasks list'."""
@@ -27,7 +29,7 @@ def run(cli, show_all=False):
                 continue
             try:
                 task = FM.load(path)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 continue
             summary = (task.metadata.get('Ti') or 'No Title')[:60]
             if task.corrupted:
@@ -61,7 +63,7 @@ def run(cli, show_all=False):
                 task = FM.load(path)
                 if os.path.basename(os.path.dirname(path)) != STATE_FOLDERS.get(task.metadata.get('St', state)):
                     candidates.append({'task': item, 'issue': 'tampered location'})
-            except Exception:
+            except Exception:  # noqa: BLE001
                 candidates.append({'task': item, 'issue': 'corrupted metadata'})
     if candidates:
         print('\n## Problem Tasks')

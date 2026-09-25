@@ -1,6 +1,8 @@
 import os
+
 from ..audit import generate_audit
 from ..file_manager import FM
+
 
 def run(cli, task_id):
     task_path, state = cli.find_task(task_id)

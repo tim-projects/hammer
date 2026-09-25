@@ -2,7 +2,9 @@ import json
 import os
 import shutil
 import tempfile
+
 from .models import Task
+
 
 def _atomic_write(path, content):
     """Write content to file atomically using temp file + rename."""
@@ -70,7 +72,7 @@ class FM:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             content = '---\n'
             for k, v in task.metadata.items():
-                val = '[' + ', '.join((f'"{item}"' for item in v)) + ']' if isinstance(v, list) else v
+                val = '[' + ', '.join(f'"{item}"' for item in v) + ']' if isinstance(v, list) else v
                 content += f'{k}: {val}\n'
             content += '---\n\n'
             content += task.parts.get('content', task.content)
@@ -100,7 +102,7 @@ class FM:
         current = task.parts.get(section, '')
         if current and (not current.endswith('\n')):
             current += '\n'
-        from datetime import datetime
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        from datetime import datetime, timezone
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         task.parts[section] = f'{current}[{timestamp}] {message}\n'
         FM.dump(task, path)

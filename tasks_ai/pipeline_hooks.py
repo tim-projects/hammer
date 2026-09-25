@@ -1,10 +1,12 @@
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
+
 from .constants import CURRENT_TASK_FILENAME
 from .hooks import PipelineHook
 from .models import Task
 from .utils import parse_filename
+
 
 class TaskRepairHook(PipelineHook):
     """Resets governance metadata when a task is moved to PROGRESSING."""
@@ -53,12 +55,10 @@ class ContentSufficiencyHook(PipelineHook):
                     return False
             tt, _ = parse_filename(fn)
             return not (tt == 'issue' and (not t.parts.get('repro') or len(str(t.parts.get('repro')).strip()) < 10))
-        if current_state == 'BACKLOG' and new_status not in ('BACKLOG', 'REJECTED'):
-            if not has_complete_content(task, os.path.basename(filepath)):
-                cli.error('Task lacks required content to leave BACKLOG.')
-        if new_status == 'PROGRESSING':
-            if not has_complete_content(task, os.path.basename(filepath)):
-                cli.error('Task lacks sufficient detail to move to PROGRESSING.')
+        if current_state == 'BACKLOG' and new_status not in ('BACKLOG', 'REJECTED') and not has_complete_content(task, os.path.basename(filepath)):
+            cli.error('Task lacks required content to leave BACKLOG.')
+        if new_status == 'PROGRESSING' and not has_complete_content(task, os.path.basename(filepath)):
+            cli.error('Task lacks sufficient detail to move to PROGRESSING.')
 
 class BlockerCheckHook(PipelineHook):
     """Checks for active blockers before entering PROGRESSING."""
@@ -80,7 +80,7 @@ class TestingToReviewGateHook(PipelineHook):
                 cli.error('Tests must be passed before moving to REVIEW.', hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed.")
             task_id = task.metadata.get('Id')
             task.metadata['Rc'] = ''
-            task.metadata['PatchGenTime'] = datetime.now().timestamp()
+            task.metadata['PatchGenTime'] = datetime.now(timezone.utc).timestamp()
             cli.log(f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}")
             cli._atomic_write(filepath, task)
             cli.console('gate', 'review', 'entered')
@@ -100,10 +100,8 @@ class BranchCheckHook(PipelineHook):
                 if remote_check.stdout.strip():
                     cli.console('git', 'restore', f'{branch} from origin')
                     cli._run_git(['checkout', '-b', branch, f'origin/{branch}'], cwd=cli.root)
-        if new_status in ('REVIEW', 'STAGING', 'DONE', 'ARCHIVED'):
-            if has_origin:
-                if not cli._run_git(['ls-remote', '--heads', 'origin', branch]).stdout:
-                    cli.error('BRANCH_NOT_PUSHED', branch=branch)
+        if new_status in ('REVIEW', 'STAGING', 'DONE', 'ARCHIVED') and has_origin and not cli._run_git(['ls-remote', '--heads', 'origin', branch]).stdout:
+            cli.error('BRANCH_NOT_PUSHED', branch=branch)
 
 class ReviewDiffHook(PipelineHook):
     """Ensures file-level diff patches are generated when entering REVIEW."""
@@ -128,7 +126,7 @@ class ArchivedCommitHook(PipelineHook):
             cli._run_git(['commit', '-m', f"Archive [{task.metadata.get('Id')}] {task.metadata.get('Ti')}"], cwd=cli.tasks_path)
             try:
                 cli._push_tasks_branch('tasks', fatal=False)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
 class PostMoveCommitHook(PipelineHook):
@@ -322,7 +320,7 @@ class DoneAtHook(PipelineHook):
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == 'DONE' and (not task.metadata.get('DoneAt')):
-            task.metadata['DoneAt'] = datetime.now().timestamp()
+            task.metadata['DoneAt'] = datetime.now(timezone.utc).timestamp()
             cli._atomic_write(filepath, task)
 
 class AutoArchiveHook(PipelineHook):
@@ -333,7 +331,7 @@ class AutoArchiveHook(PipelineHook):
             done_at = task.metadata.get('DoneAt')
             if not done_at:
                 return
-            elapsed = datetime.now().timestamp() - done_at
+            elapsed = datetime.now(timezone.utc).timestamp() - done_at
             grace_period = 7 * 24 * 60 * 60
             if elapsed >= grace_period:
                 cli.log(f"Grace period expired for task {task.metadata.get('Id')}. Archiving...")

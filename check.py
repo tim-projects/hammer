@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 check - Run validation and quality checks on the codebase
 Usage: check <command> [options]
@@ -23,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
 
 def get_git_root():
     try:
@@ -60,7 +62,7 @@ def load_config(dev=False):
                 config.update(yaml.safe_load(f) or {})
         except ImportError:
             pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f'Warning: Could not parse YAML config: {e}', file=sys.stderr)
     if os.path.exists(config_path_toml):
         try:
@@ -71,7 +73,7 @@ def load_config(dev=False):
                 config.update(config_section)
         except ImportError:
             pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f'Warning: Could not parse pyproject.toml: {e}', file=sys.stderr)
     return config
 
@@ -119,7 +121,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
         else:
             print(f'Error: {msg}')
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         msg = f'Failed to run debug check: {e!s}'
         if as_json:
             print(json.dumps({'success': False, 'tool': 'debug', 'error': msg, 'configured': 'internal'}))
@@ -197,7 +199,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             try:
                 os.unlink(stdout_file.name)
                 os.unlink(stderr_file.name)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
         else:
             result = subprocess.run(cmd_to_run, cwd=project_root, timeout=300, env=env, check=False)
@@ -229,7 +231,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
 def get_current_hash():
     try:
         return subprocess.check_output(['git', 'rev-parse', 'HEAD'], stderr=subprocess.DEVNULL).decode().strip()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 def get_last_hash_path():

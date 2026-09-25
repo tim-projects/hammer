@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 repo - Repository management wrapper script
 Usage: repo <command> [args]
@@ -26,6 +27,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
 sys.path.append(os.getcwd())
 try:
     from tasks_ai.cli import TasksCLI
@@ -115,8 +117,8 @@ class ToolRunner:
         git_root = cwd or find_project_root()
         validator = Validator(git_root, dev=dev)
         results = validator.run_all(fix)
-        success = all((r['success'] for r in results))
-        return subprocess.CompletedProcess(args=[], returncode=0 if success else 1, stdout='\n'.join((r.get('stdout', '') for r in results)), stderr='\n'.join((r.get('stderr', '') for r in results)))
+        success = all(r['success'] for r in results)
+        return subprocess.CompletedProcess(args=[], returncode=0 if success else 1, stdout='\n'.join(r.get('stdout', '') for r in results), stderr='\n'.join(r.get('stderr', '') for r in results))
 
 def branch_exists(name):
     return run(['git', 'rev-parse', '--verify', name], check=False, capture=True).returncode == 0
@@ -210,21 +212,19 @@ def cmd_promote(src_input, original_task_id=None):
     if task_id and TasksCLI:
         cli = TasksCLI(quiet=True, dev=FLAGS['dev'], yes=FLAGS['yes'])
         path, current_status = cli.find_task(task_id)
-        if path:
-            if target in ('staging', 'main'):
-                if current_status == 'TESTING':
-                    info(f'Task {task_id} in TESTING. Moving to REVIEW for audit.')
-                    cli.move(task_id, 'REVIEW')
-                    error(f'Task {task_id} moved to REVIEW for audit.', hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.")
-                if current_status == 'REVIEW':
+        if path and target in ('staging', 'main'):
+            if current_status == 'TESTING':
+                info(f'Task {task_id} in TESTING. Moving to REVIEW for audit.')
+                cli.move(task_id, 'REVIEW')
+                error(f'Task {task_id} moved to REVIEW for audit.', hint=f"Run 'tasks modify {task_id} --regression-check' before promoting.")
+            if current_status == 'REVIEW':
                     from tasks_ai.file_manager import FM
                     task = FM.load(path)
                     if not task.metadata.get('Rc'):
                         error('Regression check not passed.', hint=f"Run 'tasks modify {task_id} --regression-check'.")
     needs_move = False
-    if task_id and TasksCLI and current_status:
-        if target == 'testing' and current_status == 'PROGRESSING' or (target == 'staging' and current_status == 'REVIEW') or target == 'main':
-            needs_move = True
+    if task_id and TasksCLI and current_status and (target == 'testing' and current_status == 'PROGRESSING' or (target == 'staging' and current_status == 'REVIEW') or target == 'main'):
+        needs_move = True
     if src not in PIPELINE or needs_move:
         cmd_merge(src, target)
     if task_id and TasksCLI and needs_move:
@@ -263,7 +263,6 @@ def cmd_demote(task_id_input, target_state):
     log('✅ Successfully demoted.')
 
 def main():
-    global FLAGS
     args = []
     for arg in sys.argv[1:]:
         if arg in ['-y', '--yes']:

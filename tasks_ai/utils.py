@@ -2,7 +2,9 @@ import os
 import shutil
 import tempfile
 from typing import Any
+
 from tasks_ai.file_manager import FM
+
 
 def parse_filename(name: str) -> tuple[str, str]:
     """Parse task filename to extract type and slug."""
@@ -126,7 +128,7 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
             if task.parts.get(part_name) != content:
                 task.parts[part_name] = content
                 updated = True
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
     return updated
 
@@ -168,6 +170,7 @@ def perform_move(cli, task, current_state, new_status, filepath):
 def has_path(start_id: str, target_id: str, tasks_path: str, fm, visited=None) -> bool:
     """Check if there's a path from start_id to target_id via BlockedBy links."""
     import json
+
     from .constants import STATE_FOLDERS
     if visited is None:
         visited = set()
@@ -208,6 +211,6 @@ def has_path(start_id: str, target_id: str, tasks_path: str, fm, visited=None) -
                 return True
             if has_path(blocker_id, target_id, tasks_path, fm, visited):
                 return True
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
     return False

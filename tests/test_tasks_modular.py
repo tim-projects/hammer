@@ -3,8 +3,11 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
 import pytest
+
 from tasks_ai.cli import TasksCLI
+
 
 @pytest.fixture
 def setup_tasks():
@@ -65,7 +68,7 @@ def test_link_tasks(setup_tasks):
     from tasks_ai.file_manager import FM
     path, _ = cli.find_task('1')
     task = FM.load(path)
-    assert any(('2' in b for b in task.metadata.get('Bl', [])))
+    assert any('2' in b for b in task.metadata.get('Bl', []))
 
 def test_restore_and_undo(setup_tasks):
     cli = setup_tasks

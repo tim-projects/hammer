@@ -2,7 +2,9 @@ import os
 import shutil
 import tempfile
 import unittest
+
 from tasks_ai.cli import TasksCLI
+
 
 class TestSecurity(unittest.TestCase):
 
@@ -22,7 +24,7 @@ class TestSecurity(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
 
     def test_directory_traversal(self):
-        path, state = self.cli.find_task('../../../etc/passwd')
+        path, _state = self.cli.find_task('../../../etc/passwd')
         self.assertIsNone(path)
         path, _state = self.cli.find_task('.._.._etc_passwd')
         self.assertIsNone(path)
@@ -37,7 +39,7 @@ class TestSecurity(unittest.TestCase):
         self.cli.create('Task with <script>alert(1)</script>', story='...', tech='...', criteria='...', plan='...')
         backlog = os.path.join(self.cli.tasks_path, 'backlog')
         items = os.listdir(backlog)
-        task_dir = next((item for item in items if 'script' in item))
+        task_dir = next(item for item in items if 'script' in item)
         self.assertFalse('<' in task_dir)
         self.assertFalse('>' in task_dir)
         self.assertFalse('(' in task_dir)

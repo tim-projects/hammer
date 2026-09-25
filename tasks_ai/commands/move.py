@@ -1,11 +1,13 @@
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
+
 from ..cli_errors import PipelineMergeConflict
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..pipeline import PipelineError
 from ..utils import parse_filename, perform_move
+
 
 def run(cli, filename, new_status=None, yes=False):
     """Execution logic for 'tasks move'."""
@@ -21,14 +23,14 @@ def run(cli, filename, new_status=None, yes=False):
         if current_state == 'DONE' and new_status == 'ARCHIVED':
             done_at = task.metadata.get('DoneAt')
             if done_at:
-                elapsed = datetime.now().timestamp() - done_at
+                elapsed = datetime.now(timezone.utc).timestamp() - done_at
                 grace_period = 7 * 24 * 60 * 60
                 if elapsed < grace_period:
                     days_left = round((grace_period - elapsed) / (24 * 3600), 1)
                     cli.log(f'Task {filename} is DONE. Auto-archiving in {days_left} days.')
                     return
             else:
-                task.metadata['DoneAt'] = datetime.now().timestamp()
+                task.metadata['DoneAt'] = datetime.now(timezone.utc).timestamp()
                 cli._atomic_write(filepath, task)
                 cli.log(f'Task {filename} marked as DONE today. Auto-archiving in 7 days.')
                 return
@@ -37,7 +39,7 @@ def run(cli, filename, new_status=None, yes=False):
         for state in states:
             try:
                 success = move_logic(cli, filename, state, yes=yes)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 cli.error(str(e))
             if not success:
                 return
@@ -51,7 +53,7 @@ def run(cli, filename, new_status=None, yes=False):
         return
     try:
         success = move_logic(cli, filename, new_status, yes=yes)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         cli.error(str(e))
     if success:
         fname = os.path.basename(filepath)

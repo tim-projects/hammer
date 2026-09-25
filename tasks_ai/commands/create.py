@@ -1,9 +1,11 @@
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..models import Task
+
 
 def run(cli, title, task_type='task', priority=None, story=None, tech=None, criteria=None, plan=None, repro=None, branch=False):
     """Execution logic for 'tasks create'."""
@@ -75,7 +77,7 @@ def run(cli, title, task_type='task', priority=None, story=None, tech=None, crit
             task = FM.load(path)
             if task.metadata.get('Id') == numeric_id:
                 cli.error('TASK_ID_EXISTS', numeric_id=numeric_id, state=state)
-    task = Task(metadata={'Id': numeric_id, 'Ti': title, 'Ty': task_type, 'Cr': datetime.now().strftime('%y%m%d %H:%M'), 'Bl': [], 'Pr': priority or (1 if task_type == 'issue' else 2), 'Br': task_id}, parts={'story': story or '', 'tech': tech or '', 'criteria': ('\n'.join((c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria)) if isinstance(criteria, list) else f'{criteria}') if criteria else '', 'plan': ('\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1))) if isinstance(plan, list) else f'1. {plan}') if plan else '', 'repro': ('\n'.join((f'{i}. {r}' for i, r in enumerate(repro, 1))) if isinstance(repro, list) else f'1. {repro}') if repro else None})
+    task = Task(metadata={'Id': numeric_id, 'Ti': title, 'Ty': task_type, 'Cr': datetime.now(timezone.utc).strftime('%y%m%d %H:%M'), 'Bl': [], 'Pr': priority or (1 if task_type == 'issue' else 2), 'Br': task_id}, parts={'story': story or '', 'tech': tech or '', 'criteria': ('\n'.join(c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria) if isinstance(criteria, list) else f'{criteria}') if criteria else '', 'plan': ('\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1))) if isinstance(plan, list) else f'1. {plan}') if plan else '', 'repro': ('\n'.join((f'{i}. {r}' for i, r in enumerate(repro, 1))) if isinstance(repro, list) else f'1. {repro}') if repro else None})
     try:
         cli._atomic_write(task_dir, task)
         cli._append_log(task_dir, 'Cr')
@@ -106,7 +108,7 @@ def run(cli, title, task_type='task', priority=None, story=None, tech=None, crit
                 existing_task = FM.load(path)
                 if existing_task.metadata.get('Id') == pair_numeric_id:
                     cli.error('TASK_ID_EXISTS', numeric_id=pair_numeric_id, state=state)
-        pair_task = Task(metadata={'Id': pair_numeric_id, 'Ti': pair_title, 'Ty': 'task', 'Cr': datetime.now().strftime('%y%m%d %H:%M'), 'Bl': [], 'Pr': priority or 2, 'Br': pair_task_id}, parts={'story': story or '', 'tech': tech or '', 'criteria': ('\n'.join((c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria)) if isinstance(criteria, list) else f'{criteria}') if criteria else '', 'plan': ('\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1))) if isinstance(plan, list) else f'1. {plan}') if plan else '', 'repro': None})
+        pair_task = Task(metadata={'Id': pair_numeric_id, 'Ti': pair_title, 'Ty': 'task', 'Cr': datetime.now(timezone.utc).strftime('%y%m%d %H:%M'), 'Bl': [], 'Pr': priority or 2, 'Br': pair_task_id}, parts={'story': story or '', 'tech': tech or '', 'criteria': ('\n'.join(c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria) if isinstance(criteria, list) else f'{criteria}') if criteria else '', 'plan': ('\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1))) if isinstance(plan, list) else f'1. {plan}') if plan else '', 'repro': None})
         cli._atomic_write(pair_task_dir, pair_task)
         cli._append_log(pair_task_dir, 'Cr')
         cli._run_git(['add', os.path.relpath(pair_task_dir, cli.tasks_path)], cwd=cli.tasks_path)
@@ -121,5 +123,5 @@ def run(cli, title, task_type='task', priority=None, story=None, tech=None, crit
         cli._run_git(['checkout', task_id], cwd=cli.root)
         cli.log(f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'")
         cli.finish({'id': numeric_id, 'task_id': task_id, 'title': title, 'file': task_id, 'path': os.path.relpath(task_dir, cli.root), 'branch': task_id, 'current_branch': current_branch})
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         cli.error(str(e))

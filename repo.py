@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 repo - Repository management wrapper script
 Usage: repo <command> [args]
@@ -7,6 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
 sys.path.append(os.getcwd())
 try:
     from tasks_ai.cli import TasksCLI
@@ -30,7 +32,7 @@ def get_primary_remote():
         if not remotes:
             return 'origin'
         return 'origin' if 'origin' in remotes else remotes[0]
-    except Exception:
+    except Exception:  # noqa: BLE001
         return 'origin'
 PRIMARY_REMOTE = get_primary_remote()
 
@@ -156,12 +158,11 @@ def cmd_merge(src_input, target_input):
                 info(f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'...")
                 cli.move(task_id, new_status, yes=FLAGS['yes'])
                 return
-    if target not in PIPELINE:
-        if not FLAGS['yes']:
-            msg = f'Merging between task branches (outside pipeline: {src} -> {target}). Continue?'
-            if not prompt_yes_no(msg):
-                log('Merge cancelled.')
-                return
+    if target not in PIPELINE and not FLAGS['yes']:
+        msg = f'Merging between task branches (outside pipeline: {src} -> {target}). Continue?'
+        if not prompt_yes_no(msg):
+            log('Merge cancelled.')
+            return
     ensure_pipeline_branch(target)
     info(f'Merging {src.upper()} → {target.upper()}')
     current = get_current_branch()
@@ -270,7 +271,6 @@ def ensure_pipeline_branch(name):
     run(['git', 'checkout', '-'], quiet=True)
 
 def main():
-    global FLAGS
     args = []
     for arg in sys.argv[1:]:
         if arg in ['-y', '--yes']:

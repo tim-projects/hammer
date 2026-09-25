@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 
+
 def run_dev(cmd, force=False):
     full_cmd = ['./hammer', 'tasks', '--dev'] + cmd
     if force and cmd and (cmd[0] == 'init'):

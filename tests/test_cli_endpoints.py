@@ -1,5 +1,6 @@
 from tests.hammer_test_base import HammerTestBase
 
+
 class TestCliEndpoints(HammerTestBase):
 
     def test_tasks_list(self):

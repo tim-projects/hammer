@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+
 class ValidationError(Exception):
     """Exception raised for validation errors."""
 
@@ -77,7 +78,7 @@ class Validator:
         results = []
         for tool in ['lint', 'test', 'typecheck', 'format']:
             results.append(self.run_check(tool, fix))
-        if all((r['success'] for r in results)):
+        if all(r['success'] for r in results):
             self._update_hash()
         return results
 
@@ -93,7 +94,7 @@ class Validator:
     def _get_git_hash(self) -> str:
         try:
             return subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.project_root, stderr=subprocess.DEVNULL).decode().strip()
-        except Exception:
+        except Exception:  # noqa: BLE001
             return ''
 
     def _update_hash(self):

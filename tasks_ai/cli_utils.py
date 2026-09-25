@@ -13,7 +13,7 @@ def format_table(headers, rows, status_idx=None, prio_idx=None):
     output = []
 
     def b(left_border, m, r, sep='─┬─'):
-        return f"{L}{left_border}{sep.join(('─' * (w + 2) for w in widths))}{r}{R}"
+        return f"{L}{left_border}{sep.join('─' * (w + 2) for w in widths)}{r}{R}"
     output.append(b('┌', '┬', '┐'))
     header_line = f'{L}│{R} ' + f' {L}│{R} '.join((f"{COLORS['HEADER']}{h:<{widths[i]}}{R}" for i, h in enumerate(headers))) + f' {L}│{R}'
     output.append(header_line)

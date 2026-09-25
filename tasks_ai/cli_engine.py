@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
+
 from .cli_io import error, finish, log
 from .constants import TASKS_DIR
 from .context import ProjectContext
 from .file_manager import FM
 from .git_service import GitService
 from .pipeline import PipelineService
+
 
 class TasksCLI:
 
@@ -30,7 +32,7 @@ class TasksCLI:
                     with open(pyproject_path, 'r') as f:
                         pyproject_data = toml.load(f)
                         self.tasks_dir = pyproject_data.get('tool', {}).get('tasks_ai', {}).get('tasks_dir', self.tasks_dir)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
         if dev:
@@ -87,7 +89,7 @@ class TasksCLI:
                             task_id = int(parts[0])
                             max_id = max(max_id, task_id)
             return max_id
-        except Exception:
+        except Exception:  # noqa: BLE001
             return 0
 
     def _verify_counter_hash(self, counter_file, hash_file):

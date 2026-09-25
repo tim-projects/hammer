@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import os
 import shutil
@@ -5,8 +6,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
 from tasks_ai.file_manager import FM
+
 
 class TestTasksAI(unittest.TestCase):
 
@@ -182,7 +185,7 @@ class TestTasksAI(unittest.TestCase):
             res = self.run_cmd(move_args)
             self.assertTrue(res['success'], f'Failed move to {state}: {res}')
         log_path = os.path.join(self.repo_dir, '.tasks', 'done', file, 'activity.log')
-        old_date = (datetime.now() - timedelta(days=8)).strftime('%y%m%d %H:%M')
+        old_date = (datetime.now(timezone.utc) - timedelta(days=8)).strftime('%y%m%d %H:%M')
         with open(log_path, 'w') as f:
             f.write(f'- {old_date}: STAGING->DONE\n')
         res = self.run_cmd(['list'])

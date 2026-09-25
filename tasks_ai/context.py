@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 class ProjectContext:
     """
     Central authority for path resolution and environment detection.

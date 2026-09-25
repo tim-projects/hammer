@@ -1,5 +1,6 @@
 import os
 
+
 def run(cli, task_id, proof):
     task_path, state = cli.find_task(task_id)
     if not task_path or state != 'REVIEW':

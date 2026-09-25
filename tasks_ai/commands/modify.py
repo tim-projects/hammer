@@ -1,8 +1,10 @@
 import os
 import re
+
 from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
 from ..utils import parse_filename
+
 
 def run(cli, filename, task_type=None, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, notes=None, progress=None, findings=None, mitigations=None, tests_passed=None, priority=None, regression_check=None, reviewed=None):
     """Execution logic for 'tasks modify'."""
@@ -31,7 +33,7 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
         updated = True
     if criteria:
         if isinstance(criteria, list):
-            task.parts['criteria'] = '\n'.join((c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria))
+            task.parts['criteria'] = '\n'.join(c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria)
         else:
             task.parts['criteria'] = criteria
         updated = True

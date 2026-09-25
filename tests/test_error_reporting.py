@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import os
 import shutil
@@ -5,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
 
 class TestErrorReporting(unittest.TestCase):
 

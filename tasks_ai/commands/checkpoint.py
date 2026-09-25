@@ -1,5 +1,7 @@
 import os
+
 from ..utils import sync_task_content
+
 
 def run(cli, filename=None):
     """Execution logic for 'tasks checkpoint'."""

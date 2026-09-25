@@ -1,10 +1,13 @@
+#!/usr/bin/env python3
 __version__ = '0.1.0'
 import argparse
 import os
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tasks_ai.cli import TasksCLI
 from tasks_ai.help_text import get_help_text
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='tasks', description='Tasks AI: Agent-optimized, Git-backed task lifecycle manager.', formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, epilog=get_help_text())
     parser.add_argument('--version', action='store_true', help='Show version.')

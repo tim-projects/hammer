@@ -1,5 +1,6 @@
 import re
 
+
 def test_pairing():
     title = 'Implement feature X'
     task_type = 'task'

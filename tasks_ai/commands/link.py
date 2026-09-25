@@ -1,6 +1,8 @@
 import os
+
 from ..file_manager import FM
 from ..utils import has_path, parse_filename
+
 
 def run(cli, filename, blocked_by_filename):
     """Execution logic for 'tasks link'."""

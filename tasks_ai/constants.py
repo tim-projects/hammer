@@ -1,5 +1,7 @@
 import os
+
 import yaml
+
 
 def load_config(tasks_path):
     config_path = os.path.join(tasks_path, 'config.yaml')
@@ -7,7 +9,7 @@ def load_config(tasks_path):
         try:
             with open(config_path, 'r') as f:
                 return yaml.safe_load(f) or {}
-        except Exception:
+        except Exception:  # noqa: BLE001
             return {}
     return {}
 
@@ -20,7 +22,7 @@ def save_config(tasks_path, cfg):
     try:
         with open(config_path, 'w') as f:
             yaml.safe_dump(cfg, f)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 TASKS_DIR = '.tasks'
 TASKS_BRANCH = 'tasks'

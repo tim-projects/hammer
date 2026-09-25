@@ -1,8 +1,10 @@
 import json
 import os
 import unittest
+
 from hammer_test_base import HammerTestBase
 from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
+
 
 class TestAllTransitions(HammerTestBase):
 
@@ -37,8 +39,8 @@ class TestAllTransitions(HammerTestBase):
             success = output.get('success', False)
             error = output.get('error', '')
             is_allowed = target in ALLOWED_TRANSITIONS.get(current, [])
-            is_validation_error = any((msg.lower() in error.lower() for msg in ['Validation failed', 'regression check', 'lint']))
-            any((msg.lower() in error.lower() for msg in ['Forbidden transition', 'Auto-promotion failed', 'Regression check not passed']))
+            is_validation_error = any(msg.lower() in error.lower() for msg in ['Validation failed', 'regression check', 'lint'])
+            any(msg.lower() in error.lower() for msg in ['Forbidden transition', 'Auto-promotion failed', 'Regression check not passed'])
             if is_allowed:
                 is_pass = success or is_validation_error
                 status = 'ACCEPTED' if success else 'REJECTED'

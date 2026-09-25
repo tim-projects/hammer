@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def run_dev(cmd):
     full_cmd = ['./hammer', 'tasks', '--dev'] + cmd
     return subprocess.run(full_cmd, capture_output=True, text=True, check=False)

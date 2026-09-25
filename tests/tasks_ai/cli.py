@@ -7,12 +7,22 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import cast
-from .constants import ALLOWED_CONFIG_KEYS, ALLOWED_TRANSITIONS, CURRENT_TASK_FILENAME, KEY_MAP, STATE_FOLDERS, TASKS_BRANCH, TASKS_DIR
+
+from .constants import (
+    ALLOWED_CONFIG_KEYS,
+    ALLOWED_TRANSITIONS,
+    CURRENT_TASK_FILENAME,
+    KEY_MAP,
+    STATE_FOLDERS,
+    TASKS_BRANCH,
+    TASKS_DIR,
+)
 from .file_manager import FM
 from .models import Task
+
 
 def get_terminal_width():
     try:
@@ -44,7 +54,7 @@ class TasksCLI:
                         self.tasks_dir = pyproject_data.get('tool', {}).get('tasks_ai', {}).get('tasks_dir', self.tasks_dir)
                 except ImportError:
                     pass
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
         if os.path.isabs(self.tasks_dir):
             self.tasks_path = self.tasks_dir
@@ -106,7 +116,7 @@ class TasksCLI:
                         self._run_git(['rm', '-rf', 'live'], cwd=self.tasks_path)
                     if os.path.exists(live_dir):
                         shutil.rmtree(live_dir)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
     def _clear_delete_marks(self):
@@ -198,7 +208,7 @@ class TasksCLI:
         main_sha = None
         try:
             main_sha = self._run_git(['rev-parse', default_branch]).stdout.strip()
-        except Exception:
+        except Exception:  # noqa: BLE001
             main_sha = None
         self.log(f'[DEBUG] branch={branch}, default_branch={default_branch}, main_sha={main_sha}')
         diff_content = ''
@@ -341,7 +351,7 @@ class TasksCLI:
             target_dir = os.path.join(self.tasks_path, folder)
             if not os.path.exists(target_dir):
                 continue
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             for item in os.listdir(target_dir):
                 if item == '.gitkeep':
                     continue
@@ -356,7 +366,7 @@ class TasksCLI:
                             if '->DONE' in line:
                                 match = re.search('- (\\d{6} \\d{2}:\\d{2}):', line)
                                 if match:
-                                    done_date = datetime.strptime(match.group(1), '%y%m%d %H:%M')
+                                    done_date = datetime.strptime(match.group(1) + '+0000', '%y%m%d %H:%M%z')
                                     break
                         if done_date and now - done_date > timedelta(days=7):
                             if self._has_incomplete_checkboxes(path):
@@ -464,7 +474,7 @@ class TasksCLI:
             return
         task_path_str = cast(str, task_path)
         log_file = os.path.join(task_path_str, 'activity.log')
-        timestamp = datetime.now().strftime('%y%m%d %H:%M')
+        timestamp = datetime.now(timezone.utc).strftime('%y%m%d %H:%M')
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f'- {timestamp}: {entry}\n')
         self._run_git(['add', os.path.join(os.path.relpath(task_path_str, self.tasks_path), 'activity.log')], cwd=self.tasks_path)
@@ -594,7 +604,7 @@ class TasksCLI:
                 task = FM.load(path)
                 if task.metadata.get('Id') == numeric_id:
                     self.error(f'Task with Id {numeric_id} already exists (in {state}).')
-        task = Task(metadata={'Id': numeric_id, 'Ti': title, 'Cr': datetime.now().strftime('%y%m%d %H:%M'), 'Bl': [], 'Pr': priority or (1 if task_type == 'issue' else 2), 'Br': task_id}, parts={'story': story or '', 'tech': tech or '', 'criteria': ('\n'.join((c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria)) if isinstance(criteria, list) else f'- [ ] {criteria}') if criteria else '', 'plan': ('\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1))) if isinstance(plan, list) else f'1. {plan}') if plan else '', 'repro': ('\n'.join((f'{i}. {r}' for i, r in enumerate(repro, 1))) if isinstance(repro, list) else f'1. {repro}') if repro else None})
+        task = Task(metadata={'Id': numeric_id, 'Ti': title, 'Cr': datetime.now(timezone.utc).strftime('%y%m%d %H:%M'), 'Bl': [], 'Pr': priority or (1 if task_type == 'issue' else 2), 'Br': task_id}, parts={'story': story or '', 'tech': tech or '', 'criteria': ('\n'.join(c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria) if isinstance(criteria, list) else f'- [ ] {criteria}') if criteria else '', 'plan': ('\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1))) if isinstance(plan, list) else f'1. {plan}') if plan else '', 'repro': ('\n'.join((f'{i}. {r}' for i, r in enumerate(repro, 1))) if isinstance(repro, list) else f'1. {repro}') if repro else None})
         try:
             self._atomic_write(task_dir, task)
             self._append_log(task_dir, 'Cr')
@@ -605,7 +615,7 @@ class TasksCLI:
             self.log(f'Created: [{numeric_id}] {task_type} | {title}')
             self.log(f'Branch: {task_id} | Now on: {current_branch}')
             self.finish({'id': numeric_id, 'task_id': task_id, 'title': title, 'file': task_id, 'path': os.path.relpath(task_dir, self.root), 'branch': task_id, 'current_branch': current_branch})
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.error(str(e))
 
     def modify(self, filename, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, notes=None, progress=None, findings=None, mitigations=None, tests_passed=None, priority=None, regression_check=None):
@@ -630,7 +640,7 @@ class TasksCLI:
             updated = True
         if criteria:
             if isinstance(criteria, list):
-                task.parts['criteria'] = '\n'.join((c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria))
+                task.parts['criteria'] = '\n'.join(c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria)
             else:
                 task.parts['criteria'] = criteria
             updated = True
@@ -727,7 +737,7 @@ class TasksCLI:
             self._run_git(['add', '--all'], cwd=self.tasks_path)
             self._run_git(['commit', '--allow-empty', '-m', f'Del {task_id}'], cwd=self.tasks_path)
             self.log(f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.error(str(e))
         self.finish({'id': task.metadata.get('Id'), 'task_id': task_id, 'title': task.metadata.get('Ti', ''), 'state': 'DELETED'})
 
@@ -831,7 +841,7 @@ class TasksCLI:
                     return True
                 if self._has_path(blocker_id, target_id, visited.copy()):
                     return True
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
         return False
 
@@ -912,7 +922,7 @@ class TasksCLI:
                     fname = os.path.basename(filepath)
                     filepath = os.path.join(self.tasks_path, STATE_FOLDERS[target], fname)
                     current_state = target
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.error(f'Move failed at step {target}: {e}')
             final_status = statuses[-1]
             self.log(f'Moved: [{task_id_num}] {tt} | {title} -> {final_status}')
@@ -1015,8 +1025,7 @@ class TasksCLI:
                 return False
             type_part, _ = self._parse_filename(fn)
             return not (type_part == 'issue' and (not t.parts.get('repro') or len(str(t.parts.get('repro', '')).strip()) < 10))
-        if current_state == 'BACKLOG' and new_status not in ('BACKLOG', 'REJECTED'):
-            if not _has_complete_content(task, fname):
+        if current_state == 'BACKLOG' and new_status not in ('BACKLOG', 'REJECTED') and not _has_complete_content(task, fname):
                 missing = []
                 if not task.parts.get('story') or len(str(task.parts.get('story', '')).strip()) < 10:
                     missing.append('story')
@@ -1070,10 +1079,8 @@ class TasksCLI:
                     self.log(f"Restored branch '{branch}' from remote and switched to it")
         if not force:
             has_origin = self._run_git(['remote', 'get-url', 'origin']).returncode == 0
-            if new_status in ('REVIEW', 'STAGING', 'DONE', 'ARCHIVED'):
-                if has_origin:
-                    if not self._run_git(['ls-remote', '--heads', 'origin', branch]).stdout:
-                        self.error(f"Branch '{branch}' not pushed to remote. Push and try again. Do not bypass this tool.")
+            if new_status in ('REVIEW', 'STAGING', 'DONE', 'ARCHIVED') and has_origin and not self._run_git(['ls-remote', '--heads', 'origin', branch]).stdout:
+                self.error(f"Branch '{branch}' not pushed to remote. Push and try again. Do not bypass this tool.")
             if new_status == 'TESTING' and current_state in ('READY', 'BACKLOG', 'PROGRESSING'):
                 status_res = self._run_git(['status', '--porcelain'], cwd=self.root)
                 has_unstaged = bool(status_res.stdout.strip())
@@ -1176,7 +1183,7 @@ class TasksCLI:
                 FLAGS['dev'] = self.dev
                 try:
                     cmd_promote(branch)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.error(f'Promotion failed: {e}')
             if new_status == 'ARCHIVED':
                 task_id = task.metadata.get('Id', '')
@@ -1196,7 +1203,7 @@ class TasksCLI:
                 task.metadata['Rc'] = ''
                 self._atomic_write(new_filepath, task)
                 self.log("REVIEW entered: Diff generated. Check .tasks/review/<task_id>.patch for regressions. If issues found, move task back to PROGRESSING/TESTING to fix. Once clean, run 'tasks modify <id> --regression-check' to enable STAGING.")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.error(str(e))
 
     def current(self, filename=None):
@@ -1298,9 +1305,8 @@ class TasksCLI:
             if bl:
                 for b in bl:
                     b_id = b.split('-')[0] if '-' in b else b
-                    if b_id in all_tasks:
-                        if self._has_path(b_id, task_id):
-                            circular_warnings.append(f"Circular blocker: Task {task_id} ({t['summary'][:30]}) <-> Task {b_id}")
+                    if b_id in all_tasks and self._has_path(b_id, task_id):
+                        circular_warnings.append(f"Circular blocker: Task {task_id} ({t['summary'][:30]}) <-> Task {b_id}")
         if circular_warnings:
             if self.as_json:
                 result = all_data.copy()
@@ -1472,9 +1478,7 @@ class TasksCLI:
             print(f"Task: [{task.metadata.get('Id', '')}] {title}")
             print(f'State: {state}')
         do_archive = False
-        if self.as_json:
-            do_archive = True
-        elif input('Archive this task? [y/N]: ').strip().lower() == 'y':
+        if self.as_json or input('Archive this task? [y/N]: ').strip().lower() == 'y':
             do_archive = True
         if do_archive:
             self._move_logic(os.path.basename(filepath), 'ARCHIVED', force=True, yes=False)
@@ -1585,7 +1589,7 @@ class TasksCLI:
                     import yaml
                     with open(config_path, 'r') as f:
                         return yaml.safe_load(f) or {}
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return {}
             return {}
 
@@ -1594,7 +1598,7 @@ class TasksCLI:
                 import yaml
                 with open(config_path, 'w') as f:
                     yaml.safe_dump(cfg, f)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.error(f'Failed to save config: {e}')
         if action == 'detect':
             detected = self._detect_tools()
@@ -1713,7 +1717,7 @@ class TasksCLI:
                 import yaml
                 with open(config_path, 'r') as f:
                     cfg = yaml.safe_load(f) or {}
-            except Exception:
+            except Exception:  # noqa: BLE001
                 cfg = {}
         else:
             cfg = {}
@@ -1900,7 +1904,7 @@ class TasksCLI:
                                             yaml.safe_load(content.split('---')[1])
                                         except yaml.YAMLError as e:
                                             bugs.append({'id': f'invalid-yaml-{item}-{md_file}', 'title': f"Invalid YAML in {md_file} for task '{item}'", 'repro': f'Parsing YAML from {folder}/{item}/{md_file}', 'expected': 'Valid YAML frontmatter', 'actual': f'YAML parse error: {e!s}'})
-                                except Exception as e:
+                                except Exception as e:  # noqa: BLE001
                                     bugs.append({'id': f'read-error-{item}-{md_file}', 'title': f"Cannot read {md_file} for task '{item}'", 'repro': f'Attempting to read {folder}/{item}/{md_file}', 'expected': 'File should be readable', 'actual': f'Error: {e!s}'})
 
         def check_branch_sync():
@@ -1946,7 +1950,7 @@ class TasksCLI:
                                     meta = json.load(f)
                                     if 'Id' in meta:
                                         max_id = max(max_id, int(meta['Id']))
-                            except Exception:
+                            except Exception:  # noqa: BLE001, S110
                                 pass
             expected_counter = max_id + 1
             if counter_value < expected_counter:
@@ -1976,7 +1980,7 @@ class TasksCLI:
                                     meta = json.load(f)
                                     if meta.get('Br'):
                                         task_branches.add(meta['Br'])
-                            except Exception:
+                            except Exception:  # noqa: BLE001, S110
                                 pass
             branches = self._run_git(['branch', '--format', '%(refname:short)']).stdout.strip().splitlines() if self.tasks_path else []
             for branch in branches:
@@ -2020,7 +2024,7 @@ class TasksCLI:
                                         self._run_git(['add', target_folder], cwd=self.tasks_path)
                                         self._run_git(['commit', '-m', f'Fix: Move task {item} from {folder} to {target_folder}'], cwd=self.tasks_path)
                                         self.log(f'Fixed: Moved task {item} from {folder}/ to {target_folder}/')
-                    except Exception:
+                    except Exception:  # noqa: BLE001, S110
                         pass
         check_state_mismatch()
         check_task_counter()

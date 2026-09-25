@@ -1,6 +1,7 @@
 import os
 import subprocess
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from .cli import TasksCLI
 
@@ -23,7 +24,7 @@ class Validation:
         validator = Validator(self.cli.root)
         try:
             return validator.run_check('test', False)
-        except Exception:
+        except Exception:  # noqa: BLE001
             if fail_safe:
                 return subprocess.CompletedProcess('', 1)
             self.cli.error('❌ TEST BREAK! HAMMER SAY NO! FIX NOW! 🔨', hint="RUN 'check test' TO SEE FAILURES. HAMMER NO BYPASS TOOL!")

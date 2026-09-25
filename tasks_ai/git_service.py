@@ -1,6 +1,8 @@
 import os
 import subprocess
+
 from .constants import STATE_FOLDERS
+
 
 class GitService:
     """
@@ -103,7 +105,7 @@ class GitService:
         main_sha = None
         try:
             main_sha = self.run(['rev-parse', default_branch]).stdout.strip()
-        except Exception:
+        except Exception:  # noqa: BLE001
             main_sha = None
         diff_content = ''
         if main_sha:

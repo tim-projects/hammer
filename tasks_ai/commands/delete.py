@@ -1,9 +1,11 @@
 import os
 import secrets
 import shutil
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..utils import parse_filename
+
 
 def run(cli, filename, confirm=None):
     """Execution logic for 'tasks delete'."""
@@ -36,6 +38,6 @@ def run(cli, filename, confirm=None):
         cli._run_git(['add', '--all'], cwd=cli.tasks_path)
         cli._run_git(['commit', '--allow-empty', '-m', f'Del {task_id}'], cwd=cli.tasks_path)
         cli.log(f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         cli.error(str(e))
     cli.finish({'id': task.metadata.get('Id'), 'task_id': task_id, 'title': task.metadata.get('Ti', ''), 'state': 'DELETED'})

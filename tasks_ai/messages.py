@@ -1,6 +1,7 @@
 import json
 import os
 
+
 class MessageRegistry:
 
     def __init__(self, data_dir='data'):

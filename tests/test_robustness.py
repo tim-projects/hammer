@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
 import json
 import os
 import shutil
 import subprocess
 import tempfile
 import unittest
+
 
 class TestRobustness(unittest.TestCase):
 
@@ -860,7 +862,7 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(['doctor'])
         self.assertTrue(res['success'])
         self.assertGreaterEqual(res['data']['issues_found'], 1)
-        mismatch_found = any(('state-mismatch' in bug['id'] for bug in res['data']['bugs']))
+        mismatch_found = any('state-mismatch' in bug['id'] for bug in res['data']['bugs'])
         self.assertTrue(mismatch_found, 'Expected state-mismatch bug to be detected')
         res_fix = self.run_cmd(['doctor', '--fix'])
         self.assertTrue(res_fix['success'])

@@ -1,5 +1,6 @@
 from ..cli_utils import format_table
 
+
 def render_table(all_data):
     headers = ['#', 'P', 'Summary', 'Status', 'Type', 'Branch']
     rows = []

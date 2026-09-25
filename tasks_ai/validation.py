@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from .cli_engine import TasksCLI
 
@@ -87,7 +88,7 @@ class Validation:
                 if len(lines) == 1:
                     data = lines[0]
                 else:
-                    data = {'success': all((line.get('success', False) for line in lines)), 'results': lines}
+                    data = {'success': all(line.get('success', False) for line in lines), 'results': lines}
                 if result.returncode == 0:
                     self.cli.finish(data)
                 else:
