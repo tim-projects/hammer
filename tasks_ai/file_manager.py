@@ -1,137 +1,106 @@
-# tasks_ai/file_manager.py
 import json
 import os
 import shutil
 import tempfile
-
 from .models import Task
-
 
 def _atomic_write(path, content):
     """Write content to file atomically using temp file + rename."""
-    dir_path = os.path.dirname(path) or "."
-    with tempfile.NamedTemporaryFile(
-        mode="w", dir=dir_path, delete=False, encoding="utf-8"
-    ) as tmp:
+    dir_path = os.path.dirname(path) or '.'
+    with tempfile.NamedTemporaryFile(mode='w', dir=dir_path, delete=False, encoding='utf-8') as tmp:
         tmp.write(content)
         tmp_path = tmp.name
     shutil.move(tmp_path, path)
 
-
 class FM:
+
     @staticmethod
     def load(path):
         if not os.path.exists(path):
             return Task()
-
         if os.path.isfile(path):
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            if not content.startswith("---"):
-                return Task(parts={"content": content})
-
+            if not content.startswith('---'):
+                return Task(parts={'content': content})
             meta = {}
             lines = content.splitlines()
             content_start = -1
             for i in range(1, len(lines)):
                 line = lines[i].strip()
-                if line == "---":
+                if line == '---':
                     content_start = i + 1
                     break
-                if ":" in line:
-                    k, v = [s.strip() for s in line.split(":", 1)]
-                    if v.startswith("[") and v.endswith("]"):
+                if ':' in line:
+                    k, v = [s.strip() for s in line.split(':', 1)]
+                    if v.startswith('[') and v.endswith(']'):
                         inner = v[1:-1].strip()
-                        meta[k] = (
-                            [
-                                item.strip().strip("'").strip('"')
-                                for item in inner.split(",")
-                            ]
-                            if inner
-                            else []
-                        )
+                        meta[k] = [item.strip().strip("'").strip('"') for item in inner.split(',')] if inner else []
                     elif v.isdigit():
                         meta[k] = int(v)
                     else:
                         meta[k] = v.strip("'").strip('"')
-
-            body = "\n".join(lines[content_start:]) if content_start != -1 else ""
-            return Task(metadata=meta, parts={"content": body})
-
+            body = '\n'.join(lines[content_start:]) if content_start != -1 else ''
+            return Task(metadata=meta, parts={'content': body})
         meta = {}
-        meta_path = os.path.join(path, "meta.json")
+        meta_path = os.path.join(path, 'meta.json')
         corrupted = False
         if os.path.exists(meta_path):
             try:
-                with open(meta_path, "r") as f:
+                with open(meta_path, 'r') as f:
                     content = f.read().strip()
                     if content:
                         meta = json.loads(content)
             except (json.JSONDecodeError, OSError):
                 corrupted = True
-
         parts = {}
         for f in os.listdir(path):
-            if f.endswith(".md"):
+            if f.endswith('.md'):
                 part_name = f[:-3]
-                with open(os.path.join(path, f), "r") as file:
+                with open(os.path.join(path, f), 'r') as file:
                     parts[part_name] = file.read()
-            elif f in ["verification_proof.log", ".audit_hash"]:
-                with open(os.path.join(path, f), "r") as file:
+            elif f in ['verification_proof.log', '.audit_hash']:
+                with open(os.path.join(path, f), 'r') as file:
                     parts[f] = file.read()
         return Task(metadata=meta, parts=parts, corrupted=corrupted)
 
     @staticmethod
     def dump(task, path):
-        if path.endswith(".md"):
+        if path.endswith('.md'):
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            content = "---\n"
+            content = '---\n'
             for k, v in task.metadata.items():
-                val = (
-                    "[" + ", ".join(f'"{item}"' for item in v) + "]"
-                    if isinstance(v, list)
-                    else v
-                )
-                content += f"{k}: {val}\n"
-            content += "---\n\n"
-            content += task.parts.get("content", task.content)
+                val = '[' + ', '.join((f'"{item}"' for item in v)) + ']' if isinstance(v, list) else v
+                content += f'{k}: {val}\n'
+            content += '---\n\n'
+            content += task.parts.get('content', task.content)
             _atomic_write(path, content)
             return
-
         os.makedirs(path, exist_ok=True)
-        meta_path = os.path.join(path, "meta.json")
-        _atomic_write(
-            meta_path,
-            json.dumps(task.metadata, indent=2),
-        )
-
+        meta_path = os.path.join(path, 'meta.json')
+        _atomic_write(meta_path, json.dumps(task.metadata, indent=2))
         for name, content in task.parts.items():
-            if name == "content":
+            if name == 'content':
                 continue
             if content is None:
                 continue
-
-            if name.endswith(".md") or name in [
-                "verification_proof.log",
-                ".audit_hash",
-            ]:
+            if name.endswith('.md') or name in ['verification_proof.log', '.audit_hash']:
                 if isinstance(content, list):
-                    content = "\n".join(content)
+                    content = '\n'.join(content)
                 _atomic_write(os.path.join(path, name), content)
             else:
                 if isinstance(content, list):
-                    content = "\n".join(content)
-                _atomic_write(os.path.join(path, f"{name}.md"), content)
+                    content = '\n'.join(content)
+                _atomic_write(os.path.join(path, f'{name}.md'), content)
 
     @staticmethod
-    def append_log(path, message, section="progress"):
+    def append_log(path, message, section='progress'):
         """Append a message to a specific section of a task."""
         task = FM.load(path)
-        current = task.parts.get(section, "")
-        if current and not current.endswith("\n"):
-            current += "\n"
+        current = task.parts.get(section, '')
+        if current and (not current.endswith('\n')):
+            current += '\n'
         from datetime import datetime
-
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        task.parts[section] = f"{current}[{timestamp}] {message}\n"
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        task.parts[section] = f'{current}[{timestamp}] {message}\n'
         FM.dump(task, path)

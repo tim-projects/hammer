@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-
 from .cli_io import error, finish, log
 from .constants import TASKS_DIR
 from .context import ProjectContext
@@ -8,67 +7,45 @@ from .file_manager import FM
 from .git_service import GitService
 from .pipeline import PipelineService
 
-
 class TasksCLI:
+
     def __init__(self, as_json=False, command=None, quiet=False, dev=False, yes=False):
         self.as_json = as_json
         self.quiet = quiet
         self.dev = dev
         self.yes = yes
         self.output_messages = []
-
-        # Phase 1: Context & Path Abstraction
         self.context = ProjectContext(dev=dev)
         self.root = self.context.repo_root or os.getcwd()
-
-        # Phase 2: Logic Extraction (Modularization)
         self.git = GitService(self.context, logger=self)
         self.pipeline = PipelineService(self.context, self.git, logger=self)
-
-        # Resolve absolute path to repo.py (works for both source checkout and system install)
         install_dir = Path(__file__).resolve().parent.parent
-        self.repo_script = str(install_dir / "repo.py")
-
-        # Determine tasks directory
+        self.repo_script = str(install_dir / 'repo.py')
         self.tasks_dir = TASKS_DIR
         if not dev:
-            # Check pyproject.toml for override first (project-wide)
-            pyproject_path = self.context.resolve_path("pyproject.toml")
+            pyproject_path = self.context.resolve_path('pyproject.toml')
             if os.path.exists(pyproject_path):
                 try:
                     import toml
-
-                    with open(pyproject_path, "r") as f:
+                    with open(pyproject_path, 'r') as f:
                         pyproject_data = toml.load(f)
-                        self.tasks_dir = (
-                            pyproject_data.get("tool", {})
-                            .get("tasks_ai", {})
-                            .get("tasks_dir", self.tasks_dir)
-                        )
+                        self.tasks_dir = pyproject_data.get('tool', {}).get('tasks_ai', {}).get('tasks_dir', self.tasks_dir)
                 except Exception:
                     pass
-
-        # Update context with potentially overridden tasks_dir
         self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
         if dev:
-            self.context.tasks_path = "/tmp/.tasks"
+            self.context.tasks_path = '/tmp/.tasks'
             if not os.path.exists(self.context.tasks_path):
                 os.makedirs(self.context.tasks_path, exist_ok=True)
         elif os.path.isabs(self.tasks_dir):
             self.context.tasks_path = self.tasks_dir
-
         self.tasks_path = self.context.tasks_path
-
         if not self.tasks_path:
-            self.tasks_path = os.path.join(self.root, ".tasks")
+            self.tasks_path = os.path.join(self.root, '.tasks')
             self.context.tasks_path = self.tasks_path
-
-        # Now that self.tasks_path is set, we can check .tasks/config.yaml if not in dev mode
         if not dev:
-            # Implementation of _get_config to be moved to utils
             pass
-
-        self.logs_path = os.path.join(self.tasks_path, "logs")
+        self.logs_path = os.path.join(self.tasks_path, 'logs')
 
     def log(self, message):
         log(self, message)
@@ -87,13 +64,11 @@ class TasksCLI:
 
     def _get_next_id(self):
         from .counter import TaskCounterProtector
-
         protector = TaskCounterProtector(self.tasks_path, self)
         return protector.get_next_id(self)
 
     def _recover_task_counter_from_tasks(self):
         from .constants import STATE_FOLDERS
-
         try:
             max_id = 0
             for folder in STATE_FOLDERS.values():
@@ -101,20 +76,13 @@ class TasksCLI:
                 if not os.path.exists(state_path):
                     continue
                 for item in os.listdir(state_path):
-                    if item in [
-                        ".gitkeep",
-                        ".task_counter",
-                        "task_counter",
-                        ".task_counter.counter_hash",
-                        ".task_counter.counter_backup",
-                        ".task_counter.counter_backup.hash",
-                    ]:
+                    if item in ['.gitkeep', '.task_counter', 'task_counter', '.task_counter.counter_hash', '.task_counter.counter_backup', '.task_counter.counter_backup.hash']:
                         continue
                     item_path = os.path.join(state_path, item)
                     if not os.path.isdir(item_path):
                         continue
-                    if "-" in item:
-                        parts = item.split("-", 1)
+                    if '-' in item:
+                        parts = item.split('-', 1)
                         if parts[0].isdigit():
                             task_id = int(parts[0])
                             max_id = max(max_id, task_id)
@@ -123,11 +91,9 @@ class TasksCLI:
             return 0
 
     def _verify_counter_hash(self, counter_file, hash_file):
-        # Implementation of _verify_counter_hash
         return True
 
     def _write_counter_hash(self, counter_file, hash_file):
-        # Implementation of _write_counter_hash
         pass
 
     def _tasks_directory_has_data(self, path):
@@ -136,9 +102,8 @@ class TasksCLI:
     def find_task(self, filename):
         from .constants import STATE_FOLDERS
         from .file_manager import FM
-
         for folder in STATE_FOLDERS.values():
             path = os.path.join(self.tasks_path, folder, filename)
             if os.path.exists(path):
-                return path, FM.load(path)
-        return None, None
+                return (path, FM.load(path))
+        return (None, None)

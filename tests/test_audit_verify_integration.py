@@ -2,71 +2,28 @@ import json
 import os
 import subprocess
 
-
-# Helper to run hammer commands
 def run_dev(cmd, force=False):
-    full_cmd = ["./hammer", "tasks", "--dev"] + cmd
-    if force and cmd and cmd[0] == "init":
-        full_cmd.append("--force")
-    result = subprocess.run(full_cmd, capture_output=True, text=True)
+    full_cmd = ['./hammer', 'tasks', '--dev'] + cmd
+    if force and cmd and (cmd[0] == 'init'):
+        full_cmd.append('--force')
+    result = subprocess.run(full_cmd, capture_output=True, text=True, check=False)
     return result
 
-
 def setup_dev_config():
-    dev_tasks_dir = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
-    config_data = {
-        "repo": {
-            "lint": "/bin/true",
-            "test": "/bin/true",
-            "type_check": "/bin/true",
-            "format": "/bin/true",
-        }
-    }
-    with open(os.path.join(dev_tasks_dir, "config.yaml"), "w") as f:
+    dev_tasks_dir = os.environ.get('HAMMER_DEV_TASKS_DIR', '/tmp/.tasks')
+    config_data = {'repo': {'lint': '/bin/true', 'test': '/bin/true', 'type_check': '/bin/true', 'format': '/bin/true'}}
+    with open(os.path.join(dev_tasks_dir, 'config.yaml'), 'w') as f:
         json.dump(config_data, f, indent=2)
 
-
 def test_pipeline_audit_verify_gates():
-    # 1. Init dev env with force to clean up
-    run_dev(["init"], force=True)
+    run_dev(['init'], force=True)
     setup_dev_config()
-
-    # 2. Create task
-    run_dev(
-        [
-            "create",
-            "Integration Test Task",
-            "--story",
-            "Sufficiently long story content here to pass validation",
-            "--tech",
-            "Sufficiently long technical description here to pass validation",
-            "--criteria",
-            "- [ ] Sufficiently long acceptance criteria here to pass validation",
-            "--plan",
-            "Sufficiently long planning details here to pass validation",
-        ]
-    )
-    task_id = "1"
-
-    # 3. Mark criteria as done
-    run_dev(["modify", task_id, "--criteria", "- [x] Sufficiently long acceptance criteria here to pass validation"])
-
-    # 4. Multi-step move
-    run_dev(["move", task_id, "READY,PROGRESSING,TESTING,REVIEW"])
-
-    # 5. Audit
-    run_dev(["audit", task_id])
-
-    # 6. Verify
-    run_dev(["verify", task_id, "--proof", "Integration proof"])
-
-    # 7. Regression Check
-    run_dev(["modify", task_id, "--regression-check"])
-
-    # 8. Move to STAGING
-    move_res = run_dev(["move", task_id, "STAGING"])
-
-    # 9. Verify result
-    assert move_res.returncode == 0, (
-        f"Failed to move to STAGING: {move_res.stderr} {move_res.stdout}"
-    )
+    run_dev(['create', 'Integration Test Task', '--story', 'Sufficiently long story content here to pass validation', '--tech', 'Sufficiently long technical description here to pass validation', '--criteria', '- [ ] Sufficiently long acceptance criteria here to pass validation', '--plan', 'Sufficiently long planning details here to pass validation'])
+    task_id = '1'
+    run_dev(['modify', task_id, '--criteria', '- [x] Sufficiently long acceptance criteria here to pass validation'])
+    run_dev(['move', task_id, 'READY,PROGRESSING,TESTING,REVIEW'])
+    run_dev(['audit', task_id])
+    run_dev(['verify', task_id, '--proof', 'Integration proof'])
+    run_dev(['modify', task_id, '--regression-check'])
+    move_res = run_dev(['move', task_id, 'STAGING'])
+    assert move_res.returncode == 0, f'Failed to move to STAGING: {move_res.stderr} {move_res.stdout}'
