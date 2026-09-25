@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
@@ -199,7 +199,7 @@ def run(
                 "Id": pair_numeric_id,
                 "Ti": pair_title,
                 "Ty": "task",
-                "Cr": datetime.now().strftime("%y%m%d %H:%M"),
+                "Cr": datetime.now(timezone.utc).strftime("%y%m%d %H:%M"),
                 "Bl": [],
                 "Pr": priority or 2,
                 "Br": pair_task_id,

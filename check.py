@@ -367,13 +367,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     cmd_to_run = cmd.copy()
     env = os.environ.copy()
     if tool == "pytest":
-<<<<<<< HEAD
-        # Only run fast, non-reentrant tests to avoid nested validation subprocesses
-=======
         # Add explicit path to the project root to ensure pytest finds tests
         cmd_to_run.append(project_root)
         # Only run tests that don't have pipeline re-entrancy issues
->>>>>>> main
         # (tests that call tasks move internally cause validation to run in a subprocess
         # which fails due to missing PYTHONPATH/environment)
         # Also exclude known-failing tests that have pre-existing issues unrelated to task changes
