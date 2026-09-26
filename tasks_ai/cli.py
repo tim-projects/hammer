@@ -252,8 +252,8 @@ class TasksCLI:
             )
             self._run_git(["add", rel_log], cwd=self.tasks_path)
 
-    def _run_git(self, cmd, cwd=None):
-        return self.git.run(cmd, cwd=cwd)
+    def _run_git(self, cmd, cwd=None, check=False):
+        return self.git.run(cmd, cwd=cwd, check=check)
 
     def _get_default_branch(self):
         return self.git.get_default_branch()
@@ -589,18 +589,38 @@ class TasksCLI:
                     self.log(f"Resetting dev tasks at {self.tasks_path}")
                     shutil.rmtree(self.tasks_path)
 
-            os.makedirs(self.tasks_path, exist_ok=True)
+            from .constants import TASKS_BRANCH
+
+            clone_result = self._run_git(
+                [
+                    "clone",
+                    "--branch",
+                    TASKS_BRANCH,
+                    "--depth",
+                    "1",
+                    self.root,
+                    self.tasks_path,
+                ],
+                check=False,
+            )
+            if clone_result.returncode != 0:
+                self.error(
+                    f"Failed to clone tasks branch '{TASKS_BRANCH}' from parent repo. "
+                    "Ensure the branch exists and the parent repo is a valid git repository."
+                )
+
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
                 os.makedirs(p, exist_ok=True)
                 Path(os.path.join(p, ".gitkeep")).touch()
-            with open(os.path.join(self.tasks_path, ".task_counter"), "w") as f:
-                f.write("0")
-            self._run_git(["init"], cwd=self.tasks_path)
-            self._run_git(["add", "."], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "-m", "Initial dev tasks commit"], cwd=self.tasks_path
-            )
+            counter_file = os.path.join(self.tasks_path, ".task_counter")
+            if not os.path.exists(counter_file):
+                with open(counter_file, "w") as f:
+                    f.write("0")
+                self._run_git(["add", "."], cwd=self.tasks_path)
+                self._run_git(
+                    ["commit", "-m", "Init task counter"], cwd=self.tasks_path
+                )
             self._ensure_tasks_backup_gitignored()
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
