@@ -667,29 +667,37 @@ class TasksCLI:
 
         self._run_git(["rm", "-rf", "--cached", self.tasks_dir], cwd=self.root)
 
-        is_worktree = False
         if os.path.exists(self.tasks_path):
-            wt_res = self._run_git(["worktree", "list", "--porcelain"])
-            if self.tasks_path in wt_res.stdout:
-                is_worktree = True
+            print(
+                f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"
+            )
+            if self._tasks_directory_has_data(self.tasks_path):
+                self._backup_tasks_directory(self.tasks_path)
+                if not force:
+                    self.error(
+                        "Found existing .tasks directory with data. Use --force to reset."
+                    )
+            if os.path.isdir(self.tasks_path):
+                shutil.rmtree(self.tasks_path)
+            else:
+                os.remove(self.tasks_path)
 
-        if not is_worktree:
-            if os.path.exists(self.tasks_path):
-                print(
-                    f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"
-                )
-                if self._tasks_directory_has_data(self.tasks_path):
-                    self._backup_tasks_directory(self.tasks_path)
-                    if not force:
-                        self.error(
-                            "Found existing .tasks directory with data. Use --force to reset."
-                        )
-                if os.path.isdir(self.tasks_path):
-                    shutil.rmtree(self.tasks_path)
-                else:
-                    os.remove(self.tasks_path)
-            self._run_git(
-                ["worktree", "add", self.tasks_path, TASKS_BRANCH], cwd=self.root
+        clone_result = self._run_git(
+            [
+                "clone",
+                "--branch",
+                TASKS_BRANCH,
+                "--depth",
+                "1",
+                self.root,
+                self.tasks_path,
+            ],
+            check=False,
+        )
+        if clone_result.returncode != 0:
+            self.error(
+                f"Failed to clone tasks branch '{TASKS_BRANCH}' from parent repo. "
+                "Ensure the branch exists and the parent repo is a valid git repository."
             )
 
         for folder in STATE_FOLDERS.values():
@@ -727,7 +735,7 @@ class TasksCLI:
         self.finish(result)
 
     def restore(self, branch="tasks", force=False):
-        """Restore .tasks worktree from the specified backup branch."""
+        """Restore .tasks from the specified backup branch by cloning."""
         tasks_path = self.tasks_path
         if os.path.exists(tasks_path):
             if force:
@@ -743,26 +751,33 @@ class TasksCLI:
                     f"The directory '{tasks_path}' already exists. Use --force to overwrite, or delete it first."
                 )
 
-        self._run_git(["fetch", "origin"], cwd=self.root)
-        self._run_git(["worktree", "prune"], cwd=self.root)
-
-        branch_check = self._run_git(["branch", "--list", branch], cwd=self.root)
-        if branch_check.returncode == 0 and branch in branch_check.stdout:
-            self._run_git(["worktree", "add", tasks_path, branch], cwd=self.root)
-        else:
-            remote_check = self._run_git(
-                ["ls-remote", "--heads", "origin", branch], cwd=self.root
-            )
-            if not remote_check.stdout.strip():
-                self.error(
-                    f"Branch '{branch}' not found locally or on remote. Cannot restore."
-                )
-            self._run_git(
-                ["worktree", "add", "-b", branch, tasks_path, f"origin/{branch}"],
-                cwd=self.root,
+        remote_check = self._run_git(
+            ["ls-remote", "--heads", "origin", branch], cwd=self.root
+        )
+        if not remote_check.stdout.strip():
+            self.error(
+                f"Branch '{branch}' not found on remote. Cannot restore."
             )
 
-        self.log(f"Restored .tasks worktree from branch '{branch}' at {tasks_path}")
+        clone_result = self._run_git(
+            [
+                "clone",
+                "--branch",
+                branch,
+                "--depth",
+                "1",
+                self.root,
+                tasks_path,
+            ],
+            check=False,
+        )
+        if clone_result.returncode != 0:
+            self.error(
+                f"Failed to clone branch '{branch}' from parent repo. "
+                "Ensure the branch exists and the parent repo is a valid git repository."
+            )
+
+        self.log(f"Restored .tasks from branch '{branch}' at {tasks_path}")
         self.finish({"restored": True, "branch": branch, "path": tasks_path})
 
     def list(self, show_all=False):
