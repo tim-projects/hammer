@@ -751,12 +751,18 @@ class TasksCLI:
                     f"The directory '{tasks_path}' already exists. Use --force to overwrite, or delete it first."
                 )
 
-        remote_check = self._run_git(
-            ["ls-remote", "--heads", "origin", branch], cwd=self.root
+        remote_url = self._run_git(
+            ["remote", "get-url", "origin"], cwd=self.root
+        ).stdout.strip()
+        if not remote_url:
+            remote_url = self.root
+
+        branch_check = self._run_git(
+            ["ls-remote", "--heads", remote_url, branch], cwd=self.root
         )
-        if not remote_check.stdout.strip():
+        if not branch_check.stdout.strip():
             self.error(
-                f"Branch '{branch}' not found on remote. Cannot restore."
+                f"Branch '{branch}' not found at '{remote_url}'. Cannot restore."
             )
 
         clone_result = self._run_git(
@@ -766,15 +772,15 @@ class TasksCLI:
                 branch,
                 "--depth",
                 "1",
-                self.root,
+                remote_url,
                 tasks_path,
             ],
             check=False,
         )
         if clone_result.returncode != 0:
             self.error(
-                f"Failed to clone branch '{branch}' from parent repo. "
-                "Ensure the branch exists and the parent repo is a valid git repository."
+                f"Failed to clone branch '{branch}' from '{remote_url}'. "
+                "Ensure the branch exists and the source is a valid git repository."
             )
 
         self.log(f"Restored .tasks from branch '{branch}' at {tasks_path}")
