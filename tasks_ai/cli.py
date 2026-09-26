@@ -553,13 +553,37 @@ class TasksCLI:
             )
         os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
 
+    def _backup_tasks_directory(self, tasks_path):
+        from datetime import datetime, timezone
+
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
+        backup_dir = os.path.join(os.path.dirname(tasks_path), ".tasks.backup")
+        backup_path = os.path.join(backup_dir, timestamp, ".tasks")
+        self.log(f"Backing up existing tasks to {backup_path}...")
+        os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+        shutil.copytree(tasks_path, backup_path)
+        return backup_path
+
+    def _ensure_tasks_backup_gitignored(self):
+        gitignore_path = os.path.join(self.root, ".gitignore")
+        ignore_line = "/.tasks.backup/"
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, "r") as f:
+                content = f.read()
+            if ignore_line not in content:
+                with open(gitignore_path, "a") as f:
+                    f.write(f"\n{ignore_line}\n")
+        else:
+            with open(gitignore_path, "w") as f:
+                f.write(f"{ignore_line}\n")
+
     def init(self, force=False):
         if self.dev:
-            # Safe to reset dev storage if --force is used
             if os.path.exists(self.tasks_path):
                 if not force:
                     self.error("Dev tasks already initialized. Use --force to reset.")
                 else:
+                    self._backup_tasks_directory(self.tasks_path)
                     self.log(f"Resetting dev tasks at {self.tasks_path}")
                     shutil.rmtree(self.tasks_path)
 
@@ -575,6 +599,7 @@ class TasksCLI:
             self._run_git(
                 ["commit", "-m", "Initial dev tasks commit"], cwd=self.tasks_path
             )
+            self._ensure_tasks_backup_gitignored()
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
             return
@@ -583,15 +608,8 @@ class TasksCLI:
         if not force and os.path.exists(self.tasks_path):
             self.error("Tasks already initialized. Use --force to backup and reset.")
         elif force and os.path.exists(self.tasks_path):
-            # MANDATORY BACKUP for production before reset
-            from datetime import datetime
+            self._backup_tasks_directory(self.tasks_path)
 
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")  # noqa: DTZ005
-            backup_path = f"{self.tasks_path}.bak_{timestamp}"
-            self.log(f"MANDATORY BACKUP: Backing up existing tasks to {backup_path}...")
-            shutil.copytree(self.tasks_path, backup_path)
-
-            # Now safe to remove
             if os.path.isdir(self.tasks_path):
                 shutil.rmtree(self.tasks_path)
             else:
@@ -623,6 +641,8 @@ class TasksCLI:
             with open(gitignore_path, "w") as f:
                 f.write(f"{ignore_line}\n")
 
+        self._ensure_tasks_backup_gitignored()
+
         self._run_git(["rm", "-rf", "--cached", self.tasks_dir], cwd=self.root)
 
         is_worktree = False
@@ -637,12 +657,7 @@ class TasksCLI:
                     f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"
                 )
                 if self._tasks_directory_has_data(self.tasks_path):
-                    from datetime import datetime
-
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")  # noqa: DTZ005
-                    backup_path = f"/tmp/.tasks.bak_{timestamp}"
-                    self.log(f"Backing up existing .tasks to {backup_path}...")
-                    shutil.copytree(self.tasks_path, backup_path)
+                    self._backup_tasks_directory(self.tasks_path)
                     if not force:
                         self.error(
                             "Found existing .tasks directory with data. Use --force to reset."
