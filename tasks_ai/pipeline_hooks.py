@@ -45,23 +45,30 @@ class ValidationHook(PipelineHook):
     """Runs all validation checks when exiting PROGRESSING or TESTING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
-        if current_state in ["PROGRESSING", "TESTING"]:
-            cli.console(
-                "validate", "pre-transition", f"{current_state} -> {new_status}"
-            )
+        if current_state not in ["PROGRESSING", "TESTING"]:
+            return
 
-            # Enforce presence of essential files
-            for required_file in ["criteria.md", "progress.md"]:
-                if not os.path.exists(os.path.join(filepath, required_file)):
-                    cli.error(
-                        f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
-                    )
+        cli.console(
+            "validate", "pre-transition", f"{current_state} -> {new_status}"
+        )
 
-            cli.run_tool("all")
+        # Enforce presence of essential files
+        for required_file in ["criteria.md", "progress.md"]:
+            if not os.path.exists(os.path.join(filepath, required_file)):
+                cli.error(
+                    f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
+                )
 
-            # If we reach here, all checks passed
-            task.metadata["Tp"] = True
-            cli._atomic_write(filepath, task)
+        # Skip expensive rerun if validation already passed
+        if task.metadata.get("Tp"):
+            cli.log("DEBUG: Validation already passed; skipping rerun.")
+            return
+
+        cli.run_tool("all")
+
+        # If we reach here, all checks passed
+        task.metadata["Tp"] = True
+        cli._atomic_write(filepath, task)
 
 
 class ContentSufficiencyHook(PipelineHook):

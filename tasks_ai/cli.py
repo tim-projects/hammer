@@ -556,11 +556,13 @@ class TasksCLI:
     def _backup_tasks_directory(self, tasks_path):
         from datetime import datetime, timezone
 
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M-%S")
         backup_dir = os.path.join(os.path.dirname(tasks_path), ".tasks.backup")
         backup_path = os.path.join(backup_dir, timestamp, ".tasks")
         self.log(f"Backing up existing tasks to {backup_path}...")
         os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+        if os.path.exists(backup_path):
+            shutil.rmtree(backup_path)
         shutil.copytree(tasks_path, backup_path)
         return backup_path
 
