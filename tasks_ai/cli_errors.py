@@ -4,4 +4,4 @@ class PipelineMergeConflict(Exception):
     def __init__(self, branch, default):
         self.branch = branch
         self.default = default
-        super().__init__(f"Merge conflict {branch} -> {default}.")
+        super().__init__(f'Merge conflict {branch} -> {default}.')

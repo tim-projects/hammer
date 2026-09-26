@@ -1,8 +1,9 @@
 # tasks_ai/file_manager.py
-import os
 import json
-import tempfile
+import os
 import shutil
+import tempfile
+
 from .models import Task
 
 
@@ -131,6 +132,6 @@ class FM:
             current += "\n"
         from datetime import datetime
 
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # noqa: DTZ005
         task.parts[section] = f"{current}[{timestamp}] {message}\n"
         FM.dump(task, path)

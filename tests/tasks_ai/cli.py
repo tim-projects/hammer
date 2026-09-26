@@ -1,28 +1,28 @@
 # tasks_ai/cli.py
-import os
-import sys  # type: ignore[attr-defined]
-import subprocess
-import tempfile
-import re
-import textwrap
-import json
-import shutil
 import fcntl
-from typing import cast
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys  # type: ignore[attr-defined]
+import tempfile
+import textwrap
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import cast
 
 from .constants import (
-    TASKS_DIR,
-    TASKS_BRANCH,
-    CURRENT_TASK_FILENAME,
-    STATE_FOLDERS,
-    ALLOWED_TRANSITIONS,
-    KEY_MAP,
     ALLOWED_CONFIG_KEYS,
+    ALLOWED_TRANSITIONS,
+    CURRENT_TASK_FILENAME,
+    KEY_MAP,
+    STATE_FOLDERS,
+    TASKS_BRANCH,
+    TASKS_DIR,
 )
-from .models import Task
 from .file_manager import FM
+from .models import Task
 
 
 def get_terminal_width():
@@ -63,7 +63,7 @@ class TasksCLI:
                         )
                 except ImportError:
                     pass
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
         if os.path.isabs(self.tasks_dir):
@@ -145,12 +145,12 @@ class TasksCLI:
                         self._run_git(["rm", "-rf", "live"], cwd=self.tasks_path)
                     if os.path.exists(live_dir):
                         shutil.rmtree(live_dir)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
     def _clear_delete_marks(self):
         updated = False
-        for state, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             dir_path = os.path.join(self.tasks_path, folder)
             if not os.path.exists(dir_path):
                 continue
@@ -200,7 +200,7 @@ class TasksCLI:
 
     def _run_git(self, args, cwd=None):
         cwd = cwd or self.root
-        result = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True)
+        result = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True)  # noqa: PLW1510
 
         # If in dev mode and command fails in tasks_path, it might not be a git repo
         if result.returncode != 0 and self.dev and cwd == self.tasks_path:
@@ -259,7 +259,7 @@ class TasksCLI:
         main_sha = None
         try:
             main_sha = self._run_git(["rev-parse", default_branch]).stdout.strip()
-        except Exception:
+        except Exception:  # noqa: BLE001
             main_sha = None
 
         self.log(
@@ -310,7 +310,7 @@ class TasksCLI:
     def _run_repo(self, args, cwd=None):
         cwd = cwd or self.root
         repo_path = os.path.join(self.root, "repo")
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [repo_path] + args, cwd=cwd, capture_output=True, text=True
         )
         return result
@@ -319,7 +319,7 @@ class TasksCLI:
         check_path = os.path.join(self.root, "check.py")
         if not os.path.exists(check_path):
             return
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [sys.executable, check_path, "lint"] + (["--fix"] if fix else []),
             cwd=self.root,
             capture_output=True,
@@ -336,7 +336,7 @@ class TasksCLI:
         check_path = os.path.join(self.root, "check.py")
         if not os.path.exists(check_path):
             return subprocess.CompletedProcess("", 0)
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [sys.executable, check_path, "test"],
             cwd=self.root,
             capture_output=True,
@@ -380,10 +380,10 @@ class TasksCLI:
                         else:
                             f.write(task_or_content.decode("utf-8"))
                 os.replace(temp_path, path)
-            except Exception as e:
+            except Exception:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-                raise e
+                raise
             return
 
         temp_dir = tempfile.mkdtemp(dir=os.path.dirname(path.rstrip("/")))
@@ -393,10 +393,10 @@ class TasksCLI:
             if os.path.exists(path):
                 shutil.rmtree(path)
             os.rename(temp_dir, path)
-        except Exception as e:
+        except Exception:
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
-            raise e
+            raise
 
     def log(self, message):
         if self.as_json:
@@ -458,7 +458,7 @@ class TasksCLI:
             target_dir = os.path.join(self.tasks_path, folder)
             if not os.path.exists(target_dir):
                 continue
-            now = datetime.now()
+            now = datetime.now()  # noqa: DTZ005
             for item in os.listdir(target_dir):
                 if item == ".gitkeep":
                     continue
@@ -473,7 +473,7 @@ class TasksCLI:
                             if "->DONE" in line:
                                 match = re.search(r"- (\d{6} \d{2}:\d{2}):", line)
                                 if match:
-                                    done_date = datetime.strptime(
+                                    done_date = datetime.strptime(  # noqa: DTZ007
                                         match.group(1), "%y%m%d %H:%M"
                                     )
                                     break
@@ -501,13 +501,13 @@ class TasksCLI:
 
             git_dir = os.path.join(self.tasks_path, ".git")
             if not os.path.exists(git_dir):
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "init"], cwd=self.tasks_path, capture_output=True
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     ["git", "add", "."], cwd=self.tasks_path, capture_output=True
                 )
-                subprocess.run(
+                subprocess.run(  # noqa: PLW1510
                     [
                         "git",
                         "commit",
@@ -530,9 +530,11 @@ class TasksCLI:
             self._run_git(["reset", "--hard"])
             self._run_git(["commit", "--allow-empty", "-m", "Initial tasks commit"])
             if original_branch:
-                self._run_git(["checkout", original_branch])
+                result = self._run_git(["checkout", original_branch])
+                if result.returncode != 0:
+                    self._run_git(["checkout", "-b", "main"])
             else:
-                self._run_git(["checkout", "-"])
+                self._run_git(["checkout", "-b", "main"])
         is_worktree = False
         if os.path.exists(self.tasks_path):
             wt_res = self._run_git(["worktree", "list", "--porcelain"])
@@ -626,7 +628,7 @@ class TasksCLI:
             return
         task_path_str = cast(str, task_path)
         log_file = os.path.join(task_path_str, "activity.log")
-        timestamp = datetime.now().strftime("%y%m%d %H:%M")
+        timestamp = datetime.now().strftime("%y%m%d %H:%M")  # noqa: DTZ005
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(f"- {timestamp}: {entry}\n")
         self._run_git(
@@ -801,7 +803,7 @@ class TasksCLI:
             metadata={
                 "Id": numeric_id,
                 "Ti": title,
-                "Cr": datetime.now().strftime("%y%m%d %H:%M"),
+                "Cr": datetime.now().strftime("%y%m%d %H:%M"),  # noqa: DTZ005
                 "Bl": [],
                 "Pr": priority or (1 if task_type == "issue" else 2),
                 "Br": task_id,
@@ -810,7 +812,10 @@ class TasksCLI:
                 "story": story or "",
                 "tech": tech or "",
                 "criteria": (
-                    "\n".join(f"- [ ] {c}" for c in criteria)
+                    "\n".join(
+                        c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                        for c in criteria
+                    )
                     if isinstance(criteria, list)
                     else f"- [ ] {criteria}"
                 )
@@ -859,7 +864,7 @@ class TasksCLI:
                     "current_branch": current_branch,
                 }
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.error(str(e))
 
     def modify(
@@ -903,7 +908,10 @@ class TasksCLI:
             updated = True
         if criteria:
             if isinstance(criteria, list):
-                task.parts["criteria"] = "\n".join(f"- [ ] {c}" for c in criteria)
+                task.parts["criteria"] = "\n".join(
+                    c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                    for c in criteria
+                )
             else:
                 task.parts["criteria"] = criteria
             updated = True
@@ -1045,7 +1053,7 @@ class TasksCLI:
             self.log(
                 f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.error(str(e))
         self.finish(
             {
@@ -1159,7 +1167,7 @@ class TasksCLI:
                         if str(meta.get("Id")) == str(start_id):
                             task_file = task_dir_path
                             break
-                    except (json.JSONDecodeError, IOError):
+                    except (OSError, json.JSONDecodeError):
                         pass
             if task_file:
                 break
@@ -1185,7 +1193,7 @@ class TasksCLI:
                 # Recursively check indirect paths
                 if self._has_path(blocker_id, target_id, visited.copy()):
                     return True
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
         return False
@@ -1323,7 +1331,7 @@ class TasksCLI:
                         fname,
                     )
                     current_state = target
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.error(f"Move failed at step {target}: {e}")
 
             final_status = statuses[-1]
@@ -1498,15 +1506,15 @@ class TasksCLI:
             ):
                 return False
             type_part, _ = self._parse_filename(fn)
-            if type_part == "issue":
-                if (
+            return not (
+                type_part == "issue"
+                and (
                     not t.parts.get("repro")
                     or len(str(t.parts.get("repro", "")).strip()) < 10
-                ):
-                    return False
-            return True
+                )
+            )
 
-        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
+        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):  # noqa: SIM102
             if not _has_complete_content(task, fname):
                 missing = []
                 if (
@@ -1530,12 +1538,11 @@ class TasksCLI:
                 ):
                     missing.append("plan")
                 tt, _ = self._parse_filename(fname)
-                if tt == "issue":
-                    if (
-                        not task.parts.get("repro")
-                        or len(str(task.parts.get("repro", "")).strip()) < 10
-                    ):
-                        missing.append("repro")
+                if tt == "issue" and (
+                    not task.parts.get("repro")
+                    or len(str(task.parts.get("repro", "")).strip()) < 10
+                ):
+                    missing.append("repro")
                 self.error(
                     f"Task lacks required content to leave BACKLOG. Missing or incomplete: {', '.join(missing)}",
                     hint='Use \'tasks modify <id> --story "..." --tech "..." --criteria "..." --plan "..."\' to add details. For issues, also add --repro. Do not bypass this tool.',
@@ -1575,12 +1582,11 @@ class TasksCLI:
                 missing.append("plan")
 
             tt, _ = self._parse_filename(fname)
-            if tt == "issue":
-                if (
-                    not task.parts.get("repro")
-                    or len(str(task.parts.get("repro", "")).strip()) < 10
-                ):
-                    missing.append("repro")
+            if tt == "issue" and (
+                not task.parts.get("repro")
+                or len(str(task.parts.get("repro", "")).strip()) < 10
+            ):
+                missing.append("repro")
 
             if missing:
                 self.error(
@@ -1620,8 +1626,8 @@ class TasksCLI:
 
         if not force:
             has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
-            if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):
-                if has_origin:
+            if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):  # noqa: SIM102
+                if has_origin:  # noqa: SIM102
                     if not self._run_git(
                         ["ls-remote", "--heads", "origin", branch]
                     ).stdout:
@@ -1727,14 +1733,16 @@ class TasksCLI:
                 branch_commit = branch_sha
                 if not branch_commit and branch_exists:
                     branch_commit = self._run_git(["rev-parse", branch]).stdout.strip()
-                if not branch_commit:
-                    if self._run_git(
+                if (
+                    not branch_commit
+                    and self._run_git(
                         ["ls-remote", "--heads", "origin", branch]
-                    ).stdout.strip():
-                        self._run_git(["fetch", "origin", branch], cwd=self.root)
-                        branch_commit = self._run_git(
-                            ["rev-parse", f"origin/{branch}"]
-                        ).stdout.strip()
+                    ).stdout.strip()
+                ):
+                    self._run_git(["fetch", "origin", branch], cwd=self.root)
+                    branch_commit = self._run_git(
+                        ["rev-parse", f"origin/{branch}"]
+                    ).stdout.strip()
                 if not branch_commit:
                     branch_commit = main_sha
                 if main_sha and branch_commit:
@@ -1857,7 +1865,7 @@ class TasksCLI:
 
             # NOW call cmd_promote - task is already in TESTING so no recursive call
             if new_status == "TESTING":
-                from repo import cmd_promote, FLAGS
+                from repo import FLAGS, cmd_promote
 
                 FLAGS["yes"] = yes
                 FLAGS["quiet"] = self.quiet
@@ -1866,7 +1874,7 @@ class TasksCLI:
 
                 try:
                     cmd_promote(branch)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.error(f"Promotion failed: {e}")
             if new_status == "ARCHIVED":
                 task_id = task.metadata.get("Id", "")
@@ -1915,7 +1923,7 @@ class TasksCLI:
                     "If issues found, move task back to PROGRESSING/TESTING to fix. "
                     "Once clean, run 'tasks modify <id> --regression-check' to enable STAGING."
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.error(str(e))
 
     def current(self, filename=None):
@@ -2096,7 +2104,7 @@ class TasksCLI:
             if bl:
                 for b in bl:
                     b_id = b.split("-")[0] if "-" in b else b
-                    if b_id in all_tasks:
+                    if b_id in all_tasks:  # noqa: SIM102
                         if self._has_path(b_id, task_id):
                             circular_warnings.append(
                                 f"Circular blocker: Task {task_id} ({t['summary'][:30]}) <-> Task {b_id}"
@@ -2497,7 +2505,7 @@ class TasksCLI:
 
                     with open(config_path, "r") as f:
                         return yaml.safe_load(f) or {}
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return {}
             return {}
 
@@ -2507,7 +2515,7 @@ class TasksCLI:
 
                 with open(config_path, "w") as f:
                     yaml.safe_dump(cfg, f)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.error(f"Failed to save config: {e}")
 
         if action == "detect":
@@ -2586,9 +2594,7 @@ class TasksCLI:
             elif os.path.exists("pnpm-lock.yaml"):
                 detected["package_manager"] = "pnpm"
 
-        if os.path.exists("pyproject.toml"):
-            detected["package_manager"] = "pip"
-        elif os.path.exists("requirements.txt"):
+        if os.path.exists("pyproject.toml") or os.path.exists("requirements.txt"):
             detected["package_manager"] = "pip"
         elif os.path.exists("Pipfile"):
             detected["package_manager"] = "pipenv"
@@ -2611,6 +2617,9 @@ class TasksCLI:
             ".eslintrc.js": "eslint",
             ".eslintrc.json": "eslint",
             "eslint.config.js": "eslint",
+            "oxlint.config.js": "oxlint",
+            "oxlint.config.mjs": "oxlint",
+            ".oxlintrc.json": "oxlint",
             "tsconfig.json": "typescript",
             "rust-toolchain.toml": "rust",
             ".golangci.yml": "golangci-lint",
@@ -2683,7 +2692,7 @@ class TasksCLI:
 
                 with open(config_path, "r") as f:
                     cfg = yaml.safe_load(f) or {}
-            except Exception:
+            except Exception:  # noqa: BLE001
                 cfg = {}
         else:
             cfg = {}
@@ -2720,7 +2729,7 @@ class TasksCLI:
             cmd.append("--json")
 
         # Run check.py and capture output to pass it through TasksCLI's finish/error
-        result = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True)  # noqa: PLW1510
 
         if self.as_json:
             try:
@@ -2747,7 +2756,7 @@ class TasksCLI:
 
     def undo(self, filename):
         """Undo the last operation on a task by restoring previous state from git."""
-        filepath, current_state = self.find_task(filename)
+        filepath, _current_state = self.find_task(filename)
         if not filepath:
             self.error(
                 f"Task '{filename}' not found.",
@@ -2945,7 +2954,7 @@ class TasksCLI:
                     self.log(f"Created missing folders: {', '.join(missing)}")
 
         def check_yaml_metadata():
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -2981,7 +2990,7 @@ class TasksCLI:
                         )
 
         def check_markdown_content():
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3008,17 +3017,17 @@ class TasksCLI:
                                                     "title": f"Invalid YAML in {md_file} for task '{item}'",
                                                     "repro": f"Parsing YAML from {folder}/{item}/{md_file}",
                                                     "expected": "Valid YAML frontmatter",
-                                                    "actual": f"YAML parse error: {str(e)}",
+                                                    "actual": f"YAML parse error: {e!s}",
                                                 }
                                             )
-                                except Exception as e:
+                                except Exception as e:  # noqa: BLE001
                                     bugs.append(
                                         {
                                             "id": f"read-error-{item}-{md_file}",
                                             "title": f"Cannot read {md_file} for task '{item}'",
                                             "repro": f"Attempting to read {folder}/{item}/{md_file}",
                                             "expected": "File should be readable",
-                                            "actual": f"Error: {str(e)}",
+                                            "actual": f"Error: {e!s}",
                                         }
                                     )
 
@@ -3075,7 +3084,7 @@ class TasksCLI:
                 counter_value = int(f.read().strip())
 
             max_id = 0
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3091,7 +3100,7 @@ class TasksCLI:
                                     meta = json.load(f)
                                     if "Id" in meta:
                                         max_id = max(max_id, int(meta["Id"]))
-                            except Exception:
+                            except Exception:  # noqa: BLE001, S110
                                 pass
 
             expected_counter = max_id + 1
@@ -3123,7 +3132,7 @@ class TasksCLI:
 
         def check_orphaned_tasks():
             task_branches = set()
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 dir_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(dir_path):
                     continue
@@ -3137,9 +3146,9 @@ class TasksCLI:
                             try:
                                 with open(meta_path, "r") as f:
                                     meta = json.load(f)
-                                    if "Br" in meta and meta["Br"]:
+                                    if meta.get("Br"):
                                         task_branches.add(meta["Br"])
-                            except Exception:
+                            except Exception:  # noqa: BLE001, S110
                                 pass
 
             branches = (
@@ -3229,7 +3238,7 @@ class TasksCLI:
                                         self.log(
                                             f"Fixed: Moved task {item} from {folder}/ to {target_folder}/"
                                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001, S110
                         pass
 
         check_state_mismatch()
@@ -3290,7 +3299,7 @@ class TasksCLI:
             os.chmod(install_script, 0o755)
         else:
             self.log("Downloading install.sh from GitHub...")
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510
                 [
                     "curl",
                     "-sSL",
@@ -3307,11 +3316,11 @@ class TasksCLI:
 
         if mode == "system":
             self.log("System-wide installation detected. Running with sudo...")
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510
                 ["sudo", "bash", install_script, "-g"], capture_output=True, text=True
             )
         else:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510
                 ["bash", install_script, "-u"], capture_output=True, text=True
             )
 

@@ -28,7 +28,7 @@ class TaskCounterProtector:
                     try:
                         with open(self.counter_file, "r") as f:
                             file_id = int(f.read().strip())
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         file_id = 0
                     current = max(file_id, recovered_id or 0)
                 else:

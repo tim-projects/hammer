@@ -1,9 +1,11 @@
-import pytest
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
-import subprocess
+
+import pytest
+
 from tasks_ai.cli import TasksCLI
 
 
@@ -18,9 +20,9 @@ def setup_tasks():
     os.makedirs(repo_dir)
 
     # Init git
-    subprocess.run(["git", "init"], cwd=repo_dir, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_dir)
-    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo_dir)
+    subprocess.run(["git", "init"], cwd=repo_dir, capture_output=True)  # noqa: PLW1510
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_dir)  # noqa: PLW1510
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo_dir)  # noqa: PLW1510
 
     # Move to repo_dir
     old_cwd = os.getcwd()

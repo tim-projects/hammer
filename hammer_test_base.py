@@ -1,9 +1,9 @@
-import unittest
-import subprocess
-import os
-import tempfile
-import sys
 import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
 
 
 class HammerTestBase(unittest.TestCase):
@@ -44,7 +44,7 @@ class HammerTestBase(unittest.TestCase):
         pass
 
     def run_tasks(self, args):
-        return subprocess.run(
+        return subprocess.run(  # noqa: PLW1510
             [sys.executable, self.script_path, "-j", "--dev"] + args,
             cwd=self.repo_path,
             capture_output=True,

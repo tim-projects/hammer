@@ -16,11 +16,11 @@ Options:
 """
 
 import argparse
+import json
 import os
+import shutil
 import subprocess
 import sys
-import json
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -34,7 +34,7 @@ def get_git_root():
             .decode()
             .strip()
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return os.getcwd()
 
 
@@ -84,7 +84,7 @@ def load_config(dev=False):
                 "Warning: 'PyYAML' library not found. Skipping config.yaml parsing.",
                 file=sys.stderr,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Warning: Could not parse {config_path_yaml}: {e}", file=sys.stderr)
 
     if os.path.exists(config_path_toml):
@@ -99,7 +99,7 @@ def load_config(dev=False):
                 config.update(config_section)
         except ImportError:
             pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Warning: Could not parse pyproject.toml: {e}", file=sys.stderr)
 
     return config
@@ -123,6 +123,7 @@ def get_commands(fix=False):
             "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
             "pylint": ["pylint", "."],
             "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
+            "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
             "golangci-lint": ["golangci-lint", "run", "./..."]
             + (["--fix"] if fix else []),
         },
@@ -249,7 +250,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stdout_file,
                 tempfile.NamedTemporaryFile(mode="w+b", delete=False) as stderr_file,
             ):
-                result = subprocess.run(
+                result = subprocess.run(  # noqa: PLW1510
                     cmd_to_run,
                     cwd=project_root,
                     stdout=stdout_file,
@@ -265,11 +266,11 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
             try:
                 os.unlink(stdout_file.name)
                 os.unlink(stderr_file.name)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
         else:
             # Stream output directly to console to avoid deadlocks
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510
                 cmd_to_run,
                 cwd=project_root,
                 timeout=300,
@@ -338,7 +339,7 @@ def get_current_hash():
             .decode()
             .strip()
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 

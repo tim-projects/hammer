@@ -1,14 +1,14 @@
-import subprocess
 import os
+import subprocess
 
 
 def run_dev(cmd):
     full_cmd = ["./hammer", "tasks", "--dev"] + cmd
-    return subprocess.run(full_cmd, capture_output=True, text=True)
+    return subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
 
 
 # 1. Clean init
-subprocess.run(["./hammer", "tasks", "--dev", "init", "--force"], capture_output=True)
+subprocess.run(["./hammer", "tasks", "--dev", "init", "--force"], capture_output=True)  # noqa: PLW1510
 
 # 2. Create task
 task_dir = "/tmp/.tasks/backlog/1-task-persistent-test-task-name"

@@ -1,8 +1,9 @@
 import os
+
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
-from ..utils import parse_filename
 from ..libs.list_layout import render_table
+from ..utils import parse_filename
 
 
 def run(cli, show_all=False):
@@ -32,7 +33,7 @@ def run(cli, show_all=False):
 
             try:
                 task = FM.load(path)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 continue
 
             summary = (task.metadata.get("Ti") or "No Title")[:60]
@@ -87,7 +88,7 @@ def run(cli, show_all=False):
                     task.metadata.get("St", state)
                 ):
                     candidates.append({"task": item, "issue": "tampered location"})
-            except Exception:
+            except Exception:  # noqa: BLE001
                 candidates.append({"task": item, "issue": "corrupted metadata"})
 
     if candidates:

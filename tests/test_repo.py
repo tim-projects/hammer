@@ -1,11 +1,12 @@
-from tests.hammer_test_base import HammerTestBase, MockGitRemote
 import subprocess
+
+from tests.hammer_test_base import HammerTestBase, MockGitRemote
 
 
 class TestRepo(HammerTestBase):
     def test_repo_git_status(self):
         """Test 'repo git status' command."""
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [
                 "python3",
                 self.script_path.replace("tasks.py", "repo.py"),
@@ -24,7 +25,7 @@ class TestRepo(HammerTestBase):
 
     def test_repo_git_branch(self):
         """Test 'repo git branch' command."""
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [
                 "python3",
                 self.script_path.replace("tasks.py", "repo.py"),

@@ -1,9 +1,9 @@
+import json
 import os
-import subprocess
 import shutil
+import subprocess
 import tempfile
 import unittest
-import json
 
 
 class TestRobustnessBugfix(unittest.TestCase):
@@ -11,17 +11,17 @@ class TestRobustnessBugfix(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
-        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
         )
-        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
 
         # Initialize tasks
         self.tasks_py = os.path.join(os.getcwd(), "tasks.py")
         import sys
 
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             [sys.executable, self.tasks_py, "init"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -34,7 +34,7 @@ class TestRobustnessBugfix(unittest.TestCase):
         # Create a task
         import sys
 
-        res = subprocess.run(
+        res = subprocess.run(  # noqa: PLW1510
             [
                 sys.executable,
                 self.tasks_py,
@@ -69,7 +69,7 @@ class TestRobustnessBugfix(unittest.TestCase):
         # Run any tasks command, e.g., list
         import sys
 
-        res = subprocess.run(
+        res = subprocess.run(  # noqa: PLW1510
             [sys.executable, self.tasks_py, "--dev", "-j", "list"],
             cwd=self.repo_dir,
             capture_output=True,
@@ -85,7 +85,7 @@ class TestRobustnessBugfix(unittest.TestCase):
         # Create a task
         import sys
 
-        res = subprocess.run(
+        res = subprocess.run(  # noqa: PLW1510
             [
                 sys.executable,
                 self.tasks_py,
@@ -120,7 +120,7 @@ class TestRobustnessBugfix(unittest.TestCase):
         # Run any tasks command, e.g., list
         import sys
 
-        res = subprocess.run(
+        res = subprocess.run(  # noqa: PLW1510
             [sys.executable, self.tasks_py, "--dev", "-j", "list"],
             cwd=self.repo_dir,
             capture_output=True,

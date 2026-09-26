@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tasks_ai.validator import Validator
@@ -12,7 +12,7 @@ def main():
         validator = Validator(".")
         results = validator.run_all(False)
         print(f"Results: {results}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error: {e}")
 
 

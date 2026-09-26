@@ -1,14 +1,11 @@
-import subprocess
-import shutil
 import os
+import shutil
+import subprocess
 from pathlib import Path
-from typing import List, Dict
 
 
 class ValidationError(Exception):
     """Exception raised for validation errors."""
-
-    pass
 
 
 class Validator:
@@ -17,7 +14,7 @@ class Validator:
         self.dev = dev
         self.config = self._load_config()
 
-    def _load_config(self) -> Dict:
+    def _load_config(self) -> dict:
         """Load configuration from .tasks/config.yaml or pyproject.toml."""
         config_path_yaml = (
             Path(os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")) / "config.yaml"
@@ -54,13 +51,14 @@ class Validator:
                 pass
         return config
 
-    def _get_commands(self, fix: bool) -> Dict:
+    def _get_commands(self, fix: bool) -> dict:
         """Returns the full set of supported commands."""
         return {
             "lint": {
                 "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
                 "pylint": ["pylint", "."],
                 "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
+                "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
                 "golangci-lint": ["golangci-lint", "run", "./..."]
                 + (["--fix"] if fix else []),
                 "true": ["/bin/true"],
@@ -88,7 +86,7 @@ class Validator:
             },
         }
 
-    def run_check(self, tool_type: str, fix: bool = False, timeout: int = 60) -> Dict:
+    def run_check(self, tool_type: str, fix: bool = False, timeout: int = 60) -> dict:
         """Run a specific validation tool."""
         commands = self._get_commands(fix)
         tool_config_key = {
@@ -134,7 +132,7 @@ class Validator:
         run_env["CI"] = "true"
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510
                 cmd,
                 cwd=self.project_root,
                 capture_output=True,
@@ -153,7 +151,7 @@ class Validator:
             "exit_code": result.returncode,
         }
 
-    def run_all(self, fix: bool = False, force: bool = False) -> List[Dict]:
+    def run_all(self, fix: bool = False, force: bool = False) -> list[dict]:
         """Run all configured checks with caching."""
         if not force and not fix and self._is_unchanged():
             return [
@@ -195,7 +193,7 @@ class Validator:
                 .decode()
                 .strip()
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return ""
 
     def _update_hash(self):
@@ -204,7 +202,7 @@ class Validator:
         with open(hash_path, "w") as f:
             f.write(self._get_git_hash())
 
-    def run_debug(self) -> Dict:
+    def run_debug(self) -> dict:
         """Run debug messages check."""
         script_path = (
             self.project_root / "scripts" / "staging-remove-debug-messages-check.sh"
@@ -212,7 +210,7 @@ class Validator:
         if not script_path.exists():
             raise ValidationError(f"Debug check script not found at {script_path}")
 
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [str(script_path)], cwd=self.project_root, capture_output=True, text=True
         )
         return {

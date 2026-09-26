@@ -1,6 +1,6 @@
-import os
 import hashlib
-from typing import List, Dict
+import os
+
 from .constants import PIPELINE_STAGES
 
 
@@ -24,7 +24,7 @@ class PipelineService:
         if self.logger:
             self.logger.log(message)
 
-    def get_enabled_gates(self, target_state: str) -> List[str]:
+    def get_enabled_gates(self, target_state: str) -> list[str]:
         """Determine which gates are enabled for a target state."""
         gates = []
         if target_state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
@@ -36,7 +36,7 @@ class PipelineService:
             gates.append("mandatory_verification")
         return gates
 
-    def get_allowed_transitions(self, task_type: str = "task") -> Dict[str, List[str]]:
+    def get_allowed_transitions(self, task_type: str = "task") -> dict[str, list[str]]:
         """Get the allowed state transitions for a task type."""
         # For now, return default transitions. Could be expanded for type-specific workflows.
         from .constants import DEFAULT_ALLOWED_TRANSITIONS
@@ -74,7 +74,7 @@ class PipelineService:
 
         # 0. Fast-track check: If branch is already merged, bypass gates
         # Apply to REVIEW, STAGING, and DONE transitions
-        if target_state in ["REVIEW", "STAGING", "DONE"]:
+        if target_state in ["REVIEW", "STAGING", "DONE"]:  # noqa: SIM102
             if branch and self.git.is_merged(branch, "main"):
                 self.log(
                     f"DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion to {target_state}."
@@ -84,7 +84,7 @@ class PipelineService:
         enabled_gates = self.get_enabled_gates(target_state)
 
         # 1. Checkboxes gate: All stages moving forward require checkboxes to be checked
-        if "checkboxes" in enabled_gates:
+        if "checkboxes" in enabled_gates:  # noqa: SIM102
             if self.has_unfinished_checkboxes(task_path):
                 raise PipelineError("UNFINISHED_CHECKBOXES", task_id=task_id)
 
@@ -92,7 +92,7 @@ class PipelineService:
         if "regression_check" in enabled_gates:
             # Check if coming from a state that requires proof
             current_state = os.path.basename(os.path.dirname(task_path)).upper()
-            if current_state in ["REVIEW", "TESTING"]:
+            if current_state in ["REVIEW", "TESTING"]:  # noqa: SIM102
                 if task.metadata.get("Rc") != "PASSED":
                     patch_path = f".tasks/review/{task_id}.patch"
                     raise PipelineError(
@@ -102,28 +102,27 @@ class PipelineService:
                     )
 
         # 3. Cryptographic Audit Integrity for STAGING/DONE
-        if "audit_integrity" in enabled_gates:
+        if "audit_integrity" in enabled_gates:  # noqa: SIM102
             if task.metadata.get("Rc") != "PASSED":
                 # Only check audit if Rc is not PASSED (which implies skip or manual override)
                 # But wait, governance usually requires audit IF Rc is not empty.
                 pass
 
         # 4. Integration gate: STAGING/DONE require branch to be merged into appropriate pipeline branch
-        if "main_sync" in enabled_gates:
-            if branch:
-                # Target branch for integration check
-                integration_target = "main"
-                if target_state == "STAGING":
-                    integration_target = "staging"
+        if "main_sync" in enabled_gates and branch:
+            # Target branch for integration check
+            integration_target = "main"
+            if target_state == "STAGING":
+                integration_target = "staging"
 
-                # Check if branch is merged into target
-                if not self.git.is_merged(branch, integration_target):
-                    raise PipelineError(
-                        "BRANCH_NOT_MERGED",
-                        task_id=task_id,
-                        branch=branch,
-                        target=integration_target,
-                    )
+            # Check if branch is merged into target
+            if not self.git.is_merged(branch, integration_target):
+                raise PipelineError(
+                    "BRANCH_NOT_MERGED",
+                    task_id=task_id,
+                    branch=branch,
+                    target=integration_target,
+                )
 
         # 5. Check main divergence for terminal states
         if target_state in ["DONE", "ARCHIVED"]:
@@ -134,15 +133,13 @@ class PipelineService:
                 )
 
         # 6. Check if staging is synced with source for DONE
-        if target_state == "DONE":
-            if branch:
-                # Re-verify: Check specifically if the commit in the branch is reachable from main
-                # Since is_merged(branch, 'main') passed, we know it is.
-                # However, we also want to ensure no local main divergence.
-                if not self.git.is_merged(branch, "staging"):
-                    self.log(
-                        f"Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete."
-                    )
+        if target_state == "DONE" and branch and not self.git.is_merged(branch, "staging"):
+            # Re-verify: Check specifically if the commit in the branch is reachable from main
+            # Since is_merged(branch, 'main') passed, we know it is.
+            # However, we also want to ensure no local main divergence.
+            self.log(
+                f"Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete."
+            )
 
         # 7. Mandatory Verification for DONE
         if "mandatory_verification" in enabled_gates:
@@ -164,7 +161,7 @@ class PipelineService:
         self,
         task,
         target_state: str,
-        current_state: str = None,
+        current_state: str | None = None,
         yes: bool = False,
         force: bool = False,
     ):

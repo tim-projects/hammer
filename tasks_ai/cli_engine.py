@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
 
+from .cli_io import error, finish, log
 from .constants import TASKS_DIR
 from .context import ProjectContext
+from .file_manager import FM
 from .git_service import GitService
 from .pipeline import PipelineService
-from .cli_io import log, error, finish
-from .file_manager import FM
 
 
 class TasksCLI:
@@ -45,7 +45,7 @@ class TasksCLI:
                             .get("tasks_ai", {})
                             .get("tasks_dir", self.tasks_dir)
                         )
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
         # Update context with potentially overridden tasks_dir
@@ -96,7 +96,7 @@ class TasksCLI:
 
         try:
             max_id = 0
-            for state, folder in STATE_FOLDERS.items():
+            for folder in STATE_FOLDERS.values():
                 state_path = os.path.join(self.tasks_path, folder)
                 if not os.path.exists(state_path):
                     continue
@@ -117,10 +117,9 @@ class TasksCLI:
                         parts = item.split("-", 1)
                         if parts[0].isdigit():
                             task_id = int(parts[0])
-                            if task_id > max_id:
-                                max_id = task_id
+                            max_id = max(max_id, task_id)
             return max_id
-        except Exception:
+        except Exception:  # noqa: BLE001
             return 0
 
     def _verify_counter_hash(self, counter_file, hash_file):
@@ -135,10 +134,10 @@ class TasksCLI:
         return os.path.exists(path) and len(os.listdir(path)) > 0
 
     def find_task(self, filename):
-        from .file_manager import FM
         from .constants import STATE_FOLDERS
+        from .file_manager import FM
 
-        for _, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             path = os.path.join(self.tasks_path, folder, filename)
             if os.path.exists(path):
                 return path, FM.load(path)

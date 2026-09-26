@@ -1,9 +1,10 @@
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
+
 from ..constants import STATE_FOLDERS
-from ..models import Task
 from ..file_manager import FM
+from ..models import Task
 
 
 def run(
@@ -111,7 +112,7 @@ def run(
             "Id": numeric_id,
             "Ti": title,
             "Ty": task_type,
-            "Cr": datetime.now().strftime("%y%m%d %H:%M"),
+            "Cr": datetime.now().strftime("%y%m%d %H:%M"),  # noqa: DTZ005
             "Bl": [],
             "Pr": priority or (1 if task_type == "issue" else 2),
             "Br": task_id,
@@ -120,7 +121,10 @@ def run(
             "story": story or "",
             "tech": tech or "",
             "criteria": (
-                "\n".join(f"- [ ] {c}" for c in criteria)
+                "\n".join(
+                    c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                    for c in criteria
+                )
                 if isinstance(criteria, list)
                 else f"{criteria}"
             )
@@ -166,6 +170,89 @@ def run(
         ).stdout.strip()
         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
         cli.log(f"Branch: {task_id} | Now on: {current_branch}")
+
+        pair_numeric_id = numeric_id + 1
+        pair_title = f"Write user tests for {numeric_id}: {title}"
+        clean_pair_title = re.sub(r"[^a-zA-Z0-9]+", "-", pair_title.lower()).strip("-")
+        pair_task_id = f"{pair_numeric_id}-task-{clean_pair_title[:30]}".strip("-")
+        pair_task_dir = os.path.join(
+            cli.tasks_path, STATE_FOLDERS["BACKLOG"], pair_task_id
+        )
+
+        if cli.find_task(pair_task_id)[0]:
+            cli.error("TASK_EXISTS", task_id=pair_task_id)
+
+        for state, folder in STATE_FOLDERS.items():
+            fp = os.path.join(cli.tasks_path, folder)
+            if not os.path.exists(fp):
+                continue
+            for item in os.listdir(fp):
+                if item == ".gitkeep":
+                    continue
+                path = os.path.join(fp, item)
+                existing_task = FM.load(path)
+                if existing_task.metadata.get("Id") == pair_numeric_id:
+                    cli.error("TASK_ID_EXISTS", numeric_id=pair_numeric_id, state=state)
+
+        pair_task = Task(
+            metadata={
+                "Id": pair_numeric_id,
+                "Ti": pair_title,
+                "Ty": "task",
+                "Cr": datetime.now(timezone.utc).strftime("%y%m%d %H:%M"),
+                "Bl": [],
+                "Pr": priority or 2,
+                "Br": pair_task_id,
+            },
+            parts={
+                "story": story or "",
+                "tech": tech or "",
+                "criteria": (
+                    "\n".join(
+                        c if re.match(r"^\s*- \[( |x)\] ", c) else f"- [ ] {c}"
+                        for c in criteria
+                    )
+                    if isinstance(criteria, list)
+                    else f"{criteria}"
+                )
+                if criteria
+                else "",
+                "plan": (
+                    "\n".join(f"{i}. {p}" for i, p in enumerate(plan, 1))
+                    if isinstance(plan, list)
+                    else f"1. {plan}"
+                )
+                if plan
+                else "",
+                "repro": None,
+            },
+        )
+
+        cli._atomic_write(pair_task_dir, pair_task)
+        cli._append_log(pair_task_dir, "Cr")
+        cli._run_git(
+            ["add", os.path.relpath(pair_task_dir, cli.tasks_path)], cwd=cli.tasks_path
+        )
+        cli._run_git(
+            ["commit", "--allow-empty", "-m", f"Add task: {pair_title}"],
+            cwd=cli.tasks_path,
+        )
+
+        pair_original_branch = cli._run_git(
+            ["rev-parse", "--abbrev-ref", "HEAD"]
+        ).stdout.strip()
+        cli._run_git(["checkout", cli._get_default_branch()], cwd=cli.root)
+        cli._run_git(["checkout", "-b", pair_task_id], cwd=cli.root)
+        cli._run_git(["merge", pair_original_branch], cwd=cli.root)
+
+        pair_branch = cli._run_git(
+            ["rev-parse", "--abbrev-ref", "HEAD"]
+        ).stdout.strip()
+        cli.log(f"Created: [{pair_numeric_id}] task | {pair_title}")
+        cli.log(f"Branch: {pair_task_id} | Now on: {pair_branch}")
+
+        cli._run_git(["checkout", task_id], cwd=cli.root)
+
         cli.log(
             f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'"
         )
@@ -181,5 +268,5 @@ def run(
                 "current_branch": current_branch,
             }
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         cli.error(str(e))

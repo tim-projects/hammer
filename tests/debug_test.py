@@ -4,11 +4,11 @@ import time
 
 def run_dev(cmd):
     full_cmd = ["./hammer", "tasks", "--dev"] + cmd
-    result = subprocess.run(full_cmd, capture_output=True, text=True)
+    result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
     return result
 
 
-subprocess.run(["./hammer", "tasks", "--dev", "init", "--force"], capture_output=True)
+subprocess.run(["./hammer", "tasks", "--dev", "init", "--force"], capture_output=True)  # noqa: PLW1510
 run_dev(
     [
         "create",

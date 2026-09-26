@@ -1,6 +1,7 @@
-import os
 import json
+import os
 from datetime import datetime
+
 from ..constants import STATE_FOLDERS
 
 
@@ -61,7 +62,7 @@ def run(cli, task_id):
     log_path = os.path.join(new_dir, "activity.log")
     with open(log_path, "a") as f:
         f.write(
-            f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ARCHIVED->PROGRESSING (UNARCHIVE)\n"
+            f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ARCHIVED->PROGRESSING (UNARCHIVE)\n"  # noqa: DTZ005
         )
 
     print(f"Task {task_id} successfully unarchived to PROGRESSING.")

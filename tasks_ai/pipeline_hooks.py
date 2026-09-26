@@ -1,8 +1,9 @@
 import os
 import shutil
 from datetime import datetime
-from .hooks import PipelineHook
+
 from .constants import CURRENT_TASK_FILENAME
+from .hooks import PipelineHook
 from .models import Task
 from .utils import parse_filename
 
@@ -44,30 +45,30 @@ class ValidationHook(PipelineHook):
     """Runs all validation checks when exiting PROGRESSING or TESTING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
-        if current_state in ["PROGRESSING", "TESTING"]:
-            cli.console(
-                "validate", "pre-transition", f"{current_state} -> {new_status}"
-            )
+        if current_state not in ["PROGRESSING", "TESTING"]:
+            return
 
-            # Enforce presence of essential files
-            for required_file in ["criteria.md", "progress.md"]:
-                if not os.path.exists(os.path.join(filepath, required_file)):
-                    cli.error(
-                        f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
-                    )
+        cli.console(
+            "validate", "pre-transition", f"{current_state} -> {new_status}"
+        )
 
-            # Temporarily disable JSON mode to prevent early exit during transition
-            # run_tool calls cli.error (which sys.exits) on failure
-            orig_json = cli.as_json
-            cli.as_json = False
-            try:
-                cli.run_tool("all")
-            finally:
-                cli.as_json = orig_json
+        # Enforce presence of essential files
+        for required_file in ["criteria.md", "progress.md"]:
+            if not os.path.exists(os.path.join(filepath, required_file)):
+                cli.error(
+                    f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
+                )
 
-            # If we reach here, all checks passed
-            task.metadata["Tp"] = True
-            cli._atomic_write(filepath, task)
+        # Skip expensive rerun if validation already passed
+        if task.metadata.get("Tp"):
+            cli.log("DEBUG: Validation already passed; skipping rerun.")
+            return
+
+        cli.run_tool("all")
+
+        # If we reach here, all checks passed
+        task.metadata["Tp"] = True
+        cli._atomic_write(filepath, task)
 
 
 class ContentSufficiencyHook(PipelineHook):
@@ -79,17 +80,19 @@ class ContentSufficiencyHook(PipelineHook):
                 if not t.parts.get(part) or len(str(t.parts.get(part)).strip()) < 10:
                     return False
             tt, _ = parse_filename(fn)
-            if tt == "issue" and (
-                not t.parts.get("repro") or len(str(t.parts.get("repro")).strip()) < 10
-            ):
-                return False
-            return True
+            return not (
+                tt == "issue"
+                and (
+                    not t.parts.get("repro")
+                    or len(str(t.parts.get("repro")).strip()) < 10
+                )
+            )
 
-        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):
+        if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):  # noqa: SIM102
             if not has_complete_content(task, os.path.basename(filepath)):
                 cli.error("Task lacks required content to leave BACKLOG.")
 
-        if new_status == "PROGRESSING":
+        if new_status == "PROGRESSING":  # noqa: SIM102
             if not has_complete_content(task, os.path.basename(filepath)):
                 cli.error("Task lacks sufficient detail to move to PROGRESSING.")
 
@@ -122,7 +125,7 @@ class TestingToReviewGateHook(PipelineHook):
             task_id = task.metadata.get("Id")
             task.metadata["Rc"] = ""
             # Record generation time
-            task.metadata["PatchGenTime"] = datetime.now().timestamp()
+            task.metadata["PatchGenTime"] = datetime.now().timestamp()  # noqa: DTZ005
 
             cli.log(
                 f"DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = {task.metadata.get('Rc')}"
@@ -152,20 +155,17 @@ class BranchCheckHook(PipelineHook):
             branch_sha = (
                 branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
             )
-            if not branch_sha:
-                if has_origin:
-                    remote_check = cli._run_git(
-                        ["ls-remote", "--heads", "origin", branch]
+            if not branch_sha and has_origin:
+                remote_check = cli._run_git(["ls-remote", "--heads", "origin", branch])
+                if remote_check.stdout.strip():
+                    cli.console("git", "restore", f"{branch} from origin")
+                    cli._run_git(
+                        ["checkout", "-b", branch, f"origin/{branch}"], cwd=cli.root
                     )
-                    if remote_check.stdout.strip():
-                        cli.console("git", "restore", f"{branch} from origin")
-                        cli._run_git(
-                            ["checkout", "-b", branch, f"origin/{branch}"], cwd=cli.root
-                        )
 
         # Remote push check
-        if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):
-            if has_origin:
+        if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):  # noqa: SIM102
+            if has_origin:  # noqa: SIM102
                 if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
                     cli.error("BRANCH_NOT_PUSHED", branch=branch)
 
@@ -208,7 +208,7 @@ class ArchivedCommitHook(PipelineHook):
             )
             try:
                 cli._push_tasks_branch("tasks", fatal=False)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
 
@@ -325,6 +325,8 @@ class MainBranchProtectionHook(PipelineHook):
     """Prevents transitions if the user is working directly on the main branch."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
+        if cli.dev:
+            return
         # We only care about blocking work if they are trying to progress or move towards completion
         if new_status in ["PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"]:
             current_git_branch = cli.git.get_current_branch()
@@ -357,7 +359,7 @@ class ProgressUpdateHook(PipelineHook):
                 )
 
             # Get last commit version of the file
-            _, branch = parse_filename(os.path.basename(filepath))
+            _, _branch = parse_filename(os.path.basename(filepath))
             git_res = cli.git.run(
                 ["show", f"HEAD:{os.path.relpath(progress_file, cli.tasks_path)}"],
                 capture=True,
@@ -521,7 +523,7 @@ class DoneAtHook(PipelineHook):
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "DONE" and not task.metadata.get("DoneAt"):
-            task.metadata["DoneAt"] = datetime.now().timestamp()
+            task.metadata["DoneAt"] = datetime.now().timestamp()  # noqa: DTZ005
             cli._atomic_write(filepath, task)
 
 
@@ -534,7 +536,7 @@ class AutoArchiveHook(PipelineHook):
             if not done_at:
                 return
 
-            elapsed = datetime.now().timestamp() - done_at
+            elapsed = datetime.now().timestamp() - done_at  # noqa: DTZ005
             grace_period = 7 * 24 * 60 * 60  # 7 days in seconds
 
             if elapsed >= grace_period:

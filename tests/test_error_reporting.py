@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+import json
 import os
-import subprocess
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
-import json
-import sys
 
 
 class TestErrorReporting(unittest.TestCase):
@@ -13,11 +13,11 @@ class TestErrorReporting(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
-        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
         )
-        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
         # We need to find where 'tasks.py' is. It's in the project root.
         # Assuming the current working directory is the project root.
         self.script_path = os.path.abspath("tasks.py")
@@ -28,7 +28,7 @@ class TestErrorReporting(unittest.TestCase):
     def run_cmd(self, args):
         # Use --dev to avoid affecting real repo
         cmd = [sys.executable, self.script_path, "--dev"] + args
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             cmd,
             cwd=self.repo_dir,
             capture_output=True,
