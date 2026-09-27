@@ -179,12 +179,37 @@ class GitService:
         remotes = self.run(["remote", "-v"], cwd=tasks_path)
         self.log(f"DEBUG: Remotes stdout in {tasks_path}: '{remotes.stdout}'")
         if not remotes.stdout.strip():
-            self.log("No remote configured - skipping push (local-only mode)")
-            return {"branch": branch, "remote": None}
+            parent_remote = self.run(
+                ["remote", "get-url", "origin"], cwd=self.context.repo_root
+            )
+            if parent_remote.returncode == 0 and parent_remote.stdout.strip():
+                remote_url = parent_remote.stdout.strip()
+                self.log(
+                    f"DEBUG: Adding parent remote '{remote_url}' to .tasks for sync"
+                )
+                self.run(["remote", "add", "origin", remote_url], cwd=tasks_path)
+            else:
+                self.log("No remote configured - skipping push (local-only mode)")
+                return {"branch": branch, "remote": None}
 
+        self.run(["fetch", "origin"], cwd=tasks_path)
         current = self.run(
             ["rev-parse", "--abbrev-ref", "HEAD"], cwd=tasks_path
         ).stdout.strip()
+        merge_base = self.run(
+            ["merge-base", current, f"origin/{branch}"], cwd=tasks_path
+        )
+        if merge_base.returncode == 0:
+            head = self.run(["rev-parse", current], cwd=tasks_path).stdout.strip()
+            remote_head = self.run(
+                ["rev-parse", f"origin/{branch}"], cwd=tasks_path
+            ).stdout.strip()
+            if head != remote_head:
+                self.run(
+                    ["merge", f"origin/{branch}", "-m", "sync: merge remote tasks branch"],
+                    cwd=tasks_path,
+                )
+
         push_result = self.run(
             ["push", "-u", "origin", f"{current}:refs/heads/{branch}"], cwd=tasks_path
         )
