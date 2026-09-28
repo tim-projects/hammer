@@ -337,6 +337,15 @@ class GitService:
             yes=yes or target_state == "DONE",
         )
 
+        # Auto-save .tasks after successful merge to main
+        if target_state == "DONE":
+            self.log("Auto-saving .tasks to remote tasks branch after main merge...")
+            save_result = self.push_tasks_branch(branch="tasks", fatal=False)
+            if save_result and save_result.get("remote"):
+                self.log("✅ .tasks auto-saved to origin/tasks")
+            else:
+                self.log("⚠️  Failed to auto-save .tasks to origin/tasks")
+
     def demote_task(
         self,
         task,
