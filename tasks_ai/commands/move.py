@@ -168,6 +168,8 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
     try:
         # Stage: Physically move/copy the task directory
+        if os.path.exists(staged_task_path):
+            shutil.rmtree(staged_task_path)
         shutil.copytree(filepath_str, staged_task_path)
 
         # Validate: Re-load task from staged path and run enter hooks
