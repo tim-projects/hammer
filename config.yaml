@@ -1,1 +1,8 @@
-{"repo": {"lint": "/bin/true", "test": "/bin/true", "type_check": "/bin/true", "format": "/bin/true"}}
+{
+  "repo": {
+    "lint": "/bin/true",
+    "test": "/bin/true",
+    "type_check": "/bin/true",
+    "format": "/bin/true"
+  }
+}
