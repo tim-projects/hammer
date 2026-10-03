@@ -56,6 +56,12 @@ class TestRepo(HammerTestBase):
                 cwd=tasks_path,
                 check=True,
             )
+            # Ensure the tasks branch is pushed so auto-archive and save do not fail
+            subprocess.run(
+                ["git", "push", "-u", "origin", "tasks"],
+                cwd=tasks_path,
+                check=False,
+            )
 
             result = self.run_tasks(["save", "-y"])
             self.assertEqual(

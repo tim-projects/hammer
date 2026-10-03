@@ -80,10 +80,15 @@ class GitService:
         return result.stdout.strip()
 
     def get_default_branch(self):
-        # Fallback to 'main' if origin/HEAD cannot be determined
+        # Try origin/HEAD first
         result = self.run(["symbolic-ref", "refs/remotes/origin/HEAD"])
         if result.returncode == 0:
             return result.stdout.strip().replace("refs/remotes/origin/", "")
+        # Try common local branches
+        for branch in ["main", "master"]:
+            res = self.run(["rev-parse", "--verify", branch])
+            if res.returncode == 0:
+                return branch
         return "main"
 
     def is_merged(self, branch: str, target: str = "main") -> bool:
@@ -336,6 +341,15 @@ class GitService:
             message=f"[{task_id}] merge: {src_branch} into {target_git_branch}",
             yes=yes or target_state == "DONE",
         )
+
+        # Auto-save .tasks after successful merge to main
+        if target_state == "DONE":
+            self.log("Auto-saving .tasks to remote tasks branch after main merge...")
+            save_result = self.push_tasks_branch(branch="tasks", fatal=False)
+            if save_result and save_result.get("remote"):
+                self.log("✅ .tasks auto-saved to origin/tasks")
+            else:
+                self.log("⚠️  Failed to auto-save .tasks to origin/tasks")
 
     def demote_task(
         self,

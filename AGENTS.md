@@ -69,6 +69,7 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 - **Priority First**: Always pick the task with the lowest `P` (Priority) value first.
 - **Blockers**: If stuck, move the task to `BLOCKED` immediately and document the reason in `current-task.md` before checkpointing.
 - **Dependencies**: Use `./hammer tasks -j link <task-id> <blocker-id>` to link a task to a blocker.
+- **Criteria completion must be genuine, not cosmetic**: Before moving a task from PROGRESSING to TESTING, you MUST use `./hammer tasks show <id> criteria` to verify that every checkbox subtask has actually been completed, not merely marked with `- [x]`. Marking a checkbox without doing the work is forbidden. If any subtask is incomplete, finish the work before retrying.
 
 ## 🔑 Task References
 

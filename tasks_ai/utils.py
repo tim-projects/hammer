@@ -61,25 +61,6 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
                 if os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
                 raise
-    else:
-        content = task_or_content
-        if not isinstance(content, str):
-            try:
-                content = content.decode('utf-8')
-            except (AttributeError, UnicodeDecodeError):
-                content = str(content)
-        dir_name = os.path.dirname(path)
-        if dir_name:
-            os.makedirs(dir_name, exist_ok=True)
-        fd, temp_path = tempfile.mkstemp(dir=dir_name or '.', text=True)
-        try:
-            with os.fdopen(fd, 'w') as f:
-                f.write(content)
-            os.replace(temp_path, path)
-        except Exception:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-            raise
 
 def sync_task_content(cli, filepath, task, is_final=False) -> bool:
     """Sync task metadata with current branch commits and notes."""

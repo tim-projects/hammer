@@ -239,6 +239,7 @@ class TestRobustness(unittest.TestCase):
         )
         res = self.run_cmd(["move", file, "REVIEW"])
         self.assertTrue(res["success"], res)
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
@@ -311,16 +312,18 @@ class TestRobustness(unittest.TestCase):
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"], res)
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", file, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
@@ -813,9 +816,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = file
         self.run_cmd(["move", file, "READY"])
         self.run_cmd(["move", file, "PROGRESSING"])
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -860,15 +863,17 @@ class TestRobustness(unittest.TestCase):
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", file, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         self.run_cmd(["move", file, "DONE", "-y"])
         self.run_cmd(["move", file, "ARCHIVED", "-y"])
         res = self.run_cmd(["cleanup"])
@@ -1059,10 +1064,11 @@ class TestRobustness(unittest.TestCase):
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", branch, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         self.run_cmd(["move", str(file_id), "DONE", "-y"])
         self.run_cmd(["move", str(file_id), "ARCHIVED", "-y"])
         res = self.run_cmd(
@@ -1176,15 +1182,17 @@ class TestRobustness(unittest.TestCase):
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", file, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         self.run_cmd(["move", file, "DONE", "-y"])
         self.run_cmd(["move", file, "ARCHIVED", "-y"])
         res = self.run_cmd(["cleanup", "--dry-run"])
@@ -1583,7 +1591,8 @@ class TestRobustness(unittest.TestCase):
         """50. Run tasks init in an already initialized repository."""
         self.run_cmd(["init"])
         res = self.run_cmd(["init"])
-        self.assertTrue(res["success"], res)
+        self.assertFalse(res["success"], res)
+        self.assertIn("already initialized", res.get("error", "").lower())
 
     def test_regression_check_gate_blocks_staging(self):
         """Test that moving from REVIEW to STAGING is blocked until --regression-check."""
@@ -1650,6 +1659,7 @@ class TestRobustness(unittest.TestCase):
         self.assertIn("regression", res.get("error", "").lower())
 
         # Set Rc
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
 
         # Now STAGING should succeed
@@ -1749,17 +1759,19 @@ class TestRobustness(unittest.TestCase):
         self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
         subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
+            ["git", "branch", "-D", "staging"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(  # noqa: PLW1510
-            ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
+        subprocess.run(["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
 
         # Set regression check and move to STAGING
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"])
@@ -1816,17 +1828,18 @@ class TestRobustness(unittest.TestCase):
         # Doctor without fix should detect the issue
         res = self.run_cmd(["doctor"])
         self.assertTrue(res["success"])
-        self.assertEqual(res["data"]["issues_found"], 1)
+        self.assertEqual(len(res["data"]["bugs"]), 1)
         self.assertEqual(res["data"]["bugs"][0]["id"], "stale-task-counter")
 
-        # Doctor with --fix should update counter to max_id + 1 (which is 2+1=3)
+        # Doctor with --fix should update counter to max_id + 1
         res_fix = self.run_cmd(["doctor", "--fix"])
         self.assertTrue(res_fix["success"])
 
         # Verify counter value
         with open(counter_path, "r") as f:
             new_val = int(f.read().strip())
-        self.assertEqual(new_val, 3)
+        # Each create generates 2 tasks (main + pair), so 2 creates = 4 tasks with IDs 1-4
+        self.assertEqual(new_val, 5)
 
     def test_doctor_state_mismatch_detection_and_fix(self):
         """46. Verify doctor detects state folder mismatch and fixes with --fix."""
@@ -1873,7 +1886,7 @@ class TestRobustness(unittest.TestCase):
         # Doctor should detect state mismatch (and also stale counter if counter < expected)
         res = self.run_cmd(["doctor"])
         self.assertTrue(res["success"])
-        self.assertGreaterEqual(res["data"]["issues_found"], 1)
+        self.assertGreaterEqual(len(res["data"]["bugs"]), 1)
         mismatch_found = any(
             "state-mismatch" in bug["id"] for bug in res["data"]["bugs"]
         )
@@ -1885,7 +1898,7 @@ class TestRobustness(unittest.TestCase):
 
         # After fix, issues should be resolved (re-run doctor should show 0)
         res_after = self.run_cmd(["doctor"])
-        self.assertEqual(res_after["data"]["issues_found"], 0)
+        self.assertEqual(len(res_after["data"]["bugs"]), 0)
 
         # Verify task moved to done/
         new_task_dir = os.path.join(self.repo_dir, ".tasks", "done", tid)

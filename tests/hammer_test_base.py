@@ -29,6 +29,10 @@ class HammerTestBase(unittest.TestCase):
         os.environ['HAMMER_DEV_TASKS_DIR'] = self.dev_tasks_dir
         self.repo_path = os.path.join(self.test_root, 'repo')
         subprocess.run(['git', 'clone', os.getcwd(), self.repo_path], check=True, capture_output=True)
+        subprocess.run(['git', 'fetch', 'origin', 'tasks'], cwd=self.repo_path, check=True, capture_output=True)
+        subprocess.run(['git', 'branch', 'tasks', 'origin/tasks'], cwd=self.repo_path, check=True, capture_output=True)
+        subprocess.run(['git', 'checkout', '-b', 'main', 'origin/main'], cwd=self.repo_path, check=True, capture_output=True)
+        subprocess.run(['git', 'remote', 'set-head', 'origin', 'main'], cwd=self.repo_path, check=True, capture_output=True)
         tasks_clone_path = os.path.join(self.repo_path, '.tasks')
         if os.path.exists(tasks_clone_path):
             shutil.rmtree(tasks_clone_path)
@@ -41,6 +45,9 @@ class HammerTestBase(unittest.TestCase):
         with open(os.path.join(tasks_dir, 'config.yaml'), 'w') as f:
             json.dump({}, f)
         subprocess.run([self.script_path, 'tasks', '--dev', 'init', '--force'], cwd=self.repo_path, check=True, capture_output=True)
+        ops_path = os.path.join(self.dev_tasks_dir, '.ops')
+        if os.path.exists(ops_path):
+            shutil.rmtree(ops_path)
         config_data = {'repo': {'lint': 'ruff', 'test': '/bin/true', 'type_check': '/bin/true', 'format': 'ruff'}}
         with open(os.path.join(self.dev_tasks_dir, 'config.yaml'), 'w') as f:
             json.dump(config_data, f)

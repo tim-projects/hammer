@@ -5,7 +5,7 @@ import subprocess
 
 # Helper to run hammer commands
 def run_dev(cmd, force=False):
-    full_cmd = ["./hammer", "tasks", "--dev"] + cmd
+    full_cmd = ["./hammer", "tasks", "-j", "--dev"] + cmd
     if force and cmd and cmd[0] == "init":
         full_cmd.append("--force")
     result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
@@ -32,7 +32,7 @@ def test_pipeline_audit_verify_gates():
     setup_dev_config()
 
     # 2. Create task
-    run_dev(
+    create_result = run_dev(
         [
             "create",
             "Integration Test Task",
@@ -46,7 +46,9 @@ def test_pipeline_audit_verify_gates():
             "Sufficiently long planning details here to pass validation",
         ]
     )
-    task_id = "1"
+    create_data = json.loads(create_result.stdout)
+    task_id = str(create_data["data"]["id"])
+    branch = create_data["data"]["branch"]
 
     # 3. Mark criteria as done
     run_dev(
@@ -58,22 +60,55 @@ def test_pipeline_audit_verify_gates():
         ]
     )
 
-    # 4. Multi-step move
-    run_dev(["move", task_id, "READY,PROGRESSING,TESTING,REVIEW"])
+    # 4. Move through READY -> PROGRESSING
+    run_dev(["move", task_id, "READY"])
+    run_dev(["move", task_id, "PROGRESSING"])
 
-    # 5. Audit
+    # 5. Set up testing branch and move to TESTING
+    subprocess.run(
+        ["git", "checkout", "-b", "testing"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "merge", branch, "-m", f"Merge {branch} into testing"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
+    testing_res = run_dev(["move", task_id, "TESTING"])
+    print("TESTING rc:", testing_res.returncode)
+    print("TESTING stdout:", testing_res.stdout[:300])
+
+    # 6. Set up staging branch and move to REVIEW
+    subprocess.run(
+        ["git", "checkout", "-b", "staging"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "merge", branch, "-m", f"Merge {branch} into staging"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
+    review_res = run_dev(["move", task_id, "REVIEW"])
+    print("REVIEW rc:", review_res.returncode)
+    print("REVIEW stdout:", review_res.stdout[:300])
+
+    # 7. Audit
     run_dev(["audit", task_id])
 
-    # 6. Verify
+    # 8. Verify
     run_dev(["verify", task_id, "--proof", "Integration proof"])
 
-    # 7. Regression Check
+    # 9. Regression Check
     run_dev(["modify", task_id, "--regression-check"])
 
-    # 8. Move to STAGING
+    # 10. Move to STAGING
     move_res = run_dev(["move", task_id, "STAGING"])
 
-    # 9. Verify result
+    # 11. Verify result
     assert move_res.returncode == 0, (
         f"Failed to move to STAGING: {move_res.stderr} {move_res.stdout}"
     )

@@ -9,15 +9,14 @@ from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS
 class TestAllTransitions(HammerTestBase):
 
     def complete_criteria(self, task_file):
-        for dirpath, _, filenames in os.walk(self.dev_tasks_dir):
-            if 'criteria.md' not in filenames:
-                continue
-            criteria_path = os.path.join(dirpath, 'criteria.md')
-            with open(criteria_path, 'r') as f:
-                content = f.read()
-            with open(criteria_path, 'w') as f:
-                f.write(content.replace('- [ ]', '- [x]'))
-            return
+        for state_folder in STATE_FOLDERS.values():
+            criteria_path = os.path.join(self.dev_tasks_dir, state_folder, task_file, 'criteria.md')
+            if os.path.exists(criteria_path):
+                with open(criteria_path, 'r') as f:
+                    content = f.read()
+                with open(criteria_path, 'w') as f:
+                    f.write(content.replace('- [ ]', '- [x]'))
+                return
 
     def test_transitions(self):
         res = self.run_tasks(['create', 'Comprehensive Test Task', '--story', 'Sufficiently long story content here to pass validation', '--tech', 'Sufficiently long technical description here to pass validation', '--criteria', 'Sufficiently long acceptance criteria here to pass validation', '--plan', 'Sufficiently long planning details here to pass validation'])

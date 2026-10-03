@@ -171,7 +171,7 @@ def run(
         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
         cli.log(f"Branch: {task_id} | Now on: {current_branch}")
 
-        pair_numeric_id = numeric_id + 1
+        pair_numeric_id = cli._get_next_id()
         pair_title = f"Write user tests for {numeric_id}: {title}"
         clean_pair_title = re.sub(r"[^a-zA-Z0-9]+", "-", pair_title.lower()).strip("-")
         pair_task_id = f"{pair_numeric_id}-task-{clean_pair_title[:30]}".strip("-")

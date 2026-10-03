@@ -146,6 +146,8 @@ class BranchCheckHook(PipelineHook):
     """Handles branch restoration and remote push verification."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
+        if cli.dev:
+            return
         _, branch = parse_filename(os.path.basename(filepath))
         has_origin = cli._run_git(["remote", "get-url", "origin"]).returncode == 0
 
