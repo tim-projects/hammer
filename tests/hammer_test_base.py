@@ -31,6 +31,7 @@ class HammerTestBase(unittest.TestCase):
         subprocess.run(['git', 'clone', os.getcwd(), self.repo_path], check=True, capture_output=True)
         subprocess.run(['git', 'fetch', 'origin', 'tasks'], cwd=self.repo_path, check=True, capture_output=True)
         subprocess.run(['git', 'branch', 'tasks', 'origin/tasks'], cwd=self.repo_path, check=True, capture_output=True)
+        subprocess.run(['git', 'checkout', '--detach'], cwd=self.repo_path, check=True, capture_output=True)
         subprocess.run(['git', 'branch', '-f', 'main', 'origin/main'], cwd=self.repo_path, check=True, capture_output=True)
         subprocess.run(['git', 'checkout', 'main'], cwd=self.repo_path, check=True, capture_output=True)
         subprocess.run(['git', 'remote', 'set-head', 'origin', 'main'], cwd=self.repo_path, check=True, capture_output=True)
