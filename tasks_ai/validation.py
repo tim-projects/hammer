@@ -144,7 +144,7 @@ class Validation:
                     }
 
                 if result.returncode == 0:
-                    self.cli.finish(data)
+                    return data
                 else:
                     # Try to extract a meaningful error
                     error_msg = "Tool execution failed"

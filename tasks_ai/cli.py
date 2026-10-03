@@ -163,7 +163,6 @@ class TasksCLI:
 
         if os.path.exists(self.tasks_path):
             self._migrate_live_to_done()
-            self._auto_archive()
             if command and command != "delete":
                 self._clear_delete_marks()
 
@@ -719,6 +718,13 @@ class TasksCLI:
             self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", "Init task counter"], cwd=self.tasks_path)
 
+        config_file = os.path.join(self.tasks_path, "config.yaml")
+        if not os.path.exists(config_file):
+            with open(config_file, "w") as f:
+                f.write("repo:\n  lint: /bin/true\n  test: /bin/true\n  type_check: /bin/true\n  format: /bin/true\n")
+            self._run_git(["add", "config.yaml"], cwd=self.tasks_path)
+            self._run_git(["commit", "-m", "Init default config"], cwd=self.tasks_path)
+
         self.install_hooks()
         subprocess.run(  # noqa: PLW1510
             ["git", "config", "--global", "merge.message", "merge: auto-merge"],
@@ -789,6 +795,8 @@ class TasksCLI:
     def list(self, show_all=False):
         from .commands import list as list_cmd
 
+        if os.path.exists(self.tasks_path):
+            self._auto_archive()
         list_cmd.run(self, show_all=show_all)
 
     def show(self, filename, section=None):
@@ -926,6 +934,10 @@ class TasksCLI:
         folder = STATE_FOLDERS.get("DONE")
         fp = os.path.join(self.tasks_path, folder)
         if not os.path.exists(fp):
+            if self.as_json:
+                self.finish({"archived": 0, "dry_run": dry_run})
+            else:
+                print(f"{'Dry-run: ' if dry_run else ''}Archived 0 tasks.")
             return
         for item in os.listdir(fp):
             if item == ".gitkeep":

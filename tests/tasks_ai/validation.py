@@ -15,7 +15,7 @@ class Validation:
             return
         from tasks_ai.validator import Validator
 
-        validator = Validator(self.cli.root)
+        validator = Validator(self.cli.root, dev=self.cli.dev)
         validator.run_check("lint", fix)
 
     def run_tests(self, fail_safe=False):
@@ -23,7 +23,7 @@ class Validation:
             return subprocess.CompletedProcess("", 0)
         from tasks_ai.validator import Validator
 
-        validator = Validator(self.cli.root)
+        validator = Validator(self.cli.root, dev=self.cli.dev)
         try:
             return validator.run_check("test", False)
         except Exception:  # noqa: BLE001

@@ -5,7 +5,7 @@ import subprocess
 
 # Helper to run hammer commands
 def run_dev(cmd, force=False):
-    full_cmd = ["./hammer", "tasks", "--dev"] + cmd
+    full_cmd = ["./hammer", "tasks", "-j", "--dev"] + cmd
     if force and cmd and cmd[0] == "init":
         full_cmd.append("--force")
     result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
@@ -32,7 +32,7 @@ def test_pipeline_audit_verify_gates():
     setup_dev_config()
 
     # 2. Create task
-    run_dev(
+    create_result = run_dev(
         [
             "create",
             "Integration Test Task",
@@ -46,7 +46,8 @@ def test_pipeline_audit_verify_gates():
             "Sufficiently long planning details here to pass validation",
         ]
     )
-    task_id = "1"
+    create_data = json.loads(create_result.stdout)
+    task_id = str(create_data["data"]["id"])
 
     # 3. Mark criteria as done
     run_dev(

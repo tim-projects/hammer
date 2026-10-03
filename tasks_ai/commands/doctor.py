@@ -48,6 +48,7 @@ def run(cli, fix=False):
         return bug_filename
 
     # Check each state folder for inconsistencies
+    max_task_id = 0
     for state, folder in STATE_FOLDERS.items():
         state_path = os.path.join(cli.tasks_path, folder)
         if not os.path.exists(state_path):
@@ -85,6 +86,9 @@ def run(cli, fix=False):
 
             if correct_id is None:
                 continue
+
+            # Track max task ID for stale counter check
+            max_task_id = max(max_task_id, correct_id)
 
             # If fix_id is provided, only process that task
             if fix_id is not None and correct_id != fix_id:
@@ -134,6 +138,13 @@ def run(cli, fix=False):
                     ("metadata.Br", branch_from_metadata, expected_br)
                 )
 
+            # Check state mismatch: metadata state should match folder
+            metadata_state = task.metadata.get("St")
+            if metadata_state and metadata_state != state:
+                inconsistencies.append(
+                    ("state-mismatch", f"metadata.St={metadata_state}", f"folder={state}")
+                )
+
             # Add state transition inconsistency check
             # Only check branch existence for active states; archived/rejected tasks
             # may have had their branches cleaned up by `hammer tasks cleanup`.
@@ -165,31 +176,33 @@ def run(cli, fix=False):
                 # Determine the correct directory name
                 correct_dir_name = expected_dir
 
-                # Only move if directory name is wrong
-                if item != correct_dir_name:
-                    # Determine target state folder (should be same as current)
-                    target_path = os.path.join(state_path, correct_dir_name)
+                # Determine target state folder based on metadata state or current folder
+                target_state = task.metadata.get("St", state)
+                target_folder = STATE_FOLDERS.get(target_state, state)
+                target_path = os.path.join(cli.tasks_path, target_folder, correct_dir_name)
 
+                # Only move if directory name is wrong or state folder is wrong
+                if item != correct_dir_name or state != target_state:
                     # Ensure target doesn't already exist
                     if not os.path.exists(target_path):
-                        # Move the directory
+                        # Move the directory to the correct state folder
                         shutil.move(item_path, target_path)
                         item_path = target_path  # Update path for subsequent operations
 
                         # Log the move
                         cli.log(
-                            f"Moved task directory: {item} -> {correct_dir_name} [{state}]"
+                            f"Moved task directory: {item} [{state}] -> {correct_dir_name} [{target_state}]"
                         )
                     else:
                         cli.log(
-                            f"Cannot move {item} to {correct_dir_name}: target already exists"
+                            f"Cannot move {item} to {target_path}: target already exists"
                         )
                         # Skip fixing if target exists to avoid data loss
                         inconsistencies = [
                             (
-                                "directory name",
-                                item,
-                                f"CONFLICT: {correct_dir_name} already exists",
+                                "state-mismatch",
+                                f"{item} in {state}",
+                                f"{correct_dir_name} in {target_state}",
                             )
                         ]
 
@@ -212,15 +225,20 @@ def run(cli, fix=False):
                     task.metadata["Br"] = expected_br
                     id_changed = True
 
+                # Fix state mismatch if needed
+                if metadata_state and metadata_state != target_state:
+                    task.metadata["St"] = target_state
+                    id_changed = True
+
                 if id_changed:
                     # Save the fixed metadata
                     FM.dump(task, item_path)
                     cli.log(
-                        f"Fixed metadata for task {item_path}: Id={correct_id}, Br={expected_br}"
+                        f"Fixed metadata for task {item_path}: Id={correct_id}, Br={expected_br}, St={target_state}"
                     )
 
                 # If we moved the directory, we need to reload the task for git operations
-                if item != correct_dir_name:
+                if item != correct_dir_name or state != target_state:
                     task = FM.load(item_path)
 
                 # Git operations to record the fixes
@@ -251,6 +269,25 @@ def run(cli, fix=False):
                         }
                     )
 
+    # Check for stale task counter
+    counter_path = os.path.join(cli.tasks_path, ".task_counter")
+    if os.path.exists(counter_path):
+        try:
+            with open(counter_path, "r") as f:
+                counter_val = int(f.read().strip())
+            if counter_val < max_task_id:
+                bugs.append(
+                    {
+                        "id": "stale-task-counter",
+                        "title": "Task counter is stale",
+                        "repro": "Run 'hammer tasks doctor' to detect stale counter",
+                        "expected": f"Counter should be >= {max_task_id + 1}",
+                        "actual": f"Counter is {counter_val}",
+                    }
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
     if bugs:
         cli.log(f"Found {len(bugs)} issues:")
         for b in bugs:
@@ -261,6 +298,18 @@ def run(cli, fix=False):
                     b["id"], b["title"], b["repro"], b["expected"], b["actual"]
                 )
         else:
+            # Fix stale counter if present
+            if any(b["id"] == "stale-task-counter" for b in bugs):
+                try:
+                    with open(counter_path, "w") as f:
+                        f.write(str(max_task_id + 1))
+                    cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
+                    cli._run_git(
+                        ["commit", "--allow-empty", "-m", "Doctor: fixed stale task counter"],
+                        cwd=cli.tasks_path,
+                    )
+                except Exception as e:  # noqa: BLE001
+                    cli.log(f"Warning: Could not fix stale counter: {e}")
             cli.log("Issues have been fixed.")
     else:
         cli.log("No issues found.")
