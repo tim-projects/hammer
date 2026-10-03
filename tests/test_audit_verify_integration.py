@@ -60,7 +60,9 @@ def test_pipeline_audit_verify_gates():
     )
 
     # 4. Multi-step move
-    run_dev(["move", task_id, "READY,PROGRESSING,TESTING,REVIEW"])
+    move_res = run_dev(["move", task_id, "READY,PROGRESSING,TESTING,REVIEW"])
+    print("MOVE rc:", move_res.returncode)
+    print("MOVE stdout:", move_res.stdout[:300])
 
     # 5. Audit
     run_dev(["audit", task_id])
