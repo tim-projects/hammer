@@ -48,6 +48,7 @@ def test_pipeline_audit_verify_gates():
     )
     create_data = json.loads(create_result.stdout)
     task_id = str(create_data["data"]["id"])
+    branch = create_data["data"]["branch"]
 
     # 3. Mark criteria as done
     run_dev(
@@ -59,24 +60,51 @@ def test_pipeline_audit_verify_gates():
         ]
     )
 
-    # 4. Multi-step move
-    move_res = run_dev(["move", task_id, "READY,PROGRESSING,TESTING,REVIEW"])
-    print("MOVE rc:", move_res.returncode)
-    print("MOVE stdout:", move_res.stdout[:300])
+    # 4. Move through READY -> PROGRESSING
+    run_dev(["move", task_id, "READY"])
+    run_dev(["move", task_id, "PROGRESSING"])
 
-    # 5. Audit
+    # 5. Set up testing branch and move to TESTING
+    subprocess.run(
+        ["git", "checkout", "-b", "testing"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "merge", branch, "-m", f"Merge {branch} into testing"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
+    run_dev(["move", task_id, "TESTING"])
+
+    # 6. Set up staging branch and move to REVIEW
+    subprocess.run(
+        ["git", "checkout", "-b", "staging"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "merge", branch, "-m", f"Merge {branch} into staging"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
+    run_dev(["move", task_id, "REVIEW"])
+
+    # 7. Audit
     run_dev(["audit", task_id])
 
-    # 6. Verify
+    # 8. Verify
     run_dev(["verify", task_id, "--proof", "Integration proof"])
 
-    # 7. Regression Check
+    # 9. Regression Check
     run_dev(["modify", task_id, "--regression-check"])
 
-    # 8. Move to STAGING
+    # 10. Move to STAGING
     move_res = run_dev(["move", task_id, "STAGING"])
 
-    # 9. Verify result
+    # 11. Verify result
     assert move_res.returncode == 0, (
         f"Failed to move to STAGING: {move_res.stderr} {move_res.stdout}"
     )
