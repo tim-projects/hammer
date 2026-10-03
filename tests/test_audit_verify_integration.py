@@ -76,7 +76,9 @@ def test_pipeline_audit_verify_gates():
         capture_output=True,
     )
     subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
-    run_dev(["move", task_id, "TESTING"])
+    testing_res = run_dev(["move", task_id, "TESTING"])
+    print("TESTING rc:", testing_res.returncode)
+    print("TESTING stdout:", testing_res.stdout[:300])
 
     # 6. Set up staging branch and move to REVIEW
     subprocess.run(
@@ -90,7 +92,9 @@ def test_pipeline_audit_verify_gates():
         capture_output=True,
     )
     subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
-    run_dev(["move", task_id, "REVIEW"])
+    review_res = run_dev(["move", task_id, "REVIEW"])
+    print("REVIEW rc:", review_res.returncode)
+    print("REVIEW stdout:", review_res.stdout[:300])
 
     # 7. Audit
     run_dev(["audit", task_id])
