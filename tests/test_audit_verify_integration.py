@@ -103,7 +103,9 @@ def test_pipeline_audit_verify_gates():
     run_dev(["verify", task_id, "--proof", "Integration proof"])
 
     # 9. Regression Check
-    run_dev(["modify", task_id, "--regression-check"])
+    regression_res = run_dev(["modify", task_id, "--regression-check"])
+    print("REGRESSION rc:", regression_res.returncode)
+    print("REGRESSION stdout:", regression_res.stdout[:300])
 
     # 10. Move to STAGING
     move_res = run_dev(["move", task_id, "STAGING"])
