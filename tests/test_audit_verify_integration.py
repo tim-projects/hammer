@@ -66,7 +66,7 @@ def test_pipeline_audit_verify_gates():
 
     # 5. Set up testing branch and move to TESTING
     subprocess.run(
-        ["git", "checkout", "-b", "testing"],
+        ["git", "checkout", "testing"],
         cwd=os.getcwd(),
         capture_output=True,
     )
@@ -76,11 +76,14 @@ def test_pipeline_audit_verify_gates():
         capture_output=True,
     )
     subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
-    testing_res = run_dev(["move", task_id, "TESTING"])
-    print("TESTING rc:", testing_res.returncode)
-    print("TESTING stdout:", testing_res.stdout[:300])
+    run_dev(["move", task_id, "TESTING"])
 
     # 6. Set up staging branch and move to REVIEW
+    subprocess.run(
+        ["git", "checkout", "testing"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
     subprocess.run(
         ["git", "checkout", "-b", "staging"],
         cwd=os.getcwd(),
@@ -92,9 +95,7 @@ def test_pipeline_audit_verify_gates():
         capture_output=True,
     )
     subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
-    review_res = run_dev(["move", task_id, "REVIEW"])
-    print("REVIEW rc:", review_res.returncode)
-    print("REVIEW stdout:", review_res.stdout[:300])
+    run_dev(["move", task_id, "REVIEW"])
 
     # 7. Audit
     run_dev(["audit", task_id])
@@ -103,9 +104,7 @@ def test_pipeline_audit_verify_gates():
     run_dev(["verify", task_id, "--proof", "Integration proof"])
 
     # 9. Regression Check
-    regression_res = run_dev(["modify", task_id, "--regression-check"])
-    print("REGRESSION rc:", regression_res.returncode)
-    print("REGRESSION stdout:", regression_res.stdout[:300])
+    run_dev(["modify", task_id, "--regression-check"])
 
     # 10. Move to STAGING
     move_res = run_dev(["move", task_id, "STAGING"])
