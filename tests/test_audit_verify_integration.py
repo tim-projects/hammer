@@ -8,7 +8,9 @@ def run_dev(cmd, force=False):
     full_cmd = ["./hammer", "tasks", "-j", "--dev"] + cmd
     if force and cmd and cmd[0] == "init":
         full_cmd.append("--force")
+    print("RUN_DEV:", " ".join(full_cmd))
     result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
+    print("RUN_DEV rc:", result.returncode)
     return result
 
 
