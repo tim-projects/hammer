@@ -85,7 +85,12 @@ def test_pipeline_audit_verify_gates():
         capture_output=True,
     )
     subprocess.run(
-        ["git", "checkout", "-b", "staging"],
+        ["git", "branch", "-f", "staging", "testing"],
+        cwd=os.getcwd(),
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "checkout", "staging"],
         cwd=os.getcwd(),
         capture_output=True,
     )
