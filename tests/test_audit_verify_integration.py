@@ -8,9 +8,7 @@ def run_dev(cmd, force=False):
     full_cmd = ["./hammer", "tasks", "-j", "--dev"] + cmd
     if force and cmd and cmd[0] == "init":
         full_cmd.append("--force")
-    print("RUN_DEV:", " ".join(full_cmd))
     result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
-    print("RUN_DEV rc:", result.returncode)
     return result
 
 
@@ -68,7 +66,7 @@ def test_pipeline_audit_verify_gates():
 
     # 5. Set up testing branch and move to TESTING
     subprocess.run(
-        ["git", "checkout", "-b", "testing"],
+        ["git", "checkout", "testing"],
         cwd=os.getcwd(),
         capture_output=True,
     )
@@ -106,9 +104,7 @@ def test_pipeline_audit_verify_gates():
     run_dev(["verify", task_id, "--proof", "Integration proof"])
 
     # 9. Regression Check
-    regression_res = run_dev(["modify", task_id, "--regression-check"])
-    print("REGRESSION rc:", regression_res.returncode)
-    print("REGRESSION stdout:", regression_res.stdout[:300])
+    run_dev(["modify", task_id, "--regression-check"])
 
     # 10. Move to STAGING
     move_res = run_dev(["move", task_id, "STAGING"])
