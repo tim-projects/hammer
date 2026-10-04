@@ -9,5 +9,8 @@
   "Tp": false,
   "Reviewed": false,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
