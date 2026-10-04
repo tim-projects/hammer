@@ -22,19 +22,24 @@ def generate_file_patches(cli, task_id, task_path, branch):
     diff_base = None
     if not changed_files:
         tasks_git_dir = os.path.join(cli.tasks_path, '.git')
+        cli.log(f'DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}')
+        cli.log(f'DEBUG: tasks_git_dir={tasks_git_dir}, exists={os.path.isdir(tasks_git_dir)}')
         if os.path.isdir(tasks_git_dir):
             diff_cwd = cli.tasks_path
             initial_commit = cli.git.run(
                 ['rev-list', '--max-parents=0', 'HEAD'],
                 cwd=cli.tasks_path
             ).stdout.strip()
+            cli.log(f'DEBUG: initial_commit={initial_commit}')
             diff_base = initial_commit
             res = cli.git.run(
                 ['diff', '--name-only', f'{initial_commit}..HEAD'],
                 cwd=cli.tasks_path
             )
             all_changed = [f for f in res.stdout.splitlines() if f]
+            cli.log(f'DEBUG: all_changed count={len(all_changed)}')
             changed_files = [f for f in all_changed if task_folder_name in f]
+            cli.log(f'DEBUG: filtered changed_files={changed_files}')
 
     generated_patches = []
     for file_path in changed_files:
