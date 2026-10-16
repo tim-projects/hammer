@@ -150,9 +150,15 @@ def run(
     try:
         cli._atomic_write(task_dir, task)
         cli._append_log(task_dir, "Cr")
-        cli._run_git(
-            ["add", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
-        )
+        # Force add in case .gitignore ignores .md files
+        try:
+            cli._run_git(
+                ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
+            )
+        except Exception:
+            cli._run_git(
+                ["add", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
+            )
         cli._run_git(
             ["commit", "--allow-empty", "-m", f"Add {task_type}: {title}"],
             cwd=cli.tasks_path,
