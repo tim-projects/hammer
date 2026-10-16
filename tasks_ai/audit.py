@@ -24,7 +24,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
         cli.log('DEBUG_FALLBACK_TRIGGERED_V2')
         tasks_git_dir = os.path.join(cli.tasks_path, '.git')
         cli.log(f'DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}')
-        cli.log(f'DEBUG: tasks_git_dir={tasks_git_dir}, exists={os.path.isdir(tasks_git_dir)}')
+        cli.log(f'DEBUG: cli.tasks_path={cli.tasks_path}, tasks_git_dir={tasks_git_dir}, exists={os.path.isdir(tasks_git_dir)}')
         if os.path.isdir(tasks_git_dir):
             diff_cwd = cli.tasks_path
             initial_commit = cli.git.run(
