@@ -40,6 +40,19 @@ def generate_file_patches(cli, task_id, task_path, branch):
             cli.log(f'DEBUG: all_changed count={len(all_changed)}')
             changed_files = [f for f in all_changed if task_folder_name in f]
             cli.log(f'DEBUG: filtered changed_files={changed_files}')
+            if not changed_files:
+                # Try to add force in tasks repo
+                try:
+                    cli._run_git(['add', '-f', '.'], cwd=cli.tasks_path)
+                    res = cli.git.run(
+                        ['diff', '--name-only', f'{initial_commit}..HEAD'],
+                        cwd=cli.tasks_path
+                    )
+                    all_changed = [f for f in res.stdout.splitlines() if f]
+                    changed_files = [f for f in all_changed if task_folder_name in f]
+                    cli.log(f'DEBUG: after force add, changed_files={changed_files}')
+                except Exception as e:
+                    cli.log(f'DEBUG: force add failed: {e}')
 
     generated_patches = []
     for file_path in changed_files:
