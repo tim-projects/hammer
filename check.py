@@ -534,9 +534,13 @@ def run_all(fix=False, as_json=False, dev=False, force=False):
             total_code = 1
 
     if total_code == 0 and current_hash:
-        os.makedirs(os.path.dirname(hash_path), exist_ok=True)
-        with open(hash_path, "w") as f:
-            f.write(current_hash)
+    if total_code == 0 and current_hash:
+        try:
+            os.makedirs(os.path.dirname(hash_path), exist_ok=True)
+            with open(hash_path, "w") as f:
+                f.write(current_hash)
+        except Exception:
+            pass
 
     if not as_json:
         print("\n" + "=" * 40)
