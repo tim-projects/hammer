@@ -2,9 +2,6 @@ import hashlib
 import json
 import os
 
-print("LOADED audit.py from:", __file__)
-
-
 def get_changed_files(cli, task_path, branch):
     """Get list of files changed in the task branch compared to main."""
     main_branch = cli.git.get_default_branch()
