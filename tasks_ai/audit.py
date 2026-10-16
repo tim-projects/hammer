@@ -43,7 +43,9 @@ def generate_file_patches(cli, task_id, task_path, branch):
             if not changed_files:
                 # Try to add force in tasks repo
                 try:
-                    cli._run_git(['add', '-f', '.'], cwd=cli.tasks_path)
+                    cli.log(f'DEBUG: attempting force add in {cli.tasks_path}')
+                    add_res = cli._run_git(['add', '-f', '.'], cwd=cli.tasks_path, check=False)
+                    cli.log(f'DEBUG: add result rc={add_res.returncode}')
                     res = cli.git.run(
                         ['diff', '--name-only', f'{initial_commit}..HEAD'],
                         cwd=cli.tasks_path
