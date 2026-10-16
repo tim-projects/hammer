@@ -13,17 +13,13 @@ def generate_file_patches(cli, task_id, task_path, branch):
     changed_files = get_changed_files(cli, task_path, branch)
     task_folder_name = os.path.basename(task_path)
     patches_dir = os.path.join(cli.tasks_path, 'review', task_folder_name, 'patches')
-    cli.log(f'DEBUG: patches_dir={patches_dir}, changed_files={changed_files}')
-    os.makedirs(patches_dir, exist_ok=True)
+        os.makedirs(patches_dir, exist_ok=True)
 
-    cli.log("DEBUG_CHECKPOINT_BEFORE_IF")
-    # If no changes found in main repo, check tasks sub-repo (dev mode)
+        # If no changes found in main repo, check tasks sub-repo (dev mode)
     diff_cwd = cli.root
     diff_base = None
     if not changed_files:
-        cli.log('***FALLBACK_HIT***')
-        cli.log('DEBUG_FALLBACK_TRIGGERED_V2')
-        tasks_git_dir = os.path.join(cli.tasks_path, '.git')
+                        tasks_git_dir = os.path.join(cli.tasks_path, '.git')
         cli.log(f'DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}')
         cli.log(f'DEBUG: cli.tasks_path={cli.tasks_path}, tasks_git_dir={tasks_git_dir}, exists={os.path.isdir(tasks_git_dir)}')
         if os.path.isdir(tasks_git_dir):
@@ -110,8 +106,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
                     patch_path = os.path.join(patches_dir, patch_filename)
                     try:
                         with open(patch_path, 'w') as f:
-                            f.write(f'diff --git a/{rel} b/{rel}
-')
+                            f.write(f'diff --git a/{rel} b/{rel}\n')
                         generated_patches.append({'file': rel, 'patch_path': patch_path})
                     except:
                         pass
