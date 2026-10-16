@@ -13,7 +13,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
     changed_files = get_changed_files(cli, task_path, branch)
     task_folder_name = os.path.basename(task_path)
     patches_dir = os.path.join(cli.tasks_path, 'review', task_folder_name, 'patches')
-    cli.log(f'DEBUG: patches_dir={patches_dir}')
+    cli.log(f'DEBUG: patches_dir={patches_dir}, changed_files={changed_files}')
     os.makedirs(patches_dir, exist_ok=True)
 
     # If no changes found in main repo, check tasks sub-repo (dev mode)
