@@ -20,7 +20,15 @@ def run(cli, task_id):
     if os.path.exists(patches_dir):
         cli.log(f'DEBUG_AUDIT_CMD: files={os.listdir(patches_dir)}')
     if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
-        cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
+        from ..audit import generate_file_patches
+        try:
+            patches = generate_file_patches(cli, str(task_id), current_path, branch)
+            if not patches:
+                cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
+            task.metadata["PatchFiles"] = patches
+            FM.save(task, current_path)
+        except Exception:
+            cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
     output_path = os.path.join(review_dir, f'{task_folder_name}.audit')
     generate_audit(task_id, current_path, patches_dir, output_path)
     cli.log(f'✅ Audit log created for task {task_id}')
