@@ -180,15 +180,16 @@ class ReviewDiffHook(PipelineHook):
             cli.log(
                 f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
             )
+            cli.log("DEBUG_HOOK: importing audit")
             from .audit import generate_file_patches
 
             _, branch = parse_filename(os.path.basename(filepath))
             task_id = task.metadata.get("Id")
 
-            # Check if patches exist on disk and metadata is populated
-
+            cli.log(f"DEBUG_HOOK: calling generate_file_patches for task {task_id}")
             # Idempotent patch generation
             patches = generate_file_patches(cli, str(task_id), filepath, branch)
+            cli.log(f"DEBUG_HOOK: got {len(patches)} patches")
             task.metadata["PatchFiles"] = patches
             cli._atomic_write(filepath, task)
             cli.log("DEBUG: ReviewDiffHook: patches verified and generated.")
