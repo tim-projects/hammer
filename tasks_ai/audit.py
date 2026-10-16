@@ -54,6 +54,20 @@ def generate_file_patches(cli, task_id, task_path, branch):
                     all_changed = [f for f in res.stdout.splitlines() if f]
                     changed_files = [f for f in all_changed if task_folder_name in f]
                     cli.log(f'DEBUG: after force add, changed_files={changed_files}')
+                    if not changed_files:
+                        # Look for files in task folder directly
+                        import glob
+                        task_rel = task_folder_name
+                        candidates = []
+                        for pat in ['**/*.md', '**/*.json', '**/*.txt', 'progress.md', 'meta.json', 'story.md', 'tech.md', 'criteria.md', 'plan.md']:
+                            candidates.extend(glob.glob(os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]) if '/' not in pat else os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]), recursive=True))
+                        # easier: just walk
+                        for root, dirs, files in os.walk(os.path.join(cli.tasks_path, task_folder_name)):
+                            for fname in files:
+                                rel = os.path.relpath(os.path.join(root, fname), cli.tasks_path)
+                                if rel not in changed_files:
+                                    changed_files.append(rel)
+                        cli.log(f'DEBUG: found by walk: {changed_files}')
                 except Exception as e:
                     cli.log(f'DEBUG: force add failed: {e}')
 
