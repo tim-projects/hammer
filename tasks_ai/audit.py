@@ -62,11 +62,18 @@ def generate_file_patches(cli, task_id, task_path, branch):
                         for pat in ['**/*.md', '**/*.json', '**/*.txt', 'progress.md', 'meta.json', 'story.md', 'tech.md', 'criteria.md', 'plan.md']:
                             candidates.extend(glob.glob(os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]) if '/' not in pat else os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]), recursive=True))
                         # easier: just walk
-                        for root, dirs, files in os.walk(os.path.join(cli.tasks_path, task_folder_name)):
-                            for fname in files:
-                                rel = os.path.relpath(os.path.join(root, fname), cli.tasks_path)
-                                if rel not in changed_files:
-                                    changed_files.append(rel)
+                        # Look in common locations
+                        search_roots = []
+                        search_roots.append(os.path.join(cli.tasks_path, task_folder_name))
+                        for state in ['backlog', 'progressing', 'ready', 'testing', 'review', 'staging', 'done', 'archived', 'rejected', 'blocked']:
+                            search_roots.append(os.path.join(cli.tasks_path, state, task_folder_name))
+                        for search_root in search_roots:
+                            if os.path.exists(search_root):
+                                for root, dirs, files in os.walk(search_root):
+                                    for fname in files:
+                                        rel = os.path.relpath(os.path.join(root, fname), cli.tasks_path)
+                                        if rel not in changed_files:
+                                            changed_files.append(rel)
                         cli.log(f'DEBUG: found by walk: {changed_files}')
                 except Exception as e:
                     cli.log(f'DEBUG: force add failed: {e}')
