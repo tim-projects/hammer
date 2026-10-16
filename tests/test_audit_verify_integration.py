@@ -70,6 +70,10 @@ def test_pipeline_audit_verify_gates():
             )
 
         def check(label, result):
+            if result.returncode != 0:
+                print(f"FULL OUTPUT for {label}:")
+                print(result.stdout)
+                print(result.stderr)
             assert result.returncode == 0, (
                 f"{label} failed (rc={result.returncode}): "
                 f"{result.stdout[:500]} {result.stderr[:500]}"

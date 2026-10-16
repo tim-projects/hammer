@@ -56,6 +56,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
         with open(patch_path, 'w') as f:
             f.write(res.stdout)
         generated_patches.append({'file': file_path, 'patch_path': patch_path})
+    cli.log(f"DEBUG_GEN: returning {len(generated_patches)} patches")
     return generated_patches
 
 def generate_audit(task_id, task_path, patches_dir, output_path):
