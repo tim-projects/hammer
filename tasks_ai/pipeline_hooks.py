@@ -220,7 +220,10 @@ class PostMoveCommitHook(PipelineHook):
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status != "ARCHIVED":
-            cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+            try:
+                cli._run_git(["add", "-f", "."], cwd=cli.tasks_path)
+            except Exception:
+                cli._run_git(["add", "--all"], cwd=cli.tasks_path)
             cli._run_git(
                 [
                     "commit",
