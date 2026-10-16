@@ -16,6 +16,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
     cli.log(f'DEBUG: patches_dir={patches_dir}, changed_files={changed_files}')
     os.makedirs(patches_dir, exist_ok=True)
 
+    cli.log("DEBUG_CHECKPOINT_BEFORE_IF")
     # If no changes found in main repo, check tasks sub-repo (dev mode)
     diff_cwd = cli.root
     diff_base = None
