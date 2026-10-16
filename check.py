@@ -512,8 +512,11 @@ def run_all(fix=False, as_json=False, dev=False, force=False):
     hash_path = get_last_hash_path()
 
     if not force and not fix and current_hash and os.path.exists(hash_path):
-        with open(hash_path, "r") as f:
-            last_hash = f.read().strip()
+        try:
+            with open(hash_path, "r") as f:
+                last_hash = f.read().strip()
+        except Exception:
+            last_hash = None
         if last_hash == current_hash:
             if not as_json:
                 print("✅ Codebase unchanged, skipping validation.")
