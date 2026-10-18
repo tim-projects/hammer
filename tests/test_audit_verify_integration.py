@@ -1,19 +1,20 @@
 import json
 import os
+import shutil
 import subprocess
+import tempfile
 
 
-# Helper to run hammer commands
-def run_dev(cmd, force=False):
+def run_dev(cmd, force=False, cwd=None):
     full_cmd = ["./hammer", "tasks", "-j", "--dev"] + cmd
     if force and cmd and cmd[0] == "init":
         full_cmd.append("--force")
-    result = subprocess.run(full_cmd, capture_output=True, text=True)  # noqa: PLW1510
+    result = subprocess.run(full_cmd, capture_output=True, text=True, cwd=cwd)  # noqa: PLW1510
     return result
 
 
-def setup_dev_config():
-    dev_tasks_dir = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
+def setup_dev_config(dev_tasks_dir):
+    os.makedirs(dev_tasks_dir, exist_ok=True)
     config_data = {
         "repo": {
             "lint": "/bin/true",
@@ -27,43 +28,62 @@ def setup_dev_config():
 
 
 def test_pipeline_audit_verify_gates():
-    # 1. Init dev env with force to clean up
-    run_dev(["init"], force=True)
-    setup_dev_config()
+    test_root = tempfile.mkdtemp(prefix="hammer_pipeline_test_")
+    repo_dir = os.path.join(test_root, "repo")
+    dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+    os.environ["HAMMER_DEV_TASKS_DIR"] = dev_tasks_dir
+    try:
+        subprocess.run(
+            ["git", "clone", os.getcwd(), repo_dir],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "fetch", "origin", "tasks"], cwd=repo_dir, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "branch", "tasks", "origin/tasks"], cwd=repo_dir, check=True, capture_output=True
+        )
+        for branch in ["testing", "staging"]:
+            subprocess.run(
+                ["git", "branch", "-D", branch], cwd=repo_dir, check=False, capture_output=True
+            )
 
-    # 2. Create task
-    create_result = run_dev(
-        [
-            "create",
-            "Integration Test Task",
-            "--story",
-            "Sufficiently long story content here to pass validation",
-            "--tech",
-            "Sufficiently long technical description here to pass validation",
-            "--criteria",
-            "- [ ] Sufficiently long acceptance criteria here to pass validation",
-            "--plan",
-            "Sufficiently long planning details here to pass validation",
-        ]
-    )
-    create_data = json.loads(create_result.stdout)
-    task_id = str(create_data["data"]["id"])
-    branch = create_data["data"]["branch"]
+        # Stub validation tools in the sandbox repo's .tasks so check.py uses /bin/true
+        sandbox_tasks_dir = os.path.join(repo_dir, ".tasks")
+        os.makedirs(sandbox_tasks_dir, exist_ok=True)
+        with open(os.path.join(sandbox_tasks_dir, "config.yaml"), "w") as f:
+            json.dump(
+                {
+                    "repo": {
+                        "lint": "/bin/true",
+                        "test": "/bin/true",
+                        "type_check": "/bin/true",
+                        "format": "/bin/true",
+                    }
+                },
+                f,
+                indent=2,
+            )
 
-    # 3. Mark criteria as done
-    run_dev(
-        [
-            "modify",
-            task_id,
-            "--criteria",
-            "- [x] Sufficiently long acceptance criteria here to pass validation",
-        ]
-    )
+        def check(label, result):
+            if result.returncode != 0:
+                print(f"FULL OUTPUT for {label}:")
+                print(result.stdout)
+                print(result.stderr)
+            assert result.returncode == 0, (
+                f"{label} failed (rc={result.returncode}): "
+                f"{result.stdout[:500]} {result.stderr[:500]}"
+            )
 
-    # 4. Move through READY -> PROGRESSING
-    run_dev(["move", task_id, "READY"])
-    run_dev(["move", task_id, "PROGRESSING"])
+        init_res = run_dev(["init"], force=True, cwd=repo_dir)
+        check("init", init_res)
+        setup_dev_config(dev_tasks_dir)
 
+<<<<<<< HEAD
     # 5. Set up testing branch and move to TESTING
     subprocess.run(
         ["git", "checkout", "testing"],
@@ -101,20 +121,49 @@ def test_pipeline_audit_verify_gates():
     )
     subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
     run_dev(["move", task_id, "REVIEW"])
+=======
+        create_result = run_dev(
+            [
+                "create",
+                "Integration Test Task",
+                "--story",
+                "Sufficiently long story content here to pass validation",
+                "--tech",
+                "Sufficiently long technical description here to pass validation",
+                "--criteria",
+                "- [ ] Sufficiently long acceptance criteria here to pass validation",
+                "--plan",
+                "Sufficiently long planning details here to pass validation",
+            ],
+            cwd=repo_dir,
+        )
+        create_data = json.loads(create_result.stdout)
+        task_id = str(create_data["data"]["id"])
+        branch = create_data["data"]["branch"]
 
-    # 7. Audit
-    run_dev(["audit", task_id])
+        check("create", create_result)
+        check("modify criteria", run_dev(["modify", task_id, "--criteria", "- [x] Sufficiently long acceptance criteria here to pass validation"], cwd=repo_dir))
+        check("move READY", run_dev(["move", task_id, "READY"], cwd=repo_dir))
+        check("move PROGRESSING", run_dev(["move", task_id, "PROGRESSING"], cwd=repo_dir))
+>>>>>>> 232-task-restore-test-fixes
 
-    # 8. Verify
-    run_dev(["verify", task_id, "--proof", "Integration proof"])
+        subprocess.run(["git", "checkout", "-b", "testing"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "merge", branch, "-m", f"Merge {branch} into testing"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
+        check("move TESTING", run_dev(["move", task_id, "TESTING"], cwd=repo_dir))
 
-    # 9. Regression Check
-    run_dev(["modify", task_id, "--regression-check"])
+        subprocess.run(["git", "checkout", "testing"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "-b", "staging"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "merge", branch, "-m", f"Merge {branch} into staging"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
+        check("move REVIEW", run_dev(["move", task_id, "REVIEW"], cwd=repo_dir))
 
-    # 10. Move to STAGING
-    move_res = run_dev(["move", task_id, "STAGING"])
+        check("audit", run_dev(["audit", task_id], cwd=repo_dir))
+        check("verify", run_dev(["verify", task_id, "--proof", "Integration proof"], cwd=repo_dir))
+        check("regression-check", run_dev(["modify", task_id, "--regression-check"], cwd=repo_dir))
 
-    # 11. Verify result
-    assert move_res.returncode == 0, (
-        f"Failed to move to STAGING: {move_res.stderr} {move_res.stdout}"
-    )
+        check("move STAGING", run_dev(["move", task_id, "STAGING"], cwd=repo_dir))
+    finally:
+        shutil.rmtree(test_root, ignore_errors=True)
+        shutil.rmtree(dev_tasks_dir, ignore_errors=True)
+        os.environ.pop("HAMMER_DEV_TASKS_DIR", None)

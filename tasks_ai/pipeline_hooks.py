@@ -178,20 +178,21 @@ class ReviewDiffHook(PipelineHook):
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "REVIEW":
             cli.log(
-                f"DEBUG: ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
+                f"ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
             )
+            cli.log("")
             from .audit import generate_file_patches
 
             _, branch = parse_filename(os.path.basename(filepath))
             task_id = task.metadata.get("Id")
 
-            # Check if patches exist on disk and metadata is populated
-
+            cli.log(f" for task {task_id}")
             # Idempotent patch generation
             patches = generate_file_patches(cli, str(task_id), filepath, branch)
+            cli.log(f"Got {len(patches)} patches")
             task.metadata["PatchFiles"] = patches
             cli._atomic_write(filepath, task)
-            cli.log("DEBUG: ReviewDiffHook: patches verified and generated.")
+            cli.log("ReviewDiffHook: patches verified and generated.")
 
 
 class ArchivedCommitHook(PipelineHook):
@@ -219,7 +220,10 @@ class PostMoveCommitHook(PipelineHook):
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status != "ARCHIVED":
-            cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+            try:
+                cli._run_git(["add", "-f", "."], cwd=cli.tasks_path)
+            except Exception:
+                cli._run_git(["add", "--all"], cwd=cli.tasks_path)
             cli._run_git(
                 [
                     "commit",

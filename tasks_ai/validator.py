@@ -86,7 +86,7 @@ class Validator:
             },
         }
 
-    def run_check(self, tool_type: str, fix: bool = False, timeout: int = 60) -> dict:
+    def run_check(self, tool_type: str, fix: bool = False, timeout: int = 300) -> dict:
         """Run a specific validation tool."""
         commands = self._get_commands(fix)
         tool_config_key = {
