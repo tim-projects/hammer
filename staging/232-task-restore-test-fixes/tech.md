@@ -1,1 +1,0 @@
-Fixed test infrastructure, git branch detection, and pipeline gate logic.
