@@ -136,12 +136,13 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
     if not force:
         if new_status not in allowed_transitions.get(current_state, []):
+            next_valid = cli.git.get_next_logical_state(current_state) or "PROGRESSING"
             cli.error(
                 "FORBIDDEN_TRANSITION",
                 from_state=current_state,
                 to_state=new_status,
                 task_id=os.path.basename(filepath_str).split("-")[0],
-                next_valid_state="PROGRESSING",
+                next_valid_state=next_valid,
             )
 
         # Archived check: Enforce branch merge to main
