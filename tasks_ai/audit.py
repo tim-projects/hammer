@@ -1,6 +1,6 @@
+import os
 import hashlib
 import json
-import os
 
 def get_changed_files(cli, task_path, branch):
     """Get list of files changed in the task branch compared to main."""
@@ -13,15 +13,15 @@ def generate_file_patches(cli, task_id, task_path, branch):
     changed_files = get_changed_files(cli, task_path, branch)
     task_folder_name = os.path.basename(task_path)
     patches_dir = os.path.join(cli.tasks_path, 'review', task_folder_name, 'patches')
-        os.makedirs(patches_dir, exist_ok=True)
+    os.makedirs(patches_dir, exist_ok=True)
 
-        # If no changes found in main repo, check tasks sub-repo (dev mode)
+    # If no changes found in main repo, check tasks sub-repo (dev mode)
     diff_cwd = cli.root
     diff_base = None
     if not changed_files:
-                        tasks_git_dir = os.path.join(cli.tasks_path, '.git')
+        tasks_git_dir = os.path.join(cli.tasks_path, ".git")
         cli.log(f'DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}')
-        cli.log(f'DEBUG: cli.tasks_path={cli.tasks_path}, tasks_git_dir={tasks_git_dir}, exists={os.path.isdir(tasks_git_dir)}')
+        tasks_git_dir = os.path.join(cli.tasks_path, ".git")
         if os.path.isdir(tasks_git_dir):
             diff_cwd = cli.tasks_path
             initial_commit = cli.git.run(
@@ -94,7 +94,6 @@ def generate_file_patches(cli, task_id, task_path, branch):
     cli.log(f"DEBUG_GEN: returning {len(generated_patches)} patches")
     # Ultimate fallback
     if not generated_patches:
-        import os
         # find any files for this task
         for root, dirs, files in os.walk(cli.tasks_path):
             for fname in files:
