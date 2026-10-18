@@ -17,8 +17,7 @@ def run(cli, task_id):
         return
     review_dir = os.path.join(cli.tasks_path, 'review')
     patches_dir = os.path.join(review_dir, task_folder_name, 'patches')
-        if os.path.exists(patches_dir):
-        if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
+    if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
         from ..audit import generate_file_patches
         try:
             patches = generate_file_patches(cli, str(task_id), current_path, branch)
