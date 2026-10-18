@@ -1,0 +1,1 @@
+- [ ] Reproduce the failing integration test\n- [ ] Identify root cause of patch generation failure in test context\n- [ ] Fix patch generation to work in all contexts\n- [ ] Verify integration test passes\n- [ ] Verify no regression in other tests
