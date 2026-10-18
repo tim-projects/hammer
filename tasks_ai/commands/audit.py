@@ -21,7 +21,11 @@ def run(cli, task_id):
         from ..audit import generate_file_patches
         try:
             patches = generate_file_patches(cli, str(task_id), current_path, branch)
-            if not patches:
+            # Double-check - sometimes patches might not be written
+            if not patches or not os.path.exists(patches_dir) or not os.listdir(patches_dir):
+                # Try one more time
+                patches = generate_file_patches(cli, str(task_id), current_path, branch)
+            if not patches or not os.path.exists(patches_dir) or not os.listdir(patches_dir):
                 cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
             task.metadata["PatchFiles"] = patches
             FM.save(task, current_path)
