@@ -1,0 +1,50 @@
+{
+  "Id": 232,
+  "Ti": "Restore test fixes",
+  "Ty": "task",
+  "Cr": "260930 11:26",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "232-task-restore-test-fixes",
+  "Tp": false,
+  "Reviewed": false,
+  "Rc": "PASSED",
+  "Vp": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1792318551.432401,
+  "DoneAt": 1792319347.656739,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/check.py.patch"
+    },
+    {
+      "file": "tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tasks_ai_commands_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tests_tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/232-task-restore-test-fixes/patches/tests_test_audit_verify_integration.py.patch"
+    }
+  ]
+}

@@ -1,16 +1,17 @@
 diff --git a/tasks_ai/audit.py b/tasks_ai/audit.py
-index 6212919..b8d9206 100644
+index 6212919..cc2c95e 100644
 --- a/tasks_ai/audit.py
 +++ b/tasks_ai/audit.py
-@@ -2,7 +2,6 @@ import hashlib
+@@ -1,7 +1,6 @@
++import os
+ import hashlib
  import json
- import os
- 
+-import os
 -
+ 
  def get_changed_files(cli, task_path, branch):
      """Get list of files changed in the task branch compared to main."""
-     main_branch = cli.git.get_default_branch()
-@@ -12,21 +11,105 @@ def get_changed_files(cli, task_path, branch):
+@@ -12,21 +11,104 @@ def get_changed_files(cli, task_path, branch):
  def generate_file_patches(cli, task_id, task_path, branch):
      """Generate individual patches for each changed file."""
      changed_files = get_changed_files(cli, task_path, branch)
@@ -18,16 +19,15 @@ index 6212919..b8d9206 100644
      task_folder_name = os.path.basename(task_path)
      patches_dir = os.path.join(cli.tasks_path, 'review', task_folder_name, 'patches')
 -    cli.log(f'DEBUG: patches_dir={patches_dir}')
--    os.makedirs(patches_dir, exist_ok=True)
-+        os.makedirs(patches_dir, exist_ok=True)
+     os.makedirs(patches_dir, exist_ok=True)
 +
-+        # If no changes found in main repo, check tasks sub-repo (dev mode)
++    # If no changes found in main repo, check tasks sub-repo (dev mode)
 +    diff_cwd = cli.root
 +    diff_base = None
 +    if not changed_files:
-+                        tasks_git_dir = os.path.join(cli.tasks_path, '.git')
++        tasks_git_dir = os.path.join(cli.tasks_path, ".git")
 +        cli.log(f'DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}')
-+        cli.log(f'DEBUG: cli.tasks_path={cli.tasks_path}, tasks_git_dir={tasks_git_dir}, exists={os.path.isdir(tasks_git_dir)}')
++        tasks_git_dir = os.path.join(cli.tasks_path, ".git")
 +        if os.path.isdir(tasks_git_dir):
 +            diff_cwd = cli.tasks_path
 +            initial_commit = cli.git.run(
@@ -102,7 +102,6 @@ index 6212919..b8d9206 100644
 +    cli.log(f"DEBUG_GEN: returning {len(generated_patches)} patches")
 +    # Ultimate fallback
 +    if not generated_patches:
-+        import os
 +        # find any files for this task
 +        for root, dirs, files in os.walk(cli.tasks_path):
 +            for fname in files:
