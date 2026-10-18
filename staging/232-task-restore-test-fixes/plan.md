@@ -1,0 +1,1 @@
+1. 1. Run test suite\n2. Fix failing tests\n3. Verify fixes\n4. Update documentation
