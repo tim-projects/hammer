@@ -9,8 +9,18 @@
   "Rc": "",
   "Vp": true,
   "Tp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
-  "PatchGenTime": 1792326739.764913,
-  "DoneAt": null
+  "PatchGenTime": 1792326885.428204,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/234-task-integration-test-failure-audit/patches/check.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/234-task-integration-test-failure-audit/patches/tests_test_audit_verify_integration.py.patch"
+    }
+  ]
 }
