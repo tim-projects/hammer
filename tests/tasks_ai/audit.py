@@ -12,18 +12,43 @@ def get_changed_files(cli, task_path, branch):
 def generate_file_patches(cli, task_id, task_path, branch):
     """Generate individual patches for each changed file."""
     changed_files = get_changed_files(cli, task_path, branch)
-    cli.log(f'DEBUG: branch={branch}, changed_files={changed_files}')
     task_folder_name = os.path.basename(task_path)
     patches_dir = os.path.join(cli.tasks_path, 'review', task_folder_name, 'patches')
     cli.log(f'DEBUG: patches_dir={patches_dir}')
     os.makedirs(patches_dir, exist_ok=True)
+
+    # If no changes found in main repo, check .tasks sub-repo (dev mode)
+    diff_cwd = cli.root
+    diff_base = None
+    if not changed_files:
+        tasks_git_dir = os.path.join(cli.root, '.tasks', '.git')
+        if os.path.isdir(tasks_git_dir):
+            diff_cwd = cli.tasks_path
+            initial_commit = cli.git.run(
+                ['rev-list', '--max-parents=0', 'HEAD'],
+                cwd=cli.tasks_path
+            ).stdout.strip()
+            diff_base = initial_commit
+            res = cli.git.run(
+                ['diff', '--name-only', f'{initial_commit}..HEAD'],
+                cwd=cli.tasks_path
+            )
+            all_changed = [f for f in res.stdout.splitlines() if f]
+            changed_files = [f for f in all_changed if task_folder_name in f]
+
     generated_patches = []
     for file_path in changed_files:
         cli.log(f'DEBUG: generating patch for {file_path}')
         patch_filename = f"{file_path.replace(os.sep, '_')}.patch"
         patch_path = os.path.join(patches_dir, patch_filename)
-        main_branch = cli.git.get_default_branch()
-        res = cli.git.run(['diff', f'{main_branch}..{branch}', '--', file_path], cwd=cli.root)
+        if diff_base:
+            res = cli.git.run(
+                ['diff', f'{diff_base}..HEAD', '--', file_path],
+                cwd=diff_cwd
+            )
+        else:
+            main_branch = cli.git.get_default_branch()
+            res = cli.git.run(['diff', f'{main_branch}..{branch}', '--', file_path], cwd=cli.root)
         with open(patch_path, 'w') as f:
             f.write(res.stdout)
         generated_patches.append({'file': file_path, 'patch_path': patch_path})
