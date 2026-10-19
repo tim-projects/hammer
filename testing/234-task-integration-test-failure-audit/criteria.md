@@ -1,5 +1,0 @@
-- [x] Reproduce the failing integration test
-- [x] Identify root cause of patch generation failure in test context
-- [x] Fix patch generation to work in all contexts
-- [x] Verify integration test passes
-- [x] Verify no regression in other tests
