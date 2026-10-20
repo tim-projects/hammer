@@ -1,9 +1,9 @@
 diff --git a/.ops/staging/236-task-implement-review-gating-test-f/meta.json b/.ops/staging/236-task-implement-review-gating-test-f/meta.json
 new file mode 100644
-index 0000000..687e733
+index 0000000..a234246
 --- /dev/null
 +++ b/.ops/staging/236-task-implement-review-gating-test-f/meta.json
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,16 @@
 +{
 +  "Id": 236,
 +  "Ti": "Implement review gating test for MD5-based patch review",
@@ -12,46 +12,12 @@ index 0000000..687e733
 +  "Bl": [],
 +  "Pr": 2,
 +  "Br": "236-task-implement-review-gating-test-f",
-+  "Rc": "PASSED",
++  "Rc": "",
 +  "Vp": true,
-+  "Reviewed": false,
++  "Reviewed": true,
 +  "AuditPassed": false,
-+  "PatchGenTime": 1792501095.8967,
++  "PatchGenTime": 1792500237.008859,
 +  "DoneAt": null,
-+  "Tp": false,
-+  "PatchFiles": [
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/criteria.md",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch"
-+    },
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/current-task.md",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch"
-+    },
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/meta.json",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch"
-+    },
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/plan.md",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch"
-+    },
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/progress.md",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch"
-+    },
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/story.md",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_story.md.patch"
-+    },
-+    {
-+      "file": ".ops/staging/236-task-implement-review-gating-test-f/tech.md",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch"
-+    },
-+    {
-+      "file": "testing/236-task-implement-review-gating-test-f/meta.json",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/testing_236-task-implement-review-gating-test-f_meta.json.patch"
-+    }
-+  ]
++  "Tp": true
 +}
 \ No newline at end of file
