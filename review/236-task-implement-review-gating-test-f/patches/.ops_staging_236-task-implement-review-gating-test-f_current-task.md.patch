@@ -1,10 +1,11 @@
 diff --git a/.ops/staging/236-task-implement-review-gating-test-f/current-task.md b/.ops/staging/236-task-implement-review-gating-test-f/current-task.md
 new file mode 100644
-index 0000000..5031695
+index 0000000..5eb6461
 --- /dev/null
 +++ b/.ops/staging/236-task-implement-review-gating-test-f/current-task.md
-@@ -0,0 +1,4 @@
+@@ -0,0 +1,5 @@
 +---
 +Task: 236-task-implement-review-gating-test-f
 +---
 +
++- Progress: 
