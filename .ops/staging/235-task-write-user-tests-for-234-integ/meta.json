@@ -1,0 +1,22 @@
+{
+  "Id": 235,
+  "Ti": "Write user tests for 234: Integration test failure - audit patches missing",
+  "Ty": "task",
+  "Cr": "261018 09:46",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "235-task-write-user-tests-for-234-integ",
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1792520012.891962,
+  "DoneAt": null,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/235-task-write-user-tests-for-234-integ/patches/tests_test_audit_verify_integration.py.patch"
+    }
+  ]
+}
