@@ -1,0 +1,14 @@
+diff --git a/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch b/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch
+new file mode 100644
+index 0000000..11fd963
+--- /dev/null
++++ b/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch
+@@ -0,0 +1,8 @@
++diff --git a/.ops/staging/236-task-implement-review-gating-test-f/criteria.md b/.ops/staging/236-task-implement-review-gating-test-f/criteria.md
++new file mode 100644
++index 0000000..fb82444
++--- /dev/null
+++++ b/.ops/staging/236-task-implement-review-gating-test-f/criteria.md
++@@ -0,0 +1 @@
+++- [x] Create test that exercises the full review gating flow\n- [x] Test verifies that marking reviewed fails when patches exist without proper PatchReviews\n- [x] Test verifies that after proper structured review, promotion to STAGING succeeds\n- [x] Test passes\n- [x] No regressions in existing tests
++\ No newline at end of file

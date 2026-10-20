@@ -1,0 +1,35 @@
+diff --git a/.ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch b/.ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch
+new file mode 100644
+index 0000000..85520c3
+--- /dev/null
++++ b/.ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch
+@@ -0,0 +1,29 @@
++diff --git a/.ops/staging/236-task-implement-review-gating-test-f/patches/testing_236-task-implement-review-gating-test-f_meta.json.patch b/.ops/staging/236-task-implement-review-gating-test-f/patches/testing_236-task-implement-review-gating-test-f_meta.json.patch
++new file mode 100644
++index 0000000..a6dbcfb
++--- /dev/null
+++++ b/.ops/staging/236-task-implement-review-gating-test-f/patches/testing_236-task-implement-review-gating-test-f_meta.json.patch
++@@ -0,0 +1,23 @@
+++diff --git a/testing/236-task-implement-review-gating-test-f/meta.json b/testing/236-task-implement-review-gating-test-f/meta.json
+++new file mode 100644
+++index 0000000..01a67a4
+++--- /dev/null
++++++ b/testing/236-task-implement-review-gating-test-f/meta.json
+++@@ -0,0 +1,16 @@
++++{
++++  "Id": 236,
++++  "Ti": "Implement review gating test for MD5-based patch review",
++++  "Ty": "task",
++++  "Cr": "261020 11:42",
++++  "Bl": [],
++++  "Pr": 2,
++++  "Br": "236-task-implement-review-gating-test-f",
++++  "Rc": "",
++++  "Vp": true,
++++  "Reviewed": true,
++++  "AuditPassed": false,
++++  "PatchGenTime": 1792500237.008859,
++++  "DoneAt": null,
++++  "Tp": false
++++}
+++\ No newline at end of file

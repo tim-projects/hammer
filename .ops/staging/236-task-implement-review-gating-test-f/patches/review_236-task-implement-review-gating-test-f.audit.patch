@@ -1,0 +1,12 @@
+diff --git a/review/236-task-implement-review-gating-test-f.audit b/review/236-task-implement-review-gating-test-f.audit
+new file mode 100644
+index 0000000..2ccb815
+--- /dev/null
++++ b/review/236-task-implement-review-gating-test-f.audit
+@@ -0,0 +1,5 @@
++{
++    "task_id": "236",
++    "patch_hash": "20f05f35134f6a40c493163cd7594843",
++    "status": "verified"
++}
+\ No newline at end of file
