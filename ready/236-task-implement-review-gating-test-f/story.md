@@ -1,1 +1,0 @@
-We need a test that validates the new MD5-based review gating. The test should edit code, move through pipeline to REVIEW (generating patches), attempt a review without proper review data (should fail), then perform full structured review and proceed to STAGING successfully.
