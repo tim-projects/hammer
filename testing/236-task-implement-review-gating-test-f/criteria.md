@@ -1,1 +1,0 @@
-- [x] Create test that exercises the full review gating flow\n- [x] Test verifies that marking reviewed fails when patches exist without proper PatchReviews\n- [x] Test verifies that after proper structured review, promotion to STAGING succeeds\n- [x] Test passes\n- [x] No regressions in existing tests
