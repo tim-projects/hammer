@@ -10,7 +10,13 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1792520012.891962,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/235-task-write-user-tests-for-234-integ/patches/tests_test_audit_verify_integration.py.patch"
+    }
+  ]
 }
