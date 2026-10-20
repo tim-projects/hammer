@@ -7,5 +7,9 @@
   "Pr": 2,
   "Br": "236-task-implement-review-gating-test-f",
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
