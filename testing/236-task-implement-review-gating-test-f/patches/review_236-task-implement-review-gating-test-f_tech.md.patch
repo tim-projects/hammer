@@ -1,8 +1,0 @@
-diff --git a/review/236-task-implement-review-gating-test-f/tech.md b/review/236-task-implement-review-gating-test-f/tech.md
-new file mode 100644
-index 0000000..6965a4f
---- /dev/null
-+++ b/review/236-task-implement-review-gating-test-f/tech.md
-@@ -0,0 +1 @@
-+Create a test that exercises the new PatchReviews/MD5 gating logic. Test should modify a file, create a task, go through READY→PROGRESSING→TESTING→REVIEW (patches generated with MD5 hashes), try to mark reviewed without proper patch review data - should fail, then perform structured review via modify command with proper review information, then do audit/verify/regression-check and move to STAGING.
-\ No newline at end of file
