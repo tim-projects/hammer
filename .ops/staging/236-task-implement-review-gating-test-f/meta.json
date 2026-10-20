@@ -6,13 +6,13 @@
   "Bl": [],
   "Pr": 2,
   "Br": "236-task-implement-review-gating-test-f",
-  "Rc": "PASSED",
+  "Rc": "",
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1792501698.145423,
+  "PatchGenTime": 1792502727.029398,
   "DoneAt": null,
-  "Tp": false,
+  "Tp": true,
   "PatchFiles": [
     {
       "file": ".ops/staging/236-task-implement-review-gating-test-f/criteria.md",
@@ -39,6 +39,38 @@
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch"
     },
     {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
       "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch"
     },
@@ -53,6 +85,70 @@
     {
       "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f.audit.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f.audit.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_criteria.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_criteria.md.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_current-task.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_current-task.md.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_meta.json.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_meta.json.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_plan.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_plan.md.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_progress.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_progress.md.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_story.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_story.md.patch.patch"
+    },
+    {
+      "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_tech.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_tech.md.patch.patch"
     },
     {
       "file": ".ops/staging/236-task-implement-review-gating-test-f/patches/testing_236-task-implement-review-gating-test-f_meta.json.patch",
@@ -103,6 +199,38 @@
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch"
     },
     {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
       "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch"
     },
@@ -117,6 +245,70 @@
     {
       "file": "review/236-task-implement-review-gating-test-f/patches/.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f.audit.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f.audit.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_criteria.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_criteria.md.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_current-task.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_current-task.md.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_meta.json.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_meta.json.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_criteria.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_current-task.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_plan.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_progress.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_story.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_.ops_staging_236-task-implement-review-gating-test-f_tech.md.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_patches_testing_236-task-implement-review-gating-test-f_meta.json.patch.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_plan.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_plan.md.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_progress.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_progress.md.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_story.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_story.md.patch.patch"
+    },
+    {
+      "file": "review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_tech.md.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/236-task-implement-review-gating-test-f/patches/review_236-task-implement-review-gating-test-f_patches_review_236-task-implement-review-gating-test-f_tech.md.patch.patch"
     },
     {
       "file": "review/236-task-implement-review-gating-test-f/patches/testing_236-task-implement-review-gating-test-f_meta.json.patch",
