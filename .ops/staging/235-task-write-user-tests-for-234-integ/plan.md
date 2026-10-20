@@ -1,0 +1,1 @@
+1. 1. Reproduce test in isolated environment\n2. Debug patch generation step by step\n3. Fix identified issues\n4. Verify fix
