@@ -1,0 +1,10 @@
+{
+  "Id": 239,
+  "Ti": "Verifiable patch review gate and regression-check hardening",
+  "Ty": "task",
+  "Cr": "261021 08:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "239-task-verifiable-patch-review-gate-a",
+  "Pt": null
+}
