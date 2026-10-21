@@ -1,1 +1,0 @@
-tasks_ai/commands/modify.py, pipeline_hooks.py, pipeline.py, audit.py, tasks.py argparse. Per-patch review records written with md5; gate STAGING on all patches reviewed (empty-diff auto-pass); remove Rc=PASSED short-circuit; --regression-check verifies audit md5 + sha256 integrity; require Reviewed.
