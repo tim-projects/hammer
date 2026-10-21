@@ -12,6 +12,7 @@ def run(
     title,
     task_type="task",
     priority=None,
+    parent=None,
     story=None,
     tech=None,
     criteria=None,
@@ -104,8 +105,16 @@ def run(
                 continue
             path = os.path.join(fp, item)
             task = FM.load(path)
-            if task.metadata.get("Id") == numeric_id:
-                cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
+        if task.metadata.get("Id") == numeric_id:
+                    cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
+
+    parent_id = None
+    if parent:
+        parent_path, _ = cli.find_task(parent)
+        if not parent_path:
+            cli.error("PARENT_NOT_FOUND", parent=parent)
+        parent_task = FM.load(parent_path)
+        parent_id = parent_task.metadata.get("Id")
 
     task = Task(
         metadata={
@@ -116,6 +125,7 @@ def run(
             "Bl": [],
             "Pr": priority or (1 if task_type == "issue" else 2),
             "Br": task_id,
+            "Pt": parent_id,
         },
         parts={
             "story": story or "",
@@ -209,6 +219,7 @@ def run(
                 "Bl": [],
                 "Pr": priority or 2,
                 "Br": pair_task_id,
+                "Pt": numeric_id,
             },
             parts={
                 "story": story or "",
