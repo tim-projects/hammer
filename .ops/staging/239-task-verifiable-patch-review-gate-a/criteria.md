@@ -1,0 +1,1 @@
+- [x] empty diff auto-passes review gate

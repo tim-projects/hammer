@@ -9,9 +9,47 @@
   "Pt": null,
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
-  "PatchGenTime": 1792580918.421317,
+  "PatchGenTime": 1792625621.808107,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks_ai_commands_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks_ai_commands_modify.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/verify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks_ai_commands_verify.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tasks_ai_pipeline.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/239-task-verifiable-patch-review-gate-a/patches/tests_test_tasks.py.patch"
+    }
+  ]
 }
