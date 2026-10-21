@@ -1,0 +1,8 @@
+- [x] Add EPIC state to state machine (holds parent until children merged)
+- [x] Parent-Child linking via new metadata field (e.g., Pt for Parent task)
+- [x] Child moves to DONE triggers merge to parent branch
+- [x] Child REJECTION auto-removes requirement from parent
+- [x] Parent in EPIC state blocked from gates until all children merged
+- [x] Auto-detect when all children merged, prompt to move from EPIC to PROGRESSING
+- [x] Parent shows children state in tasks show command
+- [x] Test: Create parent in EPIC, create child with parent link, merge child to parent, verify parent unblocks
