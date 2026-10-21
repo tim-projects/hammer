@@ -101,12 +101,15 @@ def run(
         if not os.path.exists(fp):
             continue
         for item in os.listdir(fp):
-            if item == ".gitkeep":
+            if item in (".gitkeep", ".task_counter", "task_counter"):
                 continue
             path = os.path.join(fp, item)
-            task = FM.load(path)
-        if task.metadata.get("Id") == numeric_id:
-                    cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
+            try:
+                existing = FM.load(path)
+            except Exception:  # noqa: BLE001
+                continue
+            if existing.metadata.get("Id") == numeric_id:
+                cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
 
     parent_id = None
     if parent:
@@ -203,10 +206,13 @@ def run(
             if not os.path.exists(fp):
                 continue
             for item in os.listdir(fp):
-                if item == ".gitkeep":
+                if item in (".gitkeep", ".task_counter", "task_counter"):
                     continue
                 path = os.path.join(fp, item)
-                existing_task = FM.load(path)
+                try:
+                    existing_task = FM.load(path)
+                except Exception:  # noqa: BLE001
+                    continue
                 if existing_task.metadata.get("Id") == pair_numeric_id:
                     cli.error("TASK_ID_EXISTS", numeric_id=pair_numeric_id, state=state)
 

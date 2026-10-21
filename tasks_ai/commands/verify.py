@@ -29,3 +29,4 @@ def run(cli, task_id, proof):
     else:
         cli.log(f'DEBUG: Skipping audit hash update for auto-passed task {task_id}')
     cli.log(f'✅ Task {task_id} verified.')
+    cli.finish({"id": task_id, "task_id": task_folder_name, "proof_path": os.path.join(task_path, "verification_proof.log")})

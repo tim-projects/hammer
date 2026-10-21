@@ -111,37 +111,42 @@ def generate_file_patches(cli, task_id, task_path, branch):
                         pass
     return generated_patches
 
-def generate_audit(task_id, task_path, patches_dir, output_path):
-    """Generate audit file based on patches, meta.json, and criteria.md."""
+def _hash_patches(patches_dir):
+    """Deterministic MD5 over the *contents* of every patch file (sorted by name).
+
+    Only patch bytes are hashed so the digest is stable as task metadata
+    (e.g. Rc/Reviewed/PatchFiles) evolves between audit generation and
+    regression-check / STAGING verification. This is what makes a patch
+    review "verifiable": if the diff content changed, the hash no longer
+    matches.
+    """
     hasher = hashlib.md5()
-    patch_files = sorted([f for f in os.listdir(patches_dir) if f.endswith('.patch')])
+    patch_files = sorted(
+        f for f in os.listdir(patches_dir) if f.endswith(".patch")
+    )
     for patch_file in patch_files:
-        with open(os.path.join(patches_dir, patch_file), 'rb') as f:
+        with open(os.path.join(patches_dir, patch_file), "rb") as f:
             hasher.update(f.read())
-    for filename in ['meta.json', 'criteria.md']:
-        filepath = os.path.join(task_path, filename)
-        if os.path.exists(filepath):
-            with open(filepath, 'rb') as f:
-                hasher.update(f.read())
-    audit_data = {'task_id': task_id, 'patch_hash': hasher.hexdigest(), 'status': 'verified'}
+    return hasher.hexdigest(), patch_files
+
+
+def generate_audit(task_id, task_path, patches_dir, output_path):
+    """Generate audit file recording an MD5 of the patch contents."""
+    patch_hash, patch_files = _hash_patches(patches_dir)
+    audit_data = {
+        "task_id": task_id,
+        "patch_hash": patch_hash,
+        "patch_files": patch_files,
+        "status": "verified",
+    }
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(audit_data, f, indent=4)
-    print(f'Audit file generated at {output_path}')
 
 def verify_audit(task_path, patches_dir, audit_path):
     if not os.path.exists(audit_path):
         return False
-    hasher = hashlib.md5()
-    patch_files = sorted([f for f in os.listdir(patches_dir) if f.endswith('.patch')])
-    for patch_file in patch_files:
-        with open(os.path.join(patches_dir, patch_file), 'rb') as f:
-            hasher.update(f.read())
-    for filename in ['meta.json', 'criteria.md']:
-        filepath = os.path.join(task_path, filename)
-        if os.path.exists(filepath):
-            with open(filepath, 'rb') as f:
-                hasher.update(f.read())
-    with open(audit_path, 'r') as f:
+    patch_hash, _ = _hash_patches(patches_dir)
+    with open(audit_path, "r") as f:
         audit_data = json.load(f)
-    return audit_data['patch_hash'] == hasher.hexdigest()
+    return audit_data.get("patch_hash") == patch_hash
