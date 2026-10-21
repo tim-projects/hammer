@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
+import json
 import os
-import subprocess
 import shutil
+import subprocess
 import tempfile
 import unittest
-import json
-import sys
 
 
 class TestRobustness(unittest.TestCase):
@@ -13,18 +12,24 @@ class TestRobustness(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
-        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
         )
-        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
         with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
-        subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)
-        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)
-        # Compute absolute path to tasks.py based on this file's location
-        self.script_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tasks.py"
+        subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)  # noqa: PLW1510
+        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)  # noqa: PLW1510
+        # Compute absolute path to hammer based on this file's location
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.script_path = os.path.join(self.repo_dir, "hammer")
+        os.symlink(os.path.join(project_root, "hammer"), self.script_path)
+        subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Add hammer"],
+            cwd=self.repo_dir,
+            capture_output=True,
         )
 
         # Setup config
@@ -36,6 +41,7 @@ class TestRobustness(unittest.TestCase):
                 "test": "/bin/true",
                 "type_check": "/bin/true",
                 "format": "/bin/true",
+                "skip_push": True,
             }
         }
         with open(os.path.join(config_dir, "config.yaml"), "w") as f:
@@ -44,9 +50,22 @@ class TestRobustness(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
+    def complete_criteria(self, file):
+        """Mark the criteria file in the task's current pipeline stage as done."""
+        tasks_root = os.path.join(self.repo_dir, ".tasks")
+        for dirpath, _, filenames in os.walk(tasks_root):
+            if "criteria.md" not in filenames:
+                continue
+            criteria_path = os.path.join(dirpath, "criteria.md")
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
+            return
+
     def run_cmd(self, args, check=False):
-        result = subprocess.run(
-            [sys.executable, self.script_path, "-j"] + args,
+        result = subprocess.run(  # noqa: PLW1510
+            [self.script_path, "tasks", "-j"] + args,
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
@@ -130,7 +149,6 @@ class TestRobustness(unittest.TestCase):
         self.assertFalse(res["success"], res)
         self.assertIn("circular", res.get("error", "").lower())
 
-    @unittest.skip("Skipping failing test_revert_progressing_to_testing")
     def test_revert_progressing_to_testing(self):
         """4. Move to TESTING, then revert to PROGRESSING."""
         self.run_cmd(["init"])
@@ -151,28 +169,28 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         res = self.run_cmd(["move", file, "TESTING"])
         self.assertTrue(res["success"], res)
         res = self.run_cmd(["move", file, "PROGRESSING"])
         self.assertTrue(res["success"], res)
 
-    @unittest.skip("Skipping failing test_revert_staging_to_progressing")
     def test_revert_staging_to_progressing(self):
         """5. Move to STAGING, then move to REVIEW."""
         self.run_cmd(["init"])
@@ -193,41 +211,43 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         res = self.run_cmd(["move", file, "REVIEW"])
         self.assertTrue(res["success"], res)
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         res = self.run_cmd(["move", file, "STAGING"])
@@ -236,7 +256,6 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(["move", str(file_id), "REVIEW"])
         self.assertTrue(res["success"], res)
 
-    @unittest.skip("Skipping failing test_delete_done_task_fails")
     def test_delete_done_task_fails(self):
         """7. Attempt to delete task when not in DONE state."""
         self.run_cmd(["init"])
@@ -257,67 +276,69 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"], res)
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", file, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
-        subprocess.run(
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         res = self.run_cmd(["move", file, "DONE", "-y"])
         self.assertTrue(res["success"], res)
         res = self.run_cmd(["delete", file])
         self.assertTrue(res["success"], res)
 
-    @unittest.skip("Skipping failing test_reconcile_non_merged")
     def test_reconcile_non_merged(self):
         """8. Reconcile with non-merged branches."""
         self.run_cmd(["init"])
@@ -338,22 +359,23 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "testing", file, "criteria.md"
@@ -385,7 +407,7 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         res = self.run_cmd(["link", file, "nonexistent-task-id"])
         self.assertFalse(res["success"], res)
 
@@ -409,7 +431,7 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         res = self.run_cmd(["checkpoint"])
         self.assertTrue(res["success"], res)
         res = self.run_cmd(["checkpoint"])
@@ -434,12 +456,12 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", file], cwd=self.repo_dir, capture_output=True
         )
         res = self.run_cmd(["list"])
         self.assertTrue(res["success"], res)
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
 
@@ -486,7 +508,7 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         res = self.run_cmd(["link", file, file])
         self.assertFalse(res["success"], res)
 
@@ -510,51 +532,52 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         res = self.run_cmd(["move", file, "REJECTED"])
@@ -614,7 +637,7 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         res = self.run_cmd(["move", file, "ARCHIVED"])
         self.assertFalse(res["success"], res)
 
@@ -641,49 +664,50 @@ class TestRobustness(unittest.TestCase):
         self.run_cmd(["move", str(file_id), "READY"])
         self.run_cmd(["move", str(file_id), "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", str(file_id), "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(str(file_id))
         self.run_cmd(["move", str(file_id), "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", str(file_id), "REVIEW"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         self.run_cmd(["move", str(file_id), "DONE", "-y"])
         self.run_cmd(["move", str(file_id), "ARCHIVED", "-y"])
         res = self.run_cmd(["modify", str(file_id), "--story", "New story"])
@@ -773,7 +797,6 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(["list"])
         self.assertTrue(res["success"], res)
 
-    @unittest.skip("Skipping failing test_cleanup_merged_task")
     def test_cleanup_merged_task(self):
         """21. Run tasks cleanup on merged tasks."""
         self.run_cmd(["init"])
@@ -793,61 +816,64 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
-        self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
         branch = file
-        subprocess.run(
+        self.run_cmd(["move", file, "READY"])
+        self.run_cmd(["move", file, "PROGRESSING"])
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", file, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         self.run_cmd(["move", file, "DONE", "-y"])
         self.run_cmd(["move", file, "ARCHIVED", "-y"])
         res = self.run_cmd(["cleanup"])
@@ -949,17 +975,17 @@ class TestRobustness(unittest.TestCase):
         """32. Run tasks list in a non-task git repository."""
         non_task_dir = os.path.join(self.test_dir, "non_task")
         os.makedirs(non_task_dir)
-        subprocess.run(["git", "init"], cwd=non_task_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "init"], cwd=non_task_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.email", "test@example.com"], cwd=non_task_dir
         )
-        subprocess.run(["git", "config", "user.name", "Test User"], cwd=non_task_dir)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=non_task_dir)  # noqa: PLW1510
         with open(os.path.join(non_task_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
-        subprocess.run(["git", "add", "README.md"], cwd=non_task_dir)
-        subprocess.run(["git", "commit", "-m", "Initial"], cwd=non_task_dir)
-        result = subprocess.run(
-            [sys.executable, self.script_path, "-j", "list"],
+        subprocess.run(["git", "add", "README.md"], cwd=non_task_dir)  # noqa: PLW1510
+        subprocess.run(["git", "commit", "-m", "Initial"], cwd=non_task_dir)  # noqa: PLW1510
+        result = subprocess.run(  # noqa: PLW1510
+            [self.script_path, "tasks", "-j", "list"],
             cwd=non_task_dir,
             capture_output=True,
             text=True,
@@ -967,7 +993,6 @@ class TestRobustness(unittest.TestCase):
         res = json.loads(result.stdout)
         self.assertFalse(res["success"], res)
 
-    @unittest.skip("Skipping failing test_link_archived_task")
     def test_link_archived_task(self):
         """26. Attempt to link an ARCHIVED task to a new task."""
         self.run_cmd(["init"])
@@ -990,58 +1015,60 @@ class TestRobustness(unittest.TestCase):
         self.run_cmd(["move", str(file_id), "READY"])
         self.run_cmd(["move", str(file_id), "PROGRESSING"])
         branch = res["data"]["file"]
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", str(file_id), "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(str(file_id))
         self.run_cmd(["move", str(file_id), "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", str(file_id), "REVIEW"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         self.run_cmd(["modify", str(file_id), "--regression-check"])
         self.run_cmd(["move", str(file_id), "STAGING"])
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", branch, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         self.run_cmd(["move", str(file_id), "DONE", "-y"])
         self.run_cmd(["move", str(file_id), "ARCHIVED", "-y"])
         res = self.run_cmd(
@@ -1089,7 +1116,6 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(["move", file, "READY"])
         self.assertFalse(res["success"], res)
 
-    @unittest.skip("Skipping failing test_branch_deletion_after_cleanup")
     def test_branch_deletion_after_cleanup(self):
         """29. Verify task branch deletion after tasks cleanup."""
         self.run_cmd(["init"])
@@ -1111,65 +1137,67 @@ class TestRobustness(unittest.TestCase):
         file = res["data"]["file"]
         branch = file
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
-        subprocess.run(
+        self.run_cmd(["move", file, "PROGRESSING"])
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "done"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "merge", "done"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         self.run_cmd(["move", file, "STAGING"])
         criteria_path = os.path.join(
             self.repo_dir, ".tasks", "staging", file, "criteria.md"
         )
-        with open(criteria_path, "r") as f:
-            content = f.read()
-        with open(criteria_path, "w") as f:
-            f.write(content.replace("- [ ]", "- [x]"))
+        if os.path.exists(criteria_path):
+            with open(criteria_path, "r") as f:
+                content = f.read()
+            with open(criteria_path, "w") as f:
+                f.write(content.replace("- [ ]", "- [x]"))
         self.run_cmd(["move", file, "DONE", "-y"])
         self.run_cmd(["move", file, "ARCHIVED", "-y"])
         res = self.run_cmd(["cleanup", "--dry-run"])
         self.assertTrue(res["success"], res)
 
-    @unittest.skip("Skipping failing test_concurrent_move_operations")
     def test_concurrent_move_operations(self):
         """30. Test sequential move operations on the same task."""
         self.run_cmd(["init"])
@@ -1190,22 +1218,23 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         res = self.run_cmd(["move", file, "TESTING"])
         self.assertTrue(res["success"], res)
         res = self.run_cmd(["move", file, "PROGRESSING"])
@@ -1229,7 +1258,7 @@ class TestRobustness(unittest.TestCase):
             ]
         )
         self.assertTrue(res["success"], res)
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             ["git", "status"], cwd=self.repo_dir, capture_output=True, text=True
         )
         self.assertEqual(result.returncode, 0)
@@ -1400,15 +1429,14 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
-        branch_exists = subprocess.run(
+        self.run_cmd(["move", file, "PROGRESSING"])
+        branch_exists = subprocess.run(  # noqa: PLW1510
             ["git", "rev-parse", "--verify", file],
             cwd=self.repo_dir,
             capture_output=True,
         )
         self.assertEqual(branch_exists.returncode, 0)
 
-    @unittest.skip("Skipping failing test_task_movement_workflow")
     def test_task_movement_workflow(self):
         """41. Test task movement through valid workflow."""
         self.run_cmd(["init"])
@@ -1429,22 +1457,23 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         branch = file
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         res = self.run_cmd(["move", file, "TESTING"])
         self.assertTrue(res["success"], res)
 
@@ -1489,7 +1518,7 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
+        self.run_cmd(["move", file, "PROGRESSING"])
         res = self.run_cmd(["list"])
         self.assertTrue(res["success"], res)
 
@@ -1562,9 +1591,9 @@ class TestRobustness(unittest.TestCase):
         """50. Run tasks init in an already initialized repository."""
         self.run_cmd(["init"])
         res = self.run_cmd(["init"])
-        self.assertTrue(res["success"], res)
+        self.assertFalse(res["success"], res)
+        self.assertIn("already initialized", res.get("error", "").lower())
 
-    @unittest.skip("Skipping failing test_regression_check_gate_blocks_staging")
     def test_regression_check_gate_blocks_staging(self):
         """Test that moving from REVIEW to STAGING is blocked until --regression-check."""
         self.run_cmd(["init"])
@@ -1587,37 +1616,39 @@ class TestRobustness(unittest.TestCase):
         branch = file
 
         # Move through workflow to REVIEW
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
-        subprocess.run(
+        self.run_cmd(["move", file, "READY"])
+        self.run_cmd(["move", file, "PROGRESSING"])
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("code\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Add code"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
@@ -1628,13 +1659,13 @@ class TestRobustness(unittest.TestCase):
         self.assertIn("regression", res.get("error", "").lower())
 
         # Set Rc
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
 
         # Now STAGING should succeed
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"])
 
-    @unittest.skip("Skipping failing test_regression_workflow_cycle")
     def test_regression_workflow_cycle(self):
         """Test full regression workflow cycle: REVIEW -> PROGRESSING -> (fix) -> REVIEW -> STAGING."""
         self.run_cmd(["init"])
@@ -1657,39 +1688,41 @@ class TestRobustness(unittest.TestCase):
         branch = file
 
         # Initial progress to REVIEW
-        self.run_cmd(["move", file, "READY,PROGRESSING"])
-        subprocess.run(
+        self.run_cmd(["move", file, "READY"])
+        self.run_cmd(["move", file, "PROGRESSING"])
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
             f.write("initial\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Initial work"],
             cwd=self.repo_dir,
             capture_output=True,
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["modify", file, "--tests-passed"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
@@ -1699,43 +1732,46 @@ class TestRobustness(unittest.TestCase):
         self.assertTrue(res["success"])
 
         # Fix on task branch
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
         with open(os.path.join(self.repo_dir, "code.txt"), "a") as f:
             f.write("fix\n")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Fix regression"],
             cwd=self.repo_dir,
             capture_output=True,
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         # Re-merge to testing and staging
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "testing"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
+        self.complete_criteria(file)
         self.run_cmd(["move", file, "TESTING"])
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
+            ["git", "branch", "-D", "staging"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
-        subprocess.run(
-            ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(
+        subprocess.run(["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )
         self.run_cmd(["move", file, "REVIEW"])
 
         # Set regression check and move to STAGING
+        self.run_cmd(["audit", file])
         self.run_cmd(["modify", file, "--regression-check"])
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"])
@@ -1780,10 +1816,10 @@ class TestRobustness(unittest.TestCase):
         counter_path = os.path.join(tasks_dir, ".task_counter")
         with open(counter_path, "w") as f:
             f.write("0")
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "add", ".task_counter"], cwd=tasks_dir, capture_output=True
         )
-        subprocess.run(
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Simulate stale counter"],
             cwd=tasks_dir,
             capture_output=True,
@@ -1792,17 +1828,18 @@ class TestRobustness(unittest.TestCase):
         # Doctor without fix should detect the issue
         res = self.run_cmd(["doctor"])
         self.assertTrue(res["success"])
-        self.assertEqual(res["data"]["issues_found"], 1)
+        self.assertEqual(len(res["data"]["bugs"]), 1)
         self.assertEqual(res["data"]["bugs"][0]["id"], "stale-task-counter")
 
-        # Doctor with --fix should update counter to max_id + 1 (which is 2+1=3)
+        # Doctor with --fix should update counter to max_id + 1
         res_fix = self.run_cmd(["doctor", "--fix"])
         self.assertTrue(res_fix["success"])
 
         # Verify counter value
         with open(counter_path, "r") as f:
             new_val = int(f.read().strip())
-        self.assertEqual(new_val, 3)
+        # Each create generates 2 tasks (main + pair), so 2 creates = 4 tasks with IDs 1-4
+        self.assertEqual(new_val, 5)
 
     def test_doctor_state_mismatch_detection_and_fix(self):
         """46. Verify doctor detects state folder mismatch and fixes with --fix."""
@@ -1839,8 +1876,8 @@ class TestRobustness(unittest.TestCase):
             json.dump(meta, f)
 
         tasks_dir = os.path.join(self.repo_dir, ".tasks")
-        subprocess.run(["git", "add", "."], cwd=tasks_dir, capture_output=True)
-        subprocess.run(
+        subprocess.run(["git", "add", "."], cwd=tasks_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Set state mismatch manually"],
             cwd=tasks_dir,
             capture_output=True,
@@ -1849,7 +1886,7 @@ class TestRobustness(unittest.TestCase):
         # Doctor should detect state mismatch (and also stale counter if counter < expected)
         res = self.run_cmd(["doctor"])
         self.assertTrue(res["success"])
-        self.assertGreaterEqual(res["data"]["issues_found"], 1)
+        self.assertGreaterEqual(len(res["data"]["bugs"]), 1)
         mismatch_found = any(
             "state-mismatch" in bug["id"] for bug in res["data"]["bugs"]
         )
@@ -1861,7 +1898,7 @@ class TestRobustness(unittest.TestCase):
 
         # After fix, issues should be resolved (re-run doctor should show 0)
         res_after = self.run_cmd(["doctor"])
-        self.assertEqual(res_after["data"]["issues_found"], 0)
+        self.assertEqual(len(res_after["data"]["bugs"]), 0)
 
         # Verify task moved to done/
         new_task_dir = os.path.join(self.repo_dir, ".tasks", "done", tid)

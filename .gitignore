@@ -2,6 +2,8 @@ tasks/
 venv/
 
 .tasks/
+.tasks.bak/
+.tasks.backup
 
 __pycache__/
 *.pyc
@@ -10,3 +12,15 @@ __pycache__/
 *.md
 !README.md
 !AGENTS.md
+
+*.txt
+
+.hammer tasks/
+
+*.bak
+
+
+/.tasks/
+cli-versions/
+
+/.tasks.backup/

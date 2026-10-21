@@ -1,8 +1,9 @@
 # tasks_ai/file_manager.py
-import os
 import json
-import tempfile
+import os
 import shutil
+import tempfile
+
 from .models import Task
 
 
@@ -59,9 +60,15 @@ class FM:
 
         meta = {}
         meta_path = os.path.join(path, "meta.json")
+        corrupted = False
         if os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
-                meta = json.load(f)
+            try:
+                with open(meta_path, "r") as f:
+                    content = f.read().strip()
+                    if content:
+                        meta = json.loads(content)
+            except (json.JSONDecodeError, OSError):
+                corrupted = True
 
         parts = {}
         for f in os.listdir(path):
@@ -69,7 +76,10 @@ class FM:
                 part_name = f[:-3]
                 with open(os.path.join(path, f), "r") as file:
                     parts[part_name] = file.read()
-        return Task(metadata=meta, parts=parts)
+            elif f in ["verification_proof.log", ".audit_hash"]:
+                with open(os.path.join(path, f), "r") as file:
+                    parts[f] = file.read()
+        return Task(metadata=meta, parts=parts, corrupted=corrupted)
 
     @staticmethod
     def dump(task, path):
@@ -100,4 +110,28 @@ class FM:
                 continue
             if content is None:
                 continue
-            _atomic_write(os.path.join(path, f"{name}.md"), content)
+
+            if name.endswith(".md") or name in [
+                "verification_proof.log",
+                ".audit_hash",
+            ]:
+                if isinstance(content, list):
+                    content = "\n".join(content)
+                _atomic_write(os.path.join(path, name), content)
+            else:
+                if isinstance(content, list):
+                    content = "\n".join(content)
+                _atomic_write(os.path.join(path, f"{name}.md"), content)
+
+    @staticmethod
+    def append_log(path, message, section="progress"):
+        """Append a message to a specific section of a task."""
+        task = FM.load(path)
+        current = task.parts.get(section, "")
+        if current and not current.endswith("\n"):
+            current += "\n"
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # noqa: DTZ005
+        task.parts[section] = f"{current}[{timestamp}] {message}\n"
+        FM.dump(task, path)

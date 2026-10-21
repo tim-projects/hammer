@@ -1,0 +1,150 @@
+# Refactor Plan: Restore Missing Methods in cli_engine.py
+
+## Problem
+After refactoring cli.py to be modular, the list and show commands stopped working because certain methods are missing from tasks_ai/cli_engine.py that are being called by the command modules.
+
+## Root Cause
+During the modularization process, some methods were not properly transferred from the monolithic cli.py to the new cli_engine.py module. Specifically:
+- Methods called by command modules (like list, show, etc.) are missing from cli_engine.py
+- The TasksCLI class in cli_engine.py needs to have these methods restored
+
+## Solution Approach
+1. Identify which methods are being called by command modules on the cli object
+2. Compare with what methods currently exist in cli_engine.py
+3. Copy the missing method implementations from the original monolithic cli.py.main
+4. Add them to cli_engine.py in the appropriate locations
+
+## Steps to Implement
+
+### Step 1: Identify Called Methods
+From previous analysis, the command modules call these methods on cli:
+- _append_log
+- _atomic_write
+- _detect_tools
+- _generate_review_diff
+- _get_default_branch
+- _get_next_id
+- _git_merge_transition
+- _move_logic
+- _push_tasks_branch
+- _run_git
+- _run_tests
+- _run_validation
+- _validate_path
+- _validate_pipeline_gate
+- as_json (attribute)
+- dev (attribute)
+- error
+- find_task
+- finish
+- get_active_task
+- log
+- pipeline (attribute)
+- quiet (attribute)
+- root (attribute)
+- tasks_path (attribute)
+- yes (attribute)
+
+### Step 2: Check Current cli_engine.py Methods
+Current methods in cli_engine.py:
+- __init__
+- log
+- error
+- finish
+- _atomic_write
+- _run_git
+- _get_default_branch
+- _get_next_id
+- _recover_task_counter_from_tasks
+- _tasks_directory_has_data
+- init
+- reconcile
+- cleanup
+- _move_logic
+- find_task
+
+### Step 3: Identify Missing Methods
+Missing methods that need to be added:
+- _append_log
+- _detect_tools
+- _generate_review_diff
+- _git_merge_transition
+- _move_logic (already present, check if correct)
+- _push_tasks_branch
+- _run_tests
+- _run_validation
+- _validate_path
+- _validate_pipeline_gate
+- get_active_task
+- show
+- list
+
+Note: Some attributes like as_json, dev, pipeline, quiet, root, tasks_path, yes are set in __init__
+
+### Step 4: Get Source Implementations
+Copy the missing method implementations from:
+- Source: /home/vscode/git/tasks-ai/cli-versions/cli.py.main (the original monolithic version)
+- Destination: /home/vscode/git/tasks-ai/tasks_ai/cli_engine.py
+
+### Step 5: Add Methods to cli_engine.py
+Insert the missing methods in appropriate locations in cli_engine.py, maintaining logical grouping and order.
+
+## Detailed Implementation
+
+### Methods to Add:
+
+1. **_append_log** (around line 155, after find_task)
+   - Copy from cli.py.main lines 767-783
+
+2. **_detect_tools** (after _append_log or in appropriate section)
+   - Copy from cli.py.main lines 1348-1450
+
+3. **_generate_review_diff** (after _detect_tools)
+   - Copy from cli.py.main lines 245-330
+
+4. **_git_merge_transition** (after _generate_review_diff)
+   - Copy from cli.py.main lines 219-223
+
+5. **_push_tasks_branch** (after _git_merge_transition)
+   - Copy from cli.py.main lines 720-765 (restore method)
+
+6. **_run_tests** (after _push_tasks_branch)
+   - Copy from cli.py.main lines 371-389
+
+7. **_run_validation** (after _run_tests)
+   - Copy from cli.py.main lines 354-370
+
+8. **_validate_path** (after _run_validation)
+   - Copy from cli.py.main lines 198-204
+
+9. **_validate_pipeline_gate** (after _validate_path)
+   - Copy from cli.py.main lines 225-235
+
+10. **get_active_task** (after _validate_pipeline_gate)
+    - Copy from cli.py.main lines 926-943
+
+11. **show** (after get_active_task or in appropriate section)
+    - Copy from cli.py.main lines 1077-1083
+
+12. **list** (after show or in appropriate section)
+    - Copy from cli.py.main lines 1081-1083
+
+### Step 6: Verify Fix
+After adding the methods, test:
+- `./hammer tasks list` (should work)
+- `./hammer tasks show <task_id>` (should work)
+- Other commands should also work properly
+
+## Files to Modify
+- /home/vscode/git/tasks-ai/tasks_ai/cli_engine.py (primary)
+- No other files should need modification for this specific issue
+
+## Best Practices
+- Maintain existing code style and formatting
+- Add appropriate comments where needed
+- Ensure proper indentation (4 spaces)
+- Test each method addition incrementally if possible
+- Run validation checks after changes
+
+## Estimated Work
+This is a straightforward copy-paste job of ~20 methods from the original source to the destination file. Should take approximately 30-60 minutes to complete properly.

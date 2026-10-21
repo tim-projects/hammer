@@ -1,0 +1,7 @@
+[tool.ruff]
+exclude = [
+    "cli-versions",
+    "venv",
+    ".tasks",
+    "__pycache__",
+]
