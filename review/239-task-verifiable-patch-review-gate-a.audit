@@ -1,0 +1,16 @@
+{
+    "task_id": "239",
+    "patch_hash": "8271ad67ebfbb6ed58a96aad7b7dc9d1",
+    "patch_files": [
+        "tasks.py.patch",
+        "tasks_ai_audit.py.patch",
+        "tasks_ai_commands_audit.py.patch",
+        "tasks_ai_commands_create.py.patch",
+        "tasks_ai_commands_modify.py.patch",
+        "tasks_ai_commands_verify.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
