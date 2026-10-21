@@ -7,5 +7,6 @@
   "Br": "86-task-implement-epic-feature-branch",
   "Tp": false,
   "Rc": "",
-  "BlockedBy": []
+  "BlockedBy": [],
+  "Reviewed": false
 }
