@@ -102,11 +102,28 @@ class PipelineService:
                     )
 
         # 3. Cryptographic Audit Integrity for STAGING/DONE
-        if "audit_integrity" in enabled_gates:  # noqa: SIM102
+        if "audit_integrity" in enabled_gates:
+            # Rc == "PASSED" is only set by `tasks modify --regression-check`,
+            # which now requires verifiable per-patch review (--reviewed),
+            # validate_audit md5, and sha256 integrity. A bare flag flip cannot
+            # reach here through the CLI. For STAGING we additionally require the
+            # Reviewed flag (defence in depth). Empty-diff tasks skip review.
             if task.metadata.get("Rc") != "PASSED":
-                # Only check audit if Rc is not PASSED (which implies skip or manual override)
-                # But wait, governance usually requires audit IF Rc is not empty.
-                pass
+                raise PipelineError(
+                    "REGRESSION_CHECK_NOT_PASSED",
+                    task_id=task_id,
+                    patch_path=f".tasks/review/{task_id}.patch",
+                )
+            if (
+                target_state == "STAGING"
+                and not self.has_no_patch_changes(cli, task, task_path)
+                and not task.metadata.get("Reviewed")
+            ):
+                raise PipelineError(
+                    "REGRESSION_CHECK_NOT_PASSED",
+                    task_id=task_id,
+                    hint=f"Run 'tasks modify {task_id} --reviewed' after reading the patches.",
+                )
 
         # 4. Integration gate: STAGING/DONE require branch to be merged into appropriate pipeline branch
         if "main_sync" in enabled_gates and branch:
@@ -211,6 +228,18 @@ class PipelineService:
         with open(hash_path, "w") as f:
             f.write(hasher.hexdigest())
         self.log(f"Integrity hash updated for task {task_id}")
+
+    def has_no_patch_changes(self, cli, task, task_path: str) -> bool:
+        """True when the task has no patch files on disk (empty diff).
+
+        Such tasks have "nothing to review", so the review/regression gate is
+        auto-passed for them.
+        """
+        task_folder_name = os.path.basename(task_path)
+        patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
+        if not task.metadata.get("PatchFiles"):
+            return True
+        return not (os.path.isdir(patches_dir) and os.listdir(patches_dir))
 
     def check_audit_integrity(self, cli, task_id: str, task_path: str):
         """

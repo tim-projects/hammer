@@ -1,231 +1,260 @@
+"""End-to-end tests for the verifiable, non-skippable patch-review gate.
+
+These exercise the full `tasks` CLI over a real git repo (no stubs) and
+validate that the REVIEW -> STAGING gate is *not* skippable for tasks with
+real patch changes:
+
+* STAGING is blocked until a verifiable, per-patch review is recorded
+  (--regression-check / Rc == PASSED).
+* `tasks modify --regression-check` fails WITHOUT --reviewed when there are
+  real patch changes.
+* The full audit -> verify -> --reviewed -> --regression-check -> STAGING
+  flow succeeds.
+* A patch tampered with after review makes --regression-check fail (md5
+  mismatch) and blocks STAGING.
+"""
 import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
+import unittest
 
-HAMMER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hammer")
-
-
-def run_dev(cmd, force=False, cwd=None):
-    full_cmd = [HAMMER_PATH, "tasks", "-j", "--dev"] + cmd
-    if force and cmd and cmd[0] == "init":
-        full_cmd.append("--force")
-    result = subprocess.run(full_cmd, capture_output=True, text=True, cwd=cwd)
-    return result
+from tasks_ai.file_manager import FM
 
 
-def setup_dev_config(dev_tasks_dir):
-    os.makedirs(dev_tasks_dir, exist_ok=True)
-    os.makedirs(dev_tasks_dir, exist_ok=True)
-    config_data = {
-        "repo": {
-            "lint": "/bin/true",
-            "test": "/bin/true",
-            "type_check": "/bin/true",
-            "format": "/bin/true",
-        }
-    }
-    with open(os.path.join(dev_tasks_dir, "config.yaml"), "w") as f:
-        json.dump(config_data, f, indent=2)
+class ReviewGateIntegrationTest(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.repo_dir = os.path.join(self.test_dir, "repo")
+        os.makedirs(self.repo_dir)
+        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
+            ["git", "branch", "-m", "master", "main"], cwd=self.repo_dir
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "config", "user.name", "Test User"], cwd=self.repo_dir
+        )
+        with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
+            f.write("# Test Repo")
+        subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
+        )
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.script_path = os.path.abspath(os.path.join(self.repo_dir, "hammer"))
+        os.symlink(os.path.join(project_root, "hammer"), self.script_path)
+        subprocess.run(  # noqa: PLW1510
+            ["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Add hammer"], cwd=self.repo_dir, capture_output=True
+        )
 
+    def tearDown(self):
+        shutil.rmtree(self.test_dir, ignore_errors=True)
 
-def test_pipeline_audit_verify_gates():
-    test_root = tempfile.mkdtemp(prefix="hammer_pipeline_test_")
-    repo_dir = os.path.join(test_root, "repo")
-    dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
-    os.environ["HAMMER_DEV_TASKS_DIR"] = dev_tasks_dir
-    try:
-        subprocess.run(
-            ["git", "clone", os.getcwd(), repo_dir],
-            ["git", "clone", os.getcwd(), repo_dir],
-            ["git", "clone", "--single-branch", "--branch", "main", os.getcwd(), repo_dir],
-            check=True,
+    # --- helpers (mirror tests/test_tasks.py proven patterns) ---
+    def run_cmd(self, args):
+        env = os.environ.copy()
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        env["PYTHONPATH"] = (
+            project_root
+            + ":"
+            + os.path.dirname(project_root)
+            + ":"
+            + env.get("PYTHONPATH", "")
+        )
+        result = subprocess.run(  # noqa: PLW1510
+            [self.script_path, "tasks", "-j", *args],
+            cwd=self.repo_dir,
             capture_output=True,
+            text=True,
+            env=env,
         )
-        subprocess.run(
-            ["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True
-        )
-        subprocess.run(
-            ["git", "fetch", "origin", "tasks"], cwd=repo_dir, check=True, capture_output=True
-        )
-        subprocess.run(
-            ["git", "branch", "tasks", "origin/tasks"], cwd=repo_dir, check=True, capture_output=True
-        )
-        for branch in ["testing", "staging"]:
-            subprocess.run(
-                ["git", "branch", "-D", branch], cwd=repo_dir, check=False, capture_output=True
-            )
+        try:
+            data = json.loads(result.stdout)
+            if not data.get("success"):
+                print(f"CMD FAILED: tasks {' '.join(args)}", file=sys.stderr)
+                print(f"STDOUT: {result.stdout}", file=sys.stderr)
+                print(f"STDERR: {result.stderr}", file=sys.stderr)
+            return data
+        except json.JSONDecodeError:
+            print(f"JSON ERROR: tasks {' '.join(args)}", file=sys.stderr)
+            print(f"STDOUT: {result.stdout}", file=sys.stderr)
+            print(f"STDERR: {result.stderr}", file=sys.stderr)
+            return {
+                "success": False,
+                "error": "JSON Decode Error",
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+            }
 
-        # Stub validation tools in the sandbox repo's .tasks so check.py uses /bin/true
-        sandbox_tasks_dir = os.path.join(repo_dir, ".tasks")
-        os.makedirs(sandbox_tasks_dir, exist_ok=True)
-        with open(os.path.join(sandbox_tasks_dir, "config.yaml"), "w") as f:
-            json.dump(
-                {
-                    "repo": {
-                        "lint": "/bin/true",
-                        "test": "/bin/true",
-                        "type_check": "/bin/true",
-                        "format": "/bin/true",
-                    }
-                },
-                f,
-                indent=2,
-            )
+    def complete_review_gate(self, file):
+        """audit -> verify -> --reviewed -> --regression-check."""
+        res = self.run_cmd(["audit", file])
+        self.assertTrue(res["success"], f"audit failed for {file}: {res}")
+        res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
+        self.assertTrue(res["success"], f"verify failed for {file}: {res}")
+        res = self.run_cmd(["modify", file, "--reviewed"])
+        self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
+        res = self.run_cmd(["modify", file, "--regression-check"])
+        self.assertTrue(res["success"], f"--regression-check failed for {file}: {res}")
 
-        def check(label, result):
-            if result.returncode != 0:
-                print(f"FULL OUTPUT for {label}:")
-                print(result.stdout)
-                print(result.stderr)
-            assert result.returncode == 0, (
-                f"{label} failed (rc={result.returncode}): "
-                f"{result.stdout[:500]} {result.stderr[:500]}"
-            )
+    def create_and_reach_review(self, title, work_file):
+        """Create a task, commit a work file on its branch, move to REVIEW.
 
-        init_res = run_dev(["init"], force=True, cwd=repo_dir)
-        check("init", init_res)
-        setup_dev_config(dev_tasks_dir)
-
-        # 5. Set up testing branch and move to TESTING
-        subprocess.run(
-            ["git", "checkout", "testing"],
-                cwd=os.getcwd(),
-            capture_output=True,
-        )
-        subprocess.run(
-            ["git", "merge", branch, "-m", f"Merge {branch} into testing"],
-            cwd=os.getcwd(),
-            capture_output=True,
-        )
-        subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
-        run_dev(["move", task_id, "TESTING"])
-
-        # 6. Set up staging branch and move to REVIEW
-        subprocess.run(
-            ["git", "checkout", "testing"],
-                cwd=os.getcwd(),
-            capture_output=True,
-        )
-        subprocess.run(
-            ["git", "branch", "-f", "staging", "testing"],
-            cwd=os.getcwd(),
-            capture_output=True,
-        )
-        subprocess.run(
-            ["git", "checkout", "staging"],
-            cwd=os.getcwd(),
-            capture_output=True,
-        )
-        subprocess.run(
-            ["git", "merge", branch, "-m", f"Merge {branch} into staging"],
-            cwd=os.getcwd(),
-            capture_output=True,
-        )
-        subprocess.run(["git", "checkout", "main"], cwd=os.getcwd(), capture_output=True)
-        run_dev(["move", task_id, "REVIEW"])
-        create_result = run_dev(
+        Mirrors the proven cycle in tests/test_tasks.py::test_full_lifecycle.
+        Returns the task filename (basename).
+        """
+        self.run_cmd(["init"])
+        res = self.run_cmd(
             [
                 "create",
-                "Integration Test Task",
+                title,
                 "--story",
-                "Sufficiently long story content here to pass validation",
+                "As a user I want to validate the review gate is enforced.",
                 "--tech",
-                "Sufficiently long technical description here to pass validation",
+                "Git and Python orchestration for verifiable reviews.",
                 "--criteria",
-                "- [ ] Sufficiently long acceptance criteria here to pass validation",
+                "- [ ] Sufficient acceptance criteria for the review gate.",
                 "--plan",
-                "Sufficiently long planning details here to pass validation",
-            ],
-            cwd=repo_dir,
+                "1. Create\n2. Progress\n3. Test\n4. Review",
+            ]
         )
-        create_data = json.loads(create_result.stdout)
-        task_id = str(create_data["data"]["id"])
-        branch = create_data["data"]["branch"]
+        self.assertTrue(res["success"], res)
+        task_file = res["data"]["file"]
+        branch = task_file  # branch name equals task filename
 
-        check("create", create_result)
-        check("modify criteria", run_dev(["modify", task_id, "--criteria", "- [x] Sufficiently long acceptance criteria here to pass validation"], cwd=repo_dir))
-        check("move READY", run_dev(["move", task_id, "READY"], cwd=repo_dir))
-        check("move PROGRESSING", run_dev(["move", task_id, "PROGRESSING"], cwd=repo_dir))
+        self.run_cmd(["move", task_file, "READY"])
+        self.run_cmd(["move", task_file, "PROGRESSING"])
 
-        subprocess.run(["git", "checkout", "-b", "testing"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "merge", branch, "-m", f"Merge {branch} into testing"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
-        check("move TESTING", run_dev(["move", task_id, "TESTING"], cwd=repo_dir))
-
-        subprocess.run(["git", "checkout", "testing"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "checkout", "-b", "staging"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "merge", branch, "-m", f"Merge {branch} into staging"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
-        check("move REVIEW", run_dev(["move", task_id, "REVIEW"], cwd=repo_dir))
-
-        check("audit", run_dev(["audit", task_id], cwd=repo_dir))
-        check("verify", run_dev(["verify", task_id, "--proof", "Integration proof"], cwd=repo_dir))
-        check("regression-check", run_dev(["modify", task_id, "--regression-check"], cwd=repo_dir))
-
-        check("move STAGING", run_dev(["move", task_id, "STAGING"], cwd=repo_dir))
-        setup_dev_config(dev_tasks_dir)
-        run_dev(["init"], force=True, cwd=repo_dir)
-
-        create_result = run_dev(
-            [
-                "create",
-                "Integration Test Task",
-                "--story",
-                "Sufficiently long story content here to pass validation",
-                "--tech",
-                "Sufficiently long technical description here to pass validation",
-                "--criteria",
-                "- [ ] Sufficiently long acceptance criteria here to pass validation",
-                "--plan",
-                "Sufficiently long planning details here to pass validation",
-            ],
-            cwd=repo_dir,
+        # Commit real work on the task branch so there are patch changes.
+        subprocess.run(["git", "checkout", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        with open(os.path.join(self.repo_dir, work_file), "w") as f:
+            f.write("def func():\n    pass\n")
+        subprocess.run(["git", "add", work_file], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
         )
-        create_data = json.loads(create_result.stdout)
-        task_id = str(create_data["data"]["id"])
-        branch = create_data["data"]["branch"]
 
-        # Debug: check dev_tasks_dir contents
-        for root, dirs, files in os.walk(dev_tasks_dir):
-            level = root.replace(dev_tasks_dir, '').count(os.sep)
-            indent = ' ' * 2 * level
-            print(f'{indent}{os.path.basename(root)}/')
-            for f in files:
-                print(f'{indent}  {f}')
-            for d in dirs:
-                if d != '.git':
-                    print(f'{indent}  {d}/')
+        # TESTING move requires checkboxes complete in the task's CURRENT stage.
+        self.complete_current_criteria(task_file)
+        self.run_cmd(["move", task_file, "TESTING"])
 
-        run_dev(["modify", task_id, "--criteria", "- [x] Sufficiently long acceptance criteria here to pass validation"], cwd=repo_dir)
-        run_dev(["move", task_id, "READY"], cwd=repo_dir)
-        run_dev(["move", task_id, "PROGRESSING"], cwd=repo_dir)
-
-        subprocess.run(["git", "checkout", "-b", "testing"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "merge", branch, "-m", f"Merge {branch} into testing"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
-        run_dev(["move", task_id, "TESTING"], cwd=repo_dir)
-
-        subprocess.run(["git", "checkout", "testing"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "checkout", "-b", "staging"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "merge", branch, "-m", f"Merge {branch} into staging"], cwd=repo_dir, check=True, capture_output=True)
-        subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
-        run_dev(["move", task_id, "REVIEW"], cwd=repo_dir)
-
-        run_dev(["audit", task_id], cwd=repo_dir)
-        run_dev(["verify", task_id, "--proof", "Integration proof"], cwd=repo_dir)
-        run_dev(["modify", task_id, "--regression-check"], cwd=repo_dir)
-
-        list_res = run_dev(["list"], cwd=repo_dir)
-        print("LIST rc:", list_res.returncode)
-        print("LIST stdout:", list_res.stdout[:500])
-
-        move_res = run_dev(["move", task_id, "STAGING"], cwd=repo_dir)
-        assert move_res.returncode == 0, (
-            f"Failed to move to STAGING: {move_res.stderr} {move_res.stdout}"
+        # REVIEW move: testing->review needs tests-passed; sync testing branch.
+        subprocess.run(["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.run_cmd(["modify", task_file, "--tests-passed"])
+        subprocess.run(  # noqa: PLW1510
+            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
-    finally:
-        shutil.rmtree(test_root, ignore_errors=True)
-        shutil.rmtree(dev_tasks_dir, ignore_errors=True)
-        os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
+        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "checkout", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        # REVIEW (current stage=testing) also needs checkboxes complete.
+        self.complete_current_criteria(task_file)
+        self.run_cmd(["move", task_file, "REVIEW"])
+        return task_file
+
+    def complete_current_criteria(self, file):
+        """Mark the criteria file in the task's current pipeline stage as done."""
+        tasks_root = os.path.join(self.repo_dir, ".tasks")
+        for stage in [
+            "backlog", "ready", "progressing", "testing", "review",
+            "staging", "done", "archived", "rejected",
+        ]:
+            criteria_path = os.path.join(tasks_root, stage, file, "criteria.md")
+            if os.path.exists(criteria_path):
+                with open(criteria_path) as f:
+                    content = f.read()
+                with open(criteria_path, "w") as f:
+                    f.write(content.replace("- [ ]", "- [x]"))
+                return
+
+    def get_meta(self, task_file):
+        review_dir = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        meta_path = os.path.join(review_dir, "meta.json")
+        with open(meta_path) as f:
+            return json.load(f)
+
+    # --- tests ---
+    def test_staging_blocked_without_regression_check(self):
+        task_file = self.create_and_reach_review(
+            "Review Gate Blocked Test Task", "code.py"
+        )
+        # In REVIEW only; no audit/verify/--reviewed/--regression-check yet.
+        res = self.run_cmd(["move", task_file, "STAGING"])
+        self.assertFalse(res["success"], res)
+        self.assertIn("regression", res.get("error", "").lower() + " " + res.get("hint", "").lower())
+
+    def test_regression_check_requires_reviewed(self):
+        task_file = self.create_and_reach_review(
+            "Regression Check Requires Reviewed Test", "code.py"
+        )
+        # audit + verify alone do NOT satisfy the gate; Reviewed is still False.
+        self.run_cmd(["audit", task_file])
+        self.run_cmd(["verify", task_file, "--proof", "Reviewed patches and criteria pass."])
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertFalse(res["success"], res)
+        self.assertIn("regression", res.get("error", "").lower() + " " + res.get("hint", "").lower())
+        # Rc must NOT have been flipped to PASSED.
+        self.assertNotEqual(self.get_meta(task_file).get("Rc"), "PASSED")
+
+    def test_full_review_flow_succeeds_then_staging_passes(self):
+        task_file = self.create_and_reach_review(
+            "Full Review Flow Success Test Task", "code.py"
+        )
+        self.complete_review_gate(task_file)
+        # Rc is now PASSED after the full, verifiable gate.
+        self.assertEqual(self.get_meta(task_file).get("Rc"), "PASSED")
+        self.assertTrue(self.get_meta(task_file).get("Reviewed"))
+
+        res = self.run_cmd(["move", task_file, "STAGING"])
+        self.assertTrue(res["success"], f"STAGING should succeed after review: {res}")
+
+    def test_regression_check_fails_on_tampered_patch(self):
+        task_file = self.create_and_reach_review(
+            "Tampered Patch Rejection Test Task", "code.py"
+        )
+        self.complete_review_gate(task_file)
+        # Full gate passed; now corrupt a patch and re-run regression-check.
+        patches_dir = os.path.join(self.repo_dir, ".tasks", "review", task_file, "patches")
+        patches = [f for f in os.listdir(patches_dir) if f.endswith(".patch")]
+        self.assertTrue(patches, "expected generated patches")
+        with open(os.path.join(patches_dir, patches[0]), "a") as f:
+            f.write("\n+ tampered line\n")
+
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertFalse(res["success"], res)
+        low = res.get("error", "").lower() + " " + res.get("hint", "").lower()
+        self.assertIn("mismatch", low)
+
+    def test_empty_diff_auto_passes_regression_check(self):
+        task_file = self.create_and_reach_review(
+            "Empty Diff Auto Pass Test Task", "code.py"
+        )
+        # Simulate "no actual changes to review": clear PatchFiles + patch dir,
+        # reset Reviewed/Rc. The gate must auto-pass without a review record.
+        review_dir = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        patches_dir = os.path.join(review_dir, "patches")
+        audit_path = os.path.join(self.repo_dir, ".tasks", "review", f"{task_file}.audit")
+        task = FM.load(review_dir)
+        task.metadata["PatchFiles"] = []
+        task.metadata["Reviewed"] = False
+        task.metadata["Rc"] = ""
+        FM.dump(task, review_dir)
+        if os.path.isdir(patches_dir):
+            shutil.rmtree(patches_dir, ignore_errors=True)
+        if os.path.exists(audit_path):
+            os.remove(audit_path)
+
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertTrue(res["success"], res)
+        self.assertEqual(self.get_meta(task_file).get("Rc"), "PASSED")
+
+
+if __name__ == "__main__":
+    unittest.main()

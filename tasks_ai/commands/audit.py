@@ -14,6 +14,7 @@ def run(cli, task_id):
     task_folder_name = os.path.basename(current_path)
     if task.metadata.get('Rc') == 'PASSED':
         cli.log(f'✅ No changes detected for task {task_id} (already merged or empty diff). Skipping audit.')
+        cli.finish({"id": task_id, "task_id": task_folder_name, "skipped": True})
         return
     review_dir = os.path.join(cli.tasks_path, 'review')
     patches_dir = os.path.join(review_dir, task_folder_name, 'patches')
@@ -28,9 +29,10 @@ def run(cli, task_id):
             if not patches or not os.path.exists(patches_dir) or not os.listdir(patches_dir):
                 cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
             task.metadata["PatchFiles"] = patches
-            FM.save(task, current_path)
+            FM.dump(task, current_path)
         except Exception:
             cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
     output_path = os.path.join(review_dir, f'{task_folder_name}.audit')
     generate_audit(task_id, current_path, patches_dir, output_path)
     cli.log(f'✅ Audit log created for task {task_id}')
+    cli.finish({"id": task_id, "task_id": task_folder_name, "audit_path": output_path, "patches": task.metadata.get("PatchFiles", [])})

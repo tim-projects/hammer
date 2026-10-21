@@ -12,6 +12,7 @@ def run(
     title,
     task_type="task",
     priority=None,
+    parent=None,
     story=None,
     tech=None,
     criteria=None,
@@ -100,12 +101,23 @@ def run(
         if not os.path.exists(fp):
             continue
         for item in os.listdir(fp):
-            if item == ".gitkeep":
+            if item in (".gitkeep", ".task_counter", "task_counter"):
                 continue
             path = os.path.join(fp, item)
-            task = FM.load(path)
-            if task.metadata.get("Id") == numeric_id:
+            try:
+                existing = FM.load(path)
+            except Exception:  # noqa: BLE001
+                continue
+            if existing.metadata.get("Id") == numeric_id:
                 cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
+
+    parent_id = None
+    if parent:
+        parent_path, _ = cli.find_task(parent)
+        if not parent_path:
+            cli.error("PARENT_NOT_FOUND", parent=parent)
+        parent_task = FM.load(parent_path)
+        parent_id = parent_task.metadata.get("Id")
 
     task = Task(
         metadata={
@@ -116,6 +128,7 @@ def run(
             "Bl": [],
             "Pr": priority or (1 if task_type == "issue" else 2),
             "Br": task_id,
+            "Pt": parent_id,
         },
         parts={
             "story": story or "",
@@ -193,10 +206,13 @@ def run(
             if not os.path.exists(fp):
                 continue
             for item in os.listdir(fp):
-                if item == ".gitkeep":
+                if item in (".gitkeep", ".task_counter", "task_counter"):
                     continue
                 path = os.path.join(fp, item)
-                existing_task = FM.load(path)
+                try:
+                    existing_task = FM.load(path)
+                except Exception:  # noqa: BLE001
+                    continue
                 if existing_task.metadata.get("Id") == pair_numeric_id:
                     cli.error("TASK_ID_EXISTS", numeric_id=pair_numeric_id, state=state)
 
@@ -209,6 +225,7 @@ def run(
                 "Bl": [],
                 "Pr": priority or 2,
                 "Br": pair_task_id,
+                "Pt": numeric_id,
             },
             parts={
                 "story": story or "",

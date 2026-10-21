@@ -80,11 +80,28 @@ class TestTasksAI(unittest.TestCase):
                     f.write(content.replace("- [ ]", "- [x]"))
                 return
 
-    def generate_audit(self, file, stage):
-        """Helper to generate a mock audit file."""
-        audit_path = os.path.join(self.repo_dir, ".tasks", stage, f"{file}.audit")
-        with open(audit_path, "w") as f:
-            f.write("{}")
+    def generate_audit(self, file, stage=None):
+        """Generate a REAL audit (patches + md5) for a task in REVIEW.
+
+        Previously this wrote a mock '{}' audit file, which let the old
+        existence-only regression check pass without any real hashes.
+        """
+        res = self.run_cmd(["audit", file])
+        self.assertTrue(res["success"], f"audit failed for {file}: {res}")
+
+    def complete_review_gate(self, file):
+        """Run the full, now-mandatory review workflow.
+
+        Order matters: audit (patches + md5) -> verify (proof + sha256 hash)
+        -> --reviewed (per-patch md5 review records) -> --regression-check.
+        """
+        self.generate_audit(file)
+        res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
+        self.assertTrue(res["success"], f"verify failed for {file}: {res}")
+        res = self.run_cmd(["modify", file, "--reviewed"])
+        self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
+        res = self.run_cmd(["modify", file, "--regression-check"])
+        self.assertTrue(res["success"], f"--regression-check failed for {file}: {res}")
 
     def run_cmd(self, args):
         env = os.environ.copy()
@@ -265,8 +282,7 @@ class TestTasksAI(unittest.TestCase):
                     f.write(content.replace("- [ ]", "- [x]"))
 
             if state == "STAGING":
-                self.generate_audit(issue_file, "review")
-                self.run_cmd(["modify", issue_file, "--regression-check"])
+                self.complete_review_gate(issue_file)
 
             # Pass -y for DONE since it requires merge confirmation
             move_args = ["move", issue_file, state]
@@ -382,8 +398,7 @@ class TestTasksAI(unittest.TestCase):
                     self.complete_criteria(file, stage)
 
             if state == "STAGING":
-                self.generate_audit(file, "review")
-                self.run_cmd(["modify", file, "--regression-check"])
+                self.complete_review_gate(file)
 
             # Pass -y for DONE since it requires merge confirmation
             move_args = ["move", file, state]
@@ -645,10 +660,15 @@ class TestTasksAI(unittest.TestCase):
         error = res.get("error", "").lower()
         self.assertIn("regression", error, f"Error should mention regression: {res}")
 
-        # Set regression check
-        self.generate_audit(task_file, "review")
+        # --regression-check must now fail WITHOUT a verifiable per-patch review
         res = self.run_cmd(["modify", task_file, "--regression-check"])
-        self.assertTrue(res["success"], f"modify --regression-check failed: {res}")
+        self.assertFalse(
+            res["success"], "Should not allow --regression-check without --reviewed"
+        )
+        self.assertIn("regression", res.get("error", "").lower(), res)
+
+        # Full review workflow: audit -> verify -> --reviewed -> --regression-check
+        self.complete_review_gate(task_file)
 
         # Now STAGING should succeed
         res = self.run_cmd(["move", task_file, "STAGING"])
@@ -715,10 +735,16 @@ class TestTasksAI(unittest.TestCase):
             task.metadata.get("Rc"), "Rc should be unset after entering REVIEW"
         )
 
-        # Apply regression check
-        self.generate_audit(task_file, "review")
+        # Apply the full, verifiable review + regression check workflow
+        self.complete_review_gate(task_file)
+
+        # Verify Rc is now True (truthy)
+        task = FM.load(review_task_path)
+        self.assertTrue(task.metadata.get("Rc"), "Rc should be True after modify")
+
+        # --regression-check is idempotent: re-running still verifies and succeeds
         res = self.run_cmd(["modify", task_file, "--regression-check"])
-        self.assertTrue(res["success"], "modify --regression-check must succeed")
+        self.assertTrue(res["success"], f"modify --regression-check must succeed: {res}")
 
         # Verify Rc is now True
         task = FM.load(review_task_path)
