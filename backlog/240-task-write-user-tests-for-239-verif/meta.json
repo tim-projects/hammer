@@ -1,0 +1,10 @@
+{
+  "Id": 240,
+  "Ti": "Write user tests for 239: Verifiable patch review gate and regression-check hardening",
+  "Ty": "task",
+  "Cr": "261021 08:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "240-task-write-user-tests-for-239-verif",
+  "Pt": 239
+}
