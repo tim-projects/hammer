@@ -9,5 +9,24 @@
   "Rc": "",
   "BlockedBy": [],
   "Reviewed": false,
-  "Vp": true
+  "Vp": true,
+  "PatchGenTime": 1792554103.101271,
+  "PatchFiles": [
+    {
+      "file": "fix_complete.txt",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/86-task-implement-epic-feature-branch/patches/fix_complete.txt.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/86-task-implement-epic-feature-branch/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/86-task-implement-epic-feature-branch/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "update.txt",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/86-task-implement-epic-feature-branch/patches/update.txt.patch"
+    }
+  ]
 }
