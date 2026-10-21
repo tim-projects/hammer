@@ -45,6 +45,7 @@ if __name__ == '__main__':
     cr_p.add_argument('--plan', nargs='+', help='Implementation plan (list).')
     cr_p.add_argument('--repro', nargs='+', help='Reproduction steps for issues (list).')
     cr_p.add_argument('--branch', action='store_true', help='(ignored) Branch name is auto-generated from title.')
+    cr_p.add_argument('--parent', help='Parent task id or filename for child tasks in epic workflow.')
     aud_p = subparsers.add_parser('audit', help='Generate an audit log after reviewing the patch.')
     aud_p.add_argument('id', help='Task ID.')
     mod_p = subparsers.add_parser('modify', help='Update task.')
@@ -115,7 +116,7 @@ if __name__ == '__main__':
     elif args.command == 'restore':
         cli.restore(branch=args.branch, force=args.force)
     elif args.command == 'create':
-        cli.create(args.title, args.type, args.priority, story=args.story, tech=args.tech, criteria=args.criteria, plan=args.plan, repro=args.repro, branch=args.branch)
+        cli.create(args.title, args.type, args.priority, story=args.story, tech=args.tech, criteria=args.criteria, plan=args.plan, repro=args.repro, branch=args.branch, parent=getattr(args, 'parent', None))
     elif args.command == 'audit':
         cli.audit(args.id)
     elif args.command == 'modify':
