@@ -28,7 +28,7 @@ class GitService:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
         env = os.environ.copy()
-        # env["HAMMER_INTERNAL_CALL"] = "1"
+        env["HAMMER_INTERNAL_CALL"] = "1"  # exemption for hammer's own merge promotions (pre-merge-commit hook)
         result = subprocess.run(  # noqa: PLW1510
             ["git"] + args, cwd=cwd, capture_output=capture, text=True, env=env
         )
