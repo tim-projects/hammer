@@ -6,5 +6,9 @@
   "Pr": 2,
   "Br": "87-task-implement-worktree-based-task",
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
