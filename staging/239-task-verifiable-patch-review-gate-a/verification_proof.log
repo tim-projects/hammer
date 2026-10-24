@@ -1,1 +1,0 @@
-Verifiable per-patch MD5 review gate implemented and tested (tests/test_tasks.py, tests/test_audit_verify_integration.py) all passing.

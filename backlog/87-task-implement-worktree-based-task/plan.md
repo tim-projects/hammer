@@ -1,7 +1,7 @@
-1. Worktree Registry: Implement `WorktreeManager` to maintain a manifest (`.tasks/worktrees.json`) mapping `TaskID` to `WorktreePath`.
-2. Mount Command: Introduce `tasks mount <id>` to create worktrees via `git worktree add`.
-3. Context-Awareness: Update `TasksCLI` to detect worktree context and resolve paths relative to the specific task's worktree location.
-4. Gated Integration: Ensure the pipeline gates (Task 178) function correctly when executed from within a task worktree.
-5. Cleanup: Integrate automatic `git worktree remove` into the `ARCHIVED`/`DONE` transition logic within `TasksCLI._move_logic`.
-6. Backward Compatibility: Ensure the existing branch-switching workflow (`repo checkout`) remains functional for simpler tasks.
-7. Documentation & Testing: Provide conflict resolution tools, update documentation, and perform multi-task testing.
+1. Worktree Registry: Implement a `WorktreeManager` class (in tasks_ai/git_service.py or a new tasks_ai/worktree_manager.py) to maintain a manifest (`.tasks/worktrees.json`) mapping TaskID to WorktreePath, with create/list/remove/prune operations built on `GitService.run(["worktree", ...])`.
+2. Mount Command: Add `tasks mount <id>` as a new subcommand in tasks.py, delegating to a `commands/mount.py` module that calls `WorktreeManager.create_task_worktree()`.
+3. Context-Awareness: Leverage existing `ProjectContext` (tasks_ai/context.py) worktree detection. Update `TaskService.find_task()` and `FM` path resolution to detect if running inside a task worktree and resolve `.tasks` paths relative to the worktree root.
+4. Gated Integration: Ensure the pipeline gates in `PipelineService.validate_gate()` (tasks_ai/pipeline.py:67) and the hook system in tasks_ai/pipeline_hooks.py function correctly when executed from within a task worktree. Test against Task 178's gated workflow.
+5. Cleanup: Integrate automatic `git worktree remove` into the `ARCHIVED`/`DONE` transition logic via `ArchivedCommitHook` (tasks_ai/pipeline_hooks.py:198) and the `GitService.promote_task()` cleanup path.
+6. Backward Compatibility: Ensure the existing branch-based workflow (`BranchSyncHook`, `BranchCheckHook`, `GitService.merge_branches()`) remains fully functional for tasks that opt out of per-task worktrees.
+7. Documentation & Testing: Provide conflict resolution tools, update documentation (AGENTS.md, help_text.py), and write user tests (leveraging the auto-paired test task convention from `commands/create.py`).
