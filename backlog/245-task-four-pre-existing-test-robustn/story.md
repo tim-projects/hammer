@@ -1,0 +1,1 @@
+As a maintainer, I need the pytest suite to be green so test failures always indicate real regressions and CI signal stays trustworthy.

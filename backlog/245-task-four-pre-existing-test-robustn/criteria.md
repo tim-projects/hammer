@@ -1,0 +1,1 @@
+- [ ] No new failures appear in tests/test_tasks.py, tests/test_audit_verify_integration.py, tests/test_all_transitions.py, tests/test_pairing.py

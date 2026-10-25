@@ -1,0 +1,1 @@
+1. Run the full tests/test_robustness.py suite plus the four other test files listed in the third criterion

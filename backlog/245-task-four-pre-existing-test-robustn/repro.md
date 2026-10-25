@@ -1,0 +1,1 @@
+1. 1. cd /home/vscode/git/tasks-ai. 2. python3 -m pytest tests/test_robustness.py -q -k regression_check_gate or regression_workflow_cycle or revert_staging or delete_done_task. 3. Observe 4 failed with error 'Regression check not passed (Rc flag not set)'. 4. git stash and repeat to confirm identical failures at HEAD.
