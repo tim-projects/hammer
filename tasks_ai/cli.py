@@ -21,10 +21,6 @@ from .pipeline_hooks import (
     ArchivedCommitHook,
     AutoArchiveHook,
     BlockerCheckHook,
-    BranchCheckHook,
-    BranchExistsHook,
-    BranchSyncHook,
-    BranchSyncOnExitTestingHook,
     CleanupReviewArtifactsHook,
     CleanWorkspaceHook,
     ContentSufficiencyHook,
@@ -38,6 +34,10 @@ from .pipeline_hooks import (
     TestingToReviewGateHook,
     ValidationHook,
     ValidationPassedMarkHook,
+    WorktreeCheckHook,
+    WorktreeExistsHook,
+    WorktreeSyncHook,
+    WorktreeSyncOnExitTestingHook,
 )
 from .task_service import TaskService
 from .validation import Validation
@@ -60,7 +60,7 @@ class TasksCLI:
         self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
         self.hook_registry.register_exit_hook("TESTING", ValidationHook())
-        self.hook_registry.register_exit_hook("TESTING", BranchSyncOnExitTestingHook())
+        self.hook_registry.register_exit_hook("TESTING", WorktreeSyncOnExitTestingHook())
         self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
         self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
 
@@ -73,17 +73,17 @@ class TasksCLI:
         self.hook_registry.register_enter_hook("PROGRESSING", TaskRepairHook())
         self.hook_registry.register_enter_hook("PROGRESSING", ContentSufficiencyHook())
         self.hook_registry.register_enter_hook("PROGRESSING", BlockerCheckHook())
-        self.hook_registry.register_enter_hook("PROGRESSING", BranchCheckHook())
-        self.hook_registry.register_enter_hook("PROGRESSING", BranchSyncHook())
-        self.hook_registry.register_enter_hook("TESTING", BranchExistsHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", WorktreeCheckHook())
+        self.hook_registry.register_enter_hook("PROGRESSING", WorktreeSyncHook())
+        self.hook_registry.register_enter_hook("TESTING", WorktreeExistsHook())
         self.hook_registry.register_enter_hook("TESTING", ValidationPassedMarkHook())
-        self.hook_registry.register_enter_hook("REVIEW", BranchExistsHook())
-        self.hook_registry.register_enter_hook("REVIEW", BranchCheckHook())
+        self.hook_registry.register_enter_hook("REVIEW", WorktreeExistsHook())
+        self.hook_registry.register_enter_hook("REVIEW", WorktreeCheckHook())
         self.hook_registry.register_enter_hook("REVIEW", ReviewDiffHook())
-        self.hook_registry.register_enter_hook("STAGING", BranchCheckHook())
+        self.hook_registry.register_enter_hook("STAGING", WorktreeCheckHook())
         self.hook_registry.register_enter_hook("STAGING", CleanWorkspaceHook())
-        self.hook_registry.register_enter_hook("DONE", BranchCheckHook())
-        self.hook_registry.register_enter_hook("ARCHIVED", BranchCheckHook())
+        self.hook_registry.register_enter_hook("DONE", WorktreeCheckHook())
+        self.hook_registry.register_enter_hook("ARCHIVED", WorktreeCheckHook())
         self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
 
         # Post-move generic hooks
@@ -834,6 +834,11 @@ class TasksCLI:
 
         delete_cmd.run(self, filename, confirm=confirm)
 
+    def mount(self, task_id):
+        from .commands import mount as mount_cmd
+
+        mount_cmd.run(self, task_id)
+
     def link(self, filename, blocked_by):
         from .commands import link as link_cmd
 
@@ -886,15 +891,20 @@ class TasksCLI:
                     continue
 
                 if task_state == "DONE":
-                    # Archive scan
+                    # Archive scan - check worktree branch merged to main
                     branch = item
-                    main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-                    branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+                    main_sha = self._run_git(
+                        ["rev-parse", "main"], cwd=self.root
+                    ).stdout.strip()
+                    branch_sha = self._run_git(
+                        ["rev-parse", branch], cwd=self.context.main_repo_root
+                    ).stdout.strip()
                     if (
                         main_sha
                         and branch_sha
                         and self._run_git(
-                            ["merge-base", branch_sha, "main"]
+                            ["merge-base", branch_sha, "main"],
+                            cwd=self.context.main_repo_root,
                         ).stdout.strip()
                         == main_sha
                     ):
@@ -947,10 +957,12 @@ class TasksCLI:
                 continue
             branch = item
             try:
-                main_sha = self._run_git(["rev-parse", "main"]).stdout.strip()
-                branch_sha = self._run_git(["rev-parse", branch]).stdout.strip()
+                main_sha = self._run_git(["rev-parse", "main"], cwd=self.root).stdout.strip()
+                branch_sha = self._run_git(
+                    ["rev-parse", branch], cwd=self.context.main_repo_root
+                ).stdout.strip()
                 merge_base = self._run_git(
-                    ["merge-base", branch_sha, "main"]
+                    ["merge-base", branch_sha, "main"], cwd=self.context.main_repo_root
                 ).stdout.strip()
                 if merge_base == main_sha:
                     candidates.append(item)
@@ -978,21 +990,27 @@ class TasksCLI:
         if not filepath:
             self.error("TASK_NOT_FOUND", filename=filename)
         task = FM.load(filepath)
-        branch = os.path.basename(filepath).rsplit(".", 1)[0]
+        branch = task.metadata.get("Br", "")
+        if not branch:
+            branch = os.path.basename(filepath).rsplit(".", 1)[0]
 
-        has_origin = self._run_git(["remote", "get-url", "origin"]).returncode == 0
+        has_origin = self._run_git(["remote", "get-url", "origin"], cwd=self.context.main_repo_root).returncode == 0
         if has_origin:
-            if self._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
+            if self._run_git(
+                ["ls-remote", "--heads", "origin", branch], cwd=self.context.main_repo_root
+            ).stdout:
                 return
         else:
-            if self._run_git(["rev-parse", "--verify", branch]).returncode == 0:
+            if self._run_git(
+                ["rev-parse", "--verify", branch], cwd=self.context.main_repo_root
+            ).returncode == 0:
                 return
 
         if not self.as_json:
             print(
                 f"Task: [{task.metadata.get('Id', '')}] {task.metadata.get('Ti', '')}"
             )
-            print(f"State: {state} (branch no longer exists)")
+            print(f"State: {state} (worktree/branch no longer exists)")
 
             if dry_run:
                 print("Dry-run: Task would be archived.")

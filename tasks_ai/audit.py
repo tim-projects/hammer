@@ -1,6 +1,7 @@
-import os
 import hashlib
 import json
+import os
+
 
 def get_changed_files(cli, task_path, branch):
     """Get list of files changed in the task branch compared to main."""

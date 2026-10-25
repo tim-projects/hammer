@@ -8,27 +8,32 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 
+from tasks_ai.constants import STATE_FOLDERS
 from tasks_ai.file_manager import FM
 
 
 class TestTasksAI(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
         subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        subprocess.run(["git", "branch", "-m", "master", "main"], cwd=self.repo_dir, capture_output=True)
+        subprocess.run(["git", "branch", "-m", "master", "main"], cwd=self.repo_dir, capture_output=True, check=False)
         subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
         )
         subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
+            ["git", "config", "commit.gpgsign", "false"], cwd=self.repo_dir
+        )
         with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
         subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir)  # noqa: PLW1510
-        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir)  # noqa: PLW1510
-        # Use hammer CLI entry point instead of the removed tasks.py
-        # Use local './hammer' CLI entry point
-        # Use absolute path to the local './hammer' script in the repository
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
+        )
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.script_path = os.path.abspath(os.path.join(self.repo_dir, "hammer"))
         os.symlink(os.path.join(project_root, "hammer"), self.script_path)
@@ -39,38 +44,67 @@ class TestTasksAI(unittest.TestCase):
             capture_output=True,
         )
 
-        # Setup config - use skip_push to avoid remote operations
-        # Do not manually create .tasks here, let init handle it
-        # Instead, write config to a temporary location for init to pick up if needed,
-        # or just rely on default initialization.
+        # Manually initialize dev tasks dir (init in dev mode tries to clone 'tasks' branch)
+        for folder in STATE_FOLDERS.values():
+            d = os.path.join(self.dev_tasks_dir, folder)
+            os.makedirs(d, exist_ok=True)
+            open(os.path.join(d, ".gitkeep"), "w").close()
+        counter_file = os.path.join(self.dev_tasks_dir, ".task_counter")
+        if not os.path.exists(counter_file):
+            with open(counter_file, "w") as f:
+                f.write("0")
+        config_data = {"repo": {"lint": "ruff", "test": "/bin/true", "type_check": "/bin/true", "format": "ruff"}}
+        with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
+            json.dump(config_data, f)
 
     def tearDown(self):
-        shutil.rmtree(self.test_dir)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+        shutil.rmtree(self.dev_tasks_dir, ignore_errors=True)
+
+    def get_worktree_path(self, task_numeric_id):
+        """Get the worktree path for a task from the manifest."""
+        manifest_path = os.path.join(self.dev_tasks_dir, "worktrees.json")
+        if os.path.exists(manifest_path):
+            with open(manifest_path) as f:
+                manifest = json.load(f)
+            entry = manifest.get("worktrees", {}).get(str(task_numeric_id))
+            if entry:
+                return entry.get("path")
+        return None
+
+    def git_checkout(self, branch, cwd=None):
+        """Checkout a branch, preferring worktree path if branch is checked out there."""
+        if cwd is None:
+            cwd = self.repo_dir
+        subprocess.run(
+            ["git", "checkout", branch],
+            cwd=cwd,
+            capture_output=True,
+            check=False,
+        )
+
+    def git_checkout_main(self):
+        """Checkout main branch from the main repo (always works)."""
+        subprocess.run(
+            ["git", "checkout", "main"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
 
     def complete_criteria(self, file, stage):
         """Helper to mark all criteria as done."""
-        # The file argument is the task directory name (e.g. 1-task-first-task)
-        # criteria.md is in .tasks/<stage>/<file>/criteria.md
-        task_dir = os.path.join(self.repo_dir, ".tasks", stage, file)
+        task_dir = os.path.join(self.dev_tasks_dir, stage, file)
         criteria_path = os.path.join(task_dir, "criteria.md")
-
-        print(f"DEBUG: Checking task dir: {task_dir}", file=sys.stderr)
-        if os.path.exists(task_dir):
-            print(f"DEBUG: Found task dir: {task_dir}", file=sys.stderr)
-        else:
-            print(f"DEBUG: Task dir NOT found: {task_dir}", file=sys.stderr)
-
         if os.path.exists(criteria_path):
             with open(criteria_path, "r") as f:
                 content = f.read()
             with open(criteria_path, "w") as f:
                 f.write(content.replace("- [ ]", "- [x]"))
-        else:
-            print(f"DEBUG: Criteria path NOT found: {criteria_path}", file=sys.stderr)
 
     def complete_current_criteria(self, file):
         """Mark the criteria file in the task's current pipeline stage as done."""
-        tasks_root = os.path.join(self.repo_dir, ".tasks")
+        tasks_root = self.dev_tasks_dir
         for stage in ['backlog', 'ready', 'progressing', 'testing', 'review', 'staging', 'done', 'archived', 'rejected']:
             criteria_path = os.path.join(tasks_root, stage, file, 'criteria.md')
             if os.path.exists(criteria_path):
@@ -81,20 +115,12 @@ class TestTasksAI(unittest.TestCase):
                 return
 
     def generate_audit(self, file, stage=None):
-        """Generate a REAL audit (patches + md5) for a task in REVIEW.
-
-        Previously this wrote a mock '{}' audit file, which let the old
-        existence-only regression check pass without any real hashes.
-        """
+        """Generate a REAL audit (patches + md5) for a task in REVIEW."""
         res = self.run_cmd(["audit", file])
         self.assertTrue(res["success"], f"audit failed for {file}: {res}")
 
     def complete_review_gate(self, file):
-        """Run the full, now-mandatory review workflow.
-
-        Order matters: audit (patches + md5) -> verify (proof + sha256 hash)
-        -> --reviewed (per-patch md5 review records) -> --regression-check.
-        """
+        """Run the full, now-mandatory review workflow."""
         self.generate_audit(file)
         res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
         self.assertTrue(res["success"], f"verify failed for {file}: {res}")
@@ -114,7 +140,7 @@ class TestTasksAI(unittest.TestCase):
             + env.get("PYTHONPATH", "")
         )
         # Build command through the hammer wrapper and request JSON from tasks.py.
-        cmd = [self.script_path, "tasks", "-j"] + args
+        cmd = [self.script_path, "tasks", "-j", "--dev"] + args
         result = subprocess.run(  # noqa: PLW1510
             cmd,
             cwd=self.repo_dir,
@@ -141,11 +167,6 @@ class TestTasksAI(unittest.TestCase):
             }
 
     def test_full_lifecycle(self):
-        # The test class sets up a fresh test_dir for every test case.
-        # No need for --force, it should just be "init".
-        res = self.run_cmd(["init"])
-        self.assertTrue(res["success"], res)
-
         res = self.run_cmd(
             [
                 "create",
@@ -185,6 +206,7 @@ class TestTasksAI(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         issue_file = res["data"]["file"]
+        issue_id = res["data"]["id"]
 
         # Move to READY (Required)
         res = self.run_cmd(["move", issue_file, "READY"])
@@ -192,10 +214,10 @@ class TestTasksAI(unittest.TestCase):
 
         # Verify it moved from backlog to ready
         self.assertFalse(
-            os.path.exists(os.path.join(self.repo_dir, ".tasks", "backlog", issue_file))
+            os.path.exists(os.path.join(self.dev_tasks_dir, "backlog", issue_file))
         )
         self.assertTrue(
-            os.path.exists(os.path.join(self.repo_dir, ".tasks", "ready", issue_file))
+            os.path.exists(os.path.join(self.dev_tasks_dir, "ready", issue_file))
         )
 
         # Move task to READY then PROGRESSING
@@ -206,63 +228,53 @@ class TestTasksAI(unittest.TestCase):
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertFalse(res["success"], res)
 
-        # Move issue through states
+        # Get worktree paths for working in worktrees
+        issue_worktree = self.get_worktree_path(issue_id)
+
+        # Move issue to PROGRESSING
         self.run_cmd(["move", issue_file, "PROGRESSING"])
+
+        # Move issue through states
         for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
             branch = issue_file
+            # Checkout the task branch from the worktree (not main repo, since worktree has it)
+            wt = issue_worktree if issue_worktree and os.path.exists(issue_worktree) else self.repo_dir
             subprocess.run(  # noqa: PLW1510
-                ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
+                ["git", "checkout", branch], cwd=wt, capture_output=True
             )
-            with open(os.path.join(self.repo_dir, "fix.txt"), "a") as f:
+            work_file = os.path.join(wt, "fix.txt")
+            with open(work_file, "a") as f:
                 f.write("fixed\n")
+            subprocess.run(["git", "add", "fix.txt"], cwd=wt, capture_output=True)  # noqa: PLW1510
             subprocess.run(  # noqa: PLW1510
-                ["git", "add", "fix.txt"], cwd=self.repo_dir, capture_output=True
-            )
-            subprocess.run(  # noqa: PLW1510
-                ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
+                ["git", "commit", "-m", "Work"], cwd=wt, capture_output=True
             )
 
             # Simulate pipeline merges to satisfy enforcement
             if state == "REVIEW":
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-                )
+                self.git_checkout_main()
                 self.run_cmd(["modify", issue_file, "--tests-passed"])
                 subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "-b", "testing"],
-                    cwd=self.repo_dir,
-                    capture_output=True,
+                    ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "merge", branch], cwd=self.repo_dir, capture_output=True
-                )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-                )
+                subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+                subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
             elif state == "DONE":
+                self.git_checkout_main()
                 subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-                )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "-b", "staging"],
-                    cwd=self.repo_dir,
-                    capture_output=True,
+                    ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
                 )
                 subprocess.run(  # noqa: PLW1510
                     ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-                )
+                self.git_checkout_main()
                 subprocess.run(  # noqa: PLW1510
                     ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
                 )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-                )
+                subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
                 # Complete checkboxes before DONE move (write to staging folder)
                 criteria_path = os.path.join(
-                    self.repo_dir, ".tasks", "staging", issue_file, "criteria.md"
+                    self.dev_tasks_dir, "staging", issue_file, "criteria.md"
                 )
                 with open(criteria_path, "r") as f:
                     content = f.read()
@@ -272,14 +284,6 @@ class TestTasksAI(unittest.TestCase):
             # Complete checkboxes before promotion
             if state == "TESTING":
                 self.complete_current_criteria(issue_file)
-            elif state == "DONE":
-                criteria_path = os.path.join(
-                    self.repo_dir, ".tasks", "staging", issue_file, "criteria.md"
-                )
-                with open(criteria_path, "r") as f:
-                    content = f.read()
-                with open(criteria_path, "w") as f:
-                    f.write(content.replace("- [ ]", "- [x]"))
 
             if state == "STAGING":
                 self.complete_review_gate(issue_file)
@@ -289,15 +293,12 @@ class TestTasksAI(unittest.TestCase):
             if state == "DONE":
                 move_args.append("-y")
             res = self.run_cmd(move_args)
-            print(f"DEBUG: Full response for {state}: {res}")
             self.assertTrue(res["success"], f"Failed move to {state}: {res}")
 
-        # Archive (Needs a commit and -y)
+        # Archive (Needs branch merged to main and -y)
+        self.git_checkout_main()
         subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "merge", issue_file], cwd=self.repo_dir, capture_output=True
+            ["git", "merge", branch], cwd=self.repo_dir, capture_output=True
         )
         res = self.run_cmd(["move", issue_file, "ARCHIVED", "-y"])
         self.assertTrue(res["success"], res)
@@ -316,7 +317,6 @@ class TestTasksAI(unittest.TestCase):
         )
 
     def test_auto_archival(self):
-        self.run_cmd(["init"])
         res = self.run_cmd(
             [
                 "create",
@@ -333,67 +333,36 @@ class TestTasksAI(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
-
-        # Debug: list backlog to find the task directory
-        backlog_dir = os.path.join(self.repo_dir, ".tasks", "backlog")
-        print(
-            f"DEBUG: Contents of {backlog_dir}: {os.listdir(backlog_dir)}",
-            file=sys.stderr,
-        )
+        task_id = res["data"]["id"]
 
         self.run_cmd(["move", file, "READY"])
-
-        # Debug: list ready dir
-        ready_dir = os.path.join(self.repo_dir, ".tasks", "ready")
-        print(
-            f"DEBUG: Contents of {ready_dir}: {os.listdir(ready_dir)}", file=sys.stderr
-        )
-
         self.run_cmd(["move", file, "PROGRESSING"])
 
         branch = file
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-        )
-        with open(os.path.join(self.repo_dir, "code.txt"), "w") as f:
+        worktree_path = self.get_worktree_path(task_id)
+        wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+        with open(os.path.join(wt, "code.txt"), "w") as f:
             f.write("code")
-        subprocess.run(  # noqa: PLW1510
-            ["git", "add", "code.txt"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-        )
+        subprocess.run(["git", "add", "code.txt"], cwd=wt, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "commit", "-m", "Work"], cwd=wt, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
         # Rebase or merge main into the branch to avoid conflicts
-        subprocess.run(["git", "merge", "main"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
+        subprocess.run(["git", "merge", "main"], cwd=wt, capture_output=True)  # noqa: PLW1510
+        self.git_checkout_main()
 
         for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
-            subprocess.run(  # noqa: PLW1510
-                ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-            )
+            subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
             # Simulate pipeline merges to satisfy enforcement
             if state == "REVIEW":
                 self.run_cmd(["modify", file, "--tests-passed"])
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "-b", "testing"],
-                    cwd=self.repo_dir,
-                    capture_output=True,
-                )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "merge", branch], cwd=self.repo_dir, capture_output=True
-                )
-                subprocess.run(  # noqa: PLW1510
-                    ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-                )
+                subprocess.run(["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+                subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+                self.git_checkout_main()
 
             # Mark all criteria as done before promotion
             if state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
-                # Path depends on where the task currently is
                 for stage in ["progressing", "testing", "review", "staging"]:
                     self.complete_criteria(file, stage)
 
@@ -408,7 +377,7 @@ class TestTasksAI(unittest.TestCase):
             self.assertTrue(res["success"], f"Failed move to {state}: {res}")
 
         # Backdate log
-        log_path = os.path.join(self.repo_dir, ".tasks", "done", file, "activity.log")
+        log_path = os.path.join(self.dev_tasks_dir, "done", file, "activity.log")
         old_date = (datetime.now() - timedelta(days=8)).strftime("%y%m%d %H:%M")  # noqa: DTZ005
         with open(log_path, "w") as f:
             f.write(f"- {old_date}: STAGING->DONE\n")
@@ -416,17 +385,14 @@ class TestTasksAI(unittest.TestCase):
         res = self.run_cmd(["list"])
         self.assertIn(f"Auto-archiving: {file}", res["messages"], res)
         self.assertTrue(
-            os.path.exists(os.path.join(self.repo_dir, ".tasks", "archived", file))
+            os.path.exists(os.path.join(self.dev_tasks_dir, "archived", file))
         )
         self.assertFalse(
-            os.path.exists(os.path.join(self.repo_dir, ".tasks", "done", file))
+            os.path.exists(os.path.join(self.dev_tasks_dir, "done", file))
         )
 
     def test_testing_gate_blocks_when_no_new_changes(self):
         """Gate should prevent moving to TESTING if branch is clean and up-to-date with testing."""
-        self.run_cmd(["init"])
-        # No need to manually commit .gitignore
-
         res = self.run_cmd(
             [
                 "create",
@@ -443,30 +409,35 @@ class TestTasksAI(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         task_file = res["data"]["file"]
+        task_id = res["data"]["id"]
 
         # Move through READY -> PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
         self.run_cmd(["move", task_file, "PROGRESSING"])
 
+        # Get worktree path for working in worktree
+        worktree_path = self.get_worktree_path(task_id)
+        wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+
         # Create initial commit on the task branch
         subprocess.run(
             ["git", "checkout", task_file],
-            cwd=self.repo_dir,
+            cwd=wt,
             capture_output=True,
             check=True,
         )
-        work_file = os.path.join(self.repo_dir, "work.txt")
+        work_file = os.path.join(wt, "work.txt")
         with open(work_file, "w") as f:
             f.write("initial work\n")
         subprocess.run(
             ["git", "add", "work.txt"],
-            cwd=self.repo_dir,
+            cwd=wt,
             capture_output=True,
             check=True,
         )
         subprocess.run(
             ["git", "commit", "-m", "Add work"],
-            cwd=self.repo_dir,
+            cwd=wt,
             capture_output=True,
             check=True,
         )
@@ -474,7 +445,7 @@ class TestTasksAI(unittest.TestCase):
         # Capture the commit SHA of the task branch
         sha_res = subprocess.run(
             ["git", "rev-parse", "HEAD"],
-            cwd=self.repo_dir,
+            cwd=wt,
             capture_output=True,
             text=True,
             check=True,
@@ -493,13 +464,13 @@ class TestTasksAI(unittest.TestCase):
         # Ensure we are on the task branch and working tree is clean
         subprocess.run(
             ["git", "checkout", task_file],
-            cwd=self.repo_dir,
+            cwd=wt,
             capture_output=True,
             check=True,
         )
         status_check = subprocess.run(  # noqa: PLW1510
             ["git", "status", "--porcelain"],
-            cwd=self.repo_dir,
+            cwd=wt,
             capture_output=True,
             text=True,
         )
@@ -515,7 +486,6 @@ class TestTasksAI(unittest.TestCase):
 
     def test_review_diff_generated(self):
         """Test that moving to REVIEW automatically generates a diff patch."""
-        self.run_cmd(["init"])
         res = self.run_cmd(
             [
                 "create",
@@ -533,6 +503,8 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"])
         task_file = res["data"]["file"]
         branch = task_file
+        task_id = res["data"]["id"]
+        worktree_path = self.get_worktree_path(task_id)
 
         # Move back to PROGRESSING
         res = self.run_cmd(["move", task_file, "READY"])
@@ -541,16 +513,16 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"], res)
 
         # Create a code file and commit on the task branch
-        code_file = os.path.join(self.repo_dir, "feature.py")
+        wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+        code_file = os.path.join(wt, "feature.py")
         with open(code_file, "w") as f:
             f.write("def new_feature():\n    return 42\n")
         subprocess.run(  # noqa: PLW1510
-            ["git", "add", "feature.py"], cwd=self.repo_dir, capture_output=True
+            ["git", "add", "feature.py"], cwd=wt, capture_output=True
         )
         subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Add new feature implementation"],
-            cwd=self.repo_dir,
-            capture_output=True,
+            ["git", "commit", "-m", "Add new feature implementation"], cwd=wt, capture_output=True
         )
 
         # Move to TESTING (requires branch ahead of testing)
@@ -559,16 +531,12 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"], f"Move to TESTING failed: {res}")
 
         # Prepare testing branch: go to main, create testing, merge task, back to task branch
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
+        self.git_checkout_main()
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-        )
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Mark tests as passed (required for REVIEW)
         res = self.run_cmd(["modify", task_file, "--tests-passed"])
@@ -579,7 +547,7 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"], f"Move to REVIEW failed: {res}")
 
         # Verify diff files exist
-        patches_dir = os.path.join(self.repo_dir, ".tasks", "review", branch, "patches")
+        patches_dir = os.path.join(self.dev_tasks_dir, "review", branch, "patches")
         self.assertTrue(
             os.path.exists(patches_dir), f"Review patches dir not found at {patches_dir}"
         )
@@ -597,7 +565,6 @@ class TestTasksAI(unittest.TestCase):
 
     def test_review_to_staging_requires_regression_check(self):
         """Test REVIEW -> STAGING is blocked until --regression-check is used."""
-        self.run_cmd(["init"])
         res = self.run_cmd(
             [
                 "create",
@@ -615,18 +582,21 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"])
         task_file = res["data"]["file"]
         branch = task_file
+        task_id = res["data"]["id"]
+        worktree_path = self.get_worktree_path(task_id)
 
         # Move task to READY then PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
         self.run_cmd(["move", task_file, "PROGRESSING"])
-        code_file = os.path.join(self.repo_dir, "code.py")
+        wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+        code_file = os.path.join(wt, "code.py")
         with open(code_file, "w") as f:
             f.write("def func():\n    pass\n")
         subprocess.run(  # noqa: PLW1510
-            ["git", "add", "code.py"], cwd=self.repo_dir, capture_output=True
+            ["git", "add", "code.py"], cwd=wt, capture_output=True
         )
         subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Add code"], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Add code"], cwd=wt, capture_output=True
         )
 
         # Move to TESTING
@@ -635,15 +605,13 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"])
 
         # Setup testing branch merge
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
+        self.git_checkout_main()
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", branch], cwd=wt, capture_output=True
         )
 
         # Mark tests passed and move to REVIEW
@@ -676,7 +644,6 @@ class TestTasksAI(unittest.TestCase):
 
     def test_regression_check_flag_sets_rc_metadata(self):
         """Test that --regression-check correctly sets Rc metadata field."""
-        self.run_cmd(["init"])
         res = self.run_cmd(
             [
                 "create",
@@ -694,18 +661,21 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"])
         task_file = res["data"]["file"]
         branch = task_file
+        task_id = res["data"]["id"]
+        worktree_path = self.get_worktree_path(task_id)
 
         # Move to READY then PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
         self.run_cmd(["move", task_file, "PROGRESSING"])
-        code_file = os.path.join(self.repo_dir, "file.txt")
+        wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+        code_file = os.path.join(wt, "file.txt")
         with open(code_file, "w") as f:
             f.write("content\n")
         subprocess.run(  # noqa: PLW1510
-            ["git", "add", "file.txt"], cwd=self.repo_dir, capture_output=True
+            ["git", "add", "file.txt"], cwd=wt, capture_output=True
         )
         subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Add file"], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Add file"], cwd=wt, capture_output=True
         )
 
         # Move to TESTING
@@ -713,15 +683,13 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Setup testing branch
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
+        self.git_checkout_main()
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
+            ["git", "checkout", branch], cwd=wt, capture_output=True
         )
 
         # Move to REVIEW (after tests passed)
@@ -729,7 +697,7 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "REVIEW"])
 
         # Load task from review folder
-        review_task_path = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        review_task_path = os.path.join(self.dev_tasks_dir, "review", task_file)
         task = FM.load(review_task_path)
         self.assertFalse(
             task.metadata.get("Rc"), "Rc should be unset after entering REVIEW"
@@ -752,7 +720,6 @@ class TestTasksAI(unittest.TestCase):
 
     def test_regression_workflow_move_back_to_progressing(self):
         """Test full regression workflow: REVIEW -> PROGRESSING (fix) -> TESTING -> REVIEW."""
-        self.run_cmd(["init"])
         res = self.run_cmd(
             [
                 "create",
@@ -770,20 +737,19 @@ class TestTasksAI(unittest.TestCase):
         self.assertTrue(res["success"])
         task_file = res["data"]["file"]
         branch = task_file
+        task_id = res["data"]["id"]
+        worktree_path = self.get_worktree_path(task_id)
 
         # Initial commit on task branch
         self.run_cmd(["move", task_file, "READY"])
         self.run_cmd(["move", task_file, "PROGRESSING"])
-
-        with open(os.path.join(self.repo_dir, "initial.txt"), "w") as f:
+        wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+        with open(os.path.join(wt, "initial.txt"), "w") as f:
             f.write("initial\n")
+        subprocess.run(["git", "add", "initial.txt"], cwd=wt, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ["git", "add", "initial.txt"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Initial commit"],
-            cwd=self.repo_dir,
-            capture_output=True,
+            ["git", "commit", "-m", "Initial commit"], cwd=wt, capture_output=True
         )
 
         # Move to TESTING
@@ -791,23 +757,17 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Setup testing branch (merge initial commit)
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
-        )
+        self.git_checkout_main()
+        subprocess.run(["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-        )
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Set tests passed and move to REVIEW
         self.run_cmd(["modify", task_file, "--tests-passed"])
         self.run_cmd(["move", task_file, "REVIEW"])
 
         # Diff should exist
-        patches_dir = os.path.join(self.repo_dir, ".tasks", "review", branch, "patches")
+        patches_dir = os.path.join(self.dev_tasks_dir, "review", branch, "patches")
         self.assertTrue(os.path.exists(patches_dir), "Initial patches dir should exist")
         patch_files = [f for f in os.listdir(patches_dir) if f.endswith(".patch")]
         self.assertTrue(len(patch_files) > 0, "Initial diff should exist")
@@ -827,18 +787,12 @@ class TestTasksAI(unittest.TestCase):
         )
 
         # Create fix commit on task branch
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-        )
-        with open(os.path.join(self.repo_dir, "fix.txt"), "w") as f:
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+        with open(os.path.join(wt, "fix.txt"), "w") as f:
             f.write("fixed\n")
+        subprocess.run(["git", "add", "fix.txt"], cwd=wt, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ["git", "add", "fix.txt"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Fix regression issue"],
-            cwd=self.repo_dir,
-            capture_output=True,
+            ["git", "commit", "-m", "Fix regression issue"], cwd=wt, capture_output=True
         )
 
         # Move to TESTING (branch ahead)
@@ -846,16 +800,10 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # Update testing to include fix (fast-forward merge)
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "testing"], cwd=self.repo_dir, capture_output=True
-        )
+        self.git_checkout_main()
+        subprocess.run(["git", "checkout", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
-        )
+        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Move to REVIEW (new diff regenerated, Rc reset)
         self.run_cmd(["move", task_file, "REVIEW"])
@@ -869,7 +817,7 @@ class TestTasksAI(unittest.TestCase):
         self.assertIn("initial", diff2.lower(), "Diff should still contain initial commit")
 
         # Verify Rc is reset
-        review_task_path = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        review_task_path = os.path.join(self.dev_tasks_dir, "review", task_file)
         task = FM.load(review_task_path)
         self.assertFalse(
             task.metadata.get("Rc"), "Rc should be reset when re-entering REVIEW"

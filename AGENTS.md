@@ -55,10 +55,21 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
    - Once the diff is clean, run `tasks modify <id> --regression-check` to confirm.
    - Note: Tasks can move from `REVIEW`, `ARCHIVED`, or `REJECTED` back to `PROGRESSING` if further work is required.
 7. **Archiving**: When ready to archive from STAGING:
-   - Branch must be merged to main first
+   - Worktree branch must be merged to main first
    - Run `./hammer tasks move <id> ARCHIVED` - if merged, it will prompt for `-y` confirmation
    - Use `./hammer tasks move <id> ARCHIVED -y` to auto-push branch to remote and delete local copy
    - Alternatively, move to `REJECTED` if code was not merged
+   - On ARCHIVED transition, the task worktree is automatically removed (after confirming the branch is merged to main)
+
+## 🌿 Worktree Workflow
+
+Each task operates in a dedicated git worktree for isolation. Worktrees are created automatically when a task moves to `PROGRESSING` or via `tasks create`/`tasks mount`.
+
+- **Mounting a worktree**: `./hammer tasks mount <id>` — creates or opens the task's worktree
+- **Persistent through pipeline**: The worktree persists through DONE; it is only removed on ARCHIVED
+- **Demotion support**: Tasks can be demoted from DONE back to earlier states (worktree remains active)
+- **Worktree location**: `.task-worktrees/<branch>` relative to the main repo root
+- **Worktree manifest**: `.tasks/worktrees.json` tracks all active task worktrees
 
 ## ⚠️ Operational Rules
 
@@ -96,6 +107,7 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
 | `./hammer tasks move <id> ARCHIVED -y` | Archive and auto-push/delete branch (requires branch merged to main) |
 | `./hammer tasks modify <id> --plan "1. Step"` | Update task fields |
 | `./hammer tasks reconcile <id>` | Archive a task whose branch no longer exists |
+| `./hammer tasks mount <id>` | Mount (create/open) a task worktree |
 | `./hammer repo <command>` | Repo management (merge, sync, branch) |
 | `./hammer check` | Run validation checks (lint, test, typecheck, format) |
 | `./hammer check all` | Run all validation checks |

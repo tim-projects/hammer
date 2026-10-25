@@ -24,3 +24,5 @@ __pycache__/
 cli-versions/
 
 /.tasks.backup/
+
+.task-worktrees/

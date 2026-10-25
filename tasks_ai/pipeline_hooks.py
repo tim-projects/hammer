@@ -142,30 +142,27 @@ class TestingToReviewGateHook(PipelineHook):
             )
 
 
-class BranchCheckHook(PipelineHook):
-    """Handles branch restoration and remote push verification."""
+class WorktreeCheckHook(PipelineHook):
+    """Handles worktree verification and conflict detection."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if cli.dev:
             return
-        _, branch = parse_filename(os.path.basename(filepath))
+        task_id = str(task.metadata.get("Id", ""))
+        branch = task.metadata.get("Br", "")
+        if not branch:
+            _, branch = parse_filename(os.path.basename(filepath))
+
         has_origin = cli._run_git(["remote", "get-url", "origin"]).returncode == 0
 
-        # Restoration check
-        if new_status == "PROGRESSING":
-            branch_sha_res = cli._run_git(["rev-parse", branch])
-            branch_sha = (
-                branch_sha_res.stdout.strip() if branch_sha_res.returncode == 0 else ""
-            )
-            if not branch_sha and has_origin:
-                remote_check = cli._run_git(["ls-remote", "--heads", "origin", branch])
-                if remote_check.stdout.strip():
-                    cli.console("git", "restore", f"{branch} from origin")
-                    cli._run_git(
-                        ["checkout", "-b", branch, f"origin/{branch}"], cwd=cli.root
-                    )
+        if new_status == "PROGRESSING":  # noqa: SIM102
+            if not cli.git.worktrees.has_worktree(task_id):  # noqa: SIM102
+                if branch and has_origin:
+                    remote_check = cli._run_git(["ls-remote", "--heads", "origin", branch])
+                    if remote_check.stdout.strip():
+                        cli.git.worktrees.create_task_worktree(task_id, branch)
+                        cli.console("worktree", "restore", f"{branch} from origin")
 
-        # Remote push check
         if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):  # noqa: SIM102
             if has_origin:  # noqa: SIM102
                 if not cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout:
@@ -196,10 +193,16 @@ class ReviewDiffHook(PipelineHook):
 
 
 class ArchivedCommitHook(PipelineHook):
-    """Commits and pushes the tasks worktree when entering ARCHIVED."""
+    """Commits and pushes the tasks worktree when entering ARCHIVED, then removes the task worktree.
+
+    Finalizes the task: confirms the worktree branch is merged to main before removing
+    the worktree, ensuring no work is lost on archive.
+    """
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "ARCHIVED":
+            task_id = str(task.metadata.get("Id", ""))
+
             cli._run_git(["add", "--all"], cwd=cli.tasks_path)
             cli._run_git(
                 [
@@ -213,6 +216,18 @@ class ArchivedCommitHook(PipelineHook):
                 cli._push_tasks_branch("tasks", fatal=False)
             except Exception:  # noqa: BLE001, S110
                 pass
+
+            # Finalize: confirm worktree branch is merged to main before cleanup
+            branch = task.metadata.get("Br", "")
+            default_branch = cli.git.get_default_branch()
+            if branch and not cli.git.is_merged(branch, default_branch):
+                cli.error("BRANCH_NOT_MERGED", branch=branch)
+
+            if cli.git.worktrees.has_worktree(task_id):
+                cli.git.worktrees.remove_task_worktree(task_id, force=True)
+                cli.console("worktree", "remove", f"task {task_id}")
+            else:
+                cli.console("worktree", "skip", f"no worktree for task {task_id}")
 
 
 class PostMoveCommitHook(PipelineHook):
@@ -285,64 +300,76 @@ class CleanWorkspaceHook(PipelineHook):
             )
 
 
-class BranchSyncHook(PipelineHook):
-    """Switches to the task branch and merges changes from main."""
+class WorktreeSyncHook(PipelineHook):
+    """Ensures the task worktree is mounted and synced with main on PROGRESSING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if new_status == "PROGRESSING":
-            _, branch = parse_filename(os.path.basename(filepath))
+            task_id = str(task.metadata.get("Id", ""))
+            branch = task.metadata.get("Br", "")
             if not branch:
-                return
+                branch = task_id
 
-            cli.console("git", "sync", f"{branch} with main")
+            cli.console("worktree", "sync", f"{branch}")
 
-            # 1. Checkout the branch
-            checkout_res = cli.git.run(["checkout", branch])
-            if checkout_res.returncode != 0:
-                cli.error("BRANCH_CHECKOUT_FAIL", branch=branch)
+            if not cli.git.worktrees.has_worktree(task_id):
+                cli.git.worktrees.create_task_worktree(task_id, branch)
 
-            # 2. Fetch latest main
+            worktree_path = cli.git.worktrees.get_worktree_path(task_id)
+            if not worktree_path:
+                cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
+
             default_branch = cli.git.get_default_branch()
-            fetch_res = cli.git.run(["fetch", "origin", default_branch], check=False)
-
-            # 3. Determine merge source: prefer origin/default_branch, fallback to local default_branch
             merge_source = f"origin/{default_branch}"
+            fetch_res = cli.git.run(
+                ["fetch", "origin", default_branch], check=False, cwd=cli.context.main_repo_root
+            )
             if fetch_res.returncode != 0:
                 local_res = cli.git.run(
-                    ["rev-parse", "--verify", default_branch], check=False
+                    ["rev-parse", "--verify", default_branch], check=False, cwd=cli.context.main_repo_root
                 )
                 if local_res.returncode == 0:
                     merge_source = default_branch
                 else:
-                    cli.console("git", "sync", "skipped (no remote/main)")
+                    cli.console("worktree", "sync", "skipped (no remote/main)")
                     return
 
-            # 4. Attempt merge
-            merge_res = cli.git.run(["merge", merge_source])
+            merge_res = cli.git.run(["merge", merge_source], cwd=worktree_path)
             if merge_res.returncode != 0:
-                cli.console("git", "merge", "conflict")
-                cli.git.run(["merge", "--abort"])
-                cli.error("MERGE_CONFLICT", branch=branch, default=default_branch)
+                cli.console("worktree", "merge", "conflict")
+                cli.git.run(["merge", "--abort"], cwd=worktree_path)
+                cli.error("WORKTREE_MERGE_CONFLICT", branch=branch, default=default_branch)
 
-            cli.console("git", "sync", "complete")
+            cli.console("worktree", "sync", "complete")
 
 
 class MainBranchProtectionHook(PipelineHook):
-    """Prevents transitions if the user is working directly on the main branch."""
+    """Prevents transitions if the user is working directly on the main branch or outside a task worktree."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if cli.dev:
             return
-        # We only care about blocking work if they are trying to progress or move towards completion
         if new_status in ["PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE"]:
-            current_git_branch = cli.git.get_current_branch()
+            current_branch = cli.git.get_current_branch()
             default_branch = cli.git.get_default_branch()
 
-            if current_git_branch == default_branch:
-                cli.error(
-                    "MAIN_BRANCH_PROTECTION",
-                    new_status=new_status,
-                    default_branch=default_branch,
+            if current_branch == default_branch:
+                # Allow transitions from default branch if the task has its own branch —
+                # the pipeline engine handles worktree context internally
+                task_branch = task.metadata.get("Br", "")
+                if not task_branch:
+                    cli.error(
+                        "MAIN_BRANCH_PROTECTION",
+                        new_status=new_status,
+                        default_branch=default_branch,
+                    )
+
+            if not cli.git.worktrees.is_in_task_worktree():
+                task_id = str(task.metadata.get("Id", ""))
+                branch = task.metadata.get("Br", "")
+                cli.log(
+                    f"WARN: Not in a task worktree for task {task_id}. "
+                    f"Run 'tasks mount {task_id}' to mount worktree '{branch}'."
                 )
 
 
@@ -384,20 +411,27 @@ class ProgressUpdateHook(PipelineHook):
                     )
 
 
-class BranchSyncOnExitTestingHook(PipelineHook):
-    """Detect and merge missing commit during exit TESTING."""
+class WorktreeSyncOnExitTestingHook(PipelineHook):
+    """Detect and merge missing commit during exit TESTING via worktree."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
         if current_state == "TESTING" and new_status != "TESTING":
-            _, branch = parse_filename(os.path.basename(filepath))
+            task_id = str(task.metadata.get("Id", ""))
+            branch = task.metadata.get("Br", "")
+            if not branch:
+                _, branch = parse_filename(os.path.basename(filepath))
 
-            # Detect divergence
             default_branch = cli.git.get_default_branch()
-            cli.console("git", "check", "divergence")
-            res = cli.git.run(["rev-list", f"{default_branch}..{branch}", "--count"])
+            cli.console("worktree", "check", "divergence")
+            res = cli.git.run(
+                ["rev-list", f"{default_branch}..{branch}", "--count"],
+                cwd=cli.context.main_repo_root,
+            )
             if res.stdout.strip() != "0":
-                cli.console("git", "merge", "missing commit")
-                cli.git.run(["merge", default_branch])
+                cli.console("worktree", "merge", "missing commit")
+                wt_path = cli.git.worktrees.get_worktree_path(task_id)
+                cwd = wt_path if wt_path and os.path.exists(wt_path) else cli.root
+                cli.git.run(["merge", default_branch], cwd=cwd)
 
 
 class CleanupReviewArtifactsHook(PipelineHook):
@@ -501,27 +535,31 @@ class VerifyArtifactsHook(PipelineHook):
                 cli.log("DEBUG: Artifacts re-generated successfully.")
 
 
-class BranchExistsHook(PipelineHook):
-    """Checks if the task branch exists; if not, moves back to PROGRESSING."""
+class WorktreeExistsHook(PipelineHook):
+    """Checks if the task worktree exists; if not, moves back to PROGRESSING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
-        _, branch = parse_filename(os.path.basename(filepath))
+        task_id = str(task.metadata.get("Id", ""))
+        branch = task.metadata.get("Br", "")
+        if not branch:
+            _, branch = parse_filename(os.path.basename(filepath))
         if not branch:
             return
 
-        res = cli.git.run(["rev-parse", "--verify", branch], check=False)
-        if res.returncode != 0:
-            cli.log(f"Branch {branch} missing. Auto-demoting to PROGRESSING.")
+        has_worktree = cli.git.worktrees.has_worktree(task_id)
+        branch_exists = cli.git.run(
+            ["rev-parse", "--verify", branch], cwd=cli.context.main_repo_root, check=False
+        ).returncode == 0
 
-            # 1. Trigger cleanup
+        if not has_worktree and not branch_exists:
+            cli.log(f"Worktree {branch} missing. Auto-demoting to PROGRESSING.")
+
             cleanup = CleanupReviewArtifactsHook()
             cleanup.execute(cli, task, new_status, "PROGRESSING", filepath)
 
-            # 2. Move to PROGRESSING
             cli.move(task.metadata.get("Id"), "PROGRESSING")
 
-            # 3. Raise error to inform user
-            cli.error("BRANCH_MISSING_AUTO_DEMOTED", branch=branch)
+            cli.error("WORKTREE_MISSING_AUTO_DEMOTED", branch=branch)
 
 
 class DoneAtHook(PipelineHook):

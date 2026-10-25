@@ -27,6 +27,8 @@ from tasks_ai.file_manager import FM
 class ReviewGateIntegrationTest(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
         subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
@@ -38,6 +40,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         subprocess.run(  # noqa: PLW1510
             ["git", "config", "user.name", "Test User"], cwd=self.repo_dir
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "config", "commit.gpgsign", "false"], cwd=self.repo_dir
         )
         with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
@@ -55,8 +60,24 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             ["git", "commit", "-m", "Add hammer"], cwd=self.repo_dir, capture_output=True
         )
 
+        # Manually initialize dev tasks dir (init in dev mode tries to clone 'tasks' branch which doesn't exist)
+        from tasks_ai.constants import STATE_FOLDERS
+        counter_file = os.path.join(self.dev_tasks_dir, ".task_counter")
+        os.makedirs(self.dev_tasks_dir, exist_ok=True)
+        for folder in STATE_FOLDERS.values():
+            os.makedirs(os.path.join(self.dev_tasks_dir, folder), exist_ok=True)
+            open(os.path.join(self.dev_tasks_dir, folder, ".gitkeep"), "w").close()
+        if not os.path.exists(counter_file):
+            with open(counter_file, "w") as f:
+                f.write("0")
+        # Write config so validation passes
+        config_data = {"repo": {"lint": "ruff", "test": "/bin/true", "type_check": "/bin/true", "format": "ruff"}}
+        with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
+            json.dump(config_data, f)
+
     def tearDown(self):
         shutil.rmtree(self.test_dir, ignore_errors=True)
+        shutil.rmtree(self.dev_tasks_dir, ignore_errors=True)
 
     # --- helpers (mirror tests/test_tasks.py proven patterns) ---
     def run_cmd(self, args):
@@ -70,7 +91,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             + env.get("PYTHONPATH", "")
         )
         result = subprocess.run(  # noqa: PLW1510
-            [self.script_path, "tasks", "-j", *args],
+            [self.script_path, "tasks", "-j", "--dev", *args],
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
@@ -111,7 +132,6 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         Mirrors the proven cycle in tests/test_tasks.py::test_full_lifecycle.
         Returns the task filename (basename).
         """
-        self.run_cmd(["init"])
         res = self.run_cmd(
             [
                 "create",
@@ -129,17 +149,19 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.assertTrue(res["success"], res)
         task_file = res["data"]["file"]
         branch = task_file  # branch name equals task filename
+        worktree_path = res["data"].get("worktree", "")
 
         self.run_cmd(["move", task_file, "READY"])
         self.run_cmd(["move", task_file, "PROGRESSING"])
 
-        # Commit real work on the task branch so there are patch changes.
-        subprocess.run(["git", "checkout", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        with open(os.path.join(self.repo_dir, work_file), "w") as f:
+        # Commit real work in the worktree (not main repo) so the branch gets the commit
+        work_dir = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+        subprocess.run(["git", "checkout", branch], cwd=work_dir, capture_output=True)  # noqa: PLW1510
+        with open(os.path.join(work_dir, work_file), "w") as f:
             f.write("def func():\n    pass\n")
-        subprocess.run(["git", "add", work_file], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "add", work_file], cwd=work_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Work"], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Work"], cwd=work_dir, capture_output=True
         )
 
         # TESTING move requires checkboxes complete in the task's CURRENT stage.
@@ -153,7 +175,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
-        subprocess.run(["git", "checkout", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "checkout", branch], cwd=work_dir, capture_output=True)  # noqa: PLW1510
         # REVIEW (current stage=testing) also needs checkboxes complete.
         self.complete_current_criteria(task_file)
         self.run_cmd(["move", task_file, "REVIEW"])
@@ -161,7 +183,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
 
     def complete_current_criteria(self, file):
         """Mark the criteria file in the task's current pipeline stage as done."""
-        tasks_root = os.path.join(self.repo_dir, ".tasks")
+        tasks_root = self.dev_tasks_dir
         for stage in [
             "backlog", "ready", "progressing", "testing", "review",
             "staging", "done", "archived", "rejected",
@@ -175,7 +197,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
                 return
 
     def get_meta(self, task_file):
-        review_dir = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        review_dir = os.path.join(self.dev_tasks_dir, "review", task_file)
         meta_path = os.path.join(review_dir, "meta.json")
         with open(meta_path) as f:
             return json.load(f)
@@ -221,7 +243,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         self.complete_review_gate(task_file)
         # Full gate passed; now corrupt a patch and re-run regression-check.
-        patches_dir = os.path.join(self.repo_dir, ".tasks", "review", task_file, "patches")
+        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
         patches = [f for f in os.listdir(patches_dir) if f.endswith(".patch")]
         self.assertTrue(patches, "expected generated patches")
         with open(os.path.join(patches_dir, patches[0]), "a") as f:
@@ -238,9 +260,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         # Simulate "no actual changes to review": clear PatchFiles + patch dir,
         # reset Reviewed/Rc. The gate must auto-pass without a review record.
-        review_dir = os.path.join(self.repo_dir, ".tasks", "review", task_file)
+        review_dir = os.path.join(self.dev_tasks_dir, "review", task_file)
         patches_dir = os.path.join(review_dir, "patches")
-        audit_path = os.path.join(self.repo_dir, ".tasks", "review", f"{task_file}.audit")
+        audit_path = os.path.join(self.dev_tasks_dir, "review", f"{task_file}.audit")
         task = FM.load(review_dir)
         task.metadata["PatchFiles"] = []
         task.metadata["Reviewed"] = False

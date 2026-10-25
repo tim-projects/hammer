@@ -300,7 +300,7 @@ def cmd_demote(task_id_input, target_state):
     from tasks_ai.file_manager import FM
 
     task_id = task_id_input.split("-")[0]
-    cli = TasksCLI(quiet=True, dev=FLAGS["dev"], yes=FLAGS["yes"]) if TasksCLI else None
+    cli = TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"]) if TasksCLI else None
     if cli:
         path, _ = cli.find_task(task_id)
     else:
@@ -311,12 +311,16 @@ def cmd_demote(task_id_input, target_state):
     branches_to_sync = (
         ["staging", "testing"] if target_state == "PROGRESSING" else ["staging"]
     )
+    # Sync through the task worktree if one exists, otherwise fall back to main repo
+    wt_path = cli.git.worktrees.get_worktree_path(task_id) if cli else None
+    cwd = wt_path if wt_path and os.path.exists(wt_path) else find_project_root()
     for b in branches_to_sync:
         if branch_exists(b):
-            run(["git", "checkout", branch])
+            run(["git", "checkout", branch], cwd=cwd)
             run(
                 ["git", "merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
                 check=False,
+                cwd=cwd,
             )
     cli.move(task_id, target_state)
     task.metadata["Rc"] = ""
