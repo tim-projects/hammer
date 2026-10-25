@@ -1,0 +1,31 @@
+{
+    "task_id": "87-task-implement-worktree-based-task",
+    "patch_hash": "decfacb4d157509ae2b755f54d2f54a0",
+    "patch_files": [
+        ".gitignore.patch",
+        "AGENTS.md.patch",
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "error_report.json.patch",
+        "hammer.patch",
+        "repo.py.patch",
+        "tasks.py.patch",
+        "tasks_ai_audit.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_cleanup.py.patch",
+        "tasks_ai_commands_create.py.patch",
+        "tasks_ai_commands_mount.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_commands_unarchive.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_help_text.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tasks_ai_validation.py.patch",
+        "tasks_ai_worktree_manager.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}

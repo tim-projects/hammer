@@ -1,7 +1,0 @@
-Redesign tasks-ai to use git worktrees for task isolation instead of relying solely on branches. Each task gets its own dedicated worktree, allowing truly independent development while maintaining the ability to merge completed work back into the main project.
-
-The codebase has been refactored since this task was originally written. It is now a modular `tasks_ai/` package with `cli.py` (TasksCLI), `git_service.py` (GitService), `context.py` (ProjectContext), `pipeline.py` (PipelineService), `pipeline_hooks.py`, `commands/`, `file_manager.py` (FM), `task_service.py` (TaskService), and `models.py` (Task data model).
-
-Partial worktree awareness already exists: `ProjectContext` (tasks_ai/context.py) detects worktree context via `is_worktree` and provides `resolve_worktree_path()`. `GitService` (tasks_ai/git_service.py) already logs worktree add operations and runs commands with the correct cwd. The `.tasks` directory itself is a git worktree. However, there is no per-task worktree feature, no `WorktreeManager`, and no `tasks mount` command.
-
-Task 178 now exists as "Consolidate repo merge and tasks move into a gated workflow" (PROGRESSING), which establishes gated pipeline transitions that the worktree integration must be tested against.

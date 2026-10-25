@@ -1,0 +1,125 @@
+{
+  "reviews": [
+    {
+      "file": ".gitignore",
+      "patch": ".gitignore.patch",
+      "md5": "3025a09bec735abc56fb4b22c20616c6"
+    },
+    {
+      "file": "AGENTS.md",
+      "patch": "AGENTS.md.patch",
+      "md5": "19ba3219c7a1fa2b31ffca033f07100d"
+    },
+    {
+      "file": "data/errors.json",
+      "patch": "data_errors.json.patch",
+      "md5": "ba3cf223333bd738947ab893d9e3b8e6"
+    },
+    {
+      "file": "data/hints.json",
+      "patch": "data_hints.json.patch",
+      "md5": "4f3cc7a5ae24e6267104c17ad2931039"
+    },
+    {
+      "file": "error_report.json",
+      "patch": "error_report.json.patch",
+      "md5": "a3b7619c5adcbb7afd6b7ea3381b8fc4"
+    },
+    {
+      "file": "hammer",
+      "patch": "hammer.patch",
+      "md5": "06ee38b9e13ea1167efd7df8e579fd6a"
+    },
+    {
+      "file": "repo.py",
+      "patch": "repo.py.patch",
+      "md5": "479c509c6df3a449f29e4ba205a0be53"
+    },
+    {
+      "file": "tasks.py",
+      "patch": "tasks.py.patch",
+      "md5": "16e7fe6d6587f8b6661b32376e3cbf33"
+    },
+    {
+      "file": "tasks_ai/audit.py",
+      "patch": "tasks_ai_audit.py.patch",
+      "md5": "7e657f42b2fcf88327b293de1b79e640"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch": "tasks_ai_cli.py.patch",
+      "md5": "494cd42c397a2e509b7d42810514a93b"
+    },
+    {
+      "file": "tasks_ai/commands/cleanup.py",
+      "patch": "tasks_ai_commands_cleanup.py.patch",
+      "md5": "5f79dba6b39ca65c77bdc79e0454c5eb"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch": "tasks_ai_commands_create.py.patch",
+      "md5": "3be124a35f0dc7208a1c7562d09f42b3"
+    },
+    {
+      "file": "tasks_ai/commands/mount.py",
+      "patch": "tasks_ai_commands_mount.py.patch",
+      "md5": "f806e6b4a246ae200af3409442a24db4"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch": "tasks_ai_commands_move.py.patch",
+      "md5": "de08313a5ba477b4b6b41f53b375678f"
+    },
+    {
+      "file": "tasks_ai/commands/unarchive.py",
+      "patch": "tasks_ai_commands_unarchive.py.patch",
+      "md5": "14e946f35884d5388cee9421db12a644"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch": "tasks_ai_git_service.py.patch",
+      "md5": "346b79a6282f43158affd30d4d932033"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch": "tasks_ai_help_text.py.patch",
+      "md5": "a50c7f332e1e01075a19d77aa3f805e9"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch": "tasks_ai_pipeline.py.patch",
+      "md5": "4a4d2aff5d220042bd78e67d2b3fed85"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch": "tasks_ai_pipeline_hooks.py.patch",
+      "md5": "c915c3d6b01bbe8f1c1ba80183ab2667"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch": "tasks_ai_validation.py.patch",
+      "md5": "c8088ce768841b310a532663da776ac8"
+    },
+    {
+      "file": "tasks_ai/worktree_manager.py",
+      "patch": "tasks_ai_worktree_manager.py.patch",
+      "md5": "73f9042b9aaa271e07c55713ade813ad"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch": "tests_test_audit_verify_integration.py.patch",
+      "md5": "5b0bc2b8802cce564dfd6541eeb43943"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch": "tests_test_tasks.py.patch",
+      "md5": "64a9d5e81c2414d6b104a0e0a18c7678"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch": "tests_test_worktree_system.py.patch",
+      "md5": "2b9e298eae52ec6f34f095ea1026e523"
+    }
+  ],
+  "reviewed_at": 1792904254.4154668
+}

@@ -7,11 +7,11 @@
   "Br": "87-task-implement-worktree-based-task",
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1792903726.316735,
   "DoneAt": null,
-  "Tp": true,
+  "Tp": false,
   "PatchFiles": [
     {
       "file": ".gitignore",
