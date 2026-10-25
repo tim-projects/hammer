@@ -75,11 +75,11 @@ class PipelineService:
         # 0. Fast-track check: If worktree branch is already merged, bypass gates
         # Apply to REVIEW, STAGING, and DONE transitions
         if target_state in ["REVIEW", "STAGING", "DONE"]:  # noqa: SIM102
-             if branch and self.git.is_merged(branch, "main"):
-                 self.log(
-                     f"DEBUG: Task {task_id} worktree branch {branch} is already merged. Fast-tracking promotion to {target_state}."
-                 )
-                 return True
+            if branch and self.git.is_merged(branch, "main"):
+                self.log(
+                    f"DEBUG: Task {task_id} worktree branch {branch} is already merged. Fast-tracking promotion to {target_state}."
+                )
+                return True
 
         enabled_gates = self.get_enabled_gates(target_state)
 
