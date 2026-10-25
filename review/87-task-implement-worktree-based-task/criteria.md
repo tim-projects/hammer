@@ -1,0 +1,11 @@
+- [x] `WorktreeManager` class implemented with create/list/remove/prune operations
+- [x] `.tasks/worktrees.json` manifest maintained and persisted
+- [x] `tasks mount <id>` command implemented via `commands/mount.py`
+- [x] Task operations (find_task, FM paths) resolve correctly from within a task worktree
+- [x] Worktree-to-main merge workflow functional via `GitService.merge_branches()`
+- [x] Conflict detection and resolution tools available
+- [x] Automated `git worktree remove` on ARCHIVED/DONE transition via `ArchivedCommitHook`
+- [x] Backward compatibility with branch-based workflow maintained
+- [x] Pipeline gates (Task 178) pass when running from within a worktree
+- [x] User tests written and passing (auto-paired test task convention)
+- [x] Documentation updated (AGENTS.md, help_text.py)
