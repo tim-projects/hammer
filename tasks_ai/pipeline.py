@@ -72,12 +72,12 @@ class PipelineService:
         task_id = str(task.metadata.get("Id", "unknown"))
         branch = task.metadata.get("Br", "")
 
-        # 0. Fast-track check: If branch is already merged, bypass gates
+        # 0. Fast-track check: If worktree branch is already merged, bypass gates
         # Apply to REVIEW, STAGING, and DONE transitions
         if target_state in ["REVIEW", "STAGING", "DONE"]:  # noqa: SIM102
             if branch and self.git.is_merged(branch, "main"):
                 self.log(
-                    f"DEBUG: Task {task_id} branch {branch} is already merged. Fast-tracking promotion to {target_state}."
+                    f"DEBUG: Task {task_id} worktree branch {branch} is already merged. Fast-tracking promotion to {target_state}."
                 )
                 return True
 
@@ -125,14 +125,14 @@ class PipelineService:
                     hint=f"Run 'tasks modify {task_id} --reviewed' after reading the patches.",
                 )
 
-        # 4. Integration gate: STAGING/DONE require branch to be merged into appropriate pipeline branch
+        # 4. Integration gate: STAGING/DONE require worktree branch to be merged into appropriate pipeline branch
         if "main_sync" in enabled_gates and branch:
             # Target branch for integration check
             integration_target = "main"
             if target_state == "STAGING":
                 integration_target = "staging"
 
-            # Check if branch is merged into target
+            # Check if worktree branch is merged into target
             if not self.git.is_merged(branch, integration_target):
                 raise PipelineError(
                     "BRANCH_NOT_MERGED",
@@ -151,11 +151,11 @@ class PipelineService:
 
         # 6. Check if staging is synced with source for DONE
         if target_state == "DONE" and branch and not self.git.is_merged(branch, "staging"):
-            # Re-verify: Check specifically if the commit in the branch is reachable from main
+            # Re-verify: Check specifically if the commit in the worktree branch is reachable from main
             # Since is_merged(branch, 'main') passed, we know it is.
             # However, we also want to ensure no local main divergence.
             self.log(
-                f"Warning: Branch {branch} not fully merged to staging. Promotion might be incomplete."
+                f"Warning: Worktree branch {branch} not fully merged to staging. Promotion might be incomplete."
             )
 
         # 7. Mandatory Verification for DONE

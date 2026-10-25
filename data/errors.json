@@ -43,5 +43,9 @@
   "TASK_METADATA_CORRUPTED": "Task {detail}",
   "AUDIT_FAILURE": "Audit failed: {audit_code}.",
   "MAIN_DIVERGED": "Local main is out of sync with origin/main (Local: {local}, Remote: {remote}).",
-  "CLEANUP_BRANCH_INVALID": "Cleanup must be run from {default_branch}, staging, or testing branch. Currently on: {current_branch}"
+  "CLEANUP_BRANCH_INVALID": "Cleanup must be run from {default_branch}, staging, or testing branch. Currently on: {current_branch}",
+  "WORKTREE_NOT_FOUND": "Worktree not found for task {task_id}.",
+  "WORKTREE_MERGE_CONFLICT": "[{task_id}] Merge conflict while syncing worktree '{branch}' with '{default}'.",
+  "WORKTREE_MISSING_AUTO_DEMOTED": "Worktree '{branch}' missing. Task auto-demoted to PROGRESSING.",
+  "CONFLICT_DETECTED": "Merge conflicts detected in worktree '{branch}'. Resolve manually in the worktree directory."
 }

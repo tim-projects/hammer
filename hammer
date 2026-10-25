@@ -50,6 +50,7 @@ COMMAND_TO_TOOL = {
     "modify": "tasks",
     "move": "tasks",
     "delete": "tasks",
+    "mount": "tasks",
     "reconcile": "tasks",
     "cleanup": "tasks",
     "config": "tasks",

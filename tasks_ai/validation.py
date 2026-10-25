@@ -93,7 +93,10 @@ class Validation:
             return True
 
         # Allow paths within the repo
-        if abs_path.startswith(os.path.abspath(self.cli.root)):
+        # A task worktree's repo_root is the worktree itself, but task metadata
+        # (.tasks/) always lives in the main repo, so allow that root too.
+        allowed_roots = [self.cli.root, self.cli.context.main_repo_root]
+        if any(abs_path.startswith(os.path.abspath(root)) for root in allowed_roots):
             return True
 
         self.cli.error(f"Path outside repository: {path}")

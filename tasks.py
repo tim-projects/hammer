@@ -74,6 +74,8 @@ if __name__ == '__main__':
     del_p = subparsers.add_parser('delete', help='Permanently remove a task and its logs.')
     del_p.add_argument('filename')
     del_p.add_argument('--confirm', help='Confirmation code.')
+    mnt_p = subparsers.add_parser('mount', help='Mount (create/open) a task worktree.')
+    mnt_p.add_argument('id', help='Task Id.')
     rec_p = subparsers.add_parser('reconcile', help='Scan/clean merged branches (see cleanup).')
     rec_p.add_argument('target', nargs='?')
     rec_p.add_argument('--all', action='store_true', help='Clean up all candidates.')
@@ -125,6 +127,8 @@ if __name__ == '__main__':
         cli.move(args.filename, args.status, yes=args.yes)
     elif args.command == 'delete':
         cli.delete(args.filename, confirm=args.confirm)
+    elif args.command == 'mount':
+        cli.mount(args.id)
     elif args.command == 'list':
         cli.list(show_all=args.all)
     elif args.command == 'current':

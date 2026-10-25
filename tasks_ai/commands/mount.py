@@ -1,0 +1,32 @@
+import os
+
+from ..file_manager import FM
+
+
+def run(cli, task_id):
+    """Execution logic for 'tasks mount <id>'."""
+    filepath, _ = cli.find_task(task_id)
+    if not filepath:
+        cli.error("TASK_NOT_FOUND", filename=str(task_id))
+
+    task = FM.load(str(filepath))
+    branch = task.metadata.get("Br", "")
+    if not branch:
+        branch = str(task_id)
+
+    wt_path = cli.git.worktrees.create_task_worktree(str(task.metadata.get("Id", task_id)), branch)
+    if not wt_path:
+        cli.error("Failed to create worktree for task.")
+
+    cli.log(f"Worktree mounted at: {wt_path}")
+    cli.log(f"Run: cd {wt_path}")
+
+    cli.finish(
+        {
+            "id": task.metadata.get("Id"),
+            "task_id": branch,
+            "branch": branch,
+            "worktree_path": wt_path,
+            "cwd": os.getcwd(),
+        }
+    )
