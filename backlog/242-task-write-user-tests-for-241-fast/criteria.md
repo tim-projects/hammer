@@ -1,0 +1,1 @@
+- [ ] Existing tests still pass: test_audit_verify_integration.py, test_all_transitions.py, test_pairing.py

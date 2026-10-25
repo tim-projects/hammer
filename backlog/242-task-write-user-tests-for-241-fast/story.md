@@ -1,0 +1,1 @@
+As a pipeline operator, I need gates enforced regardless of whether the task branch has commits, so governance cannot be bypassed by creating a task and promoting it without doing work.
