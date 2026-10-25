@@ -1,0 +1,1 @@
+Reviewed full diff 24 files: worktree ops, mount command, WorktreeManager, validation fix, 4 new non-dev tests. No assertions weakened, no tests removed.
