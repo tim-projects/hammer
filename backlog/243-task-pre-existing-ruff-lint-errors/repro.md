@@ -1,0 +1,1 @@
+1. 1. cd /home/vscode/git/tasks-ai. 2. python3 -m ruff check tasks_ai/ --output-format=concise. 3. Observe 11 errors listed above. 4. git stash; python3 -m ruff check tasks_ai/; git stash pop confirms the same errors exist at HEAD (pre-existing).
