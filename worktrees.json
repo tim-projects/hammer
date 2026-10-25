@@ -19,6 +19,16 @@
       "branch": "244-task-write-user-tests-for-243-pre-e",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/244-task-write-user-tests-for-243-pre-e",
       "task_file": "244-task-write-user-tests-for-243-pre-e"
+    },
+    "245": {
+      "branch": "245-task-four-pre-existing-test-robustn",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/245-task-four-pre-existing-test-robustn",
+      "task_file": "245-task-four-pre-existing-test-robustn"
+    },
+    "246": {
+      "branch": "246-task-write-user-tests-for-245-four",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/246-task-write-user-tests-for-245-four",
+      "task_file": "246-task-write-user-tests-for-245-four"
     }
   }
 }
