@@ -1,0 +1,24 @@
+{
+  "worktrees": {
+    "241": {
+      "branch": "241-issue-fast-track-gate-bypass-on-unco",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/241-issue-fast-track-gate-bypass-on-unco",
+      "task_file": "241-issue-fast-track-gate-bypass-on-unco"
+    },
+    "242": {
+      "branch": "242-task-write-user-tests-for-241-fast",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/242-task-write-user-tests-for-241-fast",
+      "task_file": "242-task-write-user-tests-for-241-fast"
+    },
+    "243": {
+      "branch": "243-task-pre-existing-ruff-lint-errors",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/243-task-pre-existing-ruff-lint-errors",
+      "task_file": "243-task-pre-existing-ruff-lint-errors"
+    },
+    "244": {
+      "branch": "244-task-write-user-tests-for-243-pre-e",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/244-task-write-user-tests-for-243-pre-e",
+      "task_file": "244-task-write-user-tests-for-243-pre-e"
+    }
+  }
+}
