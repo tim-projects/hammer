@@ -13,6 +13,7 @@ __pycache__/
 !README.md
 !AGENTS.md
 !docs/spec-worktrees.md
+!plan-guard.md
 
 *.txt
 
