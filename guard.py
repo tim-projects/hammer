@@ -19,9 +19,8 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+# The package lives next to this script; cwd may be a task worktree without it.
 sys.path.insert(0, str(SCRIPT_DIR))
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
 
 from tasks_ai.constants import STATE_FOLDERS, load_config  # noqa: E402
 from tasks_ai.guard_engine import (  # noqa: E402

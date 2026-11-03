@@ -17,11 +17,14 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
 
-from tests.hammer_test_base import HammerTestBase
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tests.hammer_test_base import HammerTestBase  # noqa: E402
 
 STORY = "Sufficiently long story content here to pass validation"
 TECH = "Sufficiently long technical description here to pass validation"
