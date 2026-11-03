@@ -1,0 +1,8 @@
+diff --git a/progressing/248-task-write-user-tests-for-247-imple/tech.md b/progressing/248-task-write-user-tests-for-247-imple/tech.md
+new file mode 100644
+index 0000000..0cd8fab
+--- /dev/null
++++ b/progressing/248-task-write-user-tests-for-247-imple/tech.md
+@@ -0,0 +1 @@
++New tasks_ai/guard_engine.py (SQLite cache over git refs, WAL mode, disposable/rebuildable) and guard.py CLI; GuardGateHook in pipeline_hooks.py; common-git-dir cache resolution; two-subprocess refresh (for-each-ref + ls-tree); worktree map replacing worktrees.json; messages.py GUARD_* codes.
+\ No newline at end of file

@@ -11,7 +11,73 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1793724322.795414,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/criteria.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_criteria.md.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/current-task.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_current-task.md.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/meta.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_meta.json.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/notes.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_notes.md.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/plan.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_plan.md.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/progress.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_progress.md.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/story.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_story.md.patch"
+    },
+    {
+      "file": ".ops/staging/248-task-write-user-tests-for-247-imple/tech.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/.ops_staging_248-task-write-user-tests-for-247-imple_tech.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/criteria.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_criteria.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/current-task.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_current-task.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/meta.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_meta.json.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/notes.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_notes.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/plan.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_plan.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/progress.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_progress.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/story.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_story.md.patch"
+    },
+    {
+      "file": "progressing/248-task-write-user-tests-for-247-imple/tech.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/248-task-write-user-tests-for-247-imple/patches/progressing_248-task-write-user-tests-for-247-imple_tech.md.patch"
+    }
+  ]
 }

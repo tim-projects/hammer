@@ -1,0 +1,8 @@
+diff --git a/progressing/248-task-write-user-tests-for-247-imple/story.md b/progressing/248-task-write-user-tests-for-247-imple/story.md
+new file mode 100644
+index 0000000..44e3e4c
+--- /dev/null
++++ b/progressing/248-task-write-user-tests-for-247-imple/story.md
+@@ -0,0 +1 @@
++As a hammer user, I need task ID integrity enforced at every pipeline gate so duplicate IDs cannot progress through the workflow, eliminating silent corruption that currently requires manual doctor repair.
+\ No newline at end of file
