@@ -15,6 +15,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(dest='command', required=True)
     init_p = subparsers.add_parser('init', help='Initialize tasks worktree.')
     init_p.add_argument('--force', action='store_true', help='Force reinitialization (deletes existing .tasks if present). DANGEROUS: will lose all task data.')
+    subparsers.add_parser('init-hooks', help='Install git hooks into the common hooks dir.')
     save_p = subparsers.add_parser('save', help='Save and push .tasks worktree to remote.')
     save_p.add_argument('--branch', '-b', default='tasks', help="Remote branch name (default: 'tasks').")
     save_p.add_argument('-y', '--yes', action='store_true', help='Continue without remote (local-only mode).')
@@ -114,6 +115,8 @@ if __name__ == '__main__':
     cli = TasksCLI(as_json=args.json, command=args.command, quiet=args.quiet, dev=args.dev, yes=getattr(args, 'yes', False))
     if args.command == 'init':
         cli.init(force=getattr(args, 'force', False))
+    elif args.command == 'init-hooks':
+        cli.init_hooks()
     elif args.command == 'save':
         cli.save(branch=args.branch)
     elif args.command == 'restore':
