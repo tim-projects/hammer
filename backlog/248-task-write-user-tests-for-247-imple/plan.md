@@ -1,0 +1,1 @@
+1. Phase 4: retire counter files and worktrees.json per R7 decision; remove dead code

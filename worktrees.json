@@ -29,6 +29,16 @@
       "branch": "246-task-write-user-tests-for-245-four",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/246-task-write-user-tests-for-245-four",
       "task_file": "246-task-write-user-tests-for-245-four"
+    },
+    "247": {
+      "branch": "247-task-implement-hammer-guard-integri",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/247-task-implement-hammer-guard-integri",
+      "task_file": "247-task-implement-hammer-guard-integri"
+    },
+    "248": {
+      "branch": "248-task-write-user-tests-for-247-imple",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/248-task-write-user-tests-for-247-imple",
+      "task_file": "248-task-write-user-tests-for-247-imple"
     }
   }
 }
