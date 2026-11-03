@@ -24,7 +24,28 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.hammer_test_base import HammerTestBase
+from tests.hammer_test_base import HammerTestBase  # noqa: E402
+
+
+def load_guard_engine():
+    """Import the engine from THIS repo (not a fixture clone).
+
+    Other test modules import `tasks_ai` from fixture clones, which can leave a
+    stale `tasks_ai` in `sys.modules`; drop those entries so the import
+    resolves back to the repo under test.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    for name in [n for n in sys.modules if n == "tasks_ai" or n.startswith("tasks_ai.")]:
+        module = sys.modules[name]
+        path = list(getattr(module, "__path__", []))
+        if path and not str(path[0]).startswith(root):
+            del sys.modules[name]
+    import tasks_ai.guard_engine as guard_engine
+
+    return guard_engine
+
 
 STORY = "Sufficiently long story content here to pass validation"
 TECH = "Sufficiently long technical description here to pass validation"
@@ -293,7 +314,8 @@ class TestGuardCache(GuardTestBase):
             self.git(["add", "."], cwd=tmp)
             self.git(["commit", "-m", "init"], cwd=tmp)
 
-            from tasks_ai.guard_engine import GuardEngine, GuardUnavailable
+            engine_mod = load_guard_engine()
+            GuardEngine, GuardUnavailable = engine_mod.GuardEngine, engine_mod.GuardUnavailable
 
             GuardEngine(repo_root=tmp, tasks_path=None).scan()
             self.git(["checkout", "--detach"], cwd=tmp)
@@ -325,7 +347,7 @@ class TestGuardCache(GuardTestBase):
         self.assertIn("GUARD_WORKTREE_ORPHAN", codes)
 
     def test_verdict_is_fast_enough_for_a_gate(self):
-        from tasks_ai.guard_engine import GuardEngine
+        GuardEngine = load_guard_engine().GuardEngine
 
         self.create_task(counter_value=BASE_ID - 1)
         branch = self._find_folder(BASE_ID, "backlog")

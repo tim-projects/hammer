@@ -21,6 +21,7 @@ matching branches, so rejecting there would break the existing suite.
 Upgrade to REJECT once dev fixtures stop creating throwaway worktrees.
 """
 
+import hashlib
 import os
 import re
 import sqlite3
@@ -301,7 +302,22 @@ class GuardEngine:
                 f"total ref loss: cache knew {previous} refs, git now reports none. "
                 f"Refusing to read a wiped repo as an empty one. {UNAVAILABLE_HINT}"
             )
+        ref_signature = hashlib.sha256(
+            repr(sorted(refs.items())).encode()
+        ).hexdigest()
         tasks_ref_object = self._current_tasks_ref(conn, refs)
+        known_signature = self._get_meta(conn, "ref_signature")
+        known_tasks_ref = self._get_meta(conn, "tasks_ref_object")
+
+        # Steady state: nothing changed since the last refresh -> answer from
+        # the index. `for-each-ref` is the only subprocess on the hot path.
+        if (
+            known_signature == ref_signature
+            and known_tasks_ref == (tasks_ref_object or "")
+            and self._get_meta(conn, "prev_ref_count") == str(len(refs))
+        ):
+            return self._summary(conn)
+
         remote = self._remote_map(tasks_ref_object)
         local = self._local_map()
         worktrees = self._worktree_list()
@@ -361,9 +377,18 @@ class GuardEngine:
         )
         self._compute_anomalies(conn, refs, local, branch_by_id, worktrees)
         self._set_meta(conn, "prev_ref_count", len(refs))
+        self._set_meta(conn, "ref_signature", ref_signature)
+        self._set_meta(conn, "tasks_ref_object", tasks_ref_object or "")
         self._set_meta(conn, "last_refresh", now_iso())
         conn.commit()
-        return {"refs": len(refs), "tasks": len(rows), "worktrees": len(worktrees)}
+        return self._summary(conn)
+
+    def _summary(self, conn):
+        return {
+            "refs": conn.execute("SELECT COUNT(*) FROM refs").fetchone()[0],
+            "tasks": conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0],
+            "worktrees": conn.execute("SELECT COUNT(*) FROM worktrees").fetchone()[0],
+        }
 
     def _current_tasks_ref(self, conn, refs):
         for name in (TASKS_REF_REMOTE, TASKS_BRANCH):
