@@ -13,6 +13,7 @@ inherits the real `tasks` branch content, so created tasks use a high, unused
 counter value to avoid colliding with real task ids.
 """
 
+import importlib.util
 import json
 import os
 import shutil
@@ -31,20 +32,29 @@ def load_guard_engine():
     """Import the engine from THIS repo (not a fixture clone).
 
     Other test modules import `tasks_ai` from fixture clones, which can leave a
-    stale `tasks_ai` in `sys.modules`; drop those entries so the import
-    resolves back to the repo under test.
+    stale entry in `sys.modules`. Load `tasks_ai` from this repo explicitly.
     """
+    import importlib
+
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for name in [
+        n for n in sys.modules if n == "tasks_ai" or n.startswith("tasks_ai.")
+    ]:
+        paths = list(getattr(sys.modules[name], "__path__", []))
+        if not paths or not str(paths[0]).startswith(root):
+            del sys.modules[name]
     if root not in sys.path:
         sys.path.insert(0, root)
-    for name in [n for n in sys.modules if n == "tasks_ai" or n.startswith("tasks_ai.")]:
-        module = sys.modules[name]
-        path = list(getattr(module, "__path__", []))
-        if path and not str(path[0]).startswith(root):
-            del sys.modules[name]
-    import tasks_ai.guard_engine as guard_engine
-
-    return guard_engine
+    # Load the package itself first so relative imports resolve.
+    spec = importlib.util.spec_from_file_location(
+        "tasks_ai",
+        os.path.join(root, "tasks_ai", "__init__.py"),
+        submodule_search_locations=[os.path.join(root, "tasks_ai")],
+    )
+    package = importlib.util.module_from_spec(spec)
+    sys.modules["tasks_ai"] = package
+    spec.loader.exec_module(package)
+    return importlib.import_module("tasks_ai.guard_engine")
 
 
 STORY = "Sufficiently long story content here to pass validation"
