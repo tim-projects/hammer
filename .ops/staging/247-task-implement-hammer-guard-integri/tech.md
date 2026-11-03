@@ -1,0 +1,1 @@
+New tasks_ai/guard_engine.py (SQLite cache over git refs, WAL mode, disposable/rebuildable) and guard.py CLI; GuardGateHook in pipeline_hooks.py; common-git-dir cache resolution; two-subprocess refresh (for-each-ref + ls-tree); worktree map replacing worktrees.json; messages.py GUARD_* codes.
