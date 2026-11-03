@@ -1,0 +1,18 @@
+{
+    "task_id": "247",
+    "patch_hash": "68e98a046fd1c176ae072543a71bfdbb",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "error_report.json.patch",
+        "guard.py.patch",
+        "hammer.patch",
+        "tasks.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_test_guard.py.patch"
+    ],
+    "status": "verified"
+}
