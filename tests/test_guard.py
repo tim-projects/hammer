@@ -45,6 +45,7 @@ class GuardTestBase(HammerTestBase):
             "guard.py",
             "hammer",
             "repo.py",
+            "tasks.py",
             "tasks_ai/guard_engine.py",
             "tasks_ai/pipeline_hooks.py",
             "tasks_ai/cli.py",
