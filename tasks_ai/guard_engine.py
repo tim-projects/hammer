@@ -78,6 +78,13 @@ CREATE TABLE IF NOT EXISTS anomalies (
   detail  TEXT NOT NULL,
   ts      TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS events (       -- append-only log (forced bypasses)
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  code    TEXT NOT NULL,
+  task_id INTEGER,
+  detail  TEXT NOT NULL,
+  ts      TEXT NOT NULL
+);
 """
 
 UNAVAILABLE_HINT = (
@@ -281,7 +288,8 @@ class GuardEngine:
         if previous is not None and int(previous) > 0 and not refs:
             raise GuardUnavailable(
                 "total ref loss: cache knew %s refs, git now reports none. "
-                "Refusing to read a wiped repo as an empty one." % previous
+                "Refusing to read a wiped repo as an empty one. %s"
+                % (previous, UNAVAILABLE_HINT)
             )
         tasks_ref_object = self._current_tasks_ref(conn, refs)
         remote = self._remote_map(tasks_ref_object)
@@ -522,13 +530,17 @@ class GuardEngine:
             conn.close()
 
     def record_anomaly(self, code, task_id, detail):
-        """Append one anomaly (logs --force bypasses). Never raises."""
+        """Append to the append-only event log (forced bypasses). Never raises.
+
+        `anomalies` is a derived report recomputed on every refresh; bypasses
+        are history, so they get their own table.
+        """
         try:
             conn = self.connect()
             try:
                 self._ensure_schema(conn)
                 conn.execute(
-                    "INSERT INTO anomalies (code, task_id, detail, ts) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO events (code, task_id, detail, ts) VALUES (?, ?, ?, ?)",
                     (code, task_id, detail, now_iso()),
                 )
                 conn.commit()
@@ -537,6 +549,21 @@ class GuardEngine:
         except (sqlite3.DatabaseError, OSError, GuardUnavailable):
             return False
         return True
+
+    def events(self):
+        """Recent recorded events (forced bypasses), oldest first."""
+        try:
+            conn = self.connect()
+            try:
+                self._ensure_schema(conn)
+                rows = conn.execute(
+                    "SELECT code, task_id, detail, ts FROM events ORDER BY id"
+                ).fetchall()
+                return [dict(row) for row in rows]
+            finally:
+                conn.close()
+        except (sqlite3.DatabaseError, OSError, GuardUnavailable):
+            return []
 
     def _wipe(self):
         for name in (DB_NAME, DB_NAME + "-wal", DB_NAME + "-shm"):

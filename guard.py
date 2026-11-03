@@ -179,16 +179,29 @@ def cmd_scan(args):
         if args.all or f["code"] != "GUARD_REMOTE_DIVERGENCE"
     ]
     if args.json:
-        print(json.dumps({"success": True, "anomalies": rows}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "success": True,
+                    "anomalies": rows,
+                    "events": engine.events(),
+                },
+                indent=2,
+            )
+        )
         return 0
-    if not rows:
+    events = engine.events()
+    if not rows and not events:
         log("no anomalies found")
         return 0
-    log(f"{len(rows)} anomaly(ies)")
+    if rows:
+        log(f"{len(rows)} anomaly(ies)")
     for row in rows:
         print(f"  {YELLOW}{row['code']}{NC} [{row['task_id']}] {row['detail']}")
         if args.fix_plan and row["code"] in FIX_PLAN:
             print(f"      {CYAN}fix:{NC} {FIX_PLAN[row['code']]}")
+    for event in events:
+        print(f"  {RED}{event['code']}{NC} [{event['task_id']}] {event['detail']}")
     return 0
 
 
