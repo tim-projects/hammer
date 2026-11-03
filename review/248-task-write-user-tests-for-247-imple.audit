@@ -1,0 +1,23 @@
+{
+    "task_id": "248",
+    "patch_hash": "42f309d0d84d76c1023c2e2bcb6ac59e",
+    "patch_files": [
+        ".ops_staging_248-task-write-user-tests-for-247-imple_criteria.md.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_current-task.md.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_meta.json.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_notes.md.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_plan.md.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_progress.md.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_story.md.patch",
+        ".ops_staging_248-task-write-user-tests-for-247-imple_tech.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_criteria.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_current-task.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_meta.json.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_notes.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_plan.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_progress.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_story.md.patch",
+        "progressing_248-task-write-user-tests-for-247-imple_tech.md.patch"
+    ],
+    "status": "verified"
+}
