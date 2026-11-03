@@ -44,13 +44,15 @@ class GuardGateHook(PipelineHook):
         branch = _task_branch(task, filepath)
         try:
             engine = get_guard_engine(cli)
+        except GuardUnavailable as exc:
+            # No engine could even be built (e.g. not a git repo): fail closed.
+            cli.error("GUARD_UNAVAILABLE", task_id=task_id, detail=str(exc))
+            return
+
+        try:
             findings = engine.verdict(task_id, current_state, new_status, branch)
         except GuardUnavailable as exc:
-            try:
-                engine = get_guard_engine(cli)
-            except GuardUnavailable:
-                engine = None
-            if engine is not None and engine.fail_open:
+            if engine.fail_open:
                 cli.log(f"[guard] WARN: GUARD_UNAVAILABLE: {exc}")
                 return
             cli.error("GUARD_UNAVAILABLE", task_id=task_id, detail=str(exc))
