@@ -184,6 +184,9 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
         )
 
         # Run Enter Hooks (Post-move actions)
+        # Enter hooks run even under --force, so expose the force flag for
+        # GuardRecordHook (forced-bypass recorder).
+        cli._last_move_force = force
         cli.hook_registry.run_enter_hooks(
             cli, new_task, current_state, new_status, staged_task_path
         )

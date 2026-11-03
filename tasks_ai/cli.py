@@ -25,6 +25,8 @@ from .pipeline_hooks import (
     CleanWorkspaceHook,
     ContentSufficiencyHook,
     DoneAtHook,
+    GuardGateHook,
+    GuardRecordHook,
     MainBranchProtectionHook,
     PostMoveCommitHook,
     ProgressUpdateHook,
@@ -50,12 +52,24 @@ class TasksCLI:
         self.dev = dev
         self.yes = yes
         self.output_messages = []
+        self._last_move_force = False
         self.hook_registry = HookRegistry()
         self.messages = MessageRegistry()
 
         # Register EXIT hooks (Pre-move gates/checks)
         self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
         self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
+        # Guard runs at every gate: a duplicate ID must never progress
+        for state in [
+            "BACKLOG",
+            "READY",
+            "PROGRESSING",
+            "TESTING",
+            "REVIEW",
+            "STAGING",
+            "DONE",
+        ]:
+            self.hook_registry.register_exit_hook(state, GuardGateHook())
         self.hook_registry.register_exit_hook("PROGRESSING", MainBranchProtectionHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
@@ -101,6 +115,7 @@ class TasksCLI:
         ]:
             self.hook_registry.register_enter_hook(state, SaveProgressHook())
             self.hook_registry.register_enter_hook(state, PostMoveCommitHook())
+            self.hook_registry.register_enter_hook(state, GuardRecordHook())
 
         self.context = ProjectContext(dev=dev)
         self.root = self.context.repo_root or os.getcwd()
@@ -519,9 +534,24 @@ class TasksCLI:
         self.install_hooks()
         self.log("✅ Git hooks installed.")
 
+    def _resolve_hooks_dir(self):
+        """The COMMON hooks dir. Inside a task worktree `.git` is a file, so
+        `<root>/.git/hooks` silently misses; git resolves the shared dir."""
+        result = self._run_git(["rev-parse", "--git-path", "hooks"], cwd=self.root)
+        candidates = []
+        if result.returncode == 0:
+            path = result.stdout.strip()
+            if path:
+                candidates.append(os.path.join(self.root, path))
+        candidates.append(os.path.join(self.root, ".git", "hooks"))
+        for candidate in candidates:
+            if os.path.isdir(candidate):
+                return candidate
+        return None
+
     def install_hooks(self):
-        hook_dir = os.path.join(self.root, ".git", "hooks")
-        if not os.path.exists(hook_dir):
+        hook_dir = self._resolve_hooks_dir()
+        if not hook_dir:
             return
 
         # pre-commit hook
