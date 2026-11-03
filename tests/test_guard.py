@@ -13,7 +13,6 @@ inherits the real `tasks` branch content, so created tasks use a high, unused
 counter value to avoid colliding with real task ids.
 """
 
-import importlib.util
 import json
 import os
 import shutil
@@ -25,7 +24,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.hammer_test_base import HammerTestBase  # noqa: E402
+from tests.hammer_test_base import HammerTestBase
 
 
 def load_guard_engine():
