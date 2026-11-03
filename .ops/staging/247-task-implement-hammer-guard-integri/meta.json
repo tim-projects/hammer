@@ -8,5 +8,9 @@
   "Br": "247-task-implement-hammer-guard-integri",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
