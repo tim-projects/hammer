@@ -109,7 +109,7 @@ class GuardUnavailable(Exception):
 
 
 def run_git(args, cwd=None):
-    return subprocess.run(  # noqa: PLW1510
+    return subprocess.run(
         ["git"] + args, cwd=cwd, capture_output=True, text=True, check=False
     )
 
@@ -257,7 +257,7 @@ class GuardEngine:
         local = {}
         if not self.tasks_path or not os.path.isdir(self.tasks_path):
             return local
-        for _state, folder in STATE_FOLDERS.items():
+        for folder in STATE_FOLDERS.values():
             state_dir = os.path.join(self.tasks_path, folder)
             if not os.path.isdir(state_dir):
                 continue
@@ -298,9 +298,8 @@ class GuardEngine:
         previous = self._get_meta(conn, "prev_ref_count")
         if previous is not None and int(previous) > 0 and not refs:
             raise GuardUnavailable(
-                "total ref loss: cache knew %s refs, git now reports none. "
-                "Refusing to read a wiped repo as an empty one. %s"
-                % (previous, UNAVAILABLE_HINT)
+                f"total ref loss: cache knew {previous} refs, git now reports none. "
+                f"Refusing to read a wiped repo as an empty one. {UNAVAILABLE_HINT}"
             )
         tasks_ref_object = self._current_tasks_ref(conn, refs)
         remote = self._remote_map(tasks_ref_object)
@@ -386,7 +385,7 @@ class GuardEngine:
                 add(
                     "GUARD_DUPLICATE_ID",
                     tid,
-                    "multiple local branches claim id %d: %s" % (tid, ", ".join(branches)),
+                    f"multiple local branches claim id {tid}: {', '.join(branches)}",
                 )
             remote_names = sorted(
                 n
@@ -397,29 +396,28 @@ class GuardEngine:
                 add(
                     "GUARD_DUPLICATE_REMOTE_ID",
                     tid,
-                    "multiple remote branches claim id %d: %s"
-                    % (tid, ", ".join(remote_names)),
+                    f"multiple remote branches claim id {tid}: {', '.join(remote_names)}",
                 )
             folders = local.get(tid, [])
             if len(folders) > 1:
+                where = ", ".join(f"{state}/{folder}" for state, folder in folders)
                 add(
                     "GUARD_STATE_DUPLICATE",
                     tid,
-                    "id %d exists in %d state folders: %s"
-                    % (tid, len(folders), ", ".join("%s/%s" % f for f in folders)),
+                    f"id {tid} exists in {len(folders)} state folders: {where}",
                 )
             for branch in branches:
                 if not BRANCH_CONVENTION_RE.match(branch):
                     add(
                         "GUARD_BRANCH_NONCONFORMANT",
                         tid,
-                        "branch '%s' breaks <id>-<type>-<slug>" % branch,
+                        f"branch '{branch}' breaks <id>-<type>-<slug>",
                     )
             if folders and not branches:
                 add(
                     "GUARD_REMOTE_DIVERGENCE",
                     tid,
-                    "local task %d has no local branch (remote snapshot still tracks it)" % tid,
+                    f"local task {tid} has no local branch (remote snapshot still tracks it)",
                 )
 
         wt_entries = {}
@@ -433,15 +431,15 @@ class GuardEngine:
                 add(
                     "GUARD_WORKTREE_ORPHAN",
                     tid,
-                    "task %d has %d worktrees: %s"
-                    % (tid, len(entries), ", ".join(p for _, p in entries)),
+                    f"task {tid} has {len(entries)} worktrees: "
+                    + ", ".join(p for _, p in entries),
                 )
             for branch, _ in entries:
                 if branch not in refs:
                     add(
                         "GUARD_WORKTREE_ORPHAN",
                         tid,
-                        "worktree of task %d checks out missing branch '%s'" % (tid, branch),
+                        f"worktree of task {tid} checks out missing branch '{branch}'",
                     )
 
         conn.execute("DELETE FROM anomalies")
@@ -468,12 +466,12 @@ class GuardEngine:
                 return self._verdict_once(task_id, from_state, to_state, branch)
             except GuardUnavailable:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise GuardUnavailable(
-                    "guard cache corrupt and rebuild failed (%s). %s" % (exc, UNAVAILABLE_HINT)
+                    f"guard cache corrupt and rebuild failed ({exc}). {UNAVAILABLE_HINT}"
                 ) from exc
-        except Exception as exc:  # noqa: BLE001
-            raise GuardUnavailable("%s (%s)" % (UNAVAILABLE_HINT, exc)) from exc
+        except Exception as exc:
+            raise GuardUnavailable(f"{UNAVAILABLE_HINT} ({exc})") from exc
 
     def _verdict_once(self, task_id, from_state, to_state, branch):
         conn = self.connect()
@@ -507,7 +505,7 @@ class GuardEngine:
                 findings.append(
                     {
                         "code": "GUARD_BRANCH_NONCONFORMANT",
-                        "detail": "branch '%s' breaks <id>-<type>-<slug>" % branch,
+                        "detail": f"branch '{branch}' breaks <id>-<type>-<slug>",
                         "severity": SEVERITY_REJECT if self.enforce else SEVERITY_WARN,
                     }
                 )
@@ -519,7 +517,7 @@ class GuardEngine:
                     findings.append(
                         {
                             "code": "GUARD_BRANCH_MISSING",
-                            "detail": "branch '%s' missing; %s requires it" % (branch, to_state),
+                            "detail": f"branch '{branch}' missing; {to_state} requires it",
                             # shortcut: WARN in dev (fixtures legitimately lack branches)
                             "severity": SEVERITY_WARN if self.dev else SEVERITY_REJECT,
                         }

@@ -3,7 +3,7 @@ import shutil
 from datetime import datetime
 
 from .constants import CURRENT_TASK_FILENAME, load_config
-from .guard_engine import GuardEngine, GuardUnavailable, SEVERITY_REJECT
+from .guard_engine import SEVERITY_REJECT, GuardEngine, GuardUnavailable
 from .hooks import PipelineHook
 from .models import Task
 from .utils import parse_filename
@@ -90,12 +90,10 @@ class GuardRecordHook(PipelineHook):
 
         recorded = []
         for finding in findings:
-            if engine.record_anomaly(
-                finding["code"],
-                task_id,
-                "forced bypass %s -> %s: %s"
-                % (current_state, new_status, finding["detail"]),
-            ):
+            detail = (
+                f"forced bypass {current_state} -> {new_status}: {finding['detail']}"
+            )
+            if engine.record_anomaly(finding["code"], task_id, detail):
                 recorded.append(finding["code"])
         if recorded:
             cli.log(

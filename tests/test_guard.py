@@ -24,7 +24,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.hammer_test_base import HammerTestBase  # noqa: E402
+from tests.hammer_test_base import HammerTestBase
 
 STORY = "Sufficiently long story content here to pass validation"
 TECH = "Sufficiently long technical description here to pass validation"
@@ -63,7 +63,7 @@ class GuardTestBase(HammerTestBase):
 
     # --- helpers ---
     def run_guard(self, args, cwd=None):
-        return subprocess.run(  # noqa: PLW1510
+        return subprocess.run(
             ["python3", os.path.join(self.repo_path, "guard.py")] + args,
             cwd=cwd or self.repo_path,
             capture_output=True,
@@ -72,7 +72,7 @@ class GuardTestBase(HammerTestBase):
         )
 
     def git(self, args, cwd=None):
-        return subprocess.run(  # noqa: PLW1510
+        return subprocess.run(
             ["git"] + args,
             cwd=cwd or self.repo_path,
             capture_output=True,
@@ -203,7 +203,7 @@ class TestGuardGate(GuardTestBase):
         folder = self.create_task(counter_value=BASE_ID - 1)
         src = self.task_path(BASE_ID, "backlog", folder)
         dst = os.path.join(self.dev_tasks_dir, "progressing", folder)
-        subprocess.run(["cp", "-r", src, dst], check=True)  # noqa: PLW1510
+        subprocess.run(["cp", "-r", src, dst], check=True)
         result = self.run_tasks(["move", str(BASE_ID), "READY"])
         self.assertEqual(result.returncode, 1, f"expected rejection: {result.stdout}")
         self.assertIn("GUARD", json.loads(result.stdout)["error"])
@@ -350,7 +350,7 @@ class TestGuardIntegration(GuardTestBase):
         self.create_task(counter_value=BASE_ID - 1)
         branch = self._find_folder(BASE_ID, "backlog")
         worktree_path = os.path.join(self.repo_path, ".task-worktrees", branch)
-        result = subprocess.run(  # noqa: PLW1510
+        result = subprocess.run(
             [
                 "python3",
                 os.path.join(self.repo_path, "hammer"),
@@ -371,7 +371,7 @@ class TestGuardIntegration(GuardTestBase):
         )
 
     def test_guard_cli_is_reachable_via_hammer(self):
-        result = subprocess.run(  # noqa: PLW1510
+        result = subprocess.run(
             ["python3", os.path.join(self.repo_path, "hammer"), "guard", "scan", "--dev"],
             cwd=self.repo_path,
             capture_output=True,

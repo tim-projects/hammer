@@ -22,12 +22,12 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 # The package lives next to this script; cwd may be a task worktree without it.
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from tasks_ai.constants import STATE_FOLDERS, load_config  # noqa: E402
-from tasks_ai.guard_engine import (  # noqa: E402
-    GuardEngine,
-    GuardUnavailable,
+from tasks_ai.constants import STATE_FOLDERS, load_config
+from tasks_ai.guard_engine import (
     SEVERITY_REJECT,
     SEVERITY_WARN,
+    GuardEngine,
+    GuardUnavailable,
     task_id_of,
 )
 
@@ -113,7 +113,7 @@ def branch_for_task(engine, task_id):
     """Derive the task's branch from its folder name (single source on disk)."""
     if not engine.tasks_path:
         return None
-    for _state, folder in STATE_FOLDERS.items():
+    for folder in STATE_FOLDERS.values():
         state_dir = os.path.join(engine.tasks_path, folder)
         if not os.path.isdir(state_dir):
             continue
@@ -207,7 +207,7 @@ def cmd_scan(args):
 def cmd_refresh(args):
     engine = get_engine(dev=args.dev, cwd=os.getcwd())
     if args.fetch:
-        subprocess.run(["git", "fetch", "--all"], cwd=engine.cwd, check=False)  # noqa: PLW1510
+        subprocess.run(["git", "fetch", "--all"], cwd=engine.cwd, check=False)
     conn = engine.connect()
     try:
         engine._ensure_schema(conn)
