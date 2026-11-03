@@ -66,5 +66,12 @@ Task: 247-task-implement-hammer-guard-integri
   identical to the pre-change baseline (same 6 pre-existing failures).
 - `ruff` clean on all files I touched.
 
+### Update — steady-state short-circuit
+The first full-suite run showed `test_verdict_is_fast_enough_for_a_gate` failing
+(1.08s) because every verdict re-derived everything. Implemented the plan's
+step-6 short-circuit: `refresh` compares a sha256 of the live ref set and the
+tasks-ref object against the cached signature and, when unchanged, answers from
+the index. Measured on this repo (238 refs): cold 0.96s, warm 0.02-0.03s.
+
 ### Blockers
 - None.
