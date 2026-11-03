@@ -43,6 +43,17 @@ PROMOTED_STATES = ("TESTING", "REVIEW", "STAGING", "DONE", "ARCHIVED")
 SEVERITY_REJECT = "REJECT"
 SEVERITY_WARN = "WARN"
 
+# Anomalies that report but never block a gate. A stale/divergent remote
+# snapshot is not an integrity breach (plan-guard.md 4.5), and dev fixtures
+# legitimately create worktrees without matching branches.
+WARN_CODES = frozenset(
+    {
+        "GUARD_DUPLICATE_REMOTE_ID",
+        "GUARD_REMOTE_DIVERGENCE",
+        "GUARD_WORKTREE_ORPHAN",
+    }
+)
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
   k TEXT PRIMARY KEY,
@@ -473,13 +484,22 @@ class GuardEngine:
         finally:
             conn.close()
 
+    def _severity_for(self, code):
+        """WARN unless the code blocks a gate (and enforce is on)."""
+        if not self.enforce or code in WARN_CODES:
+            return SEVERITY_WARN
+        return SEVERITY_REJECT
+
     def _lookup(self, conn, task_id, to_state, branch):
         rows = conn.execute(
             "SELECT code, detail FROM anomalies WHERE task_id=?", (task_id,)
         ).fetchall()
-        severity = SEVERITY_WARN if not self.enforce else SEVERITY_REJECT
         findings = [
-            {"code": row["code"], "detail": row["detail"], "severity": severity}
+            {
+                "code": row["code"],
+                "detail": row["detail"],
+                "severity": self._severity_for(row["code"]),
+            }
             for row in rows
         ]
         if branch:

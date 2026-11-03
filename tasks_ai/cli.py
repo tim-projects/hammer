@@ -854,10 +854,10 @@ class TasksCLI:
 
         modify_cmd.run(self, filename, **kwargs)
 
-    def move(self, filename, status, yes=False):
+    def move(self, filename, status, yes=False, force=False):
         from .commands import move as move_cmd
 
-        move_cmd.run(self, filename, status, yes=yes)
+        move_cmd.run(self, filename, status, yes=yes, force=force)
 
     def delete(self, filename, confirm=None):
         from .commands import delete as delete_cmd

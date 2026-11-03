@@ -71,6 +71,7 @@ if __name__ == '__main__':
     group.add_argument('status', nargs='?', help='Target state. Pipeline: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. Use comma-separated for multi-step.')
     group.add_argument('--to', dest='status', help='Alias for target state.')
     mv_p.add_argument('-y', '--yes', action='store_true', help='Auto-confirm archive (push and delete branch).')
+    mv_p.add_argument('-f', '--force', action='store_true', help='Bypass exit gates (validation, guard). The bypass is recorded by the post-move hook and surfaces in `guard scan`.')
     del_p = subparsers.add_parser('delete', help='Permanently remove a task and its logs.')
     del_p.add_argument('filename')
     del_p.add_argument('--confirm', help='Confirmation code.')
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     elif args.command == 'modify':
         cli.modify(args.filename, task_type=args.type, title=args.title, story=args.story, tech=args.tech, criteria=args.criteria, plan=args.plan, repro=args.repro, notes=args.notes, progress=args.progress, findings=args.findings, mitigations=args.mitigations, tests_passed=args.tests_passed, priority=args.priority, regression_check=args.regression_check, reviewed=args.reviewed)
     elif args.command == 'move':
-        cli.move(args.filename, args.status, yes=args.yes)
+        cli.move(args.filename, args.status, yes=args.yes, force=getattr(args, "force", False))
     elif args.command == 'delete':
         cli.delete(args.filename, confirm=args.confirm)
     elif args.command == 'mount':

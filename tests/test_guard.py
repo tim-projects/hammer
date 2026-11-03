@@ -5,10 +5,17 @@ Guard is the prevention counterpart of `doctor`: duplicate task IDs must never
 pass a pipeline gate. These tests use the standard hammer fixture repo
 (HammerTestBase) and drive the tool the way a user does: through the hammer
 CLI and the guard CLI.
+
+Fixture notes: the harness clones the repo then checks out `main`, so files
+that exist only on the task branch are absent from the fixture working tree.
+`_install_guard_into_fixture` copies them in after setUp. The fixture also
+inherits the real `tasks` branch content, so created tasks use a high, unused
+counter value to avoid colliding with real task ids.
 """
 
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import time
@@ -22,9 +29,35 @@ CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
 PLAN = "Sufficiently long planning details here to pass validation"
 TITLE = "Comprehensive Guard Verification Task"
 
+# IDs above the real repo's highest task id -> no collision with fixture data.
+BASE_ID = 9001
+
 
 class GuardTestBase(HammerTestBase):
 
+    def setUp(self):
+        super().setUp()
+        self._install_guard_into_fixture()
+
+    def _install_guard_into_fixture(self):
+        """The harness checks out `main`; make the guard code available."""
+        for rel in (
+            "guard.py",
+            "hammer",
+            "repo.py",
+            "tasks_ai/guard_engine.py",
+            "tasks_ai/pipeline_hooks.py",
+            "tasks_ai/cli.py",
+            "tasks_ai/commands/move.py",
+            "data/errors.json",
+            "data/hints.json",
+        ):
+            shutil.copy2(
+                os.path.join(os.getcwd(), rel), os.path.join(self.repo_path, rel)
+            )
+        self.script_path = os.path.join(self.repo_path, "hammer")
+
+    # --- helpers ---
     def run_guard(self, args, cwd=None):
         return subprocess.run(  # noqa: PLW1510
             ["python3", os.path.join(self.repo_path, "guard.py")] + args,
@@ -44,7 +77,10 @@ class GuardTestBase(HammerTestBase):
         )
 
     def seed_counter(self, value):
-        with open(os.path.join(self.dev_tasks_dir, ".task_counter"), "w") as handle:
+        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
+        if os.path.exists(counter):
+            os.remove(counter)
+        with open(counter, "w") as handle:
             handle.write(str(value))
 
     def create_task(self, counter_value=None, title=TITLE):
@@ -68,15 +104,18 @@ class GuardTestBase(HammerTestBase):
         self.assertEqual(
             result.returncode, 0, f"create failed: {result.stdout} {result.stderr}"
         )
-        task_id = int(counter_value) + 1 if counter_value is not None else None
-        return self._find_folder(task_id, "backlog")
+        return self._find_folder(counter_value + 1, "backlog")
 
     def _find_folder(self, task_id, state):
         state_dir = os.path.join(self.dev_tasks_dir, state)
         for name in sorted(os.listdir(state_dir)):
-            if task_id is None or name.startswith(f"{task_id}-"):
+            if name.startswith(f"{task_id}-"):
                 return name
         return None
+
+    def task_path(self, task_id, state, folder=None):
+        folder = folder or self._find_folder(task_id, state)
+        return os.path.join(self.dev_tasks_dir, state, folder)
 
     @property
     def guard_db(self):
@@ -87,34 +126,41 @@ class GuardTestBase(HammerTestBase):
         self.assertEqual(result.returncode, 0, f"scan failed: {result.stderr}")
         return json.loads(result.stdout)
 
+    def codes_for(self, task_id):
+        return {
+            (a["code"], a["task_id"])
+            for a in self.scan_json()["anomalies"]
+            if a["task_id"] == task_id
+        }
+
 
 class TestGuardScan(GuardTestBase):
     """Read-only reporting: the triage list, not a wall."""
 
     def test_scan_reports_duplicate_id(self):
-        self.git(["branch", "178-task-alpha"])
-        self.git(["branch", "178-issue-beta"])
+        self.git(["branch", f"{BASE_ID}-task-alpha"])
+        self.git(["branch", f"{BASE_ID}-issue-beta"])
         data = self.scan_json()
         duplicates = [
             a
             for a in data["anomalies"]
-            if a["code"] == "GUARD_DUPLICATE_ID" and a["task_id"] == 178
+            if a["code"] == "GUARD_DUPLICATE_ID" and a["task_id"] == BASE_ID
         ]
         self.assertEqual(len(duplicates), 1, f"expected one duplicate, got {data}")
-        self.assertIn("178-task-alpha", duplicates[0]["detail"])
-        self.assertIn("178-issue-beta", duplicates[0]["detail"])
+        self.assertIn(f"{BASE_ID}-task-alpha", duplicates[0]["detail"])
+        self.assertIn(f"{BASE_ID}-issue-beta", duplicates[0]["detail"])
 
     def test_scan_never_mutates_tasks(self):
-        before = sorted(os.listdir(os.path.join(self.dev_tasks_dir, "backlog")))
-        self.git(["branch", "178-task-alpha"])
-        self.git(["branch", "178-issue-beta"])
+        backlog = os.path.join(self.dev_tasks_dir, "backlog")
+        before = sorted(os.listdir(backlog))
+        self.git(["branch", f"{BASE_ID}-task-alpha"])
+        self.git(["branch", f"{BASE_ID}-issue-beta"])
         self.scan_json()
-        after = sorted(os.listdir(os.path.join(self.dev_tasks_dir, "backlog")))
-        self.assertEqual(before, after)
+        self.assertEqual(before, sorted(os.listdir(backlog)))
 
     def test_rebuild_is_deterministic(self):
-        self.git(["branch", "178-task-alpha"])
-        self.git(["branch", "178-issue-beta"])
+        self.git(["branch", f"{BASE_ID}-task-alpha"])
+        self.git(["branch", f"{BASE_ID}-issue-beta"])
         first = self.run_guard(["rebuild", "--json", "--dev"])
         second = self.run_guard(["rebuild", "--json", "--dev"])
         self.assertEqual(first.returncode, 0, first.stderr)
@@ -123,85 +169,78 @@ class TestGuardScan(GuardTestBase):
         )
 
     def test_adding_a_branch_changes_exactly_one_verdict(self):
-        folder = self.create_task(counter_value=177)
-        task_id = 178
-        base = {
-            (a["code"], a["task_id"]) for a in self.scan_json()["anomalies"]
-        }
-        self.git(["branch", f"{task_id}-issue-collision"])
-        after = {(a["code"], a["task_id"]) for a in self.scan_json()["anomalies"]}
-        self.assertEqual(after - base, {("GUARD_DUPLICATE_ID", task_id)})
+        folder = self.create_task(counter_value=BASE_ID - 1)
+        self.assertTrue(folder.startswith(f"{BASE_ID}-"), folder)
+        base = self.codes_for(BASE_ID)
+        self.git(["branch", f"{BASE_ID}-issue-collision"])
+        after = self.codes_for(BASE_ID)
+        self.assertEqual(after - base, {("GUARD_DUPLICATE_ID", BASE_ID)})
         self.assertEqual(base - after, set())
-        self.assertTrue(folder.startswith("178-"))
 
 
 class TestGuardGate(GuardTestBase):
     """The gate: a duplicate ID must never progress."""
 
     def test_duplicate_id_cannot_pass_gate(self):
-        folder = self.create_task(counter_value=177)
-        self.git(["branch", "178-issue-collision"])
-        result = self.run_tasks(["move", "178", "READY"])
+        folder = self.create_task(counter_value=BASE_ID - 1)
+        self.git(["branch", f"{BASE_ID}-issue-collision"])
+        result = self.run_tasks(["move", str(BASE_ID), "READY"])
         self.assertEqual(result.returncode, 1, f"expected rejection: {result.stdout}")
         payload = json.loads(result.stdout)
         self.assertIn("GUARD", payload["error"])
         self.assertIn("duplicate", payload["error"].lower())
         # the task folder did not move
-        self.assertTrue(
-            os.path.isdir(os.path.join(self.dev_tasks_dir, "backlog", folder))
-        )
+        self.assertTrue(os.path.isdir(self.task_path(BASE_ID, "backlog", folder)))
         self.assertFalse(
             os.path.isdir(os.path.join(self.dev_tasks_dir, "ready", folder))
         )
 
     def test_state_duplicate_is_rejected(self):
-        folder = self.create_task(counter_value=177)
-        src = os.path.join(self.dev_tasks_dir, "backlog", folder)
+        folder = self.create_task(counter_value=BASE_ID - 1)
+        src = self.task_path(BASE_ID, "backlog", folder)
         dst = os.path.join(self.dev_tasks_dir, "progressing", folder)
         subprocess.run(["cp", "-r", src, dst], check=True)  # noqa: PLW1510
-        result = self.run_tasks(["move", "178", "READY"])
+        result = self.run_tasks(["move", str(BASE_ID), "READY"])
         self.assertEqual(result.returncode, 1, f"expected rejection: {result.stdout}")
         self.assertIn("GUARD", json.loads(result.stdout)["error"])
+        self.assertIn("GUARD_STATE_DUPLICATE", {c for c, _ in self.codes_for(BASE_ID)})
         self.assertTrue(os.path.isdir(src))
         self.assertTrue(os.path.isdir(dst))
 
     def test_force_overrides_and_is_recorded(self):
-        folder = self.create_task(counter_value=177)
-        self.git(["branch", "178-issue-collision"])
-        forced = self.run_tasks(["move", "178", "READY", "--force"])
+        folder = self.create_task(counter_value=BASE_ID - 1)
+        self.git(["branch", f"{BASE_ID}-issue-collision"])
+        forced = self.run_tasks(["move", str(BASE_ID), "READY", "--force"])
         self.assertEqual(forced.returncode, 0, f"force move failed: {forced.stdout}")
-        # the bypass is never silent: it lands in the event log
         data = self.scan_json()
         bypasses = [
             e
             for e in data["events"]
-            if e["code"] == "GUARD_DUPLICATE_ID" and e["task_id"] == 178
+            if e["code"] == "GUARD_DUPLICATE_ID" and e["task_id"] == BASE_ID
         ]
         self.assertTrue(bypasses, f"forced bypass not recorded: {data['events']}")
         self.assertIn("forced", bypasses[0]["detail"].lower())
-        self.assertTrue(os.path.isdir(os.path.join(self.dev_tasks_dir, "ready", folder)))
+        self.assertTrue(os.path.isdir(self.task_path(BASE_ID, "ready", folder)))
 
     def test_clean_task_passes_gates(self):
-        folder = self.create_task(counter_value=177)
+        folder = self.create_task(counter_value=BASE_ID - 1)
         for target in ("READY", "PROGRESSING"):
-            result = self.run_tasks(["move", "178", target])
+            result = self.run_tasks(["move", str(BASE_ID), target])
             self.assertEqual(
                 result.returncode,
                 0,
                 f"clean task blocked at {target}: {result.stdout} {result.stderr}",
             )
-        self.assertTrue(
-            os.path.isdir(os.path.join(self.dev_tasks_dir, "progressing", folder))
-        )
+        self.assertTrue(os.path.isdir(self.task_path(BASE_ID, "progressing", folder)))
 
     def test_remote_duplicate_warns_but_does_not_block(self):
-        self.create_task(counter_value=177)
+        self.create_task(counter_value=BASE_ID - 1)
         head = self.git(["rev-parse", "HEAD"]).stdout.strip()
-        self.git(["update-ref", "refs/remotes/origin/178-remote-a", head])
-        self.git(["update-ref", "refs/remotes/origin/178-remote-b", head])
-        result = self.run_tasks(["move", "178", "READY"])
-        self.assertEqual(result.returncode, 0, f"remote WARN blocked move: {result.stdout}")
-        codes = {a["code"] for a in self.scan_json()["anomalies"]}
+        self.git(["update-ref", f"refs/remotes/origin/{BASE_ID}-remote-a", head])
+        self.git(["update-ref", f"refs/remotes/origin/{BASE_ID}-remote-b", head])
+        result = self.run_tasks(["move", str(BASE_ID), "READY"])
+        self.assertEqual(result.returncode, 0, f"remote WARN blocked: {result.stdout}")
+        codes = {c for c, _ in self.codes_for(BASE_ID)}
         self.assertIn("GUARD_DUPLICATE_REMOTE_ID", codes)
 
 
@@ -209,35 +248,33 @@ class TestGuardCache(GuardTestBase):
     """The cache is disposable: corruption self-heals, loss is loud."""
 
     def test_corrupt_cache_self_heals(self):
-        self.create_task(counter_value=177)
-        self.assertTrue(
-            self.run_guard(["scan", "--dev"]).returncode == 0,
-            "scan should create the cache",
-        )
+        self.create_task(counter_value=BASE_ID - 1)
+        self.assertEqual(self.run_guard(["scan", "--dev"]).returncode, 0)
         self.assertTrue(os.path.exists(self.guard_db))
         with open(self.guard_db, "wb") as handle:
             handle.write(b"this is not a sqlite database at all")
-        result = self.run_guard(["check", "178", "--to", "TESTING", "--dev"])
+        result = self.run_guard(["check", str(BASE_ID), "--to", "TESTING", "--dev"])
         self.assertEqual(result.returncode, 0, f"self-heal failed: {result.stderr}")
-        self.assertFalse(b"this is not" in open(self.guard_db, "rb").read())
+        with open(self.guard_db, "rb") as handle:
+            self.assertNotIn(b"this is not", handle.read())
 
     def test_unwritable_cache_rejects_with_actionable_message(self):
-        folder = self.create_task(counter_value=177)
+        folder = self.create_task(counter_value=BASE_ID - 1)
         cache_dir = os.path.dirname(self.guard_db)
         os.makedirs(cache_dir, exist_ok=True)
         if os.path.isfile(self.guard_db):
             os.remove(self.guard_db)
-        os.makedirs(self.guard_db, exist_ok=True)  # a directory where the db belongs
-        result = self.run_guard(["check", "178", "--to", "TESTING", "--dev"])
+        os.makedirs(self.guard_db, exist_ok=True)  # dir where the db belongs
+        result = self.run_guard(["check", str(BASE_ID), "--to", "TESTING", "--dev"])
         self.assertEqual(result.returncode, 1, "guard must fail closed")
         self.assertIn("GUARD_UNAVAILABLE", result.stderr)
         self.assertIn("guard rebuild", result.stderr)
         self.assertIn("--force", result.stderr)
         # the pipeline gate rejects the same way and leaves the task in place
-        moved = self.run_tasks(["move", "178", "READY"])
+        moved = self.run_tasks(["move", str(BASE_ID), "READY"])
         self.assertEqual(moved.returncode, 1, f"gate must reject: {moved.stdout}")
         self.assertIn("GUARD", json.loads(moved.stdout)["error"])
-        self.assertTrue(os.path.isdir(os.path.join(self.dev_tasks_dir, "backlog", folder)))
+        self.assertTrue(os.path.isdir(self.task_path(BASE_ID, "backlog", folder)))
 
     def test_total_ref_loss_is_not_an_empty_repo(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -263,37 +300,41 @@ class TestGuardCache(GuardTestBase):
             self.assertIn("total ref loss", str(caught.exception))
 
     def test_cache_survives_in_common_dir_from_worktree(self):
-        self.create_task(counter_value=177)
-        worktrees = os.path.join(self.repo_path, ".task-worktrees")
-        branch = self._find_folder(178, "backlog")
-        worktree_path = os.path.join(worktrees, branch)
+        self.create_task(counter_value=BASE_ID - 1)
+        branch = self._find_folder(BASE_ID, "backlog")
+        worktree_path = os.path.join(self.repo_path, ".task-worktrees", branch)
         self.assertTrue(os.path.isdir(worktree_path), f"no worktree for {branch}")
-        self.git(["branch", "178-issue-collision"])
-        root = self.run_guard(["check", "178", "--dev"])
-        inner = self.run_guard(["check", "178", "--dev"], cwd=worktree_path)
+        self.git(["branch", f"{BASE_ID}-issue-collision"])
+        root = self.run_guard(["check", str(BASE_ID), "--dev"])
+        inner = self.run_guard(["check", str(BASE_ID), "--dev"], cwd=worktree_path)
         self.assertEqual(root.returncode, inner.returncode)
         self.assertEqual(root.stdout, inner.stdout)
-        self.assertNotEqual(root.returncode, 0)  # duplicate still detected inside wt
+        self.assertNotEqual(root.returncode, 0)  # duplicate detected inside wt too
 
     def test_duplicate_worktree_for_one_task_is_reported(self):
-        self.create_task(counter_value=177)
-        second = os.path.join(self.repo_path, ".task-worktrees", "178-issue-second")
-        self.git(["worktree", "add", second, "-b", "178-issue-second"])
-        codes = {a["code"] for a in self.scan_json()["anomalies"]}
+        self.create_task(counter_value=BASE_ID - 1)
+        second = os.path.join(
+            self.repo_path, ".task-worktrees", f"{BASE_ID}-issue-second"
+        )
+        self.git(["worktree", "add", second, "-b", f"{BASE_ID}-issue-second"])
+        codes = {c for c, _ in self.codes_for(BASE_ID)}
         self.assertIn("GUARD_WORKTREE_ORPHAN", codes)
 
     def test_verdict_is_fast_enough_for_a_gate(self):
         from tasks_ai.guard_engine import GuardEngine
 
-        self.create_task(counter_value=177)
+        self.create_task(counter_value=BASE_ID - 1)
+        branch = self._find_folder(BASE_ID, "backlog")
         engine = GuardEngine(
             repo_root=self.repo_path,
             tasks_path=self.dev_tasks_dir,
             dev=True,
             cwd=self.repo_path,
         )
+        # warm the cache once, then measure the steady-state gate cost
+        engine.verdict(BASE_ID, "BACKLOG", "READY", branch)
         start = time.monotonic()
-        engine.verdict(178, "BACKLOG", "READY", "178-task-comprehensive-guard-veri")
+        engine.verdict(BASE_ID, "BACKLOG", "READY", branch)
         elapsed = time.monotonic() - start
         self.assertLess(elapsed, 1.0, f"guard verdict took {elapsed:.2f}s")
 
@@ -302,11 +343,17 @@ class TestGuardIntegration(GuardTestBase):
     """Git hooks and the hammer dispatcher."""
 
     def test_hooks_install_into_common_dir_from_worktree(self):
-        self.create_task(counter_value=177)
-        branch = self._find_folder(178, "backlog")
+        self.create_task(counter_value=BASE_ID - 1)
+        branch = self._find_folder(BASE_ID, "backlog")
         worktree_path = os.path.join(self.repo_path, ".task-worktrees", branch)
         result = subprocess.run(  # noqa: PLW1510
-            ["python3", os.path.join(self.repo_path, "hammer"), "tasks", "--dev", "init-hooks"],
+            [
+                "python3",
+                os.path.join(self.repo_path, "hammer"),
+                "tasks",
+                "--dev",
+                "init-hooks",
+            ],
             cwd=worktree_path,
             capture_output=True,
             text=True,

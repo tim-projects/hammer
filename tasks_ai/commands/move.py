@@ -9,7 +9,7 @@ from ..pipeline import PipelineError
 from ..utils import parse_filename, perform_move
 
 
-def run(cli, filename, new_status=None, yes=False):
+def run(cli, filename, new_status=None, yes=False, force=False):
     """Execution logic for 'tasks move'."""
     filepath, current_state = cli.find_task(filename)
     if not filepath:
@@ -50,7 +50,7 @@ def run(cli, filename, new_status=None, yes=False):
         states = [s.strip().upper() for s in new_status.split(",") if s.strip()]
         for state in states:
             try:
-                success = move_logic(cli, filename, state, yes=yes)
+                success = move_logic(cli, filename, state, yes=yes, force=force)
             except Exception as e:  # noqa: BLE001
                 cli.error(str(e))
             if not success:
@@ -71,7 +71,7 @@ def run(cli, filename, new_status=None, yes=False):
 
     # 3. Execute transition atomically
     # Perform physical move and run ALL enter/exit hooks
-    success = move_logic(cli, filename, new_status, yes=yes)
+    success = move_logic(cli, filename, new_status, yes=yes, force=force)
 
     # 4. If everything succeeded, perform success reporting only now
     if success:
