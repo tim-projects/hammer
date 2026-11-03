@@ -8,5 +8,9 @@
   "Br": "248-task-write-user-tests-for-247-imple",
   "Pt": 247,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
