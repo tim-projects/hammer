@@ -1,0 +1,1 @@
+- [ ] refs table stores local and remote entries without collision; main is kind=branch; a promoted task with a pushed branch passes the DONE gate; full test suite unchanged from baseline

@@ -1,0 +1,12 @@
+{
+  "Id": 312,
+  "Ti": "Guard refs cache must not clobber local branches with remote twins",
+  "Ty": "issue",
+  "Cr": "261104 18:12",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "312-issue-guard-refs-cache-must-not-clob",
+  "Pt": null,
+  "Rc": "",
+  "Vp": false
+}

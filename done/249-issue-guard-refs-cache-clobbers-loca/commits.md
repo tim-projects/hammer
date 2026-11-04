@@ -1,1 +1,0 @@
-5d038a2e [249] Auto-commit before READY transition
