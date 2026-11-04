@@ -1,0 +1,1 @@
+tests/test_guard.py: 18 user tests (scan/gate/cache/integration) all passing, verified in full-suite alphabetical order and after modules that pollute sys.modules. Full suite: 105 passed / 6 pre-existing failures / 1 skipped - no new failures.

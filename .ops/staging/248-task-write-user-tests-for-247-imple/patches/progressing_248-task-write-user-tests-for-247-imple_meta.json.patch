@@ -1,0 +1,24 @@
+diff --git a/progressing/248-task-write-user-tests-for-247-imple/meta.json b/progressing/248-task-write-user-tests-for-247-imple/meta.json
+new file mode 100644
+index 0000000..f48b15a
+--- /dev/null
++++ b/progressing/248-task-write-user-tests-for-247-imple/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 248,
++  "Ti": "Write user tests for 247: Implement hammer guard integrity enforcement tool",
++  "Ty": "task",
++  "Cr": "261102 01:21",
++  "Bl": [],
++  "Pr": 2,
++  "Br": "248-task-write-user-tests-for-247-imple",
++  "Pt": 247,
++  "Rc": "",
++  "Vp": false,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file
