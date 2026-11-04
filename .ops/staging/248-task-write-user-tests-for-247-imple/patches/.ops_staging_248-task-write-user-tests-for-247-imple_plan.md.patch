@@ -1,8 +1,0 @@
-diff --git a/.ops/staging/248-task-write-user-tests-for-247-imple/plan.md b/.ops/staging/248-task-write-user-tests-for-247-imple/plan.md
-new file mode 100644
-index 0000000..c1fb7c6
---- /dev/null
-+++ b/.ops/staging/248-task-write-user-tests-for-247-imple/plan.md
-@@ -0,0 +1 @@
-+1. Phase 4: retire counter files and worktrees.json per R7 decision; remove dead code
-\ No newline at end of file

@@ -1,3 +1,4 @@
+03cce99 [247] Keep error_report.json as on main (test-run artifact)
 38374db [247] Localize importlib import in test loader
 7d77ebe [247] Simplify GuardGateHook fail-closed error path
 59cd8d9 [247] Robust engine import in tests (package-aware path load)

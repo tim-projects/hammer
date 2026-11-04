@@ -1,5 +1,37 @@
 
-- Progress: 
+
+- Progress: 2026-11-04 — Re-verification on the 247 branch before merge to main.
+
+## 2026-11-04 — Pre-merge re-verification (on main worktree, control experiment)
+
+Re-ran the full suite to confirm the documented baseline still holds before merging.
+
+- Branch: `247-task-implement-hammer-guard-integri` @ 03cce99
+- `tests/test_guard.py`: 18 passed (203s).
+- Full suite on the BRANCH: 7 failed / 104 passed / 1 skipped on the first run
+  — one more failure than the documented 6.
+- Full suite on the BRANCH (repeat run, `--tb=line`): 6 failed / 105 passed /
+  1 skipped — matching the documented baseline exactly.
+- The extra failure was `tests/test_tasks_modular.py::test_restore_and_undo`.
+  It passes standalone, passes with `test_tasks.py` before it, passes with
+  `test_guard.py` before it, and passes with every intermediate file between
+  guard and modular before it, but failed in the first full-suite ordering and
+  passed in the second. Conclusion: **pre-existing order-dependent flake, not a
+  regression from this task's changes.** Same root class as the other
+  long-standing flakes (passes in isolation, fails only in full-suite order).
+  Not fixed here — fixing it belongs to the pre-existing flake tasks (243/245).
+
+### Control experiment on `main` (why the comparison is valid)
+- Full suite on `main` @ f5a81da: 6 failed / 87 passed / 1 skipped.
+- `main` has no `tests/test_guard.py`, so the expected branch total is
+  87 + 18 = 105 non-failing tests, which is exactly what the repeat branch run
+  produced. The 4 `test_robustness` + 2 `test_worktree_system` failures are
+  the shared, pre-existing baseline (tracked by 243/245).
+
+### Pre-existing dirty state (not touched)
+- `error_report.json` is modified in the main worktree (a test-run artifact from
+  `test_error_reporting`). Left uncommitted — unrelated to this task, and
+  AGENTS.md requires a separate task for unrelated pre-existing errors.
 
 ## 2026-11-03 — Guard implementation (Phase 1 + Phase 2 gate)
 
