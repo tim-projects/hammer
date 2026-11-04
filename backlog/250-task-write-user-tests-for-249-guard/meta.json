@@ -1,0 +1,10 @@
+{
+  "Id": 250,
+  "Ti": "Write user tests for 249: Guard refs cache clobbers local branches with remote twins",
+  "Ty": "task",
+  "Cr": "261104 12:15",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "250-task-write-user-tests-for-249-guard",
+  "Pt": 249
+}
