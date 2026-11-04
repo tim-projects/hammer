@@ -1,0 +1,1 @@
+tests/test_guard.py::TestGuardRefs: 4 tests, all passing, and confirmed failing against unfixed code. Full suite 6 pre-existing failures only (109 passed/1 skipped), matching main baseline. ruff clean.

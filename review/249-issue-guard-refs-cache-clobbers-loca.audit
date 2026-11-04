@@ -1,0 +1,9 @@
+{
+    "task_id": "249",
+    "patch_hash": "0d0425319a1a84306fc8bbf707988bbe",
+    "patch_files": [
+        "tasks_ai_guard_engine.py.patch",
+        "tests_test_guard.py.patch"
+    ],
+    "status": "verified"
+}

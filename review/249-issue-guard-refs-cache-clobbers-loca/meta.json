@@ -7,7 +7,7 @@
   "Pr": 1,
   "Br": "249-issue-guard-refs-cache-clobbers-loca",
   "Pt": null,
-  "Rc": "",
+  "Rc": "PASSED",
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
