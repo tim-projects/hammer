@@ -1,0 +1,1 @@
+tests/test_guard.py::TestGuardRefs: 4 tests all passing, confirmed failing against unfixed code. 22/22 guard tests green in this worktree. ruff clean. Full suite on the source branch was 6 pre-existing failures only (109 passed/1 skipped) matching main baseline.
