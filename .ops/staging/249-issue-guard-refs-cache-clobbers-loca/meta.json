@@ -1,0 +1,27 @@
+{
+  "Id": 249,
+  "Ti": "Guard refs cache clobbers local branches with remote twins",
+  "Ty": "issue",
+  "Cr": "261104 12:15",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "249-issue-guard-refs-cache-clobbers-loca",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1793807193.154059,
+  "DoneAt": null,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/249-issue-guard-refs-cache-clobbers-loca/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/249-issue-guard-refs-cache-clobbers-loca/patches/tests_test_guard.py.patch"
+    }
+  ]
+}
