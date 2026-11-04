@@ -7,12 +7,12 @@
   "Pr": 1,
   "Br": "249-issue-guard-refs-cache-clobbers-loca",
   "Pt": null,
-  "Rc": "PASSED",
-  "Vp": true,
-  "Reviewed": true,
+  "Rc": "",
+  "Vp": false,
+  "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1793807193.154059,
-  "DoneAt": 1793809075.839143,
+  "PatchGenTime": null,
+  "DoneAt": null,
   "Tp": false,
   "PatchFiles": [
     {
