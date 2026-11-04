@@ -420,5 +420,78 @@ class TestGuardIntegration(GuardTestBase):
             self.assertIn("guard check --branch", handle.read())
 
 
+class TestGuardRefs(GuardTestBase):
+    """Local vs remote ref identity (task 249).
+
+    `_live_refs` used to key its dict by short ref name, so `refs/heads/X` and
+    `refs/remotes/origin/X` collided and the remote entry overwrote the local
+    branch. Every promoted task whose branch had been pushed was then rejected
+    with `GUARD_BRANCH_MISSING` — the guard was reading its own wrong cache,
+    not git. These tests pin both the root cause and the symptom.
+    """
+
+    def _engine(self):
+        return load_guard_engine().GuardEngine(
+            repo_root=self.repo_path,
+            tasks_path=self.dev_tasks_dir,
+            dev=True,
+            cwd=self.repo_path,
+        )
+
+    def _push_twin(self, branch):
+        """Record a remote twin of `branch` without a network remote."""
+        sha = self.git(["rev-parse", branch]).stdout.strip()
+        self.git(["update-ref", f"refs/remotes/origin/{branch}", sha])
+        return sha
+
+    def test_remote_twin_does_not_hide_local_branch(self):
+        branch = f"{BASE_ID}-task-pushed"
+        self.git(["branch", branch])
+        sha = self._push_twin(branch)
+
+        refs = self._engine()._live_refs()
+
+        self.assertEqual(refs[branch], (sha, "branch"), "local branch row vanished")
+        self.assertEqual(refs.get(f"origin/{branch}"), (sha, "remote"))
+
+    def test_current_branch_keeps_local_kind(self):
+        # `main` exists locally AND on origin: it must not be clobbered.
+        refs = self._engine()._live_refs()
+        self.assertEqual(refs["main"][1], "branch", "main lost its local identity")
+
+    def test_refs_table_holds_local_and_remote_rows(self):
+        branch = f"{BASE_ID}-task-pushed"
+        self.git(["branch", branch])
+        self._push_twin(branch)
+
+        engine = self._engine()
+        engine.rebuild()  # refresh from scratch: no stale rows survive
+
+        conn = engine.connect()
+        try:
+            local = conn.execute(
+                "SELECT kind FROM refs WHERE refname=?", (branch,)
+            ).fetchall()
+            remote = conn.execute(
+                "SELECT kind FROM refs WHERE refname=?", (f"origin/{branch}",)
+            ).fetchall()
+        finally:
+            conn.close()
+
+        self.assertEqual([row[0] for row in local], ["branch"])
+        self.assertEqual([row[0] for row in remote], ["remote"])
+
+    def test_promoted_task_with_pushed_branch_is_not_rejected(self):
+        """The symptom: DONE must not fail just because the branch was pushed."""
+        self.create_task(counter_value=BASE_ID - 1)
+        branch = self._find_folder(BASE_ID, "backlog")
+        self.git(["branch", branch])
+        self._push_twin(branch)
+
+        findings = self._engine().verdict(BASE_ID, "STAGING", "DONE", branch)
+        codes = {f["code"] for f in findings}
+        self.assertNotIn("GUARD_BRANCH_MISSING", codes)
+
+
 if __name__ == "__main__":
     unittest.main()
