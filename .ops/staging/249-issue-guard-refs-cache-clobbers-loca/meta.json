@@ -11,7 +11,17 @@
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
-  "PatchGenTime": 1793806882.324642,
+  "PatchGenTime": 1793807193.154059,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/249-issue-guard-refs-cache-clobbers-loca/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/249-issue-guard-refs-cache-clobbers-loca/patches/tests_test_guard.py.patch"
+    }
+  ]
 }
