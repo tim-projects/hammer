@@ -224,7 +224,7 @@ class GuardEngine:
                 if "/" in rest:
                     # Key remotes "<remote>/<branch>": a remote twin must not
                     # overwrite the local branch of the same short name, or
-                    # every pushed branch loses its local identity (task 249).
+                    # every pushed branch loses its local identity (task 312).
                     refs[rest] = (obj, "remote")
             elif full.startswith("refs/tags/"):
                 refs[full[len("refs/tags/"):]] = (obj, "tag")
