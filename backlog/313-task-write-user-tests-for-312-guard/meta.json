@@ -1,0 +1,10 @@
+{
+  "Id": 313,
+  "Ti": "Write user tests for 312: Guard refs cache must not clobber local branches with remote twins",
+  "Ty": "task",
+  "Cr": "261104 18:12",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "313-task-write-user-tests-for-312-guard",
+  "Pt": 312
+}
