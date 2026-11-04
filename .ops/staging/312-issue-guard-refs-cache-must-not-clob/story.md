@@ -1,1 +1,0 @@
-As a hammer user, I need the guard cache to distinguish local branches from their remote twins so promoted tasks are not falsely rejected with GUARD_BRANCH_MISSING, which currently blocks every DONE promotion of a pushed branch.
