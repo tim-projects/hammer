@@ -1,1 +1,0 @@
-Full pytest suite: 105 passed, 6 pre-existing failures unchanged from baseline (tasks 243/245), 1 skipped. New tests/test_guard.py: 18/18 passing. ruff clean on all changed files. Guard engine verified: duplicate-ID rejection at every gate, folder untouched, force bypass recorded, cache self-heals, fail-closed on unavailable cache.
