@@ -2,10 +2,106 @@ import os
 import shutil
 from datetime import datetime
 
-from .constants import CURRENT_TASK_FILENAME
+from .constants import CURRENT_TASK_FILENAME, load_config
+from .guard_engine import SEVERITY_REJECT, GuardEngine, GuardUnavailable
 from .hooks import PipelineHook
 from .models import Task
 from .utils import parse_filename
+
+
+def get_guard_engine(cli) -> GuardEngine:
+    """One engine per CLI process; cache lives in the common git dir."""
+    engine = getattr(cli, "_guard_engine", None)
+    if engine is None:
+        engine = GuardEngine(
+            repo_root=cli.context.main_repo_root,
+            tasks_path=cli.tasks_path,
+            dev=cli.dev,
+            config=load_config(cli.tasks_path),
+            cwd=cli.context.repo_root,
+        )
+        cli._guard_engine = engine
+    return engine
+
+
+def _task_branch(task, filepath):
+    branch = task.metadata.get("Br", "")
+    if not branch:
+        _, branch = parse_filename(os.path.basename(filepath))
+    return branch
+
+
+class GuardGateHook(PipelineHook):
+    """Blocks a transition whose task violates a guard invariant.
+
+    Runs before the physical move, so a rejection leaves the folder in place.
+    Fails closed: if guard cannot verify, the transition is rejected unless
+    `guard.fail_open` is explicitly enabled.
+    """
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        task_id = task.metadata.get("Id")
+        branch = _task_branch(task, filepath)
+        try:
+            engine = get_guard_engine(cli)
+        except GuardUnavailable as exc:
+            # No engine could even be built (e.g. not a git repo): fail closed.
+            cli.error("GUARD_UNAVAILABLE", task_id=task_id, detail=str(exc))
+            return
+
+        try:
+            findings = engine.verdict(task_id, current_state, new_status, branch)
+        except GuardUnavailable as exc:
+            if engine.fail_open:
+                cli.log(f"[guard] WARN: GUARD_UNAVAILABLE: {exc}")
+                return
+            cli.error("GUARD_UNAVAILABLE", task_id=task_id, detail=str(exc))
+            return
+
+        for finding in findings:
+            if finding["severity"] == SEVERITY_REJECT:
+                cli.error(
+                    finding["code"],
+                    task_id=task_id,
+                    detail=finding["detail"],
+                    branch=branch,
+                    to_state=new_status,
+                )
+            else:
+                cli.log(
+                    f"[guard] WARN: {finding['code']} [{task_id}] {finding['detail']}"
+                )
+
+
+class GuardRecordHook(PipelineHook):
+    """Records forced bypasses. Enter hooks run even under --force, so a
+    forced transition past a violation is never silent: it lands in the
+    anomalies table and is surfaced by 'guard scan' and 'doctor'."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if not getattr(cli, "_last_move_force", False):
+            return
+        task_id = task.metadata.get("Id")
+        try:
+            engine = get_guard_engine(cli)
+            findings = engine.verdict(
+                task_id, current_state, new_status, _task_branch(task, filepath)
+            )
+        except GuardUnavailable:
+            return
+
+        recorded = []
+        for finding in findings:
+            detail = (
+                f"forced bypass {current_state} -> {new_status}: {finding['detail']}"
+            )
+            if engine.record_anomaly(finding["code"], task_id, detail):
+                recorded.append(finding["code"])
+        if recorded:
+            cli.log(
+                f"[guard] FORCED BYPASS recorded for task {task_id}: "
+                f"{', '.join(sorted(set(recorded)))}. Visible in 'hammer guard scan'."
+            )
 
 
 class TaskRepairHook(PipelineHook):
