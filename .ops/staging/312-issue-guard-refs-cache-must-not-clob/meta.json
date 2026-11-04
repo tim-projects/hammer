@@ -8,5 +8,9 @@
   "Br": "312-issue-guard-refs-cache-must-not-clob",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
