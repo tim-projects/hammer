@@ -1,0 +1,1 @@
+1. 1. Fix _live_refs remote keying; 2. Make task_id_of tolerate the remote prefix; 3. Rebuild guard cache and verify; 4. Run tests/test_guard.py
