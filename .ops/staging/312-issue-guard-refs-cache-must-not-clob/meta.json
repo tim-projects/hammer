@@ -1,0 +1,27 @@
+{
+  "Id": 312,
+  "Ti": "Guard refs cache must not clobber local branches with remote twins",
+  "Ty": "issue",
+  "Cr": "261104 18:12",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "312-issue-guard-refs-cache-must-not-clob",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1793818165.220803,
+  "DoneAt": null,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/312-issue-guard-refs-cache-must-not-clob/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/312-issue-guard-refs-cache-must-not-clob/patches/tests_test_guard.py.patch"
+    }
+  ]
+}
