@@ -13,7 +13,7 @@
   "AuditPassed": false,
   "PatchGenTime": null,
   "DoneAt": null,
-  "Tp": false,
+  "Tp": true,
   "PatchFiles": [
     {
       "file": "tasks_ai/guard_engine.py",
