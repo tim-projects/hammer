@@ -1,0 +1,10 @@
+{
+  "Id": 249,
+  "Ti": "Guard refs cache clobbers local branches with remote twins",
+  "Ty": "issue",
+  "Cr": "261104 12:15",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "249-issue-guard-refs-cache-clobbers-loca",
+  "Pt": null
+}

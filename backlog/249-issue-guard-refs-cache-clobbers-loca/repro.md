@@ -1,0 +1,1 @@
+1. 1. On main, run ./hammer guard refresh; 2. sqlite3 .git/hammer-guard/guard.db SELECT refname,kind FROM refs WHERE refname='main'; 3. Observed: main stored as kind=remote; 4. Then ./hammer repo merge 248-task-write-user-tests-for-247-imple main fails with GUARD_BRANCH_MISSING
