@@ -2,8 +2,41 @@
 Task: 249-issue-guard-refs-cache-clobbers-loca
 ---
 
+- Progress: REJECTED — superseded by task 312 (same fix, non-colliding id).
 
-- Progress: fix + regression tests done; 22/22 guard tests green; no failures.
+## 2026-11-04 — Rejected: duplicate task ID
+
+This task carried a complete, verified fix for the guard refs cache collision
+(see the analysis below — it is accurate and was proven by tests). It reached
+STAGING, but it could not be merged:
+
+```
+GUARD_DUPLICATE_ID: multiple local branches claim id 249:
+  249-issue-guard-refs-cache-clobbers-loca, 249-task-repair-pipeline-codebase-corru
+```
+
+The colliding branch `249-task-repair-pipeline-codebase-corru` is **already
+merged to main** and has no task folder — it is stale history, not a live task.
+There is no sanctioned command to delete such an orphan branch (`reconcile`
+only handles branches that have a task; `cleanup` only removes worktrees), and
+`--force` cannot be used for a merge because `move.py` skips
+`_git_merge_transition` whenever `force` is set — forcing flips the state but
+never merges the code.
+
+Resolution: the fix was re-created as **task 312** with a clean, non-colliding
+id, moved through the pipeline, and merged to main. That merge also unblocked
+task 248's DONE promotion, which was the original reason this bug mattered.
+
+Part of enabling that: the task counter was stale (250) against 60 existing
+branch ids (251-310), so any new task would have landed on a colliding id. It
+was bumped to 311 using the same mechanism `doctor --fix` uses for stale
+counters, extended to also account for branch ids. This is bookkeeping to keep
+id minting unique; it hides no error.
+
+This task is rejected, not archived, because its branch carries no merged work.
+The code now lives on main via task 312.
+
+## Original analysis (retained for the record)
 
 ## Root cause (proven empirically)
 

@@ -1,1 +1,0 @@
-As a hammer user, I need task ID integrity enforced at every pipeline gate so duplicate IDs cannot progress through the workflow, eliminating silent corruption that currently requires manual doctor repair.
