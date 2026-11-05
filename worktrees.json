@@ -79,6 +79,16 @@
       "branch": "317-task-write-user-tests-for-316-imple",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/317-task-write-user-tests-for-316-imple",
       "task_file": "317-task-write-user-tests-for-316-imple"
+    },
+    "318": {
+      "branch": "318-task-fix-pre-existing-ruff-lint-err",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/318-task-fix-pre-existing-ruff-lint-err",
+      "task_file": "318-task-fix-pre-existing-ruff-lint-err"
+    },
+    "319": {
+      "branch": "319-task-write-user-tests-for-318-fix-p",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/319-task-write-user-tests-for-318-fix-p",
+      "task_file": "319-task-write-user-tests-for-318-fix-p"
     }
   }
 }

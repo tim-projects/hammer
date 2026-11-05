@@ -1,1 +1,0 @@
-TestGuardStrictness: 5 tests, all passing, and 3 confirmed failing against pre-change code. tests/test_guard.py 27/27 green. Full suite 6 failed / 113 passed / 1 skipped, the 6 being the pre-existing baseline (243/245). ruff clean. Measured impact: zero newly-blocked live tasks.
