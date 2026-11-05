@@ -7,7 +7,9 @@ def run(cli, filename=None):
     """Execution logic for 'tasks checkpoint'."""
     filepath, task = cli.get_active_task(filename)
     if not filepath or not task:
-        cli.error('NO_ACTIVE_TASK')
+        candidates = cli.processing_candidates()
+        cli.error('NO_ACTIVE_TASK', usage='./hammer tasks checkpoint <id>',
+                  candidates=', '.join(candidates) if candidates else 'none')
     filepath_str = str(filepath)
     fname = os.path.basename(filepath_str)
     cli.log(f'Checkpointing {fname}...')

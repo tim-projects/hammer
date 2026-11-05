@@ -9,7 +9,9 @@ def run(cli, filename=None):
     """Execution logic for 'tasks current'."""
     filepath, task = cli.get_active_task(filename)
     if not filepath or not task:
-        cli.error('NO_ACTIVE_TASK')
+        candidates = cli.processing_candidates()
+        cli.error('NO_ACTIVE_TASK', usage='./hammer tasks current <id>',
+                  candidates=', '.join(candidates) if candidates else 'none')
     filepath_str = str(filepath)
     tn = os.path.basename(filepath_str)
     tt, br = parse_filename(tn)

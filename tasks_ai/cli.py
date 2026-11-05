@@ -313,6 +313,9 @@ class TasksCLI:
     def get_active_task(self, filename=None):
         return self.task_service.get_active_task(filename=filename)
 
+    def processing_candidates(self):
+        return self.task_service.processing_candidates()
+
     def _get_next_id(self):
         from .counter import TaskCounterProtector
 

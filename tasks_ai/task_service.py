@@ -74,17 +74,16 @@ class TaskService:
         return (None, None)
 
     def get_active_task(self, filename=None):
-        """Find the task currently in PROGRESSING or a specific task if filename provided."""
+        """Find the task for a given filename; without one there is no safe default."""
         if filename:
             filepath, _ = self.find_task(filename)
             if filepath:
                 return (filepath, FM.load(filepath))
-            return (None, None)
+        return (None, None)
+
+    def processing_candidates(self):
+        """Task directories currently in PROGRESSING, for error messages."""
         prog_dir = os.path.join(self.cli.tasks_path, STATE_FOLDERS['PROGRESSING'])
         if not os.path.exists(prog_dir):
-            return (None, None)
-        items = [i for i in os.listdir(prog_dir) if i != '.gitkeep']
-        if not items:
-            return (None, None)
-        path = os.path.join(prog_dir, items[0])
-        return (path, FM.load(path))
+            return []
+        return sorted(i for i in os.listdir(prog_dir) if i != '.gitkeep')
