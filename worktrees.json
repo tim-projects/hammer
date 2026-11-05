@@ -99,6 +99,16 @@
       "branch": "321-task-write-user-tests-for-320-docto",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/321-task-write-user-tests-for-320-docto",
       "task_file": "321-task-write-user-tests-for-320-docto"
+    },
+    "322": {
+      "branch": "322-task-every-hammer-subcommand-must-r",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/322-task-every-hammer-subcommand-must-r",
+      "task_file": "322-task-every-hammer-subcommand-must-r"
+    },
+    "323": {
+      "branch": "323-task-write-user-tests-for-322-every",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/323-task-write-user-tests-for-322-every",
+      "task_file": "323-task-write-user-tests-for-322-every"
     }
   }
 }
