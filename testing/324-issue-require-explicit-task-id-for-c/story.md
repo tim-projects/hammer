@@ -1,1 +1,0 @@
-As an agent or user, I must pass an explicit task id to tasks checkpoint, tasks current, and tasks undo so command effects always land on the intended task record.
