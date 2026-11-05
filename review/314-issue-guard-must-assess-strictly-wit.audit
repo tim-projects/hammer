@@ -1,0 +1,17 @@
+{
+    "task_id": "314",
+    "patch_hash": "728ce4e3f7480427f94bf3cf83e0fc4a",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "guard.py.patch",
+        "plan-guard.md.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_test_all_transitions.py.patch",
+        "tests_test_backlog_to_rejected.py.patch",
+        "tests_test_guard.py.patch"
+    ],
+    "status": "verified"
+}
