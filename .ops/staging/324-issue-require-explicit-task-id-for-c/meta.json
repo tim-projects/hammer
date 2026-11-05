@@ -1,0 +1,17 @@
+{
+  "Id": 324,
+  "Ti": "Require explicit task id for checkpoint, current and undo commands",
+  "Ty": "issue",
+  "Cr": "261105 10:36",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "324-issue-require-explicit-task-id-for-c",
+  "Pt": null,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
+}
