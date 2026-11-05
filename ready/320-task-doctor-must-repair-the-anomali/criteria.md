@@ -1,1 +1,6 @@
-- [ ] doctor --fix repairs duplicate local branches by keeping the folder-matching branch and removing losers; doctor --fix repairs a state duplicate by keeping the metadata-correct folder; doctor --fix repairs a nonconformant branch name and metadata.Br drift; --dry-run default shows planned repairs without changing anything; repair never deletes unmerged work without explicit confirmation; guard cache is re-derived after repair; doctor reports which anomaly codes it cannot repair; tests cover each repair
+- [ ] doctor output lists guard anomaly codes (code, task id, detail, fix hint) alongside existing metadata bugs, delegating to the guard engine so it stays a single source of truth
+- [ ] doctor --fix still repairs metadata.Id, metadata.Br, metadata.St, wrong directory names, wrong state folders, and the stale task counter, exactly as before
+- [ ] doctor --fix makes no attempt at structural repair (duplicate ids, state duplicates, nonconformant/missing branches, remote divergence, worktree codes) and prints those codes with hints pointing at the fresh-start/mount workflow
+- [ ] GUARD_* entries in data/hints.json that currently point at 'hammer tasks doctor --fix' are repointed to the correct fresh-start/mount workflow
+- [ ] doctor without --fix remains read-only (no writes, no commits)
+- [ ] tests: guard anomalies appear in doctor output; structural codes are reported but not repaired; existing metadata repair tests still pass

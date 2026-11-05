@@ -1,6 +1,6 @@
 {
   "Id": 320,
-  "Ti": "Doctor must repair the anomalies the guard now blocks",
+  "Ti": "Doctor reports guard anomalies instead of repairing them",
   "Ty": "task",
   "Cr": "261105 06:44",
   "Bl": [],
@@ -8,5 +8,6 @@
   "Br": "320-task-doctor-must-repair-the-anomali",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Tp": false
 }

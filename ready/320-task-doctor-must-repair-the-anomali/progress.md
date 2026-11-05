@@ -83,3 +83,4 @@ and are currently un-promotable until this repair work lands.
 - **Report honestly what doctor cannot repair**, so the guard's `FIX_PLAN`
   pointers stay truthful rather than aspirational.
 [2026-11-05 06:47:32] Cp
+[2026-11-05 07:25:09] Mod
