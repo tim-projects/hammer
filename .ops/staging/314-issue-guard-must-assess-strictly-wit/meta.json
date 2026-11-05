@@ -1,0 +1,59 @@
+{
+  "Id": 314,
+  "Ti": "Guard must assess strictly with no warning fallbacks",
+  "Ty": "issue",
+  "Cr": "261105 04:19",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "314-issue-guard-must-assess-strictly-wit",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1793859079.200236,
+  "DoneAt": null,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/data_hints.json.patch"
+    },
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/guard.py.patch"
+    },
+    {
+      "file": "plan-guard.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/plan-guard.md.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_all_transitions.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/tests_test_all_transitions.py.patch"
+    },
+    {
+      "file": "tests/test_backlog_to_rejected.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/tests_test_backlog_to_rejected.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/314-issue-guard-must-assess-strictly-wit/patches/tests_test_guard.py.patch"
+    }
+  ]
+}

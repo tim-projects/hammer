@@ -1,0 +1,1 @@
+GuardEngine._severity_for degrades findings to WARN for WARN_CODES, when guard.enforce is false, and when self.dev; GuardGateHook also re-opens the fail-closed path when guard.fail_open is set. Remove all four so severity is unconditional. The guard must not repair or delete anything; repair belongs to hammer doctor.

@@ -1,0 +1,55 @@
+{
+  "reviews": [
+    {
+      "file": "data/errors.json",
+      "patch": "data_errors.json.patch",
+      "md5": "5eb05228233a44c02b31cdf6cab639a6"
+    },
+    {
+      "file": "data/hints.json",
+      "patch": "data_hints.json.patch",
+      "md5": "bdc10b25094fe5b5482174708ad2ca70"
+    },
+    {
+      "file": "guard.py",
+      "patch": "guard.py.patch",
+      "md5": "a7f0c80142cbf310cc5c19a3ba93967d"
+    },
+    {
+      "file": "plan-guard.md",
+      "patch": "plan-guard.md.patch",
+      "md5": "ca755f593caab46865e95f6c60d5e1b5"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch": "tasks_ai_guard_engine.py.patch",
+      "md5": "51b251317ec6615e48e1ea03ee02d792"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch": "tasks_ai_pipeline_hooks.py.patch",
+      "md5": "2fa25df476e16ed04eff15d39caaece2"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch": "tests_hammer_test_base.py.patch",
+      "md5": "eb77b61be527862279b51bb5f3f76b61"
+    },
+    {
+      "file": "tests/test_all_transitions.py",
+      "patch": "tests_test_all_transitions.py.patch",
+      "md5": "6aff544044504e11ad7f487812adff9d"
+    },
+    {
+      "file": "tests/test_backlog_to_rejected.py",
+      "patch": "tests_test_backlog_to_rejected.py.patch",
+      "md5": "cc66411e52b02169df88b1a29e25de68"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch": "tests_test_guard.py.patch",
+      "md5": "3deeee27b733645b7b0e5dff0f7bba24"
+    }
+  ],
+  "reviewed_at": 1793859161.7042432
+}
