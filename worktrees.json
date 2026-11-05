@@ -119,6 +119,16 @@
       "branch": "325-task-write-user-tests-for-324-requi",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/325-task-write-user-tests-for-324-requi",
       "task_file": "325-task-write-user-tests-for-324-requi"
+    },
+    "326": {
+      "branch": "326-issue-fix-four-pre-existing-robustne",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/326-issue-fix-four-pre-existing-robustne",
+      "task_file": "326-issue-fix-four-pre-existing-robustne"
+    },
+    "327": {
+      "branch": "327-task-write-user-tests-for-326-fix-f",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/327-task-write-user-tests-for-326-fix-f",
+      "task_file": "327-task-write-user-tests-for-326-fix-f"
     }
   }
 }
