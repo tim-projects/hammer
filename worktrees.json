@@ -89,6 +89,16 @@
       "branch": "319-task-write-user-tests-for-318-fix-p",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/319-task-write-user-tests-for-318-fix-p",
       "task_file": "319-task-write-user-tests-for-318-fix-p"
+    },
+    "320": {
+      "branch": "320-task-doctor-must-repair-the-anomali",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/320-task-doctor-must-repair-the-anomali",
+      "task_file": "320-task-doctor-must-repair-the-anomali"
+    },
+    "321": {
+      "branch": "321-task-write-user-tests-for-320-docto",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/321-task-write-user-tests-for-320-docto",
+      "task_file": "321-task-write-user-tests-for-320-docto"
     }
   }
 }
