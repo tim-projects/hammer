@@ -432,10 +432,12 @@ class TestRobustness(unittest.TestCase):
         file = res["data"]["file"]
         self.run_cmd(["move", file, "READY"])
         self.run_cmd(["move", file, "PROGRESSING"])
-        res = self.run_cmd(["checkpoint"])
+        res = self.run_cmd(["checkpoint", file])
         self.assertTrue(res["success"], res)
-        res = self.run_cmd(["checkpoint"])
+        res = self.run_cmd(["checkpoint", file])
         self.assertTrue(res["success"], res)
+        no_id = self.run_cmd(["checkpoint"])
+        self.assertFalse(no_id["success"], no_id)
 
     def test_detached_head_operations(self):
         """11. Run tasks operations while in detached HEAD state."""
