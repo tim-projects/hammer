@@ -1,0 +1,7 @@
+- [ ] tasks checkpoint with no task id refuses to run: prints an error naming the candidate PROGRESSING task(s) plus usage, exits non-zero, and performs no record write and no git commit
+- [ ] tasks current with no task id refuses to run the same way (no silent fallback to items[0])
+- [ ] tasks undo with no task id refuses to run the same way, consistent with checkpoint/current
+- [ ] get_active_task no longer returns an arbitrary task when filename is None for these commands; the silent items[0] pick is removed or made an explicit error
+- [ ] With an explicit id, checkpoint/current/undo still operate on exactly that task (single-active convenience path removed only if it cannot be kept unambiguous)
+- [ ] User tests cover: multiple tasks in PROGRESSING + no id (error, zero writes, non-zero exit) and multiple tasks in PROGRESSING + explicit id (correct task record updated)
+- [ ] ./hammer check lint and ./hammer check test pass with no new failures

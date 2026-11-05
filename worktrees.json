@@ -105,11 +105,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/323-task-write-user-tests-for-322-every",
       "task_file": "323-task-write-user-tests-for-322-every"
     },
-    "324": {
-      "branch": "324-issue-require-explicit-task-id-for-c",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/324-issue-require-explicit-task-id-for-c",
-      "task_file": "324-issue-require-explicit-task-id-for-c"
-    },
     "325": {
       "branch": "325-task-write-user-tests-for-324-requi",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/325-task-write-user-tests-for-324-requi",
