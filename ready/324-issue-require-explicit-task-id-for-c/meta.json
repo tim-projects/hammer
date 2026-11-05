@@ -7,5 +7,7 @@
   "Pr": 1,
   "Br": "324-issue-require-explicit-task-id-for-c",
   "Pt": null,
-  "Tp": false
+  "Tp": false,
+  "Rc": "",
+  "Vp": false
 }
