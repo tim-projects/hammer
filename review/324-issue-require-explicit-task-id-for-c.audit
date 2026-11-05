@@ -1,0 +1,16 @@
+{
+    "task_id": "324",
+    "patch_hash": "f3505e20f0b6b63645d858ff66060121",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_checkpoint.py.patch",
+        "tasks_ai_commands_current.py.patch",
+        "tasks_ai_task_service.py.patch",
+        "tests_test_require_task_id.py.patch",
+        "tests_test_robustness.py.patch"
+    ],
+    "status": "verified"
+}

@@ -8,7 +8,7 @@
   "Br": "324-issue-require-explicit-task-id-for-c",
   "Pt": null,
   "Tp": false,
-  "Rc": "",
+  "Rc": "PASSED",
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
