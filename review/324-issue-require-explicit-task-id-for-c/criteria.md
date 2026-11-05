@@ -1,0 +1,7 @@
+- [x] tasks checkpoint with no task id refuses to run at the argument parser: usage error, non-zero exit (2), no record write, no git commit; an id that resolves to no task errors naming the PROGRESSING candidate(s) plus usage
+- [x] tasks current with no task id refuses to run the same way (no silent fallback to items[0])
+- [x] tasks undo with no task id refuses to run the same way, consistent with checkpoint/current
+- [x] get_active_task no longer returns an arbitrary task when filename is None for these commands; the silent items[0] pick is removed
+- [x] With an explicit id, checkpoint/current/undo still operate on exactly that task (single-active convenience path removed; the arbitrary pick was the corruption)
+- [x] User tests added in tests/test_require_task_id.py (5 tests): no-id rejected for all three commands, zero writes on no-id, explicit id isolated to that record, current reports the right task, bad id rejected - all pass on the branch and fail on main
+- [x] ./hammer check all --force passes; ruff clean; test_multiple_checkpoints updated and passes; full suite shows no NEW failures (4 pre-existing failures on main tracked in task 326)
