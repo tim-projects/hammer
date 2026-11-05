@@ -1,1 +1,0 @@
-As a hammer user, I need hammer doctor --fix to actually repair the integrity anomalies that the guard now blocks, so that a duplicate or corrupt task can be fixed with a sanctioned command instead of manual git surgery, or a permanently wedged pipeline.
