@@ -12,6 +12,44 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
-  "DoneAt": null
+  "PatchGenTime": 1793902718.253971,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/checkpoint.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tasks_ai_commands_checkpoint.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/current.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tasks_ai_commands_current.py.patch"
+    },
+    {
+      "file": "tasks_ai/task_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tasks_ai_task_service.py.patch"
+    },
+    {
+      "file": "tests/test_require_task_id.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tests_test_require_task_id.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/324-issue-require-explicit-task-id-for-c/patches/tests_test_robustness.py.patch"
+    }
+  ]
 }

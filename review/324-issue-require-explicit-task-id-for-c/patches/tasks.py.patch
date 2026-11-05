@@ -1,0 +1,19 @@
+diff --git a/tasks.py b/tasks.py
+index e31501f2..165a7942 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -25,12 +25,12 @@ if __name__ == '__main__':
+     list_p = subparsers.add_parser('list', help='List tasks.')
+     list_p.add_argument('--all', action='store_true')
+     cur_p = subparsers.add_parser('current', help='Show active task.')
+-    cur_p.add_argument('filename', nargs='?')
++    cur_p.add_argument('filename', help='Task Id (or filename).')
+     show_p = subparsers.add_parser('show', help='Show task details or list all tasks when no ID provided.')
+     show_p.add_argument('filename', nargs='?', help='Task Id or filename to show (optional, shows all tasks if omitted).')
+     show_p.add_argument('section', nargs='?', choices=['story', 'tech', 'criteria', 'plan', 'repro', 'notes', 'progress'], help='Specific section to show: story, tech, criteria, plan, repro, notes, progress')
+     cp_p = subparsers.add_parser('checkpoint', help='Sync commits/notes.')
+-    cp_p.add_argument('filename', nargs='?')
++    cp_p.add_argument('filename', help='Task Id (or filename).')
+     lk_p = subparsers.add_parser('link', help='Link tasks (blocker relationship).')
+     lk_p.add_argument('filename', help='Task Id (or filename) to block.')
+     lk_p.add_argument('blocked_by', help='Task Id (or filename) that is blocking.')
