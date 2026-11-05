@@ -1,0 +1,10 @@
+{
+  "Id": 323,
+  "Ti": "Write user tests for 322: Every hammer subcommand must respond to -h and --help",
+  "Ty": "task",
+  "Cr": "261105 07:28",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "323-task-write-user-tests-for-322-every",
+  "Pt": 322
+}
