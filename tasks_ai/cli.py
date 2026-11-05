@@ -874,6 +874,11 @@ class TasksCLI:
 
         link_cmd.run(self, filename, blocked_by)
 
+    def unlink(self, filename, blocked_by):
+        from .commands import unlink as unlink_cmd
+
+        unlink_cmd.run(self, filename, blocked_by)
+
     def reconcile(self, target=None, all=False, dry_run=False):
         if not target and not all:
             self._reconcile_scan(dry_run=dry_run)
