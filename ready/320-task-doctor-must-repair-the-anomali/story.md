@@ -1,1 +1,1 @@
-As a hammer user, I need hammer doctor --fix to actually repair the integrity anomalies that the guard now blocks, so that a duplicate or corrupt task can be fixed with a sanctioned command instead of manual git surgery, or a permanently wedged pipeline.
+As a hammer user, I want 'hammer doctor' to show me the guard anomalies that are wedging my pipeline, and 'doctor --fix' to repair the metadata drift it safely can, so I know exactly why transitions are rejected and can fix the safe cases without manual git surgery.
