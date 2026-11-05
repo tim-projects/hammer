@@ -1,1 +1,0 @@
-1. 1. On main run ./hammer guard check 241 --to DONE; 2. Note remote-divergence and worktree findings print as [guard] WARN and the transition is allowed; 3. Expected: they must block
