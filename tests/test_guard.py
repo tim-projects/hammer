@@ -21,6 +21,7 @@ import sys
 import tempfile
 import time
 import unittest
+from typing import ClassVar
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -267,13 +268,26 @@ class TestGuardGate(GuardTestBase):
             )
         self.assertTrue(os.path.isdir(self.task_path(BASE_ID, "progressing", folder)))
 
-    def test_remote_duplicate_warns_but_does_not_block(self):
+    def test_remote_duplicate_blocks(self):
+        """A remote duplicate is an integrity violation, not a note."""
         self.create_task(counter_value=BASE_ID - 1)
         head = self.git(["rev-parse", "HEAD"]).stdout.strip()
         self.git(["update-ref", f"refs/remotes/origin/{BASE_ID}-remote-a", head])
         self.git(["update-ref", f"refs/remotes/origin/{BASE_ID}-remote-b", head])
+        folder = self._find_folder(BASE_ID, "backlog")
         result = self.run_tasks(["move", str(BASE_ID), "READY"])
-        self.assertEqual(result.returncode, 0, f"remote WARN blocked: {result.stdout}")
+        self.assertNotEqual(
+            result.returncode, 0, f"remote duplicate was waved through: {result.stdout}"
+        )
+        self.assertIn(
+            "GUARD REJECT",
+            result.stdout + result.stderr,
+            f"no rejection reported: {result.stdout}",
+        )
+        self.assertTrue(
+            os.path.isdir(self.task_path(BASE_ID, "backlog", folder)),
+            "task moved despite the guard rejection",
+        )
         codes = {c for c, _ in self.codes_for(BASE_ID)}
         self.assertIn("GUARD_DUPLICATE_REMOTE_ID", codes)
 
@@ -491,6 +505,86 @@ class TestGuardRefs(GuardTestBase):
         findings = self._engine().verdict(BASE_ID, "STAGING", "DONE", branch)
         codes = {f["code"] for f in findings}
         self.assertNotIn("GUARD_BRANCH_MISSING", codes)
+
+
+class TestGuardStrictness(GuardTestBase):
+    """The guard assesses only: no warning tier, no escape hatches.
+
+    Every finding blocks. Nothing downgrades a verdict — not config, not dev
+    mode, not a per-code exemption. The guard never repairs, renames, or
+    deletes anything; repair belongs to `hammer doctor`.
+    """
+
+    GUARD_CODES: ClassVar[list[str]] = [
+        "GUARD_DUPLICATE_ID",
+        "GUARD_DUPLICATE_REMOTE_ID",
+        "GUARD_STATE_DUPLICATE",
+        "GUARD_BRANCH_NONCONFORMANT",
+        "GUARD_BRANCH_MISSING",
+        "GUARD_REMOTE_DIVERGENCE",
+        "GUARD_WORKTREE_ORPHAN",
+        "GUARD_WORKTREE_MISSING",
+        "GUARD_UNAVAILABLE",
+    ]
+
+    def _engine(self):
+        return load_guard_engine().GuardEngine(
+            repo_root=self.repo_path,
+            tasks_path=self.dev_tasks_dir,
+            dev=True,
+            cwd=self.repo_path,
+        )
+
+    def test_no_warning_tier_exists(self):
+        """The WARN severity and per-code exemption must be gone."""
+        module = load_guard_engine()
+        self.assertFalse(hasattr(module, "SEVERITY_WARN"), "WARN severity still exists")
+        self.assertFalse(hasattr(module, "WARN_CODES"), "per-code exemption still exists")
+
+    def test_severity_for_is_always_reject(self):
+        module = load_guard_engine()
+        engine = self._engine()
+        for code in self.GUARD_CODES:
+            self.assertEqual(
+                engine._severity_for(code),
+                module.SEVERITY_REJECT,
+                f"{code} can be downgraded",
+            )
+
+    def test_no_enforce_or_fail_open_switches(self):
+        """The two kill switches must not exist on the engine."""
+        engine = self._engine()
+        self.assertFalse(hasattr(engine, "enforce"), "guard.enforce still present")
+        self.assertFalse(hasattr(engine, "fail_open"), "guard.fail_open still present")
+
+    def test_all_guard_codes_have_error_messages(self):
+        """A rejecting code must never surface as 'Unknown error'."""
+        with open(os.path.join(os.getcwd(), "data", "errors.json")) as handle:
+            errors = json.load(handle)
+        with open(os.path.join(os.getcwd(), "data", "hints.json")) as handle:
+            hints = json.load(handle)
+        for code in self.GUARD_CODES:
+            self.assertIn(code, errors, f"{code} missing from errors.json")
+            self.assertIn(code, hints, f"{code} missing from hints.json")
+
+    def test_guard_never_mutates_the_repo(self):
+        """Assessment only: no ref, worktree, or folder changes."""
+        self.create_task(counter_value=BASE_ID - 1)
+        before_refs = self.git(["for-each-ref", "--format=%(refname)"]).stdout
+        before_worktrees = self.git(["worktree", "list", "--porcelain"]).stdout
+
+        self.run_guard(["scan", "--dev"])
+        self.run_guard(["check", str(BASE_ID), "--to", "TESTING", "--dev"])
+
+        # The disposable cache DB is the only thing guard may write.
+        self.assertEqual(
+            before_refs, self.git(["for-each-ref", "--format=%(refname)"]).stdout,
+            "guard changed refs",
+        )
+        self.assertEqual(
+            before_worktrees, self.git(["worktree", "list", "--porcelain"]).stdout,
+            "guard changed worktrees",
+        )
 
 
 if __name__ == "__main__":

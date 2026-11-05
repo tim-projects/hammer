@@ -24,8 +24,6 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from tasks_ai.constants import STATE_FOLDERS, load_config
 from tasks_ai.guard_engine import (
-    SEVERITY_REJECT,
-    SEVERITY_WARN,
     GuardEngine,
     GuardUnavailable,
     task_id_of,
@@ -54,21 +52,22 @@ done
 """
 
 FIX_PLAN = {
-    "GUARD_DUPLICATE_ID": "Keep one branch; delete or rename the others "
-    "(git branch -d <loser>) then run 'hammer guard rebuild'.",
-    "GUARD_STATE_DUPLICATE": "Move one copy back with 'hammer tasks move <id> <state>' "
-    "or quarantine it with 'hammer tasks doctor'.",
-    "GUARD_BRANCH_NONCONFORMANT": "Rename the branch to <id>-<type>-<slug> "
-    "(git branch -m <new>) and update meta.json Br.",
-    "GUARD_BRANCH_MISSING": "Push/restore the branch ('hammer tasks mount <id>'), "
+    "GUARD_DUPLICATE_ID": "hammer tasks doctor --fix to reconcile; the guard "
+    "never deletes branches itself.",
+    "GUARD_STATE_DUPLICATE": "hammer tasks doctor --fix to move the duplicate "
+    "folder back to its metadata state.",
+    "GUARD_BRANCH_NONCONFORMANT": "hammer tasks doctor --fix to correct "
+    "metadata.Br to the folder name.",
+    "GUARD_BRANCH_MISSING": "hammer tasks mount <id> to restore the branch, "
     "or move the task back to PROGRESSING.",
-    "GUARD_DUPLICATE_REMOTE_ID": "Prune the stale remote branches "
-    "(git push origin --delete <loser>) or run 'hammer guard refresh --fetch'.",
-    "GUARD_REMOTE_DIVERGENCE": "Local task lost its branch; restore it from origin "
-    "or let 'hammer tasks doctor' repair metadata.",
-    "GUARD_WORKTREE_ORPHAN": "Run 'git worktree prune' or remove the orphan worktree.",
-    "GUARD_WORKTREE_MISSING": "Run 'hammer tasks mount <id>'.",
-    "GUARD_UNAVAILABLE": "Run 'hammer guard rebuild'; --force overrides and logs.",
+    "GUARD_DUPLICATE_REMOTE_ID": "hammer guard refresh --fetch, then "
+    "hammer tasks doctor --fix to reconcile.",
+    "GUARD_REMOTE_DIVERGENCE": "hammer tasks mount <id> to restore the branch "
+    "from origin, then hammer tasks doctor --fix.",
+    "GUARD_WORKTREE_ORPHAN": "hammer tasks mount <id> or "
+    "hammer tasks doctor --fix to reconcile worktrees.",
+    "GUARD_WORKTREE_MISSING": "hammer tasks mount <id>.",
+    "GUARD_UNAVAILABLE": "hammer guard rebuild; --force overrides and logs.",
 }
 
 
@@ -126,25 +125,22 @@ def branch_for_task(engine, task_id):
 
 
 def emit_findings(findings, as_json):
-    rejects = [f for f in findings if f["severity"] == SEVERITY_REJECT]
-    warns = [f for f in findings if f["severity"] == SEVERITY_WARN]
+    """Every finding blocks: there is no warning tier to fall back to."""
     if as_json:
         print(
             json.dumps(
                 {
-                    "success": not rejects,
-                    "verdict": "REJECT" if rejects else "PASS",
+                    "success": not findings,
+                    "verdict": "REJECT" if findings else "PASS",
                     "findings": findings,
                 },
                 indent=2,
             )
         )
     else:
-        for finding in warns:
-            warn(f"{finding['code']}: {finding['detail']}")
-        for finding in rejects:
+        for finding in findings:
             print(f"{RED}{finding['code']}{NC}: {finding['detail']}")
-    return 1 if rejects else 0
+    return 1 if findings else 0
 
 
 def cmd_check(args):
@@ -157,11 +153,7 @@ def cmd_check(args):
             branch=args.branch or branch_for_task(engine, args.task_id),
         )
     except GuardUnavailable as exc:
-        if engine.fail_open:
-            warn(f"GUARD_UNAVAILABLE: {exc}")
-            if args.json:
-                print(json.dumps({"success": True, "verdict": "WARN", "findings": []}))
-            return 0
+        # Cannot verify -> cannot approve. Fail closed, no escape hatch.
         fail(f"GUARD_UNAVAILABLE: {exc}")
     return emit_findings(findings, args.json)
 

@@ -5,20 +5,20 @@ git subprocess calls so pipeline gates can answer integrity questions fast.
 The cache can be deleted and rebuilt from git alone at any moment
 (`hammer guard rebuild`); a corrupt cache self-heals on the next command.
 
+The guard ASSESSES ONLY. It never repairs, renames, or deletes anything in the
+repo; repair belongs to `hammer doctor`. Its answer is binary: a task is valid
+and may be worked on, or it is not. There is no warning tier and no way to
+downgrade a finding — not by config, not in dev mode, not per code.
+
 Invariants (see plan-guard.md):
   GUARD_DUPLICATE_ID         >1 local branch claims one task id          REJECT
-  GUARD_DUPLICATE_REMOTE_ID  >1 remote branch claims one task id         WARN
+  GUARD_DUPLICATE_REMOTE_ID  >1 remote branch claims one task id         REJECT
   GUARD_BRANCH_NONCONFORMANT branch name breaks <id>-<type>-<slug>       REJECT
   GUARD_BRANCH_MISSING       no local branch for a promoted task         REJECT
   GUARD_STATE_DUPLICATE      one task id in two state folders            REJECT
-  GUARD_WORKTREE_ORPHAN      worktree without its branch / duplicated    WARN
-  GUARD_REMOTE_DIVERGENCE    local task lost its branch                  WARN
+  GUARD_WORKTREE_ORPHAN      worktree without its branch / duplicated    REJECT
+  GUARD_REMOTE_DIVERGENCE    local task lost its branch                  REJECT
   GUARD_UNAVAILABLE          guard cannot verify (fail closed)           REJECT
-
-shortcut: worktree anomalies are WARN, not REJECT (plan wanted REJECT):
-`git worktree list` in dev fixtures legitimately shows worktrees without
-matching branches, so rejecting there would break the existing suite.
-Upgrade to REJECT once dev fixtures stop creating throwaway worktrees.
 """
 
 import hashlib
@@ -42,18 +42,9 @@ LEADING_ID_RE = re.compile(r"^(\d+)-")
 PROMOTED_STATES = ("TESTING", "REVIEW", "STAGING", "DONE", "ARCHIVED")
 
 SEVERITY_REJECT = "REJECT"
-SEVERITY_WARN = "WARN"
 
-# Anomalies that report but never block a gate. A stale/divergent remote
-# snapshot is not an integrity breach (plan-guard.md 4.5), and dev fixtures
-# legitimately create worktrees without matching branches.
-WARN_CODES = frozenset(
-    {
-        "GUARD_DUPLICATE_REMOTE_ID",
-        "GUARD_REMOTE_DIVERGENCE",
-        "GUARD_WORKTREE_ORPHAN",
-    }
-)
+# The guard assesses only: every finding blocks. There is deliberately no
+# warning tier, no per-code exemption, and no config/dev escape hatch.
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -143,10 +134,11 @@ class GuardEngine:
         self.cwd = cwd or repo_root or os.getcwd()
         self.tasks_path = tasks_path
         self.dev = dev
-        guard_cfg = (config or {}).get("guard") or {}
-        self.enforce = bool(guard_cfg.get("enforce", True))
-        self.fail_open = bool(guard_cfg.get("fail_open", False))
-        self.staleness_warn_min = int(guard_cfg.get("staleness_warn_min", 60) or 60)
+        # No enforcement switches: the guard always assesses and always blocks.
+        # `dev` is retained for cache-path resolution only, not for severity.
+        self.staleness_warn_min = int(
+            ((config or {}).get("guard") or {}).get("staleness_warn_min", 60) or 60
+        )
         self.cache_dir = self._resolve_cache_dir()
         self.db_path = os.path.join(self.cache_dir, DB_NAME)
 
@@ -520,9 +512,7 @@ class GuardEngine:
             conn.close()
 
     def _severity_for(self, code):
-        """WARN unless the code blocks a gate (and enforce is on)."""
-        if not self.enforce or code in WARN_CODES:
-            return SEVERITY_WARN
+        """Every finding blocks: the guard assesses, it does not advise."""
         return SEVERITY_REJECT
 
     def _lookup(self, conn, task_id, to_state, branch):
@@ -543,7 +533,7 @@ class GuardEngine:
                     {
                         "code": "GUARD_BRANCH_NONCONFORMANT",
                         "detail": f"branch '{branch}' breaks <id>-<type>-<slug>",
-                        "severity": SEVERITY_REJECT if self.enforce else SEVERITY_WARN,
+                        "severity": SEVERITY_REJECT,
                     }
                 )
             if to_state in PROMOTED_STATES:
@@ -555,8 +545,7 @@ class GuardEngine:
                         {
                             "code": "GUARD_BRANCH_MISSING",
                             "detail": f"branch '{branch}' missing; {to_state} requires it",
-                            # shortcut: WARN in dev (fixtures legitimately lack branches)
-                            "severity": SEVERITY_WARN if self.dev else SEVERITY_REJECT,
+                            "severity": SEVERITY_REJECT,
                         }
                     )
         return findings

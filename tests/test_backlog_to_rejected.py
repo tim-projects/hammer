@@ -8,6 +8,9 @@ from tasks_ai.constants import ALLOWED_TRANSITIONS, STATE_FOLDERS  # noqa: F401
 
 class TestBacklogToRejected(HammerTestBase):
     def test_backlog_to_rejected_transition(self):
+        # Above every real task id, so the fixture cannot collide with a real
+        # branch and trip the guard's duplicate-id check.
+        self.seed_counter(9000)
         res = self.run_tasks(
             [
                 "create",

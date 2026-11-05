@@ -61,3 +61,17 @@ class HammerTestBase(unittest.TestCase):
 
     def run_tasks(self, args):
         return subprocess.run([self.script_path, 'tasks', '-j', '--dev'] + args, cwd=self.repo_path, capture_output=True, text=True, check=False)
+
+    def seed_counter(self, value):
+        """Force the next task id, so fixtures never collide with real branches.
+
+        The fixture clones this repo and therefore inherits its branches. A task
+        created at a real id would be a genuine duplicate-in-branches violation
+        and the guard correctly rejects it; tests that do not pin an id must
+        stay above the highest real task id (see tests/test_guard.py BASE_ID).
+        """
+        counter = os.path.join(self.dev_tasks_dir, '.task_counter')
+        if os.path.exists(counter):
+            os.remove(counter)
+        with open(counter, 'w') as handle:
+            handle.write(str(value))

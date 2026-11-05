@@ -19,6 +19,9 @@ class TestAllTransitions(HammerTestBase):
                 return
 
     def test_transitions(self):
+        # Above every real task id, so the fixture cannot collide with a real
+        # branch and trip the guard's duplicate-id check.
+        self.seed_counter(9000)
         res = self.run_tasks(['create', 'Comprehensive Test Task', '--story', 'Sufficiently long story content here to pass validation', '--tech', 'Sufficiently long technical description here to pass validation', '--criteria', 'Sufficiently long acceptance criteria here to pass validation', '--plan', 'Sufficiently long planning details here to pass validation'])
         print('DEBUG: CREATE RES:', res.stdout)
         create_data = json.loads(res.stdout).get('data', {})
