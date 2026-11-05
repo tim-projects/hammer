@@ -1,0 +1,2 @@
+- [ ] ruff check hammer reports no errors
+- [ ] Full ./hammer check all still passes

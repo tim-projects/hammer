@@ -1,0 +1,10 @@
+{
+  "Id": 318,
+  "Ti": "Fix pre-existing ruff lint errors in hammer script",
+  "Ty": "task",
+  "Cr": "261105 06:23",
+  "Bl": [],
+  "Pr": 3,
+  "Br": "318-task-fix-pre-existing-ruff-lint-err",
+  "Pt": null
+}

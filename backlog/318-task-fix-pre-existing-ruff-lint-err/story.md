@@ -1,0 +1,1 @@
+As a maintainer I want the hammer script free of lint errors so that codebase-wide linting is clean and CI gates are trustworthy.

@@ -1,0 +1,1 @@
+1. 1. Run ruff check hammer --fix 2. Fix PLW1510 per repo convention 3. Re-run check all
