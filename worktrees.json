@@ -40,11 +40,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/248-task-write-user-tests-for-247-imple",
       "task_file": "248-task-write-user-tests-for-247-imple"
     },
-    "249": {
-      "branch": "249-issue-guard-refs-cache-clobbers-loca",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/249-issue-guard-refs-cache-clobbers-loca",
-      "task_file": "249-issue-guard-refs-cache-clobbers-loca"
-    },
     "250": {
       "branch": "250-task-write-user-tests-for-249-guard",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/250-task-write-user-tests-for-249-guard",
