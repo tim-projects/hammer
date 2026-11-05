@@ -1,0 +1,12 @@
+{
+    "task_id": "316",
+    "patch_hash": "0881d875096fd190470a6f4948cc50c0",
+    "patch_files": [
+        "hammer.patch",
+        "tasks.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_unlink.py.patch",
+        "tests_test_unlink.py.patch"
+    ],
+    "status": "verified"
+}
