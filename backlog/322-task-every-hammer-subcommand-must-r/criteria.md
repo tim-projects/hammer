@@ -15,4 +15,5 @@
 - [ ] Remove phantom run/help entries from COMMAND_TO_TOOL or add the subcommands (hammer run -h currently argparse invalid-choice)
 - [ ] Bare 'hammer tasks' / 'hammer check' / 'hammer repo' / 'hammer guard' print tool usage instead of 'HAMMER DEMAND: Specify command'
 - [ ] hammer -h, hammer --help and hammer help still print the wrapper help and exit 0 (no regression)
+- [ ] All new/changed help text follows the HELP MESSAGE RULES & FORMAT (R1-R8) in the tech section: tool + subcommand layout, argparse only, shared global flags, agent guidance, persona limits, plain-text help in JSON mode, 80-col wrap, exit codes
 - [ ] Automated help audit exists and passes for every tool and subcommand, both -h and --help, explicit-tool and auto-detect forms
