@@ -1,0 +1,1 @@
+As a hammer user, I need the guard to give one answer per task, valid or not, so a duplicate or corrupt task can never slip through a gate by being downgraded to a warning.

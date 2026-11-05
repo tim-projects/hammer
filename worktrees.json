@@ -59,6 +59,16 @@
       "branch": "313-task-write-user-tests-for-312-guard",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/313-task-write-user-tests-for-312-guard",
       "task_file": "313-task-write-user-tests-for-312-guard"
+    },
+    "314": {
+      "branch": "314-issue-guard-must-assess-strictly-wit",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/314-issue-guard-must-assess-strictly-wit",
+      "task_file": "314-issue-guard-must-assess-strictly-wit"
+    },
+    "315": {
+      "branch": "315-task-write-user-tests-for-314-guard",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/315-task-write-user-tests-for-314-guard",
+      "task_file": "315-task-write-user-tests-for-314-guard"
     }
   }
 }

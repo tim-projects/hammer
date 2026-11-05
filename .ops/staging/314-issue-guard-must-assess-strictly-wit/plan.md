@@ -1,0 +1,1 @@
+1. 1. Remove WARN_CODES, enforce and dev degradations from severity; 2. Remove fail_open from GuardGateHook; 3. Repoint FIX_PLAN at hammer doctor; 4. Make dev fixtures create real branches; 5. Update tests and config keys
