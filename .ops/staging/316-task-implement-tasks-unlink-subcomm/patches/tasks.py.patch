@@ -1,0 +1,23 @@
+diff --git a/tasks.py b/tasks.py
+index 34efba21..e31501f2 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -34,6 +34,9 @@ if __name__ == '__main__':
+     lk_p = subparsers.add_parser('link', help='Link tasks (blocker relationship).')
+     lk_p.add_argument('filename', help='Task Id (or filename) to block.')
+     lk_p.add_argument('blocked_by', help='Task Id (or filename) that is blocking.')
++    ul_p = subparsers.add_parser('unlink', help='Unlink tasks (remove blocker relationship).')
++    ul_p.add_argument('filename', help='Task Id (or filename) to unblock.')
++    ul_p.add_argument('blocked_by', help='Task Id (or filename) that is blocking.')
+     un_p = subparsers.add_parser('unarchive', help='Unarchive a task.')
+     un_p.add_argument('filename', help='Task Id (or filename).')
+     cr_p = subparsers.add_parser('create', help='Create task.')
+@@ -146,6 +149,8 @@ if __name__ == '__main__':
+         cli.checkpoint(args.filename)
+     elif args.command == 'link':
+         cli.link(args.filename, args.blocked_by)
++    elif args.command == 'unlink':
++        cli.unlink(args.filename, args.blocked_by)
+     elif args.command == 'reconcile':
+         cli.reconcile(args.target, all=args.all, dry_run=args.dry_run)
+     elif args.command == 'unarchive':

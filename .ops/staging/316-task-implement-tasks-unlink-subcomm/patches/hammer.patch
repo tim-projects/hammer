@@ -1,0 +1,12 @@
+diff --git a/hammer b/hammer
+index c641fe78..c2d502b4 100755
+--- a/hammer
++++ b/hammer
+@@ -48,6 +48,7 @@ COMMAND_TO_TOOL = {
+     "show": "tasks",
+     "checkpoint": "tasks",
+     "link": "tasks",
++    "unlink": "tasks",
+     "create": "tasks",
+     "modify": "tasks",
+     "move": "tasks",
