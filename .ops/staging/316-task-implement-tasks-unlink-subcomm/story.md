@@ -1,0 +1,1 @@
+As a task manager I want to remove a blocker relationship between two tasks so that stale or incorrect links can be cleaned up without hand-editing task metadata.

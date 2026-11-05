@@ -1,9 +1,18 @@
-- [ ] New 'unlink' subcommand registered in ./tasks.py subparsers and dispatch, visible in ./hammer tasks --help
-- [ ] run() implementation in tasks_ai/commands/unlink.py mirroring tasks_ai/commands/link.py structure
-- [ ] Removes the blocker filename from the 'Bl' metadata list and persists via cli._atomic_write
-- [ ] Logs the operation and commits to the .tasks worktree (mirror of the 'Lk' link flow)
-- [ ] Errors cleanly when the task or blocker does not exist (LINK_TASK_NOT_FOUND style)
-- [ ] No-op with clear message when the two tasks are not currently linked
-- [ ] Rejects unlinking a task from itself (LINK_SELF parity)
-- [ ] User tests written covering link, unlink, double-unlink, and not-found cases
-- [ ] ./hammer check all passes (lint, typecheck, tests, format)
+- [x] New 'unlink' subcommand registered in ./tasks.py subparsers and dispatch, visible in ./hammer tasks --help
+  - Verified: `tasks` usage string lists 'unlink'; `./hammer tasks --dev unlink 1 3` dispatches end-to-end.
+- [x] run() implementation in tasks_ai/commands/unlink.py mirroring tasks_ai/commands/link.py structure
+  - Verified: tasks_ai/commands/unlink.py added; tasks_ai/cli.py delegation next to link.
+- [x] Removes the blocker filename from the 'Bl' metadata list and persists via cli._atomic_write
+  - Verified: dev run Bl=['3-...'] after link -> [] after unlink.
+- [x] Logs the operation and commits to the .tasks worktree (mirror of the 'Lk' link flow)
+  - Verified: .tasks git log shows 'Unlk 1->3-task-commit-check-task-beta' alongside 'Lk' commit.
+- [x] Errors cleanly when the task or blocker does not exist (LINK_TASK_NOT_FOUND style)
+  - Verified: `unlink 1 999` exits non-zero with LINK_TASK_NOT_FOUND hint.
+- [x] No-op with clear message when the two tasks are not currently linked
+  - Verified: second `unlink 1 3` prints 'Not linked: ...' with changed=False, no commit.
+- [x] Rejects unlinking a task from itself (LINK_SELF parity)
+  - Verified: `unlink 1 1` exits non-zero with LINK_SELF hint.
+- [x] User tests written covering link, unlink, double-unlink, and not-found cases
+  - Verified: tests/test_unlink.py — 6 tests, all passing.
+- [x] ./hammer check all passes (lint, typecheck, tests, format)
+  - Verified: `python3 check.py all --force` passes; ruff check/format clean on changed files; full pytest 117 passed / 4 failed — those 4 are the pre-existing test_robustness baseline (task 245), identical on clean main.

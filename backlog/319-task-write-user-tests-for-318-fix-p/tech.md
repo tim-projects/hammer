@@ -1,0 +1,1 @@
+Pre-existing ruff findings on main (verified against origin/main, unrelated to task 316): hammer:26 I001 import block un-sorted; hammer:28 F401 unused import os; hammer:131 PLW1510 subprocess.run without explicit check. Fix with ruff check hammer --fix and address PLW1510 manually.
