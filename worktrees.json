@@ -69,6 +69,16 @@
       "branch": "315-task-write-user-tests-for-314-guard",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/315-task-write-user-tests-for-314-guard",
       "task_file": "315-task-write-user-tests-for-314-guard"
+    },
+    "316": {
+      "branch": "316-task-implement-tasks-unlink-subcomm",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/316-task-implement-tasks-unlink-subcomm",
+      "task_file": "316-task-implement-tasks-unlink-subcomm"
+    },
+    "317": {
+      "branch": "317-task-write-user-tests-for-316-imple",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/317-task-write-user-tests-for-316-imple",
+      "task_file": "317-task-write-user-tests-for-316-imple"
     }
   }
 }

@@ -1,0 +1,9 @@
+- [ ] New 'unlink' subcommand registered in ./tasks.py subparsers and dispatch, visible in ./hammer tasks --help
+- [ ] run() implementation in tasks_ai/commands/unlink.py mirroring tasks_ai/commands/link.py structure
+- [ ] Removes the blocker filename from the 'Bl' metadata list and persists via cli._atomic_write
+- [ ] Logs the operation and commits to the .tasks worktree (mirror of the 'Lk' link flow)
+- [ ] Errors cleanly when the task or blocker does not exist (LINK_TASK_NOT_FOUND style)
+- [ ] No-op with clear message when the two tasks are not currently linked
+- [ ] Rejects unlinking a task from itself (LINK_SELF parity)
+- [ ] User tests written covering link, unlink, double-unlink, and not-found cases
+- [ ] ./hammer check all passes (lint, typecheck, tests, format)
