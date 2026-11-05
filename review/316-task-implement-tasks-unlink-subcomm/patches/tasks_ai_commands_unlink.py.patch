@@ -1,0 +1,65 @@
+diff --git a/tasks_ai/commands/unlink.py b/tasks_ai/commands/unlink.py
+new file mode 100644
+index 00000000..0bbe6d12
+--- /dev/null
++++ b/tasks_ai/commands/unlink.py
+@@ -0,0 +1,59 @@
++import os
++
++from ..file_manager import FM
++from ..utils import parse_filename
++
++
++def run(cli, filename, blocked_by_filename):
++    """Execution logic for 'tasks unlink'."""
++    f1, _ = cli.find_task(filename)
++    f2, _ = cli.find_task(blocked_by_filename)
++    if not f1 or not f2:
++        cli.error("LINK_TASK_NOT_FOUND")
++    f1_str, f2_str = (str(f1), str(f2))
++    if os.path.abspath(f1_str) == os.path.abspath(f2_str):
++        cli.error("LINK_SELF")
++    f1_fname = os.path.basename(f1_str)
++    f2_fname = os.path.basename(f2_str)
++    b_name = f2_fname
++    task = FM.load(f1_str)
++    task_title = str(task.metadata.get("Ti", ""))
++    task_id_num = str(task.metadata.get("Id", ""))
++    tt, _ = parse_filename(f1_fname)
++    bl = task.metadata.get("Bl", [])
++    if not isinstance(bl, list):
++        bl = []
++    b_task = FM.load(f2_str)
++    b_title = str(b_task.metadata.get("Ti", ""))
++    b_id = str(b_task.metadata.get("Id", ""))
++    b_tt, _ = parse_filename(f2_fname)
++    if b_name not in bl:
++        cli.log(f"Not linked: [{task_id_num}] {tt} -> [{b_id}] {b_tt}")
++        cli.finish(
++            {
++                "id": task_id_num,
++                "task_id": filename,
++                "unlinked_from": b_name,
++                "changed": False,
++            }
++        )
++    bl.remove(b_name)
++    task.metadata["Bl"] = bl
++    cli._atomic_write(f1_str, task)
++    cli._append_log(f1_str, "Unlk")
++    cli._run_git(["add", "--all"], cwd=cli.tasks_path)
++    cli._run_git(
++        ["commit", "--allow-empty", "-m", f"Unlk {filename}->{b_name}"],
++        cwd=cli.tasks_path,
++    )
++    cli.log(
++        f"Unlinked: [{task_id_num}] {tt} | {task_title} -> [{b_id}] {b_tt} | {b_title}"
++    )
++    cli.finish(
++        {
++            "id": task_id_num,
++            "task_id": filename,
++            "unlinked_from": b_name,
++            "unlinked_from_title": b_title,
++        }
++    )
