@@ -130,11 +130,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/329-task-write-user-tests-for-328-fix-t",
       "task_file": "329-task-write-user-tests-for-328-fix-t"
     },
-    "330": {
-      "branch": "330-issue-hammer-check-all-cannot-run-in",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/330-issue-hammer-check-all-cannot-run-in",
-      "task_file": "330-issue-hammer-check-all-cannot-run-in"
-    },
     "331": {
       "branch": "331-task-write-user-tests-for-330-hamme",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/331-task-write-user-tests-for-330-hamme",
@@ -159,6 +154,16 @@
       "branch": "335-task-write-user-tests-for-334-move",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/335-task-write-user-tests-for-334-move",
       "task_file": "335-task-write-user-tests-for-334-move"
+    },
+    "336": {
+      "branch": "336-task-fix-central-store-concurrency",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/336-task-fix-central-store-concurrency",
+      "task_file": "336-task-fix-central-store-concurrency"
+    },
+    "337": {
+      "branch": "337-task-write-user-tests-for-336-fix-c",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/337-task-write-user-tests-for-336-fix-c",
+      "task_file": "337-task-write-user-tests-for-336-fix-c"
     }
   }
 }
