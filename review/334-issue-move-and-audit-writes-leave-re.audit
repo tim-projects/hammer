@@ -1,0 +1,11 @@
+{
+    "task_id": "334",
+    "patch_hash": "fc9712d2afa1b5fdc504d6f71585e765",
+    "patch_files": [
+        "tasks_ai_commands_audit.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tests_test_store_writes.py.patch"
+    ],
+    "status": "verified"
+}
