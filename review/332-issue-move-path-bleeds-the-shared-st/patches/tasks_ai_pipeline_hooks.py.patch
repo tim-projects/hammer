@@ -1,0 +1,37 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index 45aa1fb3..386e6c4e 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -319,23 +319,17 @@ class ArchivedCommitHook(PipelineHook):
+ 
+ 
+ class PostMoveCommitHook(PipelineHook):
+-    """Standard commit for non-archived moves."""
++    """Store commit for a move.
++
++    This ran before the physical move, where a store-wide 'add -f .' committed
++    every agent's pending work under this move's message and left the staged copy
++    plus both the old and new task paths uncommitted. move_logic now commits the
++    task's old and new paths after the move, so this hook no longer touches the
++    store.
++    """
+ 
+     def execute(self, cli, task, current_state, new_status, filepath):
+-        if new_status != "ARCHIVED":
+-            try:
+-                cli._run_git(["add", "-f", "."], cwd=cli.tasks_path)
+-            except Exception:
+-                cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+-            cli._run_git(
+-                [
+-                    "commit",
+-                    "--allow-empty",
+-                    "-m",
+-                    f"Mv {os.path.basename(filepath)} -> {new_status}",
+-                ],
+-                cwd=cli.tasks_path,
+-            )
++        return
+ 
+ 
+ class ValidationPassedMarkHook(PipelineHook):

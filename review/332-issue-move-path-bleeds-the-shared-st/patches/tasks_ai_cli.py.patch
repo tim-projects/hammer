@@ -1,0 +1,28 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 9a066c25..65e7bb06 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -42,6 +42,7 @@ from .pipeline_hooks import (
+     WorktreeSyncOnExitTestingHook,
+ )
+ from .task_service import TaskService
++from .utils import commit_task_paths
+ from .validation import Validation
+ 
+ 
+@@ -1172,10 +1173,11 @@ class TasksCLI:
+             if os.path.isdir(filepath_str):
+                 shutil.rmtree(filepath_str)
+             shutil.move(temp_dir, target_dir)
+-            self._run_git(["add", "--all"], cwd=self.tasks_path)
+-            self._run_git(
+-                ["commit", "-m", f"Undo: restore {fname} to {prev_prev_commit[:7]}"],
+-                cwd=self.tasks_path,
++            commit_task_paths(
++                self,
++                target_dir,
++                f"Undo: restore {fname} to {prev_prev_commit[:7]}",
++                filepath_str,
+             )
+             self._append_log(target_dir, "Und")
+             self.log(f"Undone: restored to {prev_state}")

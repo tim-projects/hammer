@@ -1,0 +1,43 @@
+{
+  "Id": 332,
+  "Ti": "Move path bleeds the shared store with git add -f .",
+  "Ty": "issue",
+  "Cr": "261106 06:22",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "332-issue-move-path-bleeds-the-shared-st",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1793948768.698873,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/332-issue-move-path-bleeds-the-shared-st/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/332-issue-move-path-bleeds-the-shared-st/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/332-issue-move-path-bleeds-the-shared-st/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/332-issue-move-path-bleeds-the-shared-st/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/332-issue-move-path-bleeds-the-shared-st/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/332-issue-move-path-bleeds-the-shared-st/patches/tests_test_store_writes.py.patch"
+    }
+  ]
+}
