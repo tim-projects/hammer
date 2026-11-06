@@ -1,0 +1,10 @@
+{
+  "Id": 343,
+  "Ti": "Write user tests for 342: Gates and sync assume main while repos may use master",
+  "Ty": "task",
+  "Cr": "261106 16:11",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "343-task-write-user-tests-for-342-gates",
+  "Pt": 342
+}
