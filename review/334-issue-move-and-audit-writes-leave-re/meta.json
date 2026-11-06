@@ -9,11 +9,11 @@
   "Pt": null,
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1793951130.394111,
   "DoneAt": null,
-  "Tp": true,
+  "Tp": false,
   "PatchFiles": [
     {
       "file": "tasks_ai/commands/audit.py",
