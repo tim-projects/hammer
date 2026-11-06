@@ -1,6 +1,0 @@
-- [x] checkpoint stages only the target task's paths in .tasks: test_checkpoint_commits_only_its_own_task proves task A's checkpoint does not commit task B's changes
-- [x] checkpoint fails loudly (error, non-zero exit, no 'Done.' log) when git add or commit fails: held .git/index.lock and GIT_COMMITTER_DATE=bogus both surface STORE_WRITE_FAIL
-- [x] all task markdown parts (story/tech/plan/criteria/notes) sync into the record: test_hand_edited_parts_reach_the_record, run from main-repo cwd and from a task worktree cwd
-- [x] all git calls in the sync path run with an explicit cwd (tasks_path or main_repo_root): no process-cwd dependence remains
-- [x] store mutations around the task record are atomic: scoped add plus the log line inside the same commit, so no write is attributable to another agent's next commit
-- [x] ruff clean and the full pytest suite passes (127 passed; the 4 test_robustness failures are pre-existing on main, tracked by task 326); new tests in tests/test_checkpoint_store_writes.py. check all itself cannot run in a worktree - pre-existing, tracked by new task 330

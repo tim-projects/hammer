@@ -1,1 +1,0 @@
-As an operator running multiple agents against the central .tasks store, I need tasks checkpoint to write only my task's own data to the store, to fail loudly when its git operations fail, and to sync every part of my task record, so parallel agents cannot corrupt, overwrite, or silently lose each other's work.
