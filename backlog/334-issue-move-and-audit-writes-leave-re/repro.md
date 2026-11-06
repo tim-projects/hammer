@@ -1,1 +1,0 @@
-1. Run 'tasks audit 332' then 'tasks move <id> STAGING' with the current code: git -C .tasks status shows '?? review/<id>.audit' and ' D .ops/staging/<id>/...' permanently pending

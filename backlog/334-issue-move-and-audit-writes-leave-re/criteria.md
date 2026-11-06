@@ -1,4 +1,0 @@
-- [ ] after a move the store has no pending change for the moved task, its .ops/staging copy or its .audit sibling
-- [ ] the Mv commit contains the moved task's new path, its old state path and the .ops/staging deletion when it was tracked
-- [ ] commit_task_paths never passes git a pathspec it would reject (a path that is neither on disk nor tracked)
-- [ ] full test suite passes
