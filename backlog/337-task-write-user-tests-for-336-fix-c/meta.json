@@ -1,0 +1,10 @@
+{
+  "Id": 337,
+  "Ti": "Write user tests for 336: Fix central-store concurrency hazards: id allocation, manifest race, merge gate, undo scoping",
+  "Ty": "task",
+  "Cr": "261106 10:49",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "337-task-write-user-tests-for-336-fix-c",
+  "Pt": 336
+}
