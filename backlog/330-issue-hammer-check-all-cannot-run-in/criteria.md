@@ -1,5 +1,0 @@
-- [ ] check all run from a task worktree executes the configured tools instead of aborting with 'Tool X (None) not configured or not supported'
-- [ ] the tool resolver accepts a command path as well as a tool name, so the /bin/true values in the store config work
-- [ ] find_project_root treats a worktree .git file as a project root, so a worktree no longer resolves to the main repo's config
-- [ ] check all on main is no longer silently skipped by the .last_validation_hash short-circuit when the tree is unchanged
-- [ ] a test runs check all from a worktree cwd and asserts a real tool result, not an abort
