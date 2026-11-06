@@ -21,6 +21,9 @@ class Validator:
             if self.dev
             else (self.project_root / ".tasks" / "config.yaml")
         )
+        if not config_path_yaml.exists() and not self.dev:
+            # A worktree has no .tasks of its own; the store config lives in the main repo
+            config_path_yaml = self._store_config_path()
         config_path_toml = self.project_root / "pyproject.toml"
 
         config = {}
@@ -50,6 +53,24 @@ class Validator:
             except ImportError:
                 pass
         return config
+
+    def _store_config_path(self) -> Path:
+        """Locate the store config from a worktree (the store is shared, in the main repo)."""
+        try:
+            common_dir = (
+                subprocess.check_output(
+                    ["git", "rev-parse", "--git-common-dir"],
+                    cwd=self.project_root,
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode()
+                .strip()
+            )
+        except Exception:  # noqa: BLE001
+            return self.project_root / ".tasks" / "config.yaml"
+        if not os.path.isabs(common_dir):
+            common_dir = os.path.join(self.project_root, common_dir)
+        return Path(os.path.dirname(common_dir)) / ".tasks" / "config.yaml"
 
     def _get_commands(self, fix: bool) -> dict:
         """Returns the full set of supported commands."""
@@ -101,9 +122,11 @@ class Validator:
         if tool is None:
             tool = self.config.get("repo", {}).get(tool_config_key.replace("repo.", ""))
 
-        # Normalize tool name (handle /bin/true style paths)
-        if tool and tool.startswith("/bin/"):
-            tool = "true"
+        # A configured tool may be a command path (e.g. /bin/true), not just a name
+        if tool and tool not in commands.get(tool_type, {}):
+            basename = os.path.basename(str(tool))
+            if basename in commands.get(tool_type, {}):
+                tool = basename
 
         # Look up the actual command list for this tool
         cmd_list = commands.get(tool_type, {}).get(tool)
@@ -152,55 +175,12 @@ class Validator:
         }
 
     def run_all(self, fix: bool = False, force: bool = False) -> list[dict]:
-        """Run all configured checks with caching."""
-        if not force and not fix and self._is_unchanged():
-            return [
-                {
-                    "success": True,
-                    "tool": "all",
-                    "stdout": "Codebase unchanged, skipping validation.",
-                    "exit_code": 0,
-                }
-            ]
-
+        """Run all configured checks."""
         results = []
         for tool in ["lint", "test", "typecheck", "format"]:
             results.append(self.run_check(tool, fix))
 
-        if all(r["success"] for r in results):
-            self._update_hash()
-
         return results
-
-    def _is_unchanged(self) -> bool:
-        """Check if codebase has changed since last validation."""
-        hash_path = self.project_root / ".tasks" / ".last_validation_hash"
-        if not hash_path.exists():
-            return False
-
-        current_hash = self._get_git_hash()
-        with open(hash_path, "r") as f:
-            return f.read().strip() == current_hash
-
-    def _get_git_hash(self) -> str:
-        try:
-            return (
-                subprocess.check_output(
-                    ["git", "rev-parse", "HEAD"],
-                    cwd=self.project_root,
-                    stderr=subprocess.DEVNULL,
-                )
-                .decode()
-                .strip()
-            )
-        except Exception:  # noqa: BLE001
-            return ""
-
-    def _update_hash(self):
-        hash_path = self.project_root / ".tasks" / ".last_validation_hash"
-        hash_path.parent.mkdir(exist_ok=True)
-        with open(hash_path, "w") as f:
-            f.write(self._get_git_hash())
 
     def run_debug(self) -> dict:
         """Run debug messages check."""
