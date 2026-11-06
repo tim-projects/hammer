@@ -7,7 +7,7 @@
   "Pr": 1,
   "Br": "336-task-fix-central-store-concurrency",
   "Pt": null,
-  "Rc": "",
+  "Rc": "PASSED",
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
