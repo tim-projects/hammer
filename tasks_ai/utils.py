@@ -72,17 +72,20 @@ def store_is_git(cli):
     res = cli._run_git(['rev-parse', '--is-inside-work-tree'], cwd=cli.tasks_path)
     return res.returncode == 0 and res.stdout.strip() == 'true'
 
-def commit_task_paths(cli, task_filepath, message):
-    """Stage and commit only this task's paths in the shared store.
+def commit_task_paths(cli, task_filepath, message, *moved_away_paths):
+    """Stage and commit only these task paths in the shared store.
 
     The store is one git repo shared by every agent, so 'add --all' would commit
     other tasks' uncommitted records under our message. A failing add or commit
     must be fatal: a silent failure writes to disk but never to the record.
+    Paths passed in moved_away_paths are recorded as deletions (a move leaves the
+    old state folder behind).
     """
     if not store_is_git(cli):
         return
-    rel_path = os.path.relpath(task_filepath, cli.tasks_path)
-    add = cli._run_git(['add', '--', rel_path], cwd=cli.tasks_path)
+    paths = [os.path.relpath(p, cli.tasks_path)
+             for p in (task_filepath, *moved_away_paths) if p]
+    add = cli._run_git(['add', '--', *paths], cwd=cli.tasks_path)
     if add.returncode != 0:
         cli.error('STORE_WRITE_FAIL', message=message,
                   detail=(add.stderr or '').strip() or 'git add failed')

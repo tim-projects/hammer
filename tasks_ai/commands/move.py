@@ -6,7 +6,7 @@ from ..cli_errors import PipelineMergeConflict
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..pipeline import PipelineError
-from ..utils import parse_filename, perform_move
+from ..utils import commit_task_paths, parse_filename, perform_move
 
 
 def run(cli, filename, new_status=None, yes=False, force=False):
@@ -216,5 +216,11 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
         if os.path.exists(staged_task_path):
             shutil.rmtree(staged_task_path)
         raise
+
+    # Commit only this task's old and new paths: the store is shared by every
+    # agent, and a store-wide add would commit their pending work under this
+    # move. The .ops/staging copy is never staged, so it leaves nothing pending.
+    commit_task_paths(cli, new_filepath, f'Mv {os.path.basename(filepath_str)} -> {new_status}',
+                      filepath_str)
 
     return True

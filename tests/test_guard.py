@@ -83,6 +83,7 @@ class GuardTestBase(HammerTestBase):
             "tasks_ai/guard_engine.py",
             "tasks_ai/pipeline_hooks.py",
             "tasks_ai/cli.py",
+            "tasks_ai/utils.py",
             "tasks_ai/commands/move.py",
             "data/errors.json",
             "data/hints.json",
