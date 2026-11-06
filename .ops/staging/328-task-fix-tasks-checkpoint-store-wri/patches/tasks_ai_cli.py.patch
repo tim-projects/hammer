@@ -1,0 +1,17 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 00078c99..9a066c25 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -261,8 +261,11 @@ class TasksCLI:
+     def _append_log(self, path, message, section="progress"):
+         FM.append_log(path, message, section=section)
+         if path:
++            # FM.append_log writes the section file (progress.md by default), not
++            # a separate activity.log: staging the wrong name fails silently and
++            # the log line never reaches the store.
+             rel_log = os.path.join(
+-                os.path.relpath(path, self.tasks_path), "activity.log"
++                os.path.relpath(path, self.tasks_path), f"{section}.md"
+             )
+             self._run_git(["add", rel_log], cwd=self.tasks_path)
+ 

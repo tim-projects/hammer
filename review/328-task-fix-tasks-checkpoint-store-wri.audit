@@ -1,0 +1,16 @@
+{
+    "task_id": "328",
+    "patch_hash": "4214fb10071bb1b6a604bd6cdcefb154",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_checkpoint.py.patch",
+        "tasks_ai_commands_link.py.patch",
+        "tasks_ai_commands_modify.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tests_test_checkpoint_store_writes.py.patch",
+        "tests_test_unlink.py.patch"
+    ],
+    "status": "verified"
+}
