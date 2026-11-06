@@ -4,7 +4,6 @@ import os
 from tasks_ai.utils import store_lock
 
 
-
 class WorktreeManager:
     """
     Manages git worktrees for task isolation, replacing the legacy

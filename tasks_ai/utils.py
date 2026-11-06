@@ -8,7 +8,6 @@ from typing import Any
 
 from tasks_ai.file_manager import FM
 
-
 """Store-wide write lock for the shared .tasks repo.
 
 The store is one git repo written by every worktree and every agent session.
@@ -22,11 +21,6 @@ is the choke point for most mutations). Nested acquisitions of the same lock
 in one thread would deadlock, so a second request in the same thread passes
 straight through.
 """
-
-import fcntl
-import os
-import threading
-from contextlib import contextmanager
 
 _local = threading.local()
 
