@@ -1,0 +1,10 @@
+{
+  "Id": 333,
+  "Ti": "Write user tests for 332: Move path bleeds the shared store with git add -f .",
+  "Ty": "task",
+  "Cr": "261106 06:23",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "333-task-write-user-tests-for-332-move",
+  "Pt": 332
+}
