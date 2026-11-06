@@ -119,6 +119,16 @@
       "branch": "327-task-write-user-tests-for-326-fix-f",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/327-task-write-user-tests-for-326-fix-f",
       "task_file": "327-task-write-user-tests-for-326-fix-f"
+    },
+    "328": {
+      "branch": "328-task-fix-tasks-checkpoint-store-wri",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/328-task-fix-tasks-checkpoint-store-wri",
+      "task_file": "328-task-fix-tasks-checkpoint-store-wri"
+    },
+    "329": {
+      "branch": "329-task-write-user-tests-for-328-fix-t",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/329-task-write-user-tests-for-328-fix-t",
+      "task_file": "329-task-write-user-tests-for-328-fix-t"
     }
   }
 }
