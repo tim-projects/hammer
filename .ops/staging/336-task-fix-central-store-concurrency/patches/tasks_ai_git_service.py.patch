@@ -1,0 +1,130 @@
+diff --git a/tasks_ai/git_service.py b/tasks_ai/git_service.py
+index daecfb2d..7f44d7cb 100644
+--- a/tasks_ai/git_service.py
++++ b/tasks_ai/git_service.py
+@@ -20,7 +20,9 @@ class GitService:
+         if self._worktree_manager is None:
+             from .worktree_manager import WorktreeManager
+ 
+-            self._worktree_manager = WorktreeManager(self.context, self, logger=self.logger)
++            self._worktree_manager = WorktreeManager(
++                self.context, self, logger=self.logger
++            )
+         return self._worktree_manager
+ 
+     def log(self, message: str):
+@@ -37,7 +39,9 @@ class GitService:
+         """Run a git command."""
+         cwd = cwd or self.context.repo_root
+         env = os.environ.copy()
+-        env["HAMMER_INTERNAL_CALL"] = "1"  # exemption for hammer's own merge promotions (pre-merge-commit hook)
++        env["HAMMER_INTERNAL_CALL"] = (
++            "1"  # exemption for hammer's own merge promotions (pre-merge-commit hook)
++        )
+         result = subprocess.run(  # noqa: PLW1510
+             ["git"] + args, cwd=cwd, capture_output=capture, text=True, env=env
+         )
+@@ -105,15 +109,22 @@ class GitService:
+                 return branch
+         return "main"
+ 
+-    def is_merged(self, branch: str, target: str = "main", cwd: str | None = None) -> bool:
++    def is_merged(
++        self, branch: str, target: str = "main", cwd: str | None = None
++    ) -> bool:
+         # 1. Proactively refresh all remote references to avoid stale state
+         self.run(["fetch", "--all"], cwd=cwd or self.context.main_repo_root)
+ 
+         # 2. Check if the branch exists locally (or as a remote tracking branch)
+-        res = self.run(["rev-parse", "--verify", branch], cwd=cwd or self.context.main_repo_root)
++        res = self.run(
++            ["rev-parse", "--verify", branch], cwd=cwd or self.context.main_repo_root
++        )
+         if res.returncode != 0:
+             # Maybe it's a remote branch name, try searching for origin/branch
+-            res = self.run(["rev-parse", "--verify", f"origin/{branch}"], cwd=cwd or self.context.main_repo_root)
++            res = self.run(
++                ["rev-parse", "--verify", f"origin/{branch}"],
++                cwd=cwd or self.context.main_repo_root,
++            )
+             if res.returncode != 0:
+                 return False
+ 
+@@ -121,10 +132,19 @@ class GitService:
+         target_ref = f"origin/{target}"
+ 
+         # Verify target ref exists
+-        if self.run(["rev-parse", "--verify", target_ref], cwd=cwd or self.context.main_repo_root).returncode != 0:
++        if (
++            self.run(
++                ["rev-parse", "--verify", target_ref],
++                cwd=cwd or self.context.main_repo_root,
++            ).returncode
++            != 0
++        ):
+             target_ref = target  # fallback to local if remote missing
+ 
+-        res = self.run(["merge-base", "--is-ancestor", branch, target_ref], cwd=cwd or self.context.main_repo_root)
++        res = self.run(
++            ["merge-base", "--is-ancestor", branch, target_ref],
++            cwd=cwd or self.context.main_repo_root,
++        )
+         return res.returncode == 0
+ 
+     def check_main_divergence(self):
+@@ -225,7 +245,12 @@ class GitService:
+             ).stdout.strip()
+             if head != remote_head:
+                 self.run(
+-                    ["merge", f"origin/{branch}", "-m", "sync: merge remote tasks branch"],
++                    [
++                        "merge",
++                        f"origin/{branch}",
++                        "-m",
++                        "sync: merge remote tasks branch",
++                    ],
+                     cwd=tasks_path,
+                 )
+ 
+@@ -276,7 +301,9 @@ class GitService:
+         repo_root = self.context.main_repo_root
+ 
+         # 1. Ensure src and target exist
+-        if not self.branch_exists(src, repo_root) or not self.branch_exists(target, repo_root):
++        if not self.branch_exists(src, repo_root) or not self.branch_exists(
++            target, repo_root
++        ):
+             self.log(f"Skipping merge: {src} or {target} does not exist.")
+             return
+ 
+@@ -298,7 +325,10 @@ class GitService:
+             self.run(["push", "origin", target], cwd=repo_root)
+ 
+     def branch_exists(self, name: str, cwd: str | None = None) -> bool:
+-        return self.run(["rev-parse", "--verify", name], cwd=cwd, check=False).returncode == 0
++        return (
++            self.run(["rev-parse", "--verify", name], cwd=cwd, check=False).returncode
++            == 0
++        )
+ 
+     def promote_task(
+         self,
+@@ -424,10 +454,16 @@ class GitService:
+             for b in branches_to_sync:
+                 if self.branch_exists(b, repo_root):
+                     self.log(f"Git: Syncing {b} -> {branch} (demotion)")
+-                    self.run(["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"], cwd=wt_path)
++                    self.run(
++                        ["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
++                        cwd=wt_path,
++                    )
+         else:
+             self.run(["checkout", branch], cwd=repo_root)
+             for b in branches_to_sync:
+                 if self.branch_exists(b, repo_root):
+                     self.log(f"Git: Syncing {b} -> {branch} (demotion)")
+-                    self.run(["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"], cwd=repo_root)
++                    self.run(
++                        ["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
++                        cwd=repo_root,
++                    )
