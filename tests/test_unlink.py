@@ -38,6 +38,7 @@ class UnlinkTestBase(HammerTestBase):
             "hammer",
             "tasks.py",
             "tasks_ai/cli.py",
+            "tasks_ai/utils.py",
             "tasks_ai/commands/link.py",
             "tasks_ai/commands/unlink.py",
             "data/errors.json",
