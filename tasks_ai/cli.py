@@ -41,9 +41,8 @@ from .pipeline_hooks import (
     WorktreeSyncHook,
     WorktreeSyncOnExitTestingHook,
 )
-from .store_lock import store_lock
 from .task_service import TaskService
-from .utils import commit_task_paths
+from .utils import commit_task_paths, store_lock
 from .validation import Validation
 
 

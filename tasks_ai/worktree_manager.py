@@ -1,7 +1,8 @@
 import json
 import os
 
-from tasks_ai.store_lock import store_lock
+from tasks_ai.utils import store_lock
+
 
 
 class WorktreeManager:
