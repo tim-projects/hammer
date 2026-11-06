@@ -11,7 +11,45 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1793942183.634445,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/checkpoint.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tasks_ai_commands_checkpoint.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/link.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tasks_ai_commands_link.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tasks_ai_commands_modify.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_checkpoint_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tests_test_checkpoint_store_writes.py.patch"
+    },
+    {
+      "file": "tests/test_unlink.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/328-task-fix-tasks-checkpoint-store-wri/patches/tests_test_unlink.py.patch"
+    }
+  ]
 }
