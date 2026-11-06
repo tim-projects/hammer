@@ -73,9 +73,19 @@ class PipelineService:
         branch = task.metadata.get("Br", "")
 
         # 0. Fast-track check: If worktree branch is already merged, bypass gates
-        # Apply to REVIEW, STAGING, and DONE transitions
+        # Apply to REVIEW, STAGING, and DONE transitions.
+        # is_merged alone cannot tell a branch that did work and got merged from
+        # a freshly created one with zero commits: both are plain ancestors of
+        # main, and a fast-forward merge (what 'repo merge' runs) leaves no
+        # marker behind. The synced commit list in the task record is the only
+        # surviving evidence that the branch produced anything, so without it
+        # the regular gates must run.
         if target_state in ["REVIEW", "STAGING", "DONE"]:  # noqa: SIM102
-            if branch and self.git.is_merged(branch, "main"):
+            if (
+                branch
+                and self.git.is_merged(branch, "main")
+                and (task.parts.get("commits") or "").strip()
+            ):
                 self.log(
                     f"DEBUG: Task {task_id} worktree branch {branch} is already merged. Fast-tracking promotion to {target_state}."
                 )
@@ -150,7 +160,11 @@ class PipelineService:
                 )
 
         # 6. Check if staging is synced with source for DONE
-        if target_state == "DONE" and branch and not self.git.is_merged(branch, "staging"):
+        if (
+            target_state == "DONE"
+            and branch
+            and not self.git.is_merged(branch, "staging")
+        ):
             # Re-verify: Check specifically if the commit in the worktree branch is reachable from main
             # Since is_merged(branch, 'main') passed, we know it is.
             # However, we also want to ensure no local main divergence.
@@ -236,7 +250,9 @@ class PipelineService:
         auto-passed for them.
         """
         task_folder_name = os.path.basename(task_path)
-        patches_dir = os.path.join(cli.tasks_path, "review", task_folder_name, "patches")
+        patches_dir = os.path.join(
+            cli.tasks_path, "review", task_folder_name, "patches"
+        )
         if not task.metadata.get("PatchFiles"):
             return True
         return not (os.path.isdir(patches_dir) and os.listdir(patches_dir))
