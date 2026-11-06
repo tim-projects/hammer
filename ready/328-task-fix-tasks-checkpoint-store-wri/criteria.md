@@ -1,6 +1,0 @@
-- [ ] checkpoint stages only the target task's paths in .tasks: a test with two tasks pending in the store proves task A's checkpoint does not commit task B's changes
-- [ ] checkpoint fails loudly (error, non-zero exit, no 'Done.' log) when git add or commit fails; test induces contention (held index.lock) and asserts the failure surfaces
-- [ ] all task markdown parts (story/tech/plan/criteria/notes) sync into the record; test covers the main-repo cwd path and the task-worktree cwd path
-- [ ] all git calls in the sync path run with an explicit cwd (tasks_path or main_repo_root); no process-cwd dependence remains
-- [ ] store mutations around the task record are atomic: no window where a write is on disk but uncommitted and attributable to another agent's next commit
-- [ ] ./hammer check all passes; new tests added under tests/

@@ -129,6 +129,16 @@
       "branch": "329-task-write-user-tests-for-328-fix-t",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/329-task-write-user-tests-for-328-fix-t",
       "task_file": "329-task-write-user-tests-for-328-fix-t"
+    },
+    "330": {
+      "branch": "330-issue-hammer-check-all-cannot-run-in",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/330-issue-hammer-check-all-cannot-run-in",
+      "task_file": "330-issue-hammer-check-all-cannot-run-in"
+    },
+    "331": {
+      "branch": "331-task-write-user-tests-for-330-hamme",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/331-task-write-user-tests-for-330-hamme",
+      "task_file": "331-task-write-user-tests-for-330-hamme"
     }
   }
 }

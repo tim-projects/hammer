@@ -1,0 +1,1 @@
+check.py get_tool maps repo.lint/test/type_check/format to a command name (ruff, pytest, pyright) but the store config carries absolute paths (/bin/true). Either accept a path as a command, or normalise the store config to tool names, and make find_project_root detect a worktree .git file so a worktree is its own project root.
