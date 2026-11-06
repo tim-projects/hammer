@@ -1,0 +1,15 @@
+{
+    "task_id": "336",
+    "patch_hash": "0d3fb05ae0369b015df8a01c2e514695",
+    "patch_files": [
+        "tasks.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_counter.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tasks_ai_worktree_manager.py.patch",
+        "tests_test_store_concurrency.py.patch"
+    ],
+    "status": "verified"
+}
