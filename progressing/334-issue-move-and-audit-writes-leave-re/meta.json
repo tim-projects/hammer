@@ -8,5 +8,9 @@
   "Br": "334-issue-move-and-audit-writes-leave-re",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
