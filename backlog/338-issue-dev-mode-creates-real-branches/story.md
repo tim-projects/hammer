@@ -1,0 +1,1 @@
+As a hammer developer using --dev to try tool behavior, I need dev mode to leave the real repository completely untouched, so a dry run cannot create branches, worktrees, counter bumps, or guard rejections that later block real tasks.
