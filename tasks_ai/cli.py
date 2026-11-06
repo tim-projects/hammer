@@ -42,7 +42,7 @@ from .pipeline_hooks import (
     WorktreeSyncOnExitTestingHook,
 )
 from .task_service import TaskService
-from .utils import commit_task_paths
+from .utils import commit_task_paths, store_lock
 from .validation import Validation
 
 
@@ -75,7 +75,9 @@ class TasksCLI:
         self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())
         self.hook_registry.register_exit_hook("TESTING", ValidationHook())
-        self.hook_registry.register_exit_hook("TESTING", WorktreeSyncOnExitTestingHook())
+        self.hook_registry.register_exit_hook(
+            "TESTING", WorktreeSyncOnExitTestingHook()
+        )
         self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
         self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
 
@@ -704,9 +706,7 @@ class TasksCLI:
         self._run_git(["rm", "-rf", "--cached", self.tasks_dir], cwd=self.root)
 
         if os.path.exists(self.tasks_path):
-            print(
-                f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}"
-            )
+            print(f"DEBUG: Has data: {self._tasks_directory_has_data(self.tasks_path)}")
             if self._tasks_directory_has_data(self.tasks_path):
                 self._backup_tasks_directory(self.tasks_path)
                 if not force:
@@ -758,7 +758,9 @@ class TasksCLI:
         config_file = os.path.join(self.tasks_path, "config.yaml")
         if not os.path.exists(config_file):
             with open(config_file, "w") as f:
-                f.write("repo:\n  lint: /bin/true\n  test: /bin/true\n  type_check: /bin/true\n  format: /bin/true\n")
+                f.write(
+                    "repo:\n  lint: /bin/true\n  test: /bin/true\n  type_check: /bin/true\n  format: /bin/true\n"
+                )
             self._run_git(["add", "config.yaml"], cwd=self.tasks_path)
             self._run_git(["commit", "-m", "Init default config"], cwd=self.tasks_path)
 
@@ -999,7 +1001,9 @@ class TasksCLI:
                 continue
             branch = item
             try:
-                main_sha = self._run_git(["rev-parse", "main"], cwd=self.root).stdout.strip()
+                main_sha = self._run_git(
+                    ["rev-parse", "main"], cwd=self.root
+                ).stdout.strip()
                 branch_sha = self._run_git(
                     ["rev-parse", branch], cwd=self.context.main_repo_root
                 ).stdout.strip()
@@ -1036,16 +1040,25 @@ class TasksCLI:
         if not branch:
             branch = os.path.basename(filepath).rsplit(".", 1)[0]
 
-        has_origin = self._run_git(["remote", "get-url", "origin"], cwd=self.context.main_repo_root).returncode == 0
+        has_origin = (
+            self._run_git(
+                ["remote", "get-url", "origin"], cwd=self.context.main_repo_root
+            ).returncode
+            == 0
+        )
         if has_origin:
             if self._run_git(
-                ["ls-remote", "--heads", "origin", branch], cwd=self.context.main_repo_root
+                ["ls-remote", "--heads", "origin", branch],
+                cwd=self.context.main_repo_root,
             ).stdout:
                 return
         else:
-            if self._run_git(
-                ["rev-parse", "--verify", branch], cwd=self.context.main_repo_root
-            ).returncode == 0:
+            if (
+                self._run_git(
+                    ["rev-parse", "--verify", branch], cwd=self.context.main_repo_root
+                ).returncode
+                == 0
+            ):
                 return
 
         if not self.as_json:
@@ -1099,93 +1112,79 @@ class TasksCLI:
 
         filepath_str = cast(str, filepath)
         fname = os.path.basename(filepath_str)
-        all_commits = (
-            self._run_git(["log", "--all", "--format=%h"], cwd=self.tasks_path)
-            .stdout.strip()
-            .split("\n")
-        )
+        # Scoping and matching must be exact: a substring match lets commits
+        # about 11-task-x be mistaken for 1-task-x, and a global scan walks
+        # every commit every agent ever wrote to the store.
+        specs = [f":(glob)**/{fname}", f":(glob)**/{fname}/**"]
+        with store_lock(self):
+            scoped_commits = [
+                c
+                for c in self._run_git(
+                    ["log", "--all", "--format=%h", "--", *specs], cwd=self.tasks_path
+                )
+                .stdout.strip()
+                .split("\n")
+                if c
+            ]
+            if not scoped_commits:
+                self.error("Nothing to undo: no git history found.")
+            if len(scoped_commits) < 2:
+                self.error("Nothing to undo: first commit.")
+            prev_commit = scoped_commits[0]
+            prev_prev_commit = scoped_commits[1]
 
-        prev_commit = None
-        for commit in all_commits:
-            if not commit:
-                continue
             if (
-                fname
-                in self._run_git(
-                    ["ls-tree", "--name-only", "-r", commit], cwd=self.tasks_path
-                ).stdout
+                self._run_git(
+                    ["log", "-1", "--format=%s", prev_commit], cwd=self.tasks_path
+                )
+                .stdout.strip()
+                .startswith("Undo:")
             ):
-                prev_commit = commit
-                break
-        if not prev_commit:
-            self.error("Nothing to undo: no git history found.")
+                self.error("Cannot undo twice.")
 
-        prev_prev_commit = None
-        found_current = False
-        for commit in all_commits:
-            if not commit:
-                continue
-            if found_current:
-                prev_prev_commit = commit
-                break
-            if (
-                fname
-                in self._run_git(
-                    ["ls-tree", "--name-only", "-r", commit], cwd=self.tasks_path
-                ).stdout
-            ):
-                found_current = True
-        if not prev_prev_commit:
-            self.error("Nothing to undo: first commit.")
-
-        if (
-            self._run_git(
-                ["log", "-1", "--format=%s", prev_commit], cwd=self.tasks_path
+            tree_res = self._run_git(
+                ["ls-tree", "--name-only", "-r", prev_prev_commit], cwd=self.tasks_path
             )
-            .stdout.strip()
-            .startswith("Undo:")
-        ):
-            self.error("Cannot undo twice.")
+            # Slashes delimit path components, so '/<folder>/' cannot match
+            # inside a longer sibling folder name.
+            files_to_restore = [
+                f for f in tree_res.stdout.strip().split("\n") if f"/{fname}/" in f
+            ]
 
-        tree_res = self._run_git(
-            ["ls-tree", "--name-only", "-r", prev_prev_commit], cwd=self.tasks_path
-        )
-        files_to_restore = [
-            f for f in tree_res.stdout.strip().split("\n") if fname in f
-        ]
+            # Never create temp files inside the shared store: any unscoped add
+            # or another agent's checkpoint would sweep them into a commit.
+            temp_dir = tempfile.mkdtemp(prefix="hammer_undo_")
+            try:
+                for file_path in files_to_restore:
+                    out_path = os.path.join(temp_dir, os.path.basename(file_path))
+                    content = self._run_git(
+                        ["show", f"{prev_prev_commit}:{file_path}"], cwd=self.tasks_path
+                    ).stdout
+                    with open(out_path, "w") as f:
+                        f.write(content)
 
-        temp_dir = tempfile.mkdtemp(dir=self.tasks_path)
-        try:
-            for file_path in files_to_restore:
-                out_path = os.path.join(temp_dir, os.path.basename(file_path))
-                content = self._run_git(
-                    ["show", f"{prev_prev_commit}:{file_path}"], cwd=self.tasks_path
-                ).stdout
-                with open(out_path, "w") as f:
-                    f.write(content)
+                restored_task = FM.load(temp_dir)
+                prev_state = restored_task.metadata.get("St", "BACKLOG")
+                target_dir = os.path.join(
+                    self.tasks_path, STATE_FOLDERS.get(prev_state, "backlog"), fname
+                )
 
-            restored_task = FM.load(temp_dir)
-            prev_state = restored_task.metadata.get("St", "BACKLOG")
-            target_dir = os.path.join(
-                self.tasks_path, STATE_FOLDERS.get(prev_state, "backlog"), fname
-            )
-
-            if os.path.isdir(filepath_str):
-                shutil.rmtree(filepath_str)
-            shutil.move(temp_dir, target_dir)
-            commit_task_paths(
-                self,
-                target_dir,
-                f"Undo: restore {fname} to {prev_prev_commit[:7]}",
-                filepath_str,
-            )
-            self._append_log(target_dir, "Und")
-            self.log(f"Undone: restored to {prev_state}")
-            self.finish({"success": True, "previous_state": prev_state})
-        except Exception:
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
-            raise
+                if os.path.isdir(filepath_str):
+                    shutil.rmtree(filepath_str)
+                shutil.move(temp_dir, target_dir)
+                commit_task_paths(
+                    self,
+                    target_dir,
+                    f"Undo: restore {fname} to {prev_prev_commit[:7]}",
+                    filepath_str,
+                )
+                self._append_log(target_dir, "Und")
+                self.log(f"Undone: restored to {prev_state}")
+                self.finish({"success": True, "previous_state": prev_state})
+            except Exception:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                raise
 
     def upgrade(self):
         import subprocess
