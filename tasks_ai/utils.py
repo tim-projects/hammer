@@ -62,8 +62,37 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
                     shutil.rmtree(temp_dir)
                 raise
 
+def store_is_git(cli):
+    """True when the store lives inside a git work tree.
+
+    'tasks init' clones the store's own repo, but a store can also be a plain
+    directory that was never initialised; those have no history to write to, so
+    store writes are skipped there instead of failing the command.
+    """
+    res = cli._run_git(['rev-parse', '--is-inside-work-tree'], cwd=cli.tasks_path)
+    return res.returncode == 0 and res.stdout.strip() == 'true'
+
+def commit_task_paths(cli, task_filepath, message):
+    """Stage and commit only this task's paths in the shared store.
+
+    The store is one git repo shared by every agent, so 'add --all' would commit
+    other tasks' uncommitted records under our message. A failing add or commit
+    must be fatal: a silent failure writes to disk but never to the record.
+    """
+    if not store_is_git(cli):
+        return
+    rel_path = os.path.relpath(task_filepath, cli.tasks_path)
+    add = cli._run_git(['add', '--', rel_path], cwd=cli.tasks_path)
+    if add.returncode != 0:
+        cli.error('STORE_WRITE_FAIL', message=message,
+                  detail=(add.stderr or '').strip() or 'git add failed')
+    commit = cli._run_git(['commit', '--allow-empty', '-m', message], cwd=cli.tasks_path)
+    if commit.returncode != 0:
+        cli.error('STORE_WRITE_FAIL', message=message,
+                  detail=(commit.stderr or '').strip() or 'git commit failed')
+
 def sync_task_content(cli, filepath, task, is_final=False) -> bool:
-    """Sync task metadata with current branch commits and notes."""
+    """Sync task metadata with current branch commits, notes and store changes."""
     from .constants import CURRENT_TASK_FILENAME
     if not filepath:
         return False
@@ -71,12 +100,13 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
     tn = os.path.basename(filepath_str)
     _, branch = parse_filename(tn)
     updated = False
+    main_root = cli.context.main_repo_root
     default_branch = 'main'
     for b in ['main', 'master']:
-        if cli._run_git(['rev-parse', '--verify', b]).returncode == 0:
+        if cli._run_git(['rev-parse', '--verify', b], cwd=main_root).returncode == 0:
             default_branch = b
             break
-    res = cli._run_git(['log', branch, f'^{default_branch}', '--oneline'])
+    res = cli._run_git(['log', branch, f'^{default_branch}', '--oneline'], cwd=main_root)
     commits = res.stdout.strip() if res.returncode == 0 else ''
     if commits:
         task.parts['commits'] = commits
@@ -87,30 +117,30 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
         if dump.parts.get('content'):
             task.parts['notes'] = dump.parts['content']
             updated = True
-    rel_task_dir = os.path.relpath(filepath_str, cli.root)
-    res_unstaged = cli._run_git(['diff', '--name-only', '--', rel_task_dir], cwd=cli.root)
-    res_staged = cli._run_git(['diff', '--cached', '--name-only', '--', rel_task_dir], cwd=cli.root)
-    changed_files = set()
-    if res_unstaged.returncode == 0 and res_unstaged.stdout.strip():
-        changed_files.update(res_unstaged.stdout.strip().splitlines())
-    if res_staged.returncode == 0 and res_staged.stdout.strip():
-        changed_files.update(res_staged.stdout.strip().splitlines())
-    for rel_path in changed_files:
-        if not rel_path.endswith('.md'):
-            continue
-        fname = os.path.basename(rel_path)
-        if fname == CURRENT_TASK_FILENAME:
-            continue
-        part_name = fname[:-3]
-        abs_path = os.path.join(cli.root, rel_path)
-        try:
-            with open(abs_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+    # The task record lives in the shared store, which the main repo ignores, so
+    # pending changes are detected in the store repo and part files are read
+    # straight off disk instead of diffed against the main repo.
+    rel_task_dir = os.path.relpath(filepath_str, cli.tasks_path)
+    if store_is_git(cli):
+        res_status = cli._run_git(['status', '--porcelain', '--', rel_task_dir], cwd=cli.tasks_path)
+        if res_status.returncode != 0:
+            cli.error('STORE_WRITE_FAIL', message='inspect task record',
+                      detail=(res_status.stderr or '').strip() or 'git status failed')
+        if res_status.stdout.strip():
+            updated = True
+    if os.path.isdir(filepath_str):
+        for entry in sorted(os.listdir(filepath_str)):
+            if not entry.endswith('.md') or entry == CURRENT_TASK_FILENAME:
+                continue
+            try:
+                with open(os.path.join(filepath_str, entry), 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except OSError:
+                continue
+            part_name = entry[:-3]
             if task.parts.get(part_name) != content:
                 task.parts[part_name] = content
                 updated = True
-        except Exception:  # noqa: BLE001, S110
-            pass
     return updated
 
 def perform_move(cli, task, current_state, new_status, filepath):
