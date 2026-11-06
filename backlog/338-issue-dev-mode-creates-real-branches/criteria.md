@@ -1,4 +1,0 @@
-- [ ] no --dev command creates, deletes, or mutates a branch, worktree, or tag in the main repo: test asserts git branch and git worktree list are byte-identical before and after a full dev create/mount/checkpoint cycle
-- [ ] dev-mode guard checks cannot reject a REAL promotion because of dev-created state: test runs a dev create at an id that collides with a real branch, then promotes the real task successfully
-- [ ] if dev operations are refused instead of isolated, the error names the exact command and the flag to reach a real environment
-- [ ] AGENTS.md --dev guidance matches the implemented behavior; ./hammer check all passes
