@@ -139,6 +139,16 @@
       "branch": "331-task-write-user-tests-for-330-hamme",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/331-task-write-user-tests-for-330-hamme",
       "task_file": "331-task-write-user-tests-for-330-hamme"
+    },
+    "332": {
+      "branch": "332-issue-move-path-bleeds-the-shared-st",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/332-issue-move-path-bleeds-the-shared-st",
+      "task_file": "332-issue-move-path-bleeds-the-shared-st"
+    },
+    "333": {
+      "branch": "333-task-write-user-tests-for-332-move",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/333-task-write-user-tests-for-332-move",
+      "task_file": "333-task-write-user-tests-for-332-move"
     }
   }
 }

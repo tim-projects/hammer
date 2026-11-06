@@ -1,0 +1,1 @@
+1. In a store with two PROGRESSING tasks, edit task B's story.md on disk and run 'tasks move <task A> TESTING'; git -C .tasks log -1 --name-only shows B's story.md inside the Mv commit, and git -C .tasks status still lists .ops/staging/<A>/... and ready/<A>/ deletions as pending

@@ -1,0 +1,12 @@
+{
+  "Id": 332,
+  "Ti": "Move path bleeds the shared store with git add -f .",
+  "Ty": "issue",
+  "Cr": "261106 06:22",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "332-issue-move-path-bleeds-the-shared-st",
+  "Pt": null,
+  "Rc": "",
+  "Vp": false
+}
