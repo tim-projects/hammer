@@ -149,6 +149,16 @@
       "branch": "333-task-write-user-tests-for-332-move",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/333-task-write-user-tests-for-332-move",
       "task_file": "333-task-write-user-tests-for-332-move"
+    },
+    "334": {
+      "branch": "334-issue-move-and-audit-writes-leave-re",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/334-issue-move-and-audit-writes-leave-re",
+      "task_file": "334-issue-move-and-audit-writes-leave-re"
+    },
+    "335": {
+      "branch": "335-task-write-user-tests-for-334-move",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/335-task-write-user-tests-for-334-move",
+      "task_file": "335-task-write-user-tests-for-334-move"
     }
   }
 }

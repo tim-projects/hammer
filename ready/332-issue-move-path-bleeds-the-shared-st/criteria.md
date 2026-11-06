@@ -1,5 +1,0 @@
-- [ ] a test where task B has a pending edit proves tasks move of task A does not commit B's changes
-- [ ] after any move the store has no pending change for the moved task: no .ops/staging/<task> leftovers and no old-state-folder deletions
-- [ ] the Mv commit contains only the moved task's old and new state paths
-- [ ] undo still restores the previous state after a move (Mv commits remain in history for the task path)
-- [ ] full test suite passes; new tests under tests/
