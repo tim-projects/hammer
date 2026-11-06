@@ -1,0 +1,23 @@
+diff --git a/tasks_ai/commands/audit.py b/tasks_ai/commands/audit.py
+index 6ea6c1c1..96f34d1e 100644
+--- a/tasks_ai/commands/audit.py
++++ b/tasks_ai/commands/audit.py
+@@ -2,6 +2,7 @@ import os
+ 
+ from ..audit import generate_audit
+ from ..file_manager import FM
++from ..utils import commit_task_paths
+ 
+ 
+ def run(cli, task_id):
+@@ -34,5 +35,10 @@ def run(cli, task_id):
+             cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
+     output_path = os.path.join(review_dir, f'{task_folder_name}.audit')
+     generate_audit(task_id, current_path, patches_dir, output_path)
++    # Close out this task's review artifacts: the audit file and the patch it
++    # verified would otherwise sit untracked in the shared store until some
++    # other command's store-wide add swept them up.
++    commit_task_paths(cli, os.path.join(review_dir, task_folder_name),
++                      f'Audit {task_id}', output_path)
+     cli.log(f'✅ Audit log created for task {task_id}')
+     cli.finish({"id": task_id, "task_id": task_folder_name, "audit_path": output_path, "patches": task.metadata.get("PatchFiles", [])})

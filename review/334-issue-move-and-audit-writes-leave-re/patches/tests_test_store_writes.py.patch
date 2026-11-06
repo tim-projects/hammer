@@ -1,0 +1,78 @@
+diff --git a/tests/test_store_writes.py b/tests/test_store_writes.py
+index b9af6c40..10eabab2 100644
+--- a/tests/test_store_writes.py
++++ b/tests/test_store_writes.py
+@@ -357,6 +357,73 @@ class TestCheckpointStoreWrites(unittest.TestCase):
+         self.assertTrue([line for line in status.splitlines() if file_b in line],
+                         f'task B must still be pending: {status}')
+ 
++    def test_move_clears_legacy_ops_copy(self):
++        """A .ops staging copy committed by the legacy add -f . must be closed.
++
++        The move deletes the copy, so its deletion has to land in the move commit
++        instead of staying pending where nothing scoped will ever pick it up.
++        """
++        _, file_a = self.make_task('Zeta task for legacy ops cleanup')
++        staging = os.path.join(self.store, '.ops', 'staging', file_a)
++        os.makedirs(staging, exist_ok=True)
++        shutil.copy2(os.path.join(self.task_dir(file_a, 'backlog'), 'meta.json'), staging)
++        self.assertTrue(self.store_git('add', '--', '.ops/staging').returncode == 0)
++        self.store_git('commit', '-m', 'legacy staging commit')
++
++        moved = self.run_cmd(['move', file_a, 'READY'])
++        self.assertTrue(moved['success'], moved)
++
++        self.assertIn(f'.ops/staging/{file_a}/meta.json', self.commit_files(),
++                      'the legacy .ops deletion must be committed by the move')
++        status = self.store_git('status', '--porcelain', '--untracked-files=all').stdout
++        self.assertFalse([line for line in status.splitlines() if '.ops/' in line],
++                         f'no .ops residue may stay pending: {status}')
++
++    def test_audit_commits_its_own_review_artifacts(self):
++        """tasks audit must close out the audit file and patches it writes.
++
++        Both used to sit untracked in the shared store until some other
++        command's store-wide add swept them up.
++        """
++        _, file_a = self.make_processing_task('Iota task for audit store write')
++        with open(os.path.join(self.task_dir(file_a), 'criteria.md'), 'w') as handle:
++            handle.write('- [x] done\n- [x] also done\n')
++        for state in ('TESTING', 'REVIEW'):
++            self.assertTrue(self.run_cmd(['move', file_a, state])['success'], state)
++
++        audited = self.run_cmd(['audit', file_a])
++        self.assertTrue(audited['success'], audited)
++        audit_rel = f'review/{file_a}.audit'
++
++        self.assertIn(audit_rel, self.commit_files(), 'audit output must be committed')
++        subject = self.store_git('log', '-1', '--format=%s').stdout.strip()
++        self.assertEqual(subject, f'Audit {file_a}')
++        pending = [line for line in
++                   self.store_git('status', '--porcelain', '--untracked-files=all').stdout.splitlines()
++                   if file_a in line]
++        self.assertEqual(pending, [], f'audit must leave nothing pending: {pending}')
++
++    def test_move_commits_the_audit_sibling(self):
++        """A move into READY/PROGRESSING cleans review artifacts; that deletion
++        must land in the move commit when the audit file was committed."""
++        _, file_a = self.make_processing_task('Kappa task for audit sibling')
++        with open(os.path.join(self.task_dir(file_a), 'criteria.md'), 'w') as handle:
++            handle.write('- [x] done\n- [x] also done\n')
++        for state in ('TESTING', 'REVIEW'):
++            self.assertTrue(self.run_cmd(['move', file_a, state])['success'], state)
++        self.assertTrue(self.run_cmd(['audit', file_a])['success'])
++
++        moved = self.run_cmd(['move', file_a, 'PROGRESSING'])
++        self.assertTrue(moved['success'], moved)
++
++        committed = self.commit_files()
++        self.assertTrue([p for p in committed if f'ready/{file_a}/' in p or
++                         f'progressing/{file_a}/' in p], committed)
++        pending = [line for line in
++                   self.store_git('status', '--porcelain', '--untracked-files=all').stdout.splitlines()
++                   if file_a in line or '.ops/' in line]
++        self.assertEqual(pending, [], f'the move must close out its artifacts: {pending}')
++
+ 
+ if __name__ == '__main__':
+     unittest.main()

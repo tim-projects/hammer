@@ -1,0 +1,35 @@
+{
+  "Id": 334,
+  "Ti": "Move and audit writes leave residue pending in the shared store",
+  "Ty": "issue",
+  "Cr": "261106 07:09",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "334-issue-move-and-audit-writes-leave-re",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1793951130.394111,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/commands/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/334-issue-move-and-audit-writes-leave-re/patches/tasks_ai_commands_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/334-issue-move-and-audit-writes-leave-re/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/334-issue-move-and-audit-writes-leave-re/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/334-issue-move-and-audit-writes-leave-re/patches/tests_test_store_writes.py.patch"
+    }
+  ]
+}

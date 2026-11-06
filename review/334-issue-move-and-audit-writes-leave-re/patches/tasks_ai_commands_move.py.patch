@@ -1,0 +1,24 @@
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index 7906f95b..aaa42489 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -217,10 +217,15 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+             shutil.rmtree(staged_task_path)
+         raise
+ 
+-    # Commit only this task's old and new paths: the store is shared by every
+-    # agent, and a store-wide add would commit their pending work under this
+-    # move. The .ops/staging copy is never staged, so it leaves nothing pending.
++    # Commit every path this move touches: the store is shared by every agent, so
++    # a store-wide add would commit their pending work under this move's message.
++    # The old state folder is recorded as deleted, the .ops staging copy (which
++    # legacy store-wide adds committed) too, and the task's audit sibling, which
++    # 'tasks audit' writes into review/ and which must not stay pending for
++    # someone else's commit to sweep up.
++    audit_sibling = os.path.join(cli.tasks_path, 'review',
++                                 f'{os.path.basename(filepath_str)}.audit')
+     commit_task_paths(cli, new_filepath, f'Mv {os.path.basename(filepath_str)} -> {new_status}',
+-                      filepath_str)
++                      filepath_str, staged_task_path, audit_sibling)
+ 
+     return True
