@@ -1,14 +1,15 @@
-"""checkpoint must own its slice of the shared .tasks store.
+"""checkpoint and move must own their own slice of the shared .tasks store.
 
-Three behaviours are locked down here:
+Locked down here:
 
-1. Scope: 'tasks checkpoint <id>' stages only that task's paths, so one agent's
-   checkpoint cannot commit another agent's uncommitted work.
-2. Loudness: a failing 'git add' or 'git commit' in the store must fail the
-   command (error, non-zero exit, no 'Done.') instead of silently losing the
-   record.
-3. Sync: all task markdown parts must reach the record, and every git call in
-   the sync path must work from any cwd (main repo root or a task worktree).
+1. Scope: 'tasks checkpoint <id>' and 'tasks move' stage only that task's paths,
+   so one agent's write never commits another agent's uncommitted work.
+2. Loudness: a failing 'git add' or 'git commit' in the store fails the command
+   (error, non-zero exit, no 'Done.') instead of silently losing the record.
+3. Cleanliness: after a move the store has nothing pending for the moved task -
+   no .ops/staging copy, no old-state-folder deletions.
+4. Sync: all task markdown parts reach the record, from any cwd (main repo root
+   or a task worktree).
 """
 import json
 import os
@@ -138,6 +139,17 @@ class TestCheckpointStoreWrites(unittest.TestCase):
             self.assertTrue(moved['success'], moved)
         return res['data']['id'], task_file
 
+    def make_task(self, title):
+        res = self.run_cmd([
+            'create', title,
+            '--story', STORY,
+            '--tech', TECH,
+            '--criteria', CRITERIA,
+            '--plan', PLAN,
+        ])
+        self.assertTrue(res['success'], res)
+        return res['data']['id'], res['data']['file']
+
     def task_dir(self, task_file, state='progressing'):
         return os.path.join(self.store, state, task_file)
 
@@ -148,7 +160,9 @@ class TestCheckpointStoreWrites(unittest.TestCase):
         return path
 
     def commit_files(self, rev='HEAD'):
-        out = self.store_git('show', '--name-only', '--format=', rev).stdout
+        # --no-renames: a move must show up as the new path added *and* the old
+        # state folder deleted, not as a silent rename that hides the deletion.
+        out = self.store_git('show', '--name-only', '--no-renames', '--format=', rev).stdout
         return [line for line in out.splitlines() if line.strip()]
 
     # --- tests ---
@@ -276,6 +290,72 @@ class TestCheckpointStoreWrites(unittest.TestCase):
         self.assertIn(f'progressing/{file_a}/plan.md', committed, committed)
         shown = self.store_git('show', f'HEAD:progressing/{file_a}/plan.md').stdout
         self.assertEqual(shown.strip(), plan)
+
+    # --- move path ---
+
+    def test_move_does_not_commit_other_task_pending_changes(self):
+        _, file_a = self.make_task('Alpha task for move scoping')
+        _, file_b = self.make_task('Beta task for move scoping')
+        b_edit = f'{STORY}\nagent B uncommitted edit'
+        self.write_part(file_b, 'story', b_edit, state='backlog')
+
+        res = self.run_cmd(['move', file_a, 'READY'])
+        self.assertTrue(res['success'], res)
+
+        subject = self.store_git('log', '-1', '--format=%s').stdout.strip()
+        self.assertEqual(subject, f'Mv {file_a} -> READY')
+        committed = self.commit_files()
+        self.assertTrue([p for p in committed if file_a in p], committed)
+        self.assertFalse([p for p in committed if file_b in p], committed)
+        self.assertIn(f'ready/{file_a}/story.md', committed,
+                      'the moved record must be in the move commit')
+        self.assertIn(f'backlog/{file_a}/story.md', committed,
+                      'the old state folder must be recorded as deleted')
+
+        status = self.store_git('status', '--porcelain', '--untracked-files=all').stdout
+        self.assertIn(f'backlog/{file_b}/story.md', status,
+                      f'task B must still be pending: {status}')
+        with open(os.path.join(self.task_dir(file_b, 'backlog'), 'story.md')) as handle:
+            self.assertEqual(handle.read(), b_edit, 'B must keep its uncommitted edit')
+
+    def test_store_has_no_pending_leftovers_after_move(self):
+        _, file_a = self.make_task('Gamma task for move cleanliness')
+        res = self.run_cmd(['move', file_a, 'READY'])
+        self.assertTrue(res['success'], res)
+
+        status = self.store_git('status', '--porcelain', '--untracked-files=all').stdout
+        ops_leftovers = [line for line in status.splitlines() if '.ops/' in line]
+        self.assertEqual(ops_leftovers, [],
+                         f'the .ops staging copy must not linger: {status}')
+        stale = [line for line in status.splitlines() if f'backlog/{file_a}/' in line]
+        self.assertEqual(stale, [],
+                         f'the old state folder must be committed as deleted: {status}')
+        moved = [line for line in status.splitlines() if f'ready/{file_a}/' in line]
+        self.assertEqual(moved, [], f'the new record must be committed: {status}')
+
+    def test_move_leaves_the_store_clean_for_both_agents(self):
+        """The move commit must close out the move, leaving nothing pending.
+
+        'tasks undo' cannot assert this end to end: it silently no-ops in this
+        fixture (a pre-existing defect, independent of the store write), so the
+        cleanup is asserted straight from the store instead.
+        """
+        _, file_a = self.make_task('Delta task for move cleanliness')
+        _, file_b = self.make_task('Epsilon task for move cleanliness')
+        self.write_part(file_b, 'story', f'{STORY}\nagent B uncommitted edit',
+                        state='backlog')
+
+        moved = self.run_cmd(['move', file_a, 'READY'])
+        self.assertTrue(moved['success'], moved)
+
+        committed = self.commit_files()
+        self.assertIn(f'ready/{file_a}/story.md', committed, committed)
+        self.assertIn(f'backlog/{file_a}/story.md', committed, committed)
+        status = self.store_git('status', '--porcelain', '--untracked-files=all').stdout
+        self.assertFalse([line for line in status.splitlines() if file_a in line],
+                         f'nothing may stay pending for the moved task: {status}')
+        self.assertTrue([line for line in status.splitlines() if file_b in line],
+                        f'task B must still be pending: {status}')
 
 
 if __name__ == '__main__':
