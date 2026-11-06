@@ -1,0 +1,1 @@
+- [ ] check all run from a task worktree executes the configured tools instead of aborting with not configured; check all on main is not silently skipped by the hash short-circuit; a test covers a worktree invocation.
