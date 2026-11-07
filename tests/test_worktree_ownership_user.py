@@ -1,0 +1,151 @@
+"""User tests for task 350: hammer owns worktree paths end to end.
+
+These drive the hammer CLI the way a user does, in the --dev fixture repo, and
+assert that drift goes from silent to loud: a stray directory under
+.task-worktrees/ is reported by `guard scan` and removed by `tasks doctor --fix`,
+a worktree registered at a drifted path never blocks a correctly named one, and
+`tasks current` answers where the worktree is.
+"""
+
+import hashlib
+import json
+import os
+import subprocess
+
+from tests.hammer_test_base import HammerTestBase, ensure_dev_repo
+
+STORY = "Sufficiently long story content here to pass validation"
+TECH = "Sufficiently long technical description here to pass validation"
+CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
+PLAN = "Sufficiently long planning details here to pass validation"
+TITLE = "Worktree Ownership Probe Task"
+BASE_ID = 9100
+
+
+class OwnershipTestBase(HammerTestBase):
+    def setUp(self):
+        super().setUp()
+        fixture_hammer = os.path.join(self.repo_path, "hammer")
+        if os.path.lexists(fixture_hammer):
+            os.remove(fixture_hammer)
+        os.symlink(os.path.join(os.getcwd(), "hammer"), fixture_hammer)
+
+    @property
+    def dev_repo_dir(self):
+        """The throwaway repo the --dev CLI acts on, never this fixture repo."""
+        return ensure_dev_repo(self.dev_tasks_dir)
+
+    def git(self, args, cwd=None):
+        return subprocess.run(
+            ["git"] + args,
+            cwd=cwd or self.repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def seed_counter(self, value):
+        with open(os.path.join(self.dev_tasks_dir, ".task_counter"), "w") as handle:
+            handle.write(str(value))
+        digest = hashlib.md5(str(value).encode()).hexdigest()
+        with open(
+            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
+        ) as handle:
+            handle.write(digest)
+
+    def create_task(self, counter=BASE_ID):
+        self.seed_counter(counter - 1)
+        result = self.run_tasks(
+            [
+                "create",
+                TITLE,
+                "--story",
+                STORY,
+                "--tech",
+                TECH,
+                "--criteria",
+                CRITERIA,
+                "--plan",
+                PLAN,
+            ]
+        )
+        assert result.returncode == 0, result.stdout
+        return json.loads(result.stdout)["data"]
+
+    def guard_scan(self):
+        return subprocess.run(
+            [os.path.join(self.repo_path, "hammer"), "guard", "scan", "--dev"],
+            cwd=self.repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def doctor(self, fix=False):
+        args = [os.path.join(self.repo_path, "hammer"), "tasks", "--dev", "doctor"]
+        if fix:
+            args.append("--fix")
+        return subprocess.run(
+            args, cwd=self.repo_path, capture_output=True, text=True, check=False
+        )
+
+
+class TestGuardSeesUnownedDirectories(OwnershipTestBase):
+    def test_stray_directory_under_the_base_is_reported(self):
+        stray = os.path.join(self.dev_repo_dir, ".task-worktrees", "999-task-none")
+        os.makedirs(stray)
+        result = self.guard_scan()
+        text = result.stdout + result.stderr
+        self.assertIn("GUARD_WORKTREE_UNREGISTERED", text)
+        self.assertIn(stray, text)
+
+    def test_doctor_fix_removes_only_the_stray(self):
+        payload = self.create_task()
+        real = payload["worktree"]
+        stray = os.path.join(self.dev_repo_dir, ".task-worktrees", "999-task-none")
+        os.makedirs(stray)
+
+        self.doctor(fix=True)
+        self.assertFalse(os.path.exists(stray), "stray directory survived --fix")
+        self.assertTrue(os.path.exists(real), "the registered worktree was damaged")
+        self.assertNotIn("GUARD_WORKTREE_UNREGISTERED", self.guard_scan().stdout)
+
+
+class TestDriftedPathDoesNotBlockTheHealthyTask(OwnershipTestBase):
+    def test_a_healthy_worktree_is_not_reported(self):
+        payload = self.create_task()
+        result = self.guard_scan()
+        text = result.stdout + result.stderr
+        self.assertNotIn(f"[{payload['id']}]", text)
+        self.assertNotIn(payload["file"], text)
+
+
+class TestCurrentAnswersWhereTheWorktreeIs(OwnershipTestBase):
+    def test_current_reports_the_worktree_hammer_created(self):
+        payload = self.create_task()
+        out = self.run_tasks(["current", str(payload["id"])])
+        assert out.returncode == 0, out.stdout
+        data = json.loads(out.stdout)["data"]
+        self.assertEqual(data["worktree_path"], payload["worktree"])
+        self.assertTrue(os.path.isdir(data["worktree_path"]))
+
+    def test_mount_creates_the_worktree_when_it_is_missing(self):
+        payload = self.create_task()
+        # Drop the registered worktree the way a pruned checkout does.
+        subprocess.run(
+            ["git", "worktree", "remove", "--force", payload["worktree"]],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertFalse(os.path.exists(payload["worktree"]))
+
+        out = self.run_tasks(["mount", str(payload["id"])])
+        assert out.returncode == 0, out.stdout
+        data = json.loads(out.stdout)["data"]
+        self.assertTrue(os.path.isdir(data["worktree_path"]))
+        self.assertIn(
+            data["worktree_path"],
+            self.git(["worktree", "list"], cwd=self.dev_repo_dir).stdout,
+        )
