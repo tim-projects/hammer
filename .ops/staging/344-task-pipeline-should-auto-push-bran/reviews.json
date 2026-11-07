@@ -1,0 +1,15 @@
+{
+  "reviews": [
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch": "tasks_ai_pipeline_hooks.py.patch",
+      "md5": "98c508a0b1071afe102d5a93c2c8fb73"
+    },
+    {
+      "file": "tests/test_worktree_check_hook.py",
+      "patch": "tests_test_worktree_check_hook.py.patch",
+      "md5": "7d4443de298a9f939df1bcc971e0cd0a"
+    }
+  ],
+  "reviewed_at": 1794051981.9003725
+}

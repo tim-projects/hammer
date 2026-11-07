@@ -1,0 +1,27 @@
+{
+  "Id": 344,
+  "Ti": "Pipeline should auto-push branches instead of demanding manual push",
+  "Ty": "task",
+  "Cr": "261107 11:17",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "344-task-pipeline-should-auto-push-bran",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794051993.520163,
+  "DoneAt": 1794052032.946757,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/344-task-pipeline-should-auto-push-bran/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_check_hook.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/344-task-pipeline-should-auto-push-bran/patches/tests_test_worktree_check_hook.py.patch"
+    }
+  ]
+}

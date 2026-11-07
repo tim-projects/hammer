@@ -160,11 +160,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/339-task-write-user-tests-for-338-dev-m",
       "task_file": "339-task-write-user-tests-for-338-dev-m"
     },
-    "340": {
-      "branch": "340-issue-tracked-tests-tasks-ai-package",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/340-issue-tracked-tests-tasks-ai-package",
-      "task_file": "340-issue-tracked-tests-tasks-ai-package"
-    },
     "341": {
       "branch": "341-task-write-user-tests-for-340-track",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/341-task-write-user-tests-for-340-track",
@@ -179,6 +174,16 @@
       "branch": "343-task-write-user-tests-for-342-gates",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/343-task-write-user-tests-for-342-gates",
       "task_file": "343-task-write-user-tests-for-342-gates"
+    },
+    "344": {
+      "branch": "344-task-pipeline-should-auto-push-bran",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/344-task-pipeline-should-auto-push-bran",
+      "task_file": "344-task-pipeline-should-auto-push-bran"
+    },
+    "345": {
+      "branch": "345-task-write-user-tests-for-344-pipel",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/345-task-write-user-tests-for-344-pipel",
+      "task_file": "345-task-write-user-tests-for-344-pipel"
     }
   }
 }
