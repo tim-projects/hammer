@@ -1,0 +1,10 @@
+{
+  "Id": 351,
+  "Ti": "Write user tests for 350: Hammer must own worktree paths instead of letting a tool invent one",
+  "Ty": "task",
+  "Cr": "261107 12:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "351-task-write-user-tests-for-350-hamme",
+  "Pt": 350
+}
