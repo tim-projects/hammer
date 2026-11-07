@@ -175,15 +175,40 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/343-task-write-user-tests-for-342-gates",
       "task_file": "343-task-write-user-tests-for-342-gates"
     },
-    "344": {
-      "branch": "344-task-pipeline-should-auto-push-bran",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/344-task-pipeline-should-auto-push-bran",
-      "task_file": "344-task-pipeline-should-auto-push-bran"
-    },
     "345": {
       "branch": "345-task-write-user-tests-for-344-pipel",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/345-task-write-user-tests-for-344-pipel",
       "task_file": "345-task-write-user-tests-for-344-pipel"
+    },
+    "346": {
+      "branch": "346-issue-guard-must-reject-a-worktree-w",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/346-issue-guard-must-reject-a-worktree-w",
+      "task_file": "346-issue-guard-must-reject-a-worktree-w"
+    },
+    "347": {
+      "branch": "347-task-write-user-tests-for-346-guard",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/347-task-write-user-tests-for-346-guard",
+      "task_file": "347-task-write-user-tests-for-346-guard"
+    },
+    "348": {
+      "branch": "348-issue-task-branch-and-directory-name",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/348-issue-task-branch-and-directory-name",
+      "task_file": "348-issue-task-branch-and-directory-name"
+    },
+    "349": {
+      "branch": "349-task-write-user-tests-for-348-task",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/349-task-write-user-tests-for-348-task",
+      "task_file": "349-task-write-user-tests-for-348-task"
+    },
+    "350": {
+      "branch": "350-issue-hammer-must-own-worktree-paths",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/350-issue-hammer-must-own-worktree-paths",
+      "task_file": "350-issue-hammer-must-own-worktree-paths"
+    },
+    "351": {
+      "branch": "351-task-write-user-tests-for-350-hamme",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/351-task-write-user-tests-for-350-hamme",
+      "task_file": "351-task-write-user-tests-for-350-hamme"
     }
   }
 }

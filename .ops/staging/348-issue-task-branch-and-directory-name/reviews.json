@@ -1,0 +1,25 @@
+{
+  "reviews": [
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch": "tasks_ai_commands_create.py.patch",
+      "md5": "730f417b79da1d0dfe0da52b286fdac6"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch": "tasks_ai_commands_doctor.py.patch",
+      "md5": "8a6aff0de761f05f98a56ddf9f2cd6a5"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch": "tasks_ai_utils.py.patch",
+      "md5": "728416d4c8c0c717185bb235a9270712"
+    },
+    {
+      "file": "tests/test_task_naming.py",
+      "patch": "tests_test_task_naming.py.patch",
+      "md5": "c66e910f645a50408f4f249bbfc1e23b"
+    }
+  ],
+  "reviewed_at": 1794056047.9149075
+}
