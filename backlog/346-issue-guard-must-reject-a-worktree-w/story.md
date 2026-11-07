@@ -1,0 +1,1 @@
+As a hammer developer, I need the guard to treat a task whose worktree directory name is not identical to its branch name as invalid, so no pipeline transition can succeed on a worktree that is not where the manifest and every agent expects it to be.

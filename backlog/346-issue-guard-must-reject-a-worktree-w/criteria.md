@@ -1,0 +1,1 @@
+- [ ] new test locks both directions (match passes, mismatch rejected); './hammer check all' passes

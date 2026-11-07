@@ -1,0 +1,10 @@
+{
+  "Id": 346,
+  "Ti": "Guard must reject a worktree whose directory name differs from its branch",
+  "Ty": "issue",
+  "Cr": "261107 12:02",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "346-issue-guard-must-reject-a-worktree-w",
+  "Pt": null
+}
