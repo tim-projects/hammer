@@ -2,6 +2,10 @@ import os
 import subprocess
 
 
+class DevRepoUnavailable(Exception):
+    """Dev mode cannot be isolated: no repo to act on, and the real one is off limits."""
+
+
 class ProjectContext:
     """
     Central authority for path resolution and environment detection.
@@ -15,6 +19,13 @@ class ProjectContext:
         self.is_worktree = os.path.normpath(self.repo_root) != os.path.normpath(self.main_repo_root)
         if self.dev:
             self.tasks_path = os.environ.get('HAMMER_DEV_TASKS_DIR', '/tmp/.tasks')
+            # Dev mode swaps the store AND the repo it acts on. Binding only the
+            # store leaves every git write on the real repo: dev-created branches
+            # and worktrees collide with real task ids and the guard then rejects
+            # the real promotion.
+            self.repo_root = self._ensure_dev_repo(self.main_repo_root, self.tasks_path)
+            self.main_repo_root = self.repo_root
+            self.is_worktree = False
         elif tasks_dir_override:
             if os.path.isabs(tasks_dir_override):
                 self.tasks_path = tasks_dir_override
@@ -40,6 +51,84 @@ class ProjectContext:
             return os.path.dirname(common_dir)
         except subprocess.CalledProcessError:
             return self._get_git_root()
+
+    @staticmethod
+    def dev_repo_path(tasks_path: str) -> str:
+        """Throwaway repo of a dev store, keyed on the store so it is reused."""
+        return os.path.abspath(tasks_path) + '-repo'
+
+    def _ensure_dev_repo(self, source: str, tasks_path: str) -> str:
+        """Clone `source` into the dev repo, once per HAMMER_DEV_TASKS_DIR.
+
+        A dev invocation cannot be isolated in place: worktrees and branches
+        must live somewhere the real repo cannot see. When the clone cannot be
+        made (not a git repository, empty history, unwritable path) dev mode
+        refuses rather than silently falling back to the real repo.
+        """
+        path = self.dev_repo_path(tasks_path)
+        if os.path.isdir(os.path.join(path, '.git')):
+            return path
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        result = subprocess.run(
+            ['git', 'clone', '--quiet', source, path],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise DevRepoUnavailable(
+                f'detached dev repo could not be cloned from {source} '
+                f'({result.stderr.strip() or "unknown error"})'
+            )
+        # An empty source has no HEAD at all: give the dev repo a root commit so
+        # worktrees and branches can be created from it.
+        seeded = subprocess.run(
+            ['git', '-C', path, 'rev-parse', '--verify', 'HEAD'],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if seeded.returncode != 0:
+            root = subprocess.run(
+                ['git', '-C', path, 'commit', '--allow-empty', '--quiet', '-m', 'dev repo root'],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if root.returncode != 0:
+                raise DevRepoUnavailable(
+                    f'detached dev repo at {path} could not be seeded '
+                    f'({root.stderr.strip() or "unknown error"})'
+                )
+        # Mirror the source's local branches, otherwise a dev run can only see
+        # the checked-out branch: worktree, branch and guard checks read local
+        # refs, and a dev store is seeded from the 'tasks' branch.
+        default = subprocess.run(
+            ['git', '-C', path, 'rev-parse', '--abbrev-ref', 'HEAD'],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        steps = [
+            # Detach first: git refuses to fetch into the checked-out branch.
+            ['checkout', '--quiet', '--detach'],
+            ['fetch', '--quiet', 'origin', '+refs/heads/*:refs/heads/*'],
+        ]
+        if default:
+            steps.append(['checkout', '--quiet', default])
+        for step in steps:
+            mirror = subprocess.run(
+                ['git', '-C', path] + step,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if mirror.returncode != 0:
+                raise DevRepoUnavailable(
+                    f'detached dev repo at {path} could not mirror branches from '
+                    f'{source} ({mirror.stderr.strip() or "unknown error"})'
+                )
+        return path
 
     def resolve_path(self, *paths: str) -> str:
         """Resolve a path relative to the main repo root."""
