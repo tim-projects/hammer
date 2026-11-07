@@ -11,7 +11,13 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794067961.033862,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tests/test_task_naming_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/349-task-write-user-tests-for-348-task/patches/tests_test_task_naming_user.py.patch"
+    }
+  ]
 }
