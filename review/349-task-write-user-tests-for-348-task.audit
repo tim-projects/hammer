@@ -1,0 +1,8 @@
+{
+    "task_id": "349",
+    "patch_hash": "cdd9d6748617095b94e3d4e25ecdab3c",
+    "patch_files": [
+        "tests_test_task_naming_user.py.patch"
+    ],
+    "status": "verified"
+}
