@@ -150,15 +150,40 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/335-task-write-user-tests-for-334-move",
       "task_file": "335-task-write-user-tests-for-334-move"
     },
-    "336": {
-      "branch": "336-task-fix-central-store-concurrency",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/336-task-fix-central-store-concurrency",
-      "task_file": "336-task-fix-central-store-concurrency"
-    },
     "337": {
       "branch": "337-task-write-user-tests-for-336-fix-c",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/337-task-write-user-tests-for-336-fix-c",
       "task_file": "337-task-write-user-tests-for-336-fix-c"
+    },
+    "338": {
+      "branch": "338-issue-dev-mode-creates-real-branches",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/338-issue-dev-mode-creates-real-branches",
+      "task_file": "338-issue-dev-mode-creates-real-branches"
+    },
+    "339": {
+      "branch": "339-task-write-user-tests-for-338-dev-m",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/339-task-write-user-tests-for-338-dev-m",
+      "task_file": "339-task-write-user-tests-for-338-dev-m"
+    },
+    "340": {
+      "branch": "340-issue-tracked-tests-tasks-ai-package",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/340-issue-tracked-tests-tasks-ai-package",
+      "task_file": "340-issue-tracked-tests-tasks-ai-package"
+    },
+    "341": {
+      "branch": "341-task-write-user-tests-for-340-track",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/341-task-write-user-tests-for-340-track",
+      "task_file": "341-task-write-user-tests-for-340-track"
+    },
+    "342": {
+      "branch": "342-task-gates-and-sync-assume-main-whi",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/342-task-gates-and-sync-assume-main-whi",
+      "task_file": "342-task-gates-and-sync-assume-main-whi"
+    },
+    "343": {
+      "branch": "343-task-write-user-tests-for-342-gates",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/343-task-write-user-tests-for-342-gates",
+      "task_file": "343-task-write-user-tests-for-342-gates"
     }
   }
 }

@@ -1,0 +1,32 @@
+diff --git a/guard.py b/guard.py
+index d7c05272..fe55e6b4 100755
+--- a/guard.py
++++ b/guard.py
+@@ -97,13 +97,24 @@ def main_repo_root():
+ 
+ 
+ def get_engine(dev=False, cwd=None):
+-    root = main_repo_root()
+-    tasks_path = os.environ.get("HAMMER_DEV_TASKS_DIR") if dev else str(root / ".tasks")
++    if dev:
++        # Dev reads the same throwaway repo the tasks CLI acts on: assessing the
++        # real repo's refs against a dev store is what produced false rejections
++        # of real promotions.
++        from tasks_ai.context import ProjectContext
++
++        context = ProjectContext(dev=True)
++        root = Path(context.repo_root)
++        tasks_path = context.tasks_path
++        cwd = root  # every git read comes from the dev repo, never the invoked one
++    else:
++        root = main_repo_root()
++        tasks_path = str(root / ".tasks")
+     return GuardEngine(
+         repo_root=str(root),
+         tasks_path=tasks_path,
+         dev=dev,
+-        config=load_config(tasks_path or str(root / ".tasks")),
++        config=load_config(tasks_path),
+         cwd=cwd or os.getcwd(),
+     )
+ 

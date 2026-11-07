@@ -1,0 +1,24 @@
+diff --git a/testing/338-issue-dev-mode-creates-real-branches/meta.json b/testing/338-issue-dev-mode-creates-real-branches/meta.json
+new file mode 100644
+index 0000000..98d9aa1
+--- /dev/null
++++ b/testing/338-issue-dev-mode-creates-real-branches/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 338,
++  "Ti": "Dev mode creates real branches and worktrees in the main repo",
++  "Ty": "issue",
++  "Cr": "261106 16:09",
++  "Bl": [],
++  "Pr": 1,
++  "Br": "338-issue-dev-mode-creates-real-branches",
++  "Pt": null,
++  "Rc": "",
++  "Vp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file
