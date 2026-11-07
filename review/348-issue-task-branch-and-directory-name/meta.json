@@ -1,0 +1,35 @@
+{
+  "Id": 348,
+  "Ti": "Task branch and directory names must not be silently truncated",
+  "Ty": "issue",
+  "Cr": "261107 12:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "348-issue-task-branch-and-directory-name",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794056015.813635,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/348-issue-task-branch-and-directory-name/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/348-issue-task-branch-and-directory-name/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/348-issue-task-branch-and-directory-name/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_task_naming.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/348-issue-task-branch-and-directory-name/patches/tests_test_task_naming.py.patch"
+    }
+  ]
+}

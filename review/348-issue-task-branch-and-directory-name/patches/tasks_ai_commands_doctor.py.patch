@@ -1,0 +1,55 @@
+diff --git a/tasks_ai/commands/doctor.py b/tasks_ai/commands/doctor.py
+index 54b25b1b..46a7711c 100644
+--- a/tasks_ai/commands/doctor.py
++++ b/tasks_ai/commands/doctor.py
+@@ -4,7 +4,7 @@ import shutil
+ 
+ from ..constants import STATE_FOLDERS
+ from ..file_manager import FM
+-from ..utils import parse_filename
++from ..utils import derive_task_id, parse_filename, worktree_path_matches
+ 
+ 
+ def extract_id_from_string(s):
+@@ -116,18 +116,10 @@ def run(cli, fix=False):
+                 else:
+                     title_for_branch = "unknown"
+ 
+-            # Clean title for branch (remove special chars, limit length)
+-            clean_title = re.sub(r"[^a-zA-Z0-9]+", "-", title_for_branch.lower()).strip(
+-                "-"
+-            )
+-            if not clean_title:
+-                clean_title = "task"
+-
+-            # Derive type: metadata.Ty -> folder name -> 'task'
+             task_type, _ = parse_filename(item)
+             task_type = task.metadata.get("Ty", task_type)
+ 
+-            expected_br = f"{correct_id}-{task_type}-{clean_title[:30]}".strip("-")
++            expected_br = derive_task_id(correct_id, task_type, title_for_branch)
+ 
+             if not (
+                 branch_from_metadata
+@@ -167,10 +159,20 @@ def run(cli, fix=False):
+                 )
+ 
+             # Check directory name
+-            expected_dir = f"{correct_id}-{task_type}-{clean_title[:30]}".strip("-")
++            expected_dir = expected_br
+             if item != expected_dir:
+                 inconsistencies.append(("directory name", item, expected_dir))
+ 
++            # The worktree directory must be the branch name, so no agent has to
++            # guess which spelling resolves the task's path.
++            wt_path = cli.git.worktrees.get_worktree_path(str(correct_id))
++            if wt_path and not worktree_path_matches(
++                wt_path, cli.git.worktrees.worktrees_base, expected_br
++            ):
++                inconsistencies.append(("worktree path", wt_path, os.path.join(
++                    cli.git.worktrees.worktrees_base, expected_br
++                )))
++
+             # If there are inconsistencies and fix is enabled, repair them
+             if inconsistencies and fix:
+                 # Determine the correct directory name
