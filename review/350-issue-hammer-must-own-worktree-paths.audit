@@ -1,0 +1,15 @@
+{
+    "task_id": "350",
+    "patch_hash": "129e754ae79a82c640b50207a1a751f1",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_commands_current.py.patch",
+        "tasks_ai_commands_doctor.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tasks_ai_worktree_manager.py.patch",
+        "tests_test_worktree_path_ownership.py.patch"
+    ],
+    "status": "verified"
+}
