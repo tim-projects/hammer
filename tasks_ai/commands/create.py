@@ -274,7 +274,9 @@ def run(
                 "task_id": task_id,
                 "title": title,
                 "file": task_id,
-                "path": os.path.relpath(task_dir, cli.root),
+                # A dev store lives outside the repo the CLI acts on, so a
+                # repo-relative path would point nowhere: absolute there.
+                "path": task_dir if cli.dev else os.path.relpath(task_dir, cli.root),
                 "branch": task_id,
                 "worktree": cli.git.worktrees.get_worktree_path(str(numeric_id)),
                 "current_branch": current_branch,

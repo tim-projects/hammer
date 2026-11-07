@@ -112,38 +112,34 @@ class GitService:
     def is_merged(
         self, branch: str, target: str = "main", cwd: str | None = None
     ) -> bool:
-        # 1. Proactively refresh all remote references to avoid stale state
-        self.run(["fetch", "--all"], cwd=cwd or self.context.main_repo_root)
+        cwd = cwd or self.context.main_repo_root
+        if self.context.dev:
+            # A dev repo never pushes, so its origin is only a snapshot of the
+            # repo it was cloned from: local merges are the only truth here.
+            target_ref = target
+        else:
+            # 1. Proactively refresh all remote references to avoid stale state
+            self.run(["fetch", "--all"], cwd=cwd)
 
         # 2. Check if the branch exists locally (or as a remote tracking branch)
-        res = self.run(
-            ["rev-parse", "--verify", branch], cwd=cwd or self.context.main_repo_root
-        )
+        res = self.run(["rev-parse", "--verify", branch], cwd=cwd)
         if res.returncode != 0:
             # Maybe it's a remote branch name, try searching for origin/branch
-            res = self.run(
-                ["rev-parse", "--verify", f"origin/{branch}"],
-                cwd=cwd or self.context.main_repo_root,
-            )
+            res = self.run(["rev-parse", "--verify", f"origin/{branch}"], cwd=cwd)
             if res.returncode != 0:
                 return False
 
         # 3. Check ancestry against target's remote tracking branch
-        target_ref = f"origin/{target}"
+        if not self.context.dev:
+            target_ref = f"origin/{target}"
 
-        # Verify target ref exists
-        if (
-            self.run(
-                ["rev-parse", "--verify", target_ref],
-                cwd=cwd or self.context.main_repo_root,
-            ).returncode
-            != 0
-        ):
-            target_ref = target  # fallback to local if remote missing
+            # Verify target ref exists
+            if self.run(["rev-parse", "--verify", target_ref], cwd=cwd).returncode != 0:
+                target_ref = target  # fallback to local if remote missing
 
         res = self.run(
             ["merge-base", "--is-ancestor", branch, target_ref],
-            cwd=cwd or self.context.main_repo_root,
+            cwd=cwd,
         )
         return res.returncode == 0
 
@@ -208,6 +204,11 @@ class GitService:
 
     def push_tasks_branch(self, branch="tasks", fatal=True):
         """Internal: push current .tasks worktree branch to remote."""
+        if self.context.dev:
+            # A dev store's remote is the real repo: pushing from it would move
+            # real refs, which is exactly what dev mode must never do.
+            self.log("Dev mode: push to remote skipped (throwaway store).")
+            return {"branch": branch, "remote": None}
         tasks_path = self.context.tasks_path
         if not os.path.exists(tasks_path):
             msg = "Tasks not initialized."
@@ -320,8 +321,8 @@ class GitService:
         if merge_res.returncode != 0:
             raise RuntimeError(f"Merge conflict {src} -> {target}. Resolve manually.")
 
-        # 5. Push if confirmed
-        if yes:
+        # 5. Push if confirmed (never in dev: the dev repo's origin is the real repo)
+        if yes and not self.context.dev:
             self.run(["push", "origin", target], cwd=repo_root)
 
     def branch_exists(self, name: str, cwd: str | None = None) -> bool:
