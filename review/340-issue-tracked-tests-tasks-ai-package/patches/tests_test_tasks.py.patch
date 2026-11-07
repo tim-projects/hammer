@@ -1,0 +1,22 @@
+diff --git a/tests/test_tasks.py b/tests/test_tasks.py
+index ae4ef764..c272729d 100755
+--- a/tests/test_tasks.py
++++ b/tests/test_tasks.py
+@@ -8,16 +8,9 @@ import tempfile
+ import unittest
+ from datetime import datetime, timedelta
+ 
+-TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+-if TESTS_DIR not in sys.path:
+-    sys.path.insert(0, TESTS_DIR)
+-
+-from tests.hammer_test_base import ensure_dev_repo, project_tasks_ai
+-
+-project_tasks_ai()  # drop the stale tests/tasks_ai copy before importing
+-
+ from tasks_ai.constants import STATE_FOLDERS
+ from tasks_ai.file_manager import FM
++from tests.hammer_test_base import ensure_dev_repo
+ 
+ 
+ class TestTasksAI(unittest.TestCase):

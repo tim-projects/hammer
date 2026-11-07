@@ -1,0 +1,83 @@
+{
+  "Id": 340,
+  "Ti": "Tracked tests/tasks_ai package copy shadows the real package",
+  "Ty": "issue",
+  "Cr": "261106 16:10",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "340-issue-tracked-tests-tasks-ai-package",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794049943.434409,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "conftest.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/conftest.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/__init__.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai___init__.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/commands.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_commands.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/file_manager.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_file_manager.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_help_text.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/models.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_models.py.patch"
+    },
+    {
+      "file": "tests/tasks_ai/validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_tasks_ai_validation.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_store_concurrency.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_test_store_concurrency.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_tasks_ai_import.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_test_tasks_ai_import.py.patch"
+    },
+    {
+      "file": "tests/test_unlink.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/340-issue-tracked-tests-tasks-ai-package/patches/tests_test_unlink.py.patch"
+    }
+  ]
+}
