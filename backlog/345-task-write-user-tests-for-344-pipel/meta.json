@@ -1,0 +1,10 @@
+{
+  "Id": 345,
+  "Ti": "Write user tests for 344: Pipeline should auto-push branches instead of demanding manual push",
+  "Ty": "task",
+  "Cr": "261107 11:17",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "345-task-write-user-tests-for-344-pipel",
+  "Pt": 344
+}
