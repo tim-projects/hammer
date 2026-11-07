@@ -1,0 +1,18 @@
+diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
+index 798c706b..74d09740 100644
+--- a/tasks_ai/pipeline.py
++++ b/tasks_ai/pipeline.py
+@@ -151,8 +151,11 @@ class PipelineService:
+                     target=integration_target,
+                 )
+ 
+-        # 5. Check main divergence for terminal states
+-        if target_state in ["DONE", "ARCHIVED"]:
++        # 5. Check main divergence for terminal states. A dev run merges into a
++        # throwaway repo it never pushes from, so its local main is always ahead
++        # of the repo it was cloned from; demanding sync would block every dev
++        # dry run without protecting anything.
++        if target_state in ["DONE", "ARCHIVED"] and not cli.dev:
+             synced, local, remote = self.git.check_main_divergence()
+             if not synced:
+                 raise PipelineError(

@@ -1,0 +1,173 @@
+diff --git a/tests/test_tasks.py b/tests/test_tasks.py
+index 44914566..ae4ef764 100755
+--- a/tests/test_tasks.py
++++ b/tests/test_tasks.py
+@@ -8,6 +8,14 @@ import tempfile
+ import unittest
+ from datetime import datetime, timedelta
+ 
++TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
++if TESTS_DIR not in sys.path:
++    sys.path.insert(0, TESTS_DIR)
++
++from tests.hammer_test_base import ensure_dev_repo, project_tasks_ai
++
++project_tasks_ai()  # drop the stale tests/tasks_ai copy before importing
++
+ from tasks_ai.constants import STATE_FOLDERS
+ from tasks_ai.file_manager import FM
+ 
+@@ -60,6 +68,10 @@ class TestTasksAI(unittest.TestCase):
+     def tearDown(self):
+         shutil.rmtree(self.test_dir, ignore_errors=True)
+         shutil.rmtree(self.dev_tasks_dir, ignore_errors=True)
++        shutil.rmtree(self.dev_repo_dir, ignore_errors=True)
++        # The store switch keys on this env var, so leaving it set turns every
++        # later non-dev test into a dev one.
++        os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
+ 
+     def get_worktree_path(self, task_numeric_id):
+         """Get the worktree path for a task from the manifest."""
+@@ -72,6 +84,15 @@ class TestTasksAI(unittest.TestCase):
+                 return entry.get("path")
+         return None
+ 
++    @property
++    def dev_repo_dir(self):
++        """Repo the --dev CLI acts on: a throwaway clone, never this fixture repo.
++
++        Dev mode must leave the repo it was invoked from untouched, so every
++        pipeline-branch simulation below has to target the dev repo.
++        """
++        return ensure_dev_repo(self.dev_tasks_dir)
++
+     def git_checkout(self, branch, cwd=None):
+         """Checkout a branch, preferring worktree path if branch is checked out there."""
+         if cwd is None:
+@@ -84,10 +105,10 @@ class TestTasksAI(unittest.TestCase):
+         )
+ 
+     def git_checkout_main(self):
+-        """Checkout main branch from the main repo (always works)."""
++        """Checkout main in the repo the --dev CLI acts on (always works)."""
+         subprocess.run(
+             ["git", "checkout", "main"],
+-            cwd=self.repo_dir,
++            cwd=self.dev_repo_dir,
+             capture_output=True,
+             check=False,
+         )
+@@ -255,21 +276,21 @@ class TestTasksAI(unittest.TestCase):
+                 self.git_checkout_main()
+                 self.run_cmd(["modify", issue_file, "--tests-passed"])
+                 subprocess.run(  # noqa: PLW1510
+-                    ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
++                    ["git", "checkout", "-b", "testing"], cwd=self.dev_repo_dir, capture_output=True
+                 )
+-                subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++                subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+                 subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+             elif state == "DONE":
+                 self.git_checkout_main()
+                 subprocess.run(  # noqa: PLW1510
+-                    ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
++                    ["git", "checkout", "-b", "staging"], cwd=self.dev_repo_dir, capture_output=True
+                 )
+                 subprocess.run(  # noqa: PLW1510
+-                    ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
++                    ["git", "merge", "testing"], cwd=self.dev_repo_dir, capture_output=True
+                 )
+                 self.git_checkout_main()
+                 subprocess.run(  # noqa: PLW1510
+-                    ["git", "merge", "staging"], cwd=self.repo_dir, capture_output=True
++                    ["git", "merge", "staging"], cwd=self.dev_repo_dir, capture_output=True
+                 )
+                 subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+                 # Complete checkboxes before DONE move (write to staging folder)
+@@ -298,7 +319,7 @@ class TestTasksAI(unittest.TestCase):
+         # Archive (Needs branch merged to main and -y)
+         self.git_checkout_main()
+         subprocess.run(  # noqa: PLW1510
+-            ["git", "merge", branch], cwd=self.repo_dir, capture_output=True
++            ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
+         )
+         res = self.run_cmd(["move", issue_file, "ARCHIVED", "-y"])
+         self.assertTrue(res["success"], res)
+@@ -357,8 +378,8 @@ class TestTasksAI(unittest.TestCase):
+             # Simulate pipeline merges to satisfy enforcement
+             if state == "REVIEW":
+                 self.run_cmd(["modify", file, "--tests-passed"])
+-                subprocess.run(["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+-                subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++                subprocess.run(["git", "checkout", "-b", "testing"], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
++                subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+                 self.git_checkout_main()
+ 
+             # Mark all criteria as done before promotion
+@@ -456,7 +477,7 @@ class TestTasksAI(unittest.TestCase):
+         # simulating that testing already contains this work.
+         subprocess.run(
+             ["git", "branch", "-f", "testing", task_sha],
+-            cwd=self.repo_dir,
++            cwd=self.dev_repo_dir,
+             capture_output=True,
+             check=True,
+         )
+@@ -533,9 +554,9 @@ class TestTasksAI(unittest.TestCase):
+         # Prepare testing branch: go to main, create testing, merge task, back to task branch
+         self.git_checkout_main()
+         subprocess.run(  # noqa: PLW1510
+-            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
++            ["git", "checkout", "-b", "testing"], cwd=self.dev_repo_dir, capture_output=True
+         )
+-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+ 
+         # Mark tests as passed (required for REVIEW)
+@@ -607,9 +628,9 @@ class TestTasksAI(unittest.TestCase):
+         # Setup testing branch merge
+         self.git_checkout_main()
+         subprocess.run(  # noqa: PLW1510
+-            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
++            ["git", "checkout", "-b", "testing"], cwd=self.dev_repo_dir, capture_output=True
+         )
+-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+         subprocess.run(  # noqa: PLW1510
+             ["git", "checkout", branch], cwd=wt, capture_output=True
+         )
+@@ -685,9 +706,9 @@ class TestTasksAI(unittest.TestCase):
+         # Setup testing branch
+         self.git_checkout_main()
+         subprocess.run(  # noqa: PLW1510
+-            ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
++            ["git", "checkout", "-b", "testing"], cwd=self.dev_repo_dir, capture_output=True
+         )
+-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+         subprocess.run(  # noqa: PLW1510
+             ["git", "checkout", branch], cwd=wt, capture_output=True
+         )
+@@ -758,8 +779,8 @@ class TestTasksAI(unittest.TestCase):
+ 
+         # Setup testing branch (merge initial commit)
+         self.git_checkout_main()
+-        subprocess.run(["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "checkout", "-b", "testing"], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+ 
+         # Set tests passed and move to REVIEW
+@@ -801,8 +822,8 @@ class TestTasksAI(unittest.TestCase):
+ 
+         # Update testing to include fix (fast-forward merge)
+         self.git_checkout_main()
+-        subprocess.run(["git", "checkout", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+-        subprocess.run(["git", "merge", branch], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "checkout", "testing"], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True)  # noqa: PLW1510
+         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+ 
+         # Move to REVIEW (new diff regenerated, Rc reset)
