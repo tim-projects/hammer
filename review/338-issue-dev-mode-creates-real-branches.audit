@@ -1,0 +1,24 @@
+{
+    "task_id": "338",
+    "patch_hash": "c2c5393a13f21ea34a6b8fc6bfcf5bab",
+    "patch_files": [
+        "AGENTS.md.patch",
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "guard.py.patch",
+        "repo.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_create.py.patch",
+        "tasks_ai_context.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "testing_338-issue-dev-mode-creates-real-branches_meta.json.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_test_dev_isolation.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_robustness_bugfix.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_unlink.py.patch"
+    ],
+    "status": "verified"
+}
