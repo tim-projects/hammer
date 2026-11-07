@@ -1,1 +1,0 @@
-- [ ] a new test creates each drift case in a throwaway repo and asserts the finding; './hammer check all' passes
