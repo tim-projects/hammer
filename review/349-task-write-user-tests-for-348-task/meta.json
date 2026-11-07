@@ -9,11 +9,11 @@
   "Pt": 348,
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794067961.033862,
   "DoneAt": null,
-  "Tp": true,
+  "Tp": false,
   "PatchFiles": [
     {
       "file": "tests/test_task_naming_user.py",
