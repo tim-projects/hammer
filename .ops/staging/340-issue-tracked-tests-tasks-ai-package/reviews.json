@@ -1,0 +1,85 @@
+{
+  "reviews": [
+    {
+      "file": "conftest.py",
+      "patch": "conftest.py.patch",
+      "md5": "b664b6c9c95cc8077de3f7a6b45f453b"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch": "tests_hammer_test_base.py.patch",
+      "md5": "f914826d8befaba720752443391aef8a"
+    },
+    {
+      "file": "tests/tasks_ai/__init__.py",
+      "patch": "tests_tasks_ai___init__.py.patch",
+      "md5": "47e207ca0033a3f6a043bdbc3991253c"
+    },
+    {
+      "file": "tests/tasks_ai/audit.py",
+      "patch": "tests_tasks_ai_audit.py.patch",
+      "md5": "51426160bfd937013453a70656b36b29"
+    },
+    {
+      "file": "tests/tasks_ai/cli.py",
+      "patch": "tests_tasks_ai_cli.py.patch",
+      "md5": "929ac1092c0dd1baa2132eab67570cd9"
+    },
+    {
+      "file": "tests/tasks_ai/commands.py",
+      "patch": "tests_tasks_ai_commands.py.patch",
+      "md5": "49cd938589a0d834a806c22e788ba5bc"
+    },
+    {
+      "file": "tests/tasks_ai/constants.py",
+      "patch": "tests_tasks_ai_constants.py.patch",
+      "md5": "55c003a1f234cc210eba2ed2cb36263f"
+    },
+    {
+      "file": "tests/tasks_ai/file_manager.py",
+      "patch": "tests_tasks_ai_file_manager.py.patch",
+      "md5": "72978d5e4e9f7a36588fae00bae6265b"
+    },
+    {
+      "file": "tests/tasks_ai/help_text.py",
+      "patch": "tests_tasks_ai_help_text.py.patch",
+      "md5": "4051b470459340d9670c880f2cc8cc5a"
+    },
+    {
+      "file": "tests/tasks_ai/models.py",
+      "patch": "tests_tasks_ai_models.py.patch",
+      "md5": "0bbfce882262ff0a6837806cfb790d6d"
+    },
+    {
+      "file": "tests/tasks_ai/validation.py",
+      "patch": "tests_tasks_ai_validation.py.patch",
+      "md5": "a4dd8cedd7b8b10d4afb133dcc4d7c71"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch": "tests_test_guard.py.patch",
+      "md5": "b6752c5cff9a19cbf220a224fed4e1df"
+    },
+    {
+      "file": "tests/test_store_concurrency.py",
+      "patch": "tests_test_store_concurrency.py.patch",
+      "md5": "83b8e5dd92c28034ff0f5d7b5a0b7187"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch": "tests_test_tasks.py.patch",
+      "md5": "65488b43e7fbf9760d0553fe49751988"
+    },
+    {
+      "file": "tests/test_tasks_ai_import.py",
+      "patch": "tests_test_tasks_ai_import.py.patch",
+      "md5": "df6a89bffab68ece35664d40878cbc7e"
+    },
+    {
+      "file": "tests/test_unlink.py",
+      "patch": "tests_test_unlink.py.patch",
+      "md5": "4a75257dbde8f451ba34be04e0a5bbf0"
+    }
+  ],
+  "reviewed_at": 1794050004.6058626
+}

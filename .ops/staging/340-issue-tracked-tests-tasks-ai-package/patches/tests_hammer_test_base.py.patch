@@ -1,0 +1,48 @@
+diff --git a/tests/hammer_test_base.py b/tests/hammer_test_base.py
+index 10a1d627..542ff54b 100644
+--- a/tests/hammer_test_base.py
++++ b/tests/hammer_test_base.py
+@@ -17,43 +17,12 @@ def ensure_dev_repo(tasks_dir):
+     The CLI creates it lazily on its first --dev invocation; tests that touch
+     the repo before running a command need it to exist already.
+     """
+-    project_tasks_ai()
+     import importlib
+ 
+     context = importlib.import_module("tasks_ai.context")
+     return context.ProjectContext(dev=True).repo_root
+ 
+ 
+-def project_tasks_ai():
+-    """Import tasks_ai from THIS project.
+-
+-    tests/ carries a stale tasks_ai copy, and pytest puts tests/ ahead of the
+-    project root on sys.path, so a plain `import tasks_ai` can resolve the stale
+-    package. Load the project's package explicitly, replacing any stale copy
+-    already in sys.modules.
+-    """
+-    import importlib
+-    import importlib.util
+-    import sys
+-
+-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+-    package_dir = os.path.join(root, "tasks_ai")
+-    for name in [n for n in sys.modules if n == "tasks_ai" or n.startswith("tasks_ai.")]:
+-        module = sys.modules[name]
+-        paths = list(getattr(module, "__path__", [])) or [getattr(module, "__file__", "")]
+-        if paths and os.path.dirname(str(paths[0])) != root:
+-            del sys.modules[name]
+-    spec = importlib.util.spec_from_file_location(
+-        "tasks_ai",
+-        os.path.join(package_dir, "__init__.py"),
+-        submodule_search_locations=[package_dir],
+-    )
+-    module = importlib.util.module_from_spec(spec)
+-    sys.modules["tasks_ai"] = module
+-    spec.loader.exec_module(module)
+-    return module
+-
+-
+ class MockGitRemote:
+     def __init__(self, repo_dir):
+         self.remote_dir = tempfile.mkdtemp(prefix='hammer_remote_')
