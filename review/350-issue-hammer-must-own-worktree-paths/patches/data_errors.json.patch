@@ -1,0 +1,14 @@
+diff --git a/data/errors.json b/data/errors.json
+index 4832f977..5f96830e 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -54,6 +54,9 @@
+   "GUARD_BRANCH_NONCONFORMANT": "GUARD REJECT: branch '{branch}' breaks the <id>-<type>-<slug> convention. {detail}",
+   "GUARD_BRANCH_MISSING": "GUARD REJECT: task {task_id} has no local branch, required for {to_state}. {detail}",
+   "GUARD_REMOTE_DIVERGENCE": "GUARD REJECT: task {task_id} has no local branch; the remote snapshot still tracks it. {detail}",
++  "GUARD_WORKTREE_PATH_DRIFT": "GUARD REJECT: worktree path drift for task {task_id}. {detail}",
++  "GUARD_WORKTREE_MISSING_WORKTREE": "GUARD REJECT: manifest worktree path is not a git worktree. {detail}",
++  "GUARD_WORKTREE_UNREGISTERED": "GUARD REJECT: unregistered directory under .task-worktrees/. {detail}",
+   "GUARD_WORKTREE_ORPHAN": "GUARD REJECT: orphaned worktree for task {task_id}. {detail}",
+   "GUARD_WORKTREE_MISSING": "GUARD REJECT: task {task_id} has no worktree, required for {to_state}. {detail}",
+   "GUARD_UNAVAILABLE": "GUARD REJECT: cannot verify task {task_id}. {detail}",

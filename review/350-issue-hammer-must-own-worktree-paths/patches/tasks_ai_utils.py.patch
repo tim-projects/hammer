@@ -1,0 +1,73 @@
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index 35d97245..eccfeed0 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -64,6 +64,68 @@ def derive_task_id(numeric_id, task_type: str, title: str) -> str:
+     return f"{numeric_id}-{task_type}-{slug[:30]}".strip("-")
+ 
+ 
++def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
++    """Where the worktree manifest, git and the directory tree disagree.
++
++    Hammer owns these paths: a task's worktree lives at exactly
++    <worktrees_base>/<branch> and is registered in the manifest. Any other
++    arrangement is drift a consumer would have to guess about, which is how
++    stray directories and phantom paths get created.
++    """
++    findings = []
++    live = {os.path.abspath(p) for p in live_paths}
++    registered = set()
++    for task_id, entry in sorted(manifest_worktrees.items()):
++        path = entry.get("path") or ""
++        branch = entry.get("branch") or ""
++        if not path:
++            findings.append(
++                (
++                    "GUARD_WORKTREE_PATH_DRIFT",
++                    task_id,
++                    f"manifest entry for task {task_id} has no worktree path",
++                )
++            )
++            continue
++        abs_path = os.path.abspath(path)
++        registered.add(abs_path)
++        expected = os.path.join(worktrees_base, branch)
++        if abs_path != expected:
++            findings.append(
++                (
++                    "GUARD_WORKTREE_PATH_DRIFT",
++                    task_id,
++                    f"worktree for task {task_id} is at '{abs_path}', expected '{expected}'",
++                )
++            )
++        elif abs_path not in live:
++            findings.append(
++                (
++                    "GUARD_WORKTREE_MISSING_WORKTREE",
++                    task_id,
++                    f"manifest path '{abs_path}' is not a git worktree",
++                )
++            )
++    base = os.path.abspath(worktrees_base)
++    if os.path.isdir(base):
++        for name in sorted(os.listdir(base)):
++            abs_path = os.path.join(base, name)
++            if abs_path in registered:
++                continue
++            if os.path.isdir(abs_path) and os.path.exists(
++                os.path.join(abs_path, ".git")
++            ):
++                continue
++            findings.append(
++                (
++                    "GUARD_WORKTREE_UNREGISTERED",
++                    None,
++                    f"directory under {base} is not in the manifest: {abs_path}",
++                )
++            )
++    return findings
++
++
+ def worktree_path_matches(wt_path: str, worktrees_base: str, branch: str) -> bool:
+     """A task's worktree lives at exactly <worktrees_base>/<branch>.
+ 

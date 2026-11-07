@@ -1,0 +1,61 @@
+diff --git a/tasks_ai/worktree_manager.py b/tasks_ai/worktree_manager.py
+index 7670277d..a6236ae6 100644
+--- a/tasks_ai/worktree_manager.py
++++ b/tasks_ai/worktree_manager.py
+@@ -1,7 +1,8 @@
+ import json
+ import os
++import shutil
+ 
+-from tasks_ai.utils import store_lock
++from tasks_ai.utils import audit_worktree_manifest, store_lock
+ 
+ 
+ class WorktreeManager:
+@@ -126,6 +127,46 @@ class WorktreeManager:
+         self.log(f"Git: Created worktree for task {task_id} at '{worktree_path}'")
+         return worktree_path
+ 
++    def live_worktree_paths(self) -> list[str]:
++        """Paths git reports as worktrees (the main checkout included)."""
++        result = self.git.run(
++            ["worktree", "list", "--porcelain"], cwd=self.context.main_repo_root
++        )
++        if result.returncode != 0:
++            return []
++        paths = []
++        for line in result.stdout.splitlines():
++            if line.startswith("worktree "):
++                paths.append(line[len("worktree ") :].strip())
++        return paths
++
++    def audit_worktrees(self) -> list[tuple[str, str | None, str]]:
++        """Findings for every worktree path the manifest does not own."""
++        return audit_worktree_manifest(
++            self._load_manifest().get("worktrees", {}),
++            self.worktrees_base,
++            self.live_worktree_paths(),
++        )
++
++    def remove_unregistered_dir(self, path: str) -> bool:
++        """Delete a directory under .task-worktrees/ no manifest entry owns.
++
++        Refuses anything that is a real git worktree or outside the base: this is
++        a repair, not a cleanup of other agents' working directories.
++        """
++        base = os.path.abspath(self.worktrees_base)
++        target = os.path.abspath(path)
++        if not target.startswith(base + os.sep) or not os.path.isdir(target):
++            return False
++        manifest = self._load_manifest().get("worktrees", {})
++        registered = {os.path.abspath(e.get("path", "")) for e in manifest.values()}
++        if target in registered or target in {
++            os.path.abspath(p) for p in self.live_worktree_paths()
++        }:
++            return False
++        shutil.rmtree(target)
++        return True
++
+     def list_worktrees(self) -> list[dict]:
+         manifest = self._load_manifest()
+         worktrees = []

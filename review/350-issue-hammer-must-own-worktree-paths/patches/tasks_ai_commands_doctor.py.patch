@@ -1,0 +1,29 @@
+diff --git a/tasks_ai/commands/doctor.py b/tasks_ai/commands/doctor.py
+index 46a7711c..a405d479 100644
+--- a/tasks_ai/commands/doctor.py
++++ b/tasks_ai/commands/doctor.py
+@@ -290,6 +290,24 @@ def run(cli, fix=False):
+         except Exception:  # noqa: BLE001
+             pass
+ 
++    # Worktree ownership: the manifest, git and .task-worktrees/ must agree.
++    # Hammer mounts a task's worktree itself; anything unregistered there is
++    # drift that lets a consumer resolve a path nobody owns.
++    for code, task_id, detail in cli.git.worktrees.audit_worktrees():
++        bugs.append(
++            {
++                "id": code,
++                "title": code.replace("_", " ").title(),
++                "repro": "Run 'hammer guard scan' for the full anomaly list",
++                "expected": "worktree path == <worktrees_base>/<branch>, registered in .tasks/worktrees.json",
++                "actual": detail,
++            }
++        )
++        if fix and code == "GUARD_WORKTREE_UNREGISTERED":
++            stray = detail.split(": ", 1)[-1]
++            if cli.git.worktrees.remove_unregistered_dir(stray):
++                cli.log(f"Removed unregistered worktree directory: {stray}")
++
+     if bugs:
+         cli.log(f"Found {len(bugs)} issues:")
+         for b in bugs:
