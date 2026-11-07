@@ -208,7 +208,7 @@ class WorktreeManager:
                     ["rev-parse", "--verify", branch], cwd=self.context.main_repo_root
                 )
                 if verify.returncode == 0:
-                    if self.git.is_merged(branch, "main"):
+                    if self.git.is_merged(branch):
                         self.git.run(
                             ["branch", "-d", branch], cwd=self.context.main_repo_root
                         )

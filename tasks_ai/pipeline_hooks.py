@@ -423,6 +423,9 @@ class WorktreeSyncHook(PipelineHook):
                 cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
 
             default_branch = cli.git.get_default_branch()
+            if not default_branch:
+                cli.console("worktree", "sync", "skipped (no main/master)")
+                return
             merge_source = f"origin/{default_branch}"
             fetch_res = cli.git.run(
                 ["fetch", "origin", default_branch], check=False, cwd=cli.context.main_repo_root
@@ -434,7 +437,7 @@ class WorktreeSyncHook(PipelineHook):
                 if local_res.returncode == 0:
                     merge_source = default_branch
                 else:
-                    cli.console("worktree", "sync", "skipped (no remote/main)")
+                    cli.console("worktree", "sync", "skipped (no remote/default)")
                     return
 
             merge_res = cli.git.run(["merge", merge_source], cwd=worktree_path)
@@ -525,6 +528,9 @@ class WorktreeSyncOnExitTestingHook(PipelineHook):
                 _, branch = parse_filename(os.path.basename(filepath))
 
             default_branch = cli.git.get_default_branch()
+            if not default_branch:
+                cli.console("worktree", "check", "skipped (no main/master)")
+                return
             cli.console("worktree", "check", "divergence")
             res = cli.git.run(
                 ["rev-list", f"{default_branch}..{branch}", "--count"],
