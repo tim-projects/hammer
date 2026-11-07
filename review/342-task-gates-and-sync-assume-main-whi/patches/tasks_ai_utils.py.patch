@@ -1,0 +1,32 @@
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index eccfeed0..bf410d13 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -267,18 +267,15 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
+     _, branch = parse_filename(tn)
+     updated = False
+     main_root = cli.context.main_repo_root
+-    default_branch = "main"
+-    for b in ["main", "master"]:
+-        if cli._run_git(["rev-parse", "--verify", b], cwd=main_root).returncode == 0:
+-            default_branch = b
+-            break
+-    res = cli._run_git(
+-        ["log", branch, f"^{default_branch}", "--oneline"], cwd=main_root
+-    )
+-    commits = res.stdout.strip() if res.returncode == 0 else ""
+-    if commits:
+-        task.parts["commits"] = commits
+-        updated = True
++    default_branch = cli.git.get_default_branch()
++    if default_branch:
++        res = cli._run_git(
++            ["log", branch, f"^{default_branch}", "--oneline"], cwd=main_root
++        )
++        commits = res.stdout.strip() if res.returncode == 0 else ""
++        if commits:
++            task.parts["commits"] = commits
++            updated = True
+     dump_path = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
+     if os.path.exists(dump_path):
+         dump = FM.load(dump_path)
