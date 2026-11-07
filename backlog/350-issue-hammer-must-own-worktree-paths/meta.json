@@ -1,0 +1,10 @@
+{
+  "Id": 350,
+  "Ti": "Hammer must own worktree paths instead of letting a tool invent one",
+  "Ty": "issue",
+  "Cr": "261107 12:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "350-issue-hammer-must-own-worktree-paths",
+  "Pt": null
+}
