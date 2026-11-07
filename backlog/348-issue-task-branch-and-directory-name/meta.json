@@ -1,0 +1,10 @@
+{
+  "Id": 348,
+  "Ti": "Task branch and directory names must not be silently truncated",
+  "Ty": "issue",
+  "Cr": "261107 12:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "348-issue-task-branch-and-directory-name",
+  "Pt": null
+}
