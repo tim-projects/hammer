@@ -1,0 +1,23 @@
+{
+    "task_id": "340",
+    "patch_hash": "078e1fa5dff050482ffa292a79246db0",
+    "patch_files": [
+        "conftest.py.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_tasks_ai___init__.py.patch",
+        "tests_tasks_ai_audit.py.patch",
+        "tests_tasks_ai_cli.py.patch",
+        "tests_tasks_ai_commands.py.patch",
+        "tests_tasks_ai_constants.py.patch",
+        "tests_tasks_ai_file_manager.py.patch",
+        "tests_tasks_ai_help_text.py.patch",
+        "tests_tasks_ai_models.py.patch",
+        "tests_tasks_ai_validation.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_store_concurrency.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_tasks_ai_import.py.patch",
+        "tests_test_unlink.py.patch"
+    ],
+    "status": "verified"
+}
