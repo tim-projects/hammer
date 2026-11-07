@@ -1,5 +1,0 @@
-- [ ] get_default_branch returns the actually-existing default branch (main if present, else master), never a nonexistent one
-- [ ] every hardcoded 'main' in gate, sync, merge, and archive paths resolves through the derived default branch: grep for '"main"' in tasks_ai/ shows no gate-path literals
-- [ ] end-to-end test: create/move/checkpoint/promote on a master-named repo succeeds
-- [ ] a repo with neither main nor master fails with an actionable error, not a raw git fatal
-- [ ] ./hammer check all passes
