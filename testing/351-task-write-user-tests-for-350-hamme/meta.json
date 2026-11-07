@@ -8,10 +8,10 @@
   "Br": "351-task-write-user-tests-for-350-hamme",
   "Pt": 350,
   "Rc": "",
-  "Vp": false,
+  "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
   "PatchGenTime": null,
   "DoneAt": null,
-  "Tp": false
+  "Tp": true
 }
