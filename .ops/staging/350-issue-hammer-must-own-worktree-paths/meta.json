@@ -1,0 +1,51 @@
+{
+  "Id": 350,
+  "Ti": "Hammer must own worktree paths instead of letting a tool invent one",
+  "Ty": "issue",
+  "Cr": "261107 12:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "350-issue-hammer-must-own-worktree-paths",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794062835.113378,
+  "DoneAt": 1794062907.436948,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks_ai/commands/current.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/tasks_ai_commands_current.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/worktree_manager.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/tasks_ai_worktree_manager.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_path_ownership.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/350-issue-hammer-must-own-worktree-paths/patches/tests_test_worktree_path_ownership.py.patch"
+    }
+  ]
+}
