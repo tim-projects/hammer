@@ -1,1 +1,0 @@
-As a hammer developer, I need imports of tasks_ai to resolve to the project package under pytest, so any test that imports the package works regardless of pytest's sys.path ordering, without each test hand-patching sys.path.

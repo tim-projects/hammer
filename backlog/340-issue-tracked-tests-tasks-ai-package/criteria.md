@@ -1,4 +1,0 @@
-- [ ] tests/tasks_ai no longer exists in the repo and in any fresh clone (git ls-files shows nothing)
-- [ ] a root conftest.py makes 'import tasks_ai' resolve to the project root package under pytest without per-test sys.path hacks
-- [ ] a regression test fails if tasks_ai ever resolves to a path under tests/ again
-- [ ] the full suite result is unchanged apart from tests this fix repairs; ./hammer check all passes
