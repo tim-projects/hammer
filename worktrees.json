@@ -189,11 +189,6 @@
       "branch": "347-task-write-user-tests-for-346-guard",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/347-task-write-user-tests-for-346-guard",
       "task_file": "347-task-write-user-tests-for-346-guard"
-    },
-    "351": {
-      "branch": "351-task-write-user-tests-for-350-hamme",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/351-task-write-user-tests-for-350-hamme",
-      "task_file": "351-task-write-user-tests-for-350-hamme"
     }
   }
 }

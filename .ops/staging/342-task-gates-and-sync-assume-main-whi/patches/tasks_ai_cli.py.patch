@@ -1,0 +1,68 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 3037428b..3eff1626 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -499,10 +499,13 @@ class TasksCLI:
+         tn = os.path.basename(filepath_str)
+         _, branch = self._parse_filename(tn)
+         updated = False
+-        res = self._run_git(
+-            ["log", branch, f"^{self._get_default_branch()}", "--oneline"]
++        default_branch = self._get_default_branch()
++        res = (
++            self._run_git(["log", branch, f"^{default_branch}", "--oneline"])
++            if default_branch
++            else None
+         )
+-        commits = res.stdout.strip() if res.returncode == 0 else ""
++        commits = res.stdout.strip() if res and res.returncode == 0 else ""
+         if commits:
+             task.parts["commits"] = commits
+             updated = True
+@@ -944,10 +947,13 @@ class TasksCLI:
+                     continue
+ 
+                 if task_state == "DONE":
+-                    # Archive scan - check worktree branch merged to main
++                    # Archive scan - check worktree branch merged to the default branch
+                     branch = item
++                    default_branch = self._get_default_branch()
++                    if not default_branch:
++                        continue
+                     main_sha = self._run_git(
+-                        ["rev-parse", "main"], cwd=self.root
++                        ["rev-parse", default_branch], cwd=self.root
+                     ).stdout.strip()
+                     branch_sha = self._run_git(
+                         ["rev-parse", branch], cwd=self.context.main_repo_root
+@@ -956,7 +962,7 @@ class TasksCLI:
+                         main_sha
+                         and branch_sha
+                         and self._run_git(
+-                            ["merge-base", branch_sha, "main"],
++                            ["merge-base", branch_sha, default_branch],
+                             cwd=self.context.main_repo_root,
+                         ).stdout.strip()
+                         == main_sha
+@@ -1010,14 +1016,19 @@ class TasksCLI:
+                 continue
+             branch = item
+             try:
++                default_branch = self._get_default_branch()
++                if not default_branch:
++                    print(f"⚠️ Skipping {branch}: no default branch (main/master) found.")
++                    continue
+                 main_sha = self._run_git(
+-                    ["rev-parse", "main"], cwd=self.root
++                    ["rev-parse", default_branch], cwd=self.root
+                 ).stdout.strip()
+                 branch_sha = self._run_git(
+                     ["rev-parse", branch], cwd=self.context.main_repo_root
+                 ).stdout.strip()
+                 merge_base = self._run_git(
+-                    ["merge-base", branch_sha, "main"], cwd=self.context.main_repo_root
++                    ["merge-base", branch_sha, default_branch],
++                    cwd=self.context.main_repo_root,
+                 ).stdout.strip()
+                 if merge_base == main_sha:
+                     candidates.append(item)
