@@ -9,11 +9,11 @@
   "Pt": 350,
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794070244.145212,
   "DoneAt": null,
-  "Tp": true,
+  "Tp": false,
   "PatchFiles": [
     {
       "file": "tests/test_worktree_ownership_user.py",
