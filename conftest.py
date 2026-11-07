@@ -1,0 +1,16 @@
+"""Deterministic `import tasks_ai` under pytest.
+
+pytest prepends the test file's basedir (tests/) to sys.path. A stale tracked
+tasks_ai snapshot used to live there and shadow the real package; keep the
+project root at the front so every test imports the project's package without
+per-file sys.path hacks.
+"""
+
+import os
+import sys
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+
+while ROOT in sys.path:
+    sys.path.remove(ROOT)
+sys.path.insert(0, ROOT)
