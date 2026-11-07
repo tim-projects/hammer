@@ -11,7 +11,7 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1794076764.915236,
+  "PatchGenTime": 1794077017.124734,
   "DoneAt": null,
   "Tp": true,
   "PatchFiles": [
@@ -22,10 +22,6 @@
     {
       "file": "data/hints.json",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/342-task-gates-and-sync-assume-main-whi/patches/data_hints.json.patch"
-    },
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/342-task-gates-and-sync-assume-main-whi/patches/error_report.json.patch"
     },
     {
       "file": "tasks_ai/cli.py",
