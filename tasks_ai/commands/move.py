@@ -150,7 +150,7 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                 branch = task.metadata.get("Br", "")
                 if not branch:
                     _, branch = parse_filename(os.path.basename(filepath_str))
-                if not cli.git.is_merged(branch, "main"):
+                if not cli.git.is_merged(branch):
                     cli.error("BRANCH_NOT_MERGED", branch=branch)
 
     # Perform Git Merge if applicable

@@ -2,7 +2,10 @@ def run(cli, dry_run=False, yes=False):
     """Execution logic for 'tasks cleanup' - removes stale worktrees and merged branches."""
     current_branch = cli.git.get_current_branch()
     default_branch = cli.git.get_default_branch()
-    if current_branch not in ('main', 'master', 'staging', 'testing'):
+    if not default_branch:
+        cli.error('NO_DEFAULT_BRANCH', current_branch=current_branch)
+        return
+    if current_branch not in (default_branch, 'staging', 'testing'):
         if cli.as_json:
             cli.finish({'error': f"Cleanup must be run from {default_branch}, staging, or testing branch. Currently on '{current_branch}'."})
         else:
