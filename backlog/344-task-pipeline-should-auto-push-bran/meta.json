@@ -1,0 +1,10 @@
+{
+  "Id": 344,
+  "Ti": "Pipeline should auto-push branches instead of demanding manual push",
+  "Ty": "task",
+  "Cr": "261107 11:17",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "344-task-pipeline-should-auto-push-bran",
+  "Pt": null
+}
