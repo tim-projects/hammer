@@ -1,0 +1,23 @@
+{
+  "Id": 351,
+  "Ti": "Write user tests for 350: Hammer must own worktree paths instead of letting a tool invent one",
+  "Ty": "task",
+  "Cr": "261107 12:08",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "351-task-write-user-tests-for-350-hamme",
+  "Pt": 350,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794070244.145212,
+  "DoneAt": 1794070330.55499,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tests/test_worktree_ownership_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/351-task-write-user-tests-for-350-hamme/patches/tests_test_worktree_ownership_user.py.patch"
+    }
+  ]
+}
