@@ -1,0 +1,18 @@
+{
+    "task_id": "342-task-gates-and-sync-assume-main-whi",
+    "patch_hash": "050ad216dc4b15d3ad2583aa072e3970",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_cleanup.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tasks_ai_worktree_manager.py.patch",
+        "tests_test_default_branch.py.patch"
+    ],
+    "status": "verified"
+}
