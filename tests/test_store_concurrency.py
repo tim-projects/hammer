@@ -18,15 +18,11 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import time
 import unittest
 
-# tests/ itself carries stale 'tasks_ai' junk that shadows the real package
-# once pytest puts tests/ at the front of sys.path, so insert at 0 always.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, PROJECT_ROOT)
 
 STORY = "Sufficiently long story content here to pass validation"
 TECH = "Sufficiently long technical description here to pass validation"

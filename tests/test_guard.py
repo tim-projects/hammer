@@ -23,8 +23,6 @@ import time
 import unittest
 from typing import ClassVar
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from tests.hammer_test_base import HammerTestBase, ensure_dev_repo
 
 
