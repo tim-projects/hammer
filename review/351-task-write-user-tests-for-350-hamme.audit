@@ -1,0 +1,8 @@
+{
+    "task_id": "351",
+    "patch_hash": "313ea8daec4b08a3a32b557ac746ccb0",
+    "patch_files": [
+        "tests_test_worktree_ownership_user.py.patch"
+    ],
+    "status": "verified"
+}
