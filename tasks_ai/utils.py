@@ -1,5 +1,6 @@
 import fcntl
 import os
+import re
 import shutil
 import tempfile
 import threading
@@ -51,6 +52,25 @@ def store_lock(cli):
     finally:
         fcntl.flock(fd, fcntl.LOCK_UN)
         os.close(fd)
+
+
+def derive_task_id(numeric_id, task_type: str, title: str) -> str:
+    """The single naming rule for task id, branch, worktree dir and task folder.
+
+    The slug is capped at 30 characters; create and doctor both derive from here
+    so doctor never repairs a name it disagrees with.
+    """
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", str(title).lower()).strip("-") or "task"
+    return f"{numeric_id}-{task_type}-{slug[:30]}".strip("-")
+
+
+def worktree_path_matches(wt_path: str, worktrees_base: str, branch: str) -> bool:
+    """A task's worktree lives at exactly <worktrees_base>/<branch>.
+
+    Anything else means the manifest, the branch and the directory on disk
+    disagree, so no consumer can resolve the task by name.
+    """
+    return os.path.abspath(wt_path) == os.path.join(worktrees_base, branch)
 
 
 def parse_filename(name: str) -> tuple[str, str]:
