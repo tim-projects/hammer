@@ -1,0 +1,25 @@
+WorktreeCheckHook now pushes the task branch (git push -u origin <branch>) from the task worktree and re-checks the remote instead of erroring BRANCH_NOT_PUSHED; a failed push or a still-missing remote ref still halts. Verified live: DEBUG: Loading config from /home/vscode/git/tasks-ai/.tasks
+Performing pipeline promotion: 344-task-pipeline-should-auto-push-bran -> testing
+Merging 344-task-pipeline-should-auto-push-bran -> testing...
+Skipping merge: 344-task-pipeline-should-auto-push-bran or testing does not exist.
+Git: Committed changes: Mv 344-task-pipeline-should-auto-push-bran -> TESTING
+[validate] pre-transition -> testing -> review
+[worktree] check -> divergence
+[worktree] merge -> missing commit
+Git: Merged 'main'
+DEBUG: TestingToReviewGateHook: task.metadata['Rc'] = 
+[gate] review -> entered
+💡 HINT: Manual patch review required.
+1. Review all patches in: '.tasks/review/344-task-pipeline-should-auto-push-bran/patches/'
+2. Mark review complete: './hammer tasks modify 344 --reviewed'
+Once reviewed, you will be prompted to run audit and regression check.
+ReviewDiffHook triggered for task 344. Ensuring patches exist.
+
+ for task 344
+DEBUG: generating patch for tasks_ai/pipeline_hooks.py
+DEBUG: generating patch for tests/test_worktree_check_hook.py
+DEBUG_GEN: returning 2 patches
+Got 2 patches
+ReviewDiffHook: patches verified and generated.
+Git: Committed changes: Mv 344-task-pipeline-should-auto-push-bran -> REVIEW
+Moved: [344] task | Pipeline should auto-push branches instead of demanding manual push -> REVIEW succeeded with zero manual pushes (log line '[git] push -> 344-task-pipeline-should-auto-push-bran'). New tests/test_worktree_check_hook.py (4 tests) covers push-on-missing, no-push-when-present, failed-push-halts, and dev-mode-off; full suite 5 failed / 162 passed / 1 skipped (the 5 are the same pre-existing failures on main); ./hammer check all green; diff reviewed with no regressions.
