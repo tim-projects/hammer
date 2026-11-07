@@ -195,11 +195,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/349-task-write-user-tests-for-348-task",
       "task_file": "349-task-write-user-tests-for-348-task"
     },
-    "350": {
-      "branch": "350-issue-hammer-must-own-worktree-paths",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/350-issue-hammer-must-own-worktree-paths",
-      "task_file": "350-issue-hammer-must-own-worktree-paths"
-    },
     "351": {
       "branch": "351-task-write-user-tests-for-350-hamme",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/351-task-write-user-tests-for-350-hamme",
