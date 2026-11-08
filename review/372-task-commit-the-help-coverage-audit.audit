@@ -1,0 +1,8 @@
+{
+    "task_id": "372",
+    "patch_hash": "87c3210ad69961e84e4c1ea6da873fec",
+    "patch_files": [
+        "tests_test_help_coverage.py.patch"
+    ],
+    "status": "verified"
+}
