@@ -1,0 +1,9 @@
+- [ ] move <id> ARCHIVED refuses from every state with a message pointing at automatic archiving
+- [ ] comma chains containing ARCHIVED refuse before any state executes
+- [ ] move <id> on a DONE task no longer archives; it reports the automatic grace period
+- [ ] delete <id> <confirm-code> no longer permanently deletes; the first step still rejects
+- [ ] automation still archives: a task DONE >grace is archived on tasks list with no user action
+- [ ] ARCHIVED records older than the grace period are deleted automatically on the sweep
+- [ ] REJECTED records older than the same grace period are deleted automatically on the sweep
+- [ ] the grace period is one shared constant used by all cleanup sites
+- [ ] tests pin each behavior and ./hammer check all passes
