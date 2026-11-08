@@ -2,5 +2,6 @@
 - [ ] -j and --json are accepted in any flag order on every command (before or after subcommands, flags, and args)
 - [ ] Every command combination accepts -j/--json (no command rejects it as an unrecognized argument)
 - [ ] When -j/--json is passed, output is always valid JSON, regardless of success or failure
-- [ ] Help output (-h/--help) is always human-readable text, never JSON, even when -j/--json is also passed
+- [ ] Help overrides JSON: when -h/--help is present, only human-readable help text is emitted and no JSON is printed, so parsers never see mixed output
+- [ ] -j/--json does not leak into help text output, and help detection happens before the JSON directive is applied
 - [ ] Existing tests pass and new tests cover flag-order permutations plus a representative command from every combination group
