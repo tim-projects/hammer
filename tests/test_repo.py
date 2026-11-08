@@ -1,9 +1,37 @@
+import os
+import shutil
 import subprocess
 
 from tests.hammer_test_base import HammerTestBase, MockGitRemote
 
+# The harness checks out main, so these files must come from the branch under
+# test for save/push behavior to be the branch's.
+BRANCH_FILES = (
+    "hammer",
+    "tasks.py",
+    "tasks_ai/cli.py",
+    "tasks_ai/git_service.py",
+    "tasks_ai/utils.py",
+    "data/errors.json",
+    "data/hints.json",
+)
+
 
 class TestRepo(HammerTestBase):
+    def setUp(self):
+        super().setUp()
+        for rel in BRANCH_FILES:
+            shutil.copy2(
+                os.path.join(os.getcwd(), rel), os.path.join(self.repo_path, rel)
+            )
+        # Commit the copies: 'repo git status' asserts a clean tree.
+        subprocess.run(["git", "add", "-A"], cwd=self.repo_path, capture_output=True)  # noqa: PLW1510
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "branch code under test"],
+            cwd=self.repo_path,
+            capture_output=True,
+        )
+
     def test_repo_git_status(self):
         """Test 'repo git status' command."""
         result = subprocess.run(  # noqa: PLW1510
