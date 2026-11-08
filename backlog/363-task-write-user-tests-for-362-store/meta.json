@@ -1,0 +1,10 @@
+{
+  "Id": 363,
+  "Ti": "Write user tests for 362: Store readers take no lock and observe mid-transaction state",
+  "Ty": "task",
+  "Cr": "261108 08:58",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "363-task-write-user-tests-for-362-store",
+  "Pt": 362
+}
