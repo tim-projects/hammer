@@ -8,10 +8,10 @@
   "Br": "366-task-add-all-flag-to-hammer-tasks-s",
   "Pt": null,
   "Rc": "",
-  "Vp": false,
+  "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
   "PatchGenTime": null,
   "DoneAt": null,
-  "Tp": false
+  "Tp": true
 }
