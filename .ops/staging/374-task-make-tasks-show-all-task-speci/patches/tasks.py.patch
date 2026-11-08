@@ -1,0 +1,22 @@
+diff --git a/tasks.py b/tasks.py
+index 5af2e926..644a8709 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -86,7 +86,7 @@ if __name__ == "__main__":
+     show_p.add_argument(
+         "--all",
+         action="store_true",
+-        help="Output every task's .md files and metadata (with -j, all task metadata as JSON).",
++        help="All .md files and metadata of the given task (every task if no Id given; with -j, as JSON).",
+     )
+     cp_p = subparsers.add_parser("checkpoint", help="Sync commits/notes.")
+     cp_p.add_argument("filename", help="Task Id (or filename).")
+@@ -334,7 +334,7 @@ if __name__ == "__main__":
+         cli.current(args.filename)
+     elif args.command == "show":
+         if args.all:
+-            cli.show(None, show_all=True)
++            cli.show(args.filename, show_all=True)
+         elif args.filename:
+             cli.show(args.filename, args.section)
+         else:

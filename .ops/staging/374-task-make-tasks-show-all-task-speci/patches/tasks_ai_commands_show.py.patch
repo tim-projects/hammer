@@ -1,0 +1,29 @@
+diff --git a/tasks_ai/commands/show.py b/tasks_ai/commands/show.py
+index fd3206a1..a6b527fb 100644
+--- a/tasks_ai/commands/show.py
++++ b/tasks_ai/commands/show.py
+@@ -55,10 +55,23 @@ def run_all(cli):
+     cli.finish(records)
+ 
+ 
++def run_task_all(cli, filename):
++    """Execution logic for 'tasks show <id> --all': all .md files and metadata of one task."""
++    filepath, _ = cli.find_task(filename)
++    if not filepath:
++        cli.error(f"Task '{filename}' not found.", hint="Use 'hammer tasks list' to see available task Ids.")
++    filepath_str = str(filepath)
++    state = next((s for s, folder in STATE_FOLDERS.items() if os.path.basename(os.path.dirname(filepath_str)) == folder), None)
++    record = _task_record(cli, filepath_str, state)
++    if not cli.as_json:
++        _print_record(record)
++    cli.finish(record)
++
++
+ def run(cli, filename, section=None, show_all=False):
+     """Execution logic for 'tasks show'."""
+     if show_all:
+-        return run_all(cli)
++        return run_task_all(cli, filename) if filename else run_all(cli)
+     filepath, _ = cli.find_task(filename)
+     if not filepath:
+         cli.error(f"Task '{filename}' not found.", hint="Use 'hammer tasks list' to see available task Ids.")
