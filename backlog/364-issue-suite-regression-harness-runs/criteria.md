@@ -1,0 +1,6 @@
+- [ ] full suite on main has no failures other than task 326's four pre-existing test_robustness failures
+- [ ] HammerTestBase.run_tasks no longer passes --dev; store isolation comes from the per-fixture HAMMER_DEV_TASKS_DIR
+- [ ] tests/test_repo.py::test_repo_save_with_mock_remote passes; worktree_system, worktree_ownership_user, task_naming_user, store_writes families pass both standalone and in-suite
+- [ ] the base fixture restores env and cwd even when a test fails mid-way (no leak into later test files)
+- [ ] tests/test_dev_isolation.py and tests/test_dev_mode.py still pass, with --dev passed explicitly by those tests
+- [ ] ./hammer check all passes
