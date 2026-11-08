@@ -224,7 +224,13 @@ class GitService:
         parent_url = parent.stdout.strip() if parent.returncode == 0 else ""
         store = self.run(["remote", "get-url", "origin"], cwd=self.context.tasks_path)
         store_url = store.stdout.strip() if store.returncode == 0 else ""
-        return bool(store_url) and store_url != parent_url
+        if not store_url or store_url == parent_url:
+            return False
+        # A dev store cloned for init points at its own throwaway repo; pushing
+        # there is pointless, and counting it as deliberate would weaken the
+        # "dev does not push" contract the isolation tests pin.
+        dev_repo = os.path.abspath(self.context.tasks_path) + "-repo"
+        return os.path.realpath(store_url) != os.path.realpath(dev_repo)
 
     def push_tasks_branch(self, branch="tasks", fatal=True):
         """Internal: push current .tasks worktree branch to remote."""
