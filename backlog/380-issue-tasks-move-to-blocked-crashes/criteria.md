@@ -1,0 +1,4 @@
+- [ ] reproduce the KeyError from PROGRESSING and from TESTING/REVIEW/STAGING
+- [ ] identify the exact failing lookup in the move path
+- [ ] fix so BLOCKED moves work from every state that allows them
+- [ ] add a regression test moving a task to BLOCKED and back to PROGRESSING

@@ -1,0 +1,1 @@
+As a user I need tasks move <id> BLOCKED to work when a task is stuck, so I can park blocked work instead of hitting a traceback.

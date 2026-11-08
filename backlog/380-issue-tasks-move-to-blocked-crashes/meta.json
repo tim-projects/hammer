@@ -1,0 +1,10 @@
+{
+  "Id": 380,
+  "Ti": "tasks move to BLOCKED crashes with KeyError BLOCKED",
+  "Ty": "issue",
+  "Cr": "261108 23:09",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "380-issue-tasks-move-to-blocked-crashes",
+  "Pt": null
+}
