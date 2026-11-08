@@ -1,0 +1,1 @@
+Manual --dev: show 354 --all dumps that task's metadata and all 5 md files; -j emits the record dict; bare show --all lists all 252 tasks; show 354 unchanged. ruff clean; user tests extended (green post-merge, fixture tests main).

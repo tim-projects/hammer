@@ -1,0 +1,20 @@
+{
+  "reviews": [
+    {
+      "file": "tasks.py",
+      "patch": "tasks.py.patch",
+      "md5": "ff12be9c51272694e571c587c1174299"
+    },
+    {
+      "file": "tasks_ai/commands/show.py",
+      "patch": "tasks_ai_commands_show.py.patch",
+      "md5": "35536f9f9a0fd4619e1c6ead947c36d7"
+    },
+    {
+      "file": "tests/test_show_all.py",
+      "patch": "tests_test_show_all.py.patch",
+      "md5": "df2bad4a143f974af0cf8227a802346c"
+    }
+  ],
+  "reviewed_at": 1794175515.8305357
+}
