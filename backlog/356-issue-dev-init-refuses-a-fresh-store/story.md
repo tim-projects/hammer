@@ -1,1 +1,0 @@
-As a hammer developer following the AGENTS.md workflow, I need ./hammer tasks --dev init to initialize a fresh store, so the documented dev workflow works from an empty path and every dev command operates on a real store.
