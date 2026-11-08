@@ -1,4 +1,3 @@
-## Criteria
 - [ ] pre-commit hook on a master-named repo allows commits on the default branch (and still enforces the `^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$` regex for non-pipeline branches)
 - [ ] pre-merge hook blocks a direct git merge into the repo's actual default branch, whatever its name (main or master)
 - [ ] post-merge hook compares the resolved default branch against staging/testing, and emits no git error when the literal `main` does not exist

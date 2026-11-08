@@ -1,4 +1,3 @@
-## Plan
 1. Grep the four hook strings in `tasks_ai/cli.py` install_hooks and every `main` literal in `tests/repo.py`; classify each (allow-list, merge guard, diff comparison, deletion guard, pipeline top)
 2. Add default-branch resolution to the bash hook template — same semantics as `GitService.get_default_branch`: `git symbolic-ref --quiet refs/remotes/origin/HEAD` (strip `refs/remotes/origin/`), else first existing of main/master, else main as final fallback
 3. Interpolate the resolved branch into all four hook strings (pre-commit allow-list, pre-merge guard, post-merge diff base, pre-receive protected set); keep the generated bash readable
