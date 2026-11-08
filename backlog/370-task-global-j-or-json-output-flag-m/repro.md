@@ -1,0 +1,1 @@
+1. Run 'hammer tasks -j list' (works), then 'hammer tasks list -j' or 'hammer repo -j sync'; the flag placement is inconsistent or rejected

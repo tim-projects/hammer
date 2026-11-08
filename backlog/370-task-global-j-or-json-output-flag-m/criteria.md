@@ -1,0 +1,5 @@
+- [ ] A full list/matrix of every hammer command combination (tool x command x flags, including auto-detected shortcuts) is produced and documented
+- [ ] -j and --json are accepted in any flag order on every command (before or after subcommands, flags, and args)
+- [ ] Every command combination accepts -j/--json (no command rejects it as an unrecognized argument)
+- [ ] When -j/--json is passed, output is always valid JSON, regardless of success or failure
+- [ ] Existing tests pass and new tests cover flag-order permutations plus a representative command from every combination group
