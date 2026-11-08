@@ -1,1 +1,0 @@
-1. 1. ./hammer tasks move 376 PROGRESSING  2. ./hammer tasks move 376 BLOCKED  3. observe KeyError: 'BLOCKED' traceback
