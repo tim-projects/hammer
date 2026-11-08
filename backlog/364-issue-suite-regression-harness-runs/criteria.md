@@ -3,4 +3,6 @@
 - [ ] tests/test_repo.py::test_repo_save_with_mock_remote passes: dev refuses only pushes to the parent repo's own remote, not a store's configured mock remote
 - [ ] worktree_system, worktree_ownership_user, task_naming_user and store_writes families pass standalone AND in-suite, resolving the CLI's repo as <store>-repo or via tool output
 - [ ] the base fixture restores HAMMER_DEV_TASKS_DIR and cwd even when a test fails mid-way (no leak into later test files)
+- [ ] INVARIANT - dev mode cannot write any path outside <HAMMER_DEV_TASKS_DIR> and its throwaway repo <store>-repo: an audit test runs a full dev workflow (init, create, move, mount, checkpoint, save, guard, init-hooks, undo, doctor) and asserts every created or modified file lies under those two roots
+- [ ] INVARIANT enforcement - the dev push fallback never adds the parent repo's remote to the dev store (git_service.py:234-238), and 'tasks upgrade' (which runs install.sh against the real installation, cli.py:1223-1227) refuses in dev
 - [ ] ./hammer check all passes
