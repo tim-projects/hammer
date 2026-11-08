@@ -1,10 +1,9 @@
-- [ ] Remove the 8 root scratch scripts feature_file.py, feature_file_2.py through feature_file_7.py, feature_file_FINAL.py
-- [ ] Remove the 4 debug helpers check_cols.py, check_env.py, check_shutil.py, check_width.py
-- [ ] Remove the 4 root ad-hoc scripts test_create_logic.py, test_is_merged.py, test_pairing_logic.py, test_regex.py
-- [ ] Remove dev_feature.py, tmp_cli.py, repo_fix.py, setup_test_env.py, repro_audit_script.py, root hammer_test_base.py, tasks_ai/cli.py.fixed
-- [ ] Remove tracked output artifacts diff_debug.log, verification_proof.log, error_report.json, list.json, sync_test.txt, fix_complete.txt, refactor-final.txt1, update.txt
-- [ ] Remove stale tests mirrors tests/tasks.py, tests/repo.py, tests/check.py plus import-time scripts tests/debug_test.py, tests/reproduce_persistence_issue.py
-- [ ] Remove the stale tests/tasks_ai/ package copy (pre-modularization layout, no importer)
-- [ ] Delete untracked transient docs and logs: root one-off report md and txt files, GEMINI.md, TODO.md, session-ses_f142.md, tmp/, cli-versions/, .kilo/node_modules/
+- [ ] git rm the 23 root scratch scripts: feature_file.py, feature_file_2.py through feature_file_7.py, feature_file_FINAL.py, check_cols.py, check_env.py, check_shutil.py, check_width.py, test_create_logic.py, test_is_merged.py, test_pairing_logic.py, test_regex.py, dev_feature.py, tmp_cli.py, repo_fix.py, setup_test_env.py, repro_audit_script.py, root hammer_test_base.py, tasks_ai/cli.py.fixed
+- [ ] git rm the 8 tracked output artifacts: diff_debug.log, verification_proof.log, error_report.json, list.json, sync_test.txt, fix_complete.txt, refactor-final.txt1, update.txt
+- [ ] git rm the 5 stale tests mirrors: tests/tasks.py, tests/repo.py, tests/check.py, tests/debug_test.py, tests/reproduce_persistence_issue.py
+- [ ] Delete the 31 untracked orphan artifacts under .hammer tasks/: 30 hammer-bug-orphan-branch-*.md files plus review/123-task-fix-help-on-repo-check-and-tas.diff
+- [ ] Delete .kilo/ in full (node_modules, package.json, package-lock.json, .gitignore, 8 plans/*.md)
+- [ ] Delete the 29 root-level untracked one-off docs and logs: FUNCTION-MAP.md, FUNCTION_LIST.txt, GEMINI.md, TODO.md, TASK_ID_MISMATCH_BUG_REPORT.md, TASK_ID_MISMATCH_ROOT_CAUSE.md, all-functions.md, bug-report.md, bugreport.md, cli-function-map.md, cli-regressions.md, cli_diff.txt, current-task.md, function_map_temp.txt, hammer-report.md, legacy_functions.txt, local_branches.txt, modular_functions.txt, pipeline_hooks_audit.md, plan-cleanup.md, remote_branches.txt, report-unarchive.md, session-ses_f142.md, unmerged_branches.txt, utils-function-map.md, utils-regressions.md, workflows_design.md, cli-versions/, tmp/
+- [ ] Keep conftest.py and tests/hammer_test_base.py; the tracked tests/tasks_ai/ snapshot was already removed, so no action is needed there
 - [ ] Leave .tasks/, .tasks.backup/, and .task-worktrees/ completely untouched
 - [ ] Run ./hammer check all and confirm lint, typecheck, and the test suite all pass
