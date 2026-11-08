@@ -1,0 +1,10 @@
+{
+  "Id": 371,
+  "Ti": "Write user tests for 370: Global -j or --json output flag must work in any flag order on every hammer command",
+  "Ty": "task",
+  "Cr": "261108 14:31",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "371-task-write-user-tests-for-370-globa",
+  "Pt": 370
+}
