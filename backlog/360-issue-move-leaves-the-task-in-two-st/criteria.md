@@ -1,0 +1,5 @@
+- [ ] the entire physical move (write new, move artifacts, delete old) runs inside one store_lock transaction
+- [ ] with both old and new folders present, find_task returns the folder matching the record's St metadata, and list shows exactly one row for the id
+- [ ] the guard does not report GUARD_STATE_DUPLICATE for a same-id pair whose records agree on St
+- [ ] a concurrent list during a locked move returns a consistent state (no two rows, no stale copy)
+- [ ] ./hammer check all passes

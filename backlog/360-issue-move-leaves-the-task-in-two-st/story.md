@@ -1,0 +1,1 @@
+As an operator running agents on separate worktrees, I need a task to exist in exactly one state folder at every observable moment, so another agent's list, find_task, or guard scan during a move never sees a duplicated task or a false GUARD_STATE_DUPLICATE rejection.
