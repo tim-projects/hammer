@@ -1,1 +1,0 @@
-The current --all ignores the task id and dumps every task. Per-task all-data needs a single-task branch in show that reuses the record builder (state/file/name/type/branch/metadata/files) already used by the all-tasks path.
