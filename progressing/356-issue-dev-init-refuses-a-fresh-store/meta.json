@@ -8,5 +8,9 @@
   "Br": "356-issue-dev-init-refuses-a-fresh-store",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
