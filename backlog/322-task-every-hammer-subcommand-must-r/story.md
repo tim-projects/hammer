@@ -1,1 +1,0 @@
-As a hammer user or agent, I want every hammer subcommand to respond to -h and --help so that the interface is discoverable without reading source. Currently the tasks and guard tools have full help coverage, but the check tool, the repo tool, the wrapper auto-detect, and bare tool invocations do not.
