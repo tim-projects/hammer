@@ -1,0 +1,1 @@
+Add a --checkout flag to tasks create; without it, build the task branch at the default branch merged with the current HEAD using git worktree-free plumbing so the working tree is never switched.
