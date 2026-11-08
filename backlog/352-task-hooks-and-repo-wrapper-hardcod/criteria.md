@@ -1,1 +1,9 @@
+## Criteria
+- [ ] pre-commit hook on a master-named repo allows commits on the default branch (and still enforces the `^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$` regex for non-pipeline branches)
+- [ ] pre-merge hook blocks a direct git merge into the repo's actual default branch, whatever its name (main or master)
+- [ ] post-merge hook compares the resolved default branch against staging/testing, and emits no git error when the literal `main` does not exist
+- [ ] pre-receive hook protects deletion of the resolved default branch plus staging/testing
+- [ ] tests/repo.py PIPELINE resolves the final pipeline branch from the actual default branch (`repo sync` / `repo promote` on a master repo target master, not main)
+- [ ] hook install is idempotent and re-running `tasks init` overwrites previously installed main-hardcoded hooks
+- [ ] test proves hooks generated for a master repo resolve master and for a main repo resolve main (init a temp repo per case, install hooks, attempt a direct commit on the default branch and a direct merge into it)
 - [ ] ./hammer check all passes
