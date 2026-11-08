@@ -1,0 +1,10 @@
+{
+  "Id": 381,
+  "Ti": "Write user tests for 380: tasks move to BLOCKED crashes with KeyError BLOCKED",
+  "Ty": "task",
+  "Cr": "261108 23:09",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "381-task-write-user-tests-for-380-tasks",
+  "Pt": 380
+}
