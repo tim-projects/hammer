@@ -11,7 +11,13 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794153591.238177,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tests/test_help_coverage.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/372-task-commit-the-help-coverage-audit/patches/tests_test_help_coverage.py.patch"
+    }
+  ]
 }
