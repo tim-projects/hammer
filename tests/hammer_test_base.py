@@ -42,6 +42,24 @@ class HammerTestBase(unittest.TestCase):
     def setUp(self):
         self.test_root = tempfile.mkdtemp(prefix='hammer_test_')
         self.dev_tasks_dir = tempfile.mkdtemp(prefix='hammer_tasks_')
+        # Leak-proofing: register the restores BEFORE any mutation. A test that
+        # failed mid-way used to skip tearDown and leak the env var (and a
+        # deleted cwd) into every later test file in the same run.
+        prev_env = os.environ.get('HAMMER_DEV_TASKS_DIR')
+        prev_cwd = os.getcwd()
+
+        def _restore_env():
+            if prev_env is None:
+                os.environ.pop('HAMMER_DEV_TASKS_DIR', None)
+            else:
+                os.environ['HAMMER_DEV_TASKS_DIR'] = prev_env
+
+        def _restore_cwd():
+            if os.path.isdir(prev_cwd):
+                os.chdir(prev_cwd)
+
+        self.addCleanup(_restore_env)
+        self.addCleanup(_restore_cwd)
         os.environ['HAMMER_DEV_TASKS_DIR'] = self.dev_tasks_dir
         self.repo_path = os.path.join(self.test_root, 'repo')
         subprocess.run(['git', 'clone', os.getcwd(), self.repo_path], check=True, capture_output=True)
@@ -74,7 +92,6 @@ class HammerTestBase(unittest.TestCase):
         shutil.rmtree(self.test_root)
         shutil.rmtree(self.dev_tasks_dir)
         shutil.rmtree(dev_repo_path(self.dev_tasks_dir), ignore_errors=True)
-        del os.environ['HAMMER_DEV_TASKS_DIR']
 
     def run_tasks(self, args):
         return subprocess.run([self.script_path, 'tasks', '-j', '--dev'] + args, cwd=self.repo_path, capture_output=True, text=True, check=False)

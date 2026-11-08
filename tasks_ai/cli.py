@@ -1230,6 +1230,9 @@ class TasksCLI:
     def upgrade(self):
         import subprocess
 
+        if self.dev:
+            # install.sh writes the real installation; dev mode must not touch it.
+            self.error("DEV_WRITE_BLOCKED", detail="'tasks upgrade' installs into the live installation", command="upgrade")
         self.log("Upgrading tasks...")
         subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])  # noqa: PLW1510
 

@@ -216,12 +216,20 @@ class GitService:
 
     def push_tasks_branch(self, branch="tasks", fatal=True):
         """Internal: push current .tasks worktree branch to remote."""
-        if self.context.dev:
-            # A dev store's remote is the real repo: pushing from it would move
-            # real refs, which is exactly what dev mode must never do.
-            self.log("Dev mode: push to remote skipped (throwaway store).")
-            return {"branch": branch, "remote": None}
         tasks_path = self.context.tasks_path
+        if self.context.dev:
+            # Dev mode must never move the parent repo's refs. The store may
+            # still push to a remote it was deliberately given (e.g. a test's
+            # mock remote); the parent repo's own remote - or no remote, where
+            # the fallback below would add it - is production and stays put.
+            parent = self.run(["remote", "get-url", "origin"], cwd=self.context.repo_root)
+            parent_url = parent.stdout.strip() if parent.returncode == 0 else ""
+            store = self.run(["remote", "get-url", "origin"], cwd=tasks_path)
+            store_url = store.stdout.strip() if store.returncode == 0 else ""
+            if not store_url or store_url == parent_url:
+                self.log("Dev mode: push to remote skipped (throwaway store).")
+                return {"branch": branch, "remote": None}
+            self.log(f"DEBUG: Dev mode pushing to the store's own remote '{store_url}'")
         if not os.path.exists(tasks_path):
             msg = "Tasks not initialized."
             if fatal and self.logger:
