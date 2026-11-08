@@ -1,0 +1,23 @@
+{
+  "Id": 372,
+  "Ti": "Commit the help coverage audit test",
+  "Ty": "task",
+  "Cr": "261108 15:49",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "372-task-commit-the-help-coverage-audit",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794153591.238177,
+  "DoneAt": 1794153691.273435,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tests/test_help_coverage.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/372-task-commit-the-help-coverage-audit/patches/tests_test_help_coverage.py.patch"
+    }
+  ]
+}

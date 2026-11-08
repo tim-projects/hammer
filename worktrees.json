@@ -95,11 +95,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/321-task-write-user-tests-for-320-docto",
       "task_file": "321-task-write-user-tests-for-320-docto"
     },
-    "322": {
-      "branch": "322-task-every-hammer-subcommand-must-r",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/322-task-every-hammer-subcommand-must-r",
-      "task_file": "322-task-every-hammer-subcommand-must-r"
-    },
     "323": {
       "branch": "323-task-write-user-tests-for-322-every",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/323-task-write-user-tests-for-322-every",
@@ -279,6 +274,16 @@
       "branch": "371-task-write-user-tests-for-370-globa",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/371-task-write-user-tests-for-370-globa",
       "task_file": "371-task-write-user-tests-for-370-globa"
+    },
+    "372": {
+      "branch": "372-task-commit-the-help-coverage-audit",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/372-task-commit-the-help-coverage-audit",
+      "task_file": "372-task-commit-the-help-coverage-audit"
+    },
+    "373": {
+      "branch": "373-task-write-user-tests-for-372-commi",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/373-task-write-user-tests-for-372-commi",
+      "task_file": "373-task-write-user-tests-for-372-commi"
     }
   }
 }
