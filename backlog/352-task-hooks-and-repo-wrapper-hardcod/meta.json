@@ -1,0 +1,10 @@
+{
+  "Id": 352,
+  "Ti": "Hooks and repo wrapper hardcode main while repos may use master",
+  "Ty": "task",
+  "Cr": "261108 03:27",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "352-task-hooks-and-repo-wrapper-hardcod",
+  "Pt": null
+}
