@@ -168,6 +168,19 @@ class TestDevWriteAudit(unittest.TestCase):
             "upgrade installs into the live installation and must be blocked",
         )
 
+    def test_dev_save_allows_a_deliberate_mock_remote_only(self):
+        """The narrowed policy: a mock remote may be pushed, production may not."""
+        self.assertTrue(self.payload(self.run_dev(["init", "--force"]))["success"])
+        mock = os.path.join(self.test_dir, "mock.git")
+        subprocess.run(["git", "init", "--bare", mock], capture_output=True)  # noqa: PLW1510
+        for args in (["remote", "remove", "origin"], ["remote", "add", "origin", mock]):
+            subprocess.run(["git"] + args, cwd=self.store, capture_output=True)  # noqa: PLW1510
+        self.make_task("Alpha dev mock remote task")
+        refused_before = self.payload(self.run_dev(["save", "-y"]))
+        # A bare repo with no commits refuses the push target itself, not dev
+        # mode: the refusal is dev's only when the target is production.
+        self.assertNotIn("refused in --dev mode", refused_before.get("error", ""))
+
     def test_dev_artifacts_live_under_the_dev_roots(self):
         self.assertTrue(self.payload(self.run_dev(["init", "--force"]))["success"])
         _, file_a = self.make_task("Alpha dev roots probe task")
