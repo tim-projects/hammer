@@ -1,0 +1,80 @@
+"""User tests for task 366: 'tasks show --all' outputs every task's .md files and metadata.
+
+These drive the hammer CLI the way a user does, in the --dev fixture repo:
+'tasks show --all' must list every task's markdown files beside its metadata,
+'-j' must emit the same records as JSON, and plain 'tasks show <id>' must keep
+focusing on a single task.
+"""
+
+import json
+import subprocess
+
+from tests.hammer_test_base import HammerTestBase
+
+STORY = "Sufficiently long story content here to pass validation"
+TECH = "Sufficiently long technical description here to pass validation"
+CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
+PLAN = "Sufficiently long planning details here to pass validation"
+
+
+class ShowAllTest(HammerTestBase):
+    def create_task(self, title):
+        result = self.run_tasks([
+            'create', title,
+            '--story', STORY, '--tech', TECH,
+            '--criteria', CRITERIA, '--plan', PLAN,
+        ])
+        self.assertEqual(result.returncode, 0, f'create failed: {result.stdout}')
+        return json.loads(result.stdout)['data']['file']
+
+    def test_all_emits_every_task_as_json(self):
+        first = self.create_task('Show all flag json test task one')
+        second = self.create_task('Show all flag json test task two')
+
+        result = self.run_tasks(['show', first.split('-')[0], '--all'])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        records = json.loads(result.stdout)['data']
+        by_name = {r['name']: r for r in records}
+
+        self.assertIn(first, by_name)
+        self.assertIn(second, by_name)
+        for name in (first, second):
+            record = by_name[name]
+            self.assertEqual(record['state'], 'BACKLOG')
+            self.assertIn('story', record['files'])
+            self.assertIn(STORY, record['files']['story'])
+            self.assertEqual(record['metadata']['Priority'], 2)
+
+    def test_all_text_lists_every_md_file(self):
+        name = self.create_task('Show all flag text test task')
+
+        result = subprocess.run(
+            [self.script_path, 'tasks', '--dev', 'show', '--all'],
+            cwd=self.repo_path, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        self.assertIn(name, result.stdout)
+        self.assertIn(STORY, result.stdout)
+        for part in ('story', 'tech', 'criteria', 'plan'):
+            self.assertIn(f'## {part}', result.stdout)
+
+    def test_single_task_still_focuses_on_one_task(self):
+        name = self.create_task('Show all flag single task test')
+
+        result = subprocess.run(
+            [self.script_path, 'tasks', '--dev', 'show', name.split('-')[0]],
+            cwd=self.repo_path, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        self.assertIn(name, result.stdout)
+        self.assertIn(STORY, result.stdout)
+
+    def test_help_documents_all(self):
+        result = subprocess.run(
+            [self.script_path, 'tasks', 'show', '--help'],
+            cwd=self.repo_path, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('--all', result.stdout)

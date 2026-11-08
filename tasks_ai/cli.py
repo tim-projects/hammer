@@ -864,10 +864,10 @@ class TasksCLI:
             self._auto_archive()
         list_cmd.run(self, show_all=show_all)
 
-    def show(self, filename, section=None):
+    def show(self, filename, section=None, show_all=False):
         from .commands import show as show_cmd
 
-        show_cmd.run(self, filename, section=section)
+        show_cmd.run(self, filename, section=section, show_all=show_all)
 
     def current(self, filename=None):
         from .commands import current as current_cmd
