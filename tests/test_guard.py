@@ -79,6 +79,7 @@ class GuardTestBase(HammerTestBase):
             "repo.py",
             "tasks.py",
             "tasks_ai/guard_engine.py",
+            "tasks_ai/help_text.py",
             "tasks_ai/pipeline_hooks.py",
             "tasks_ai/context.py",
             "tasks_ai/git_service.py",

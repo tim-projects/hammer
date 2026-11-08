@@ -28,6 +28,7 @@ from tasks_ai.guard_engine import (
     GuardUnavailable,
     task_id_of,
 )
+from tasks_ai.help_text import agent_epilog
 
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
@@ -278,7 +279,11 @@ def cmd_hooks(args):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(prog="guard", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="guard",
+        description=__doc__,
+        epilog=agent_epilog("guard"),
+    )
     sub = parser.add_subparsers(dest="command")
 
     check = sub.add_parser("check", help="gate verdict for one task")
