@@ -1,0 +1,10 @@
+{
+  "Id": 355,
+  "Ti": "Write user tests for 354: Task create must not auto checkout the task branch",
+  "Ty": "task",
+  "Cr": "261108 06:18",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "355-task-write-user-tests-for-354-task",
+  "Pt": 354
+}
