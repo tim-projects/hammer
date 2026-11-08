@@ -1,9 +1,9 @@
-"""User tests for task 366: 'tasks show --all' outputs every task's .md files and metadata.
+"""User tests for task 366 and 374: 'tasks show --all' outputs all data, scoped to one task.
 
 These drive the hammer CLI the way a user does, in the --dev fixture repo:
-'tasks show --all' must list every task's markdown files beside its metadata,
-'-j' must emit the same records as JSON, and plain 'tasks show <id>' must keep
-focusing on a single task.
+'tasks show <id> --all' must dump that task's metadata beside every .md file,
+'-j' must emit the same record as JSON, a bare 'tasks show --all' must list
+every task, and plain 'tasks show <id>' must keep focusing on a single task.
 """
 
 import json
@@ -27,29 +27,27 @@ class ShowAllTest(HammerTestBase):
         self.assertEqual(result.returncode, 0, f'create failed: {result.stdout}')
         return json.loads(result.stdout)['data']['file']
 
-    def test_all_emits_every_task_as_json(self):
-        first = self.create_task('Show all flag json test task one')
-        second = self.create_task('Show all flag json test task two')
+    def test_all_with_an_id_dumps_that_task_only(self):
+        name = self.create_task('Show all flag json test task one')
+        self.create_task('Show all flag json test task two')
 
-        result = self.run_tasks(['show', first.split('-')[0], '--all'])
+        result = self.run_tasks(['show', name.split('-')[0], '--all'])
         self.assertEqual(result.returncode, 0, result.stderr)
-        records = json.loads(result.stdout)['data']
-        by_name = {r['name']: r for r in records}
+        record = json.loads(result.stdout)['data']
 
-        self.assertIn(first, by_name)
-        self.assertIn(second, by_name)
-        for name in (first, second):
-            record = by_name[name]
-            self.assertEqual(record['state'], 'BACKLOG')
-            self.assertIn('story', record['files'])
-            self.assertIn(STORY, record['files']['story'])
-            self.assertEqual(record['metadata']['Priority'], 2)
+        self.assertEqual(record['name'], name)
+        self.assertEqual(record['state'], 'BACKLOG')
+        self.assertEqual(record['metadata']['Title'], 'Show all flag json test task one')
+        for part in ('story', 'tech', 'criteria', 'plan'):
+            self.assertIn(part, record['files'])
+        self.assertEqual(record['files']['story'].strip(), STORY)
+        self.assertNotIn('verification_proof.log', record['files'])
 
-    def test_all_text_lists_every_md_file(self):
+    def test_all_with_an_id_text_lists_every_md_file(self):
         name = self.create_task('Show all flag text test task')
 
         result = subprocess.run(
-            [self.script_path, 'tasks', '--dev', 'show', '--all'],
+            [self.script_path, 'tasks', '--dev', 'show', name.split('-')[0], '--all'],
             cwd=self.repo_path, capture_output=True, text=True, check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -58,6 +56,17 @@ class ShowAllTest(HammerTestBase):
         self.assertIn(STORY, result.stdout)
         for part in ('story', 'tech', 'criteria', 'plan'):
             self.assertIn(f'## {part}', result.stdout)
+
+    def test_all_without_an_id_still_lists_every_task(self):
+        first = self.create_task('Show all flag every task one')
+        second = self.create_task('Show all flag every task two')
+
+        result = self.run_tasks(['show', '--all'])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        names = {r['name'] for r in json.loads(result.stdout)['data']}
+
+        self.assertIn(first, names)
+        self.assertIn(second, names)
 
     def test_single_task_still_focuses_on_one_task(self):
         name = self.create_task('Show all flag single task test')
