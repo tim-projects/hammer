@@ -1,0 +1,1 @@
+As an operator with multiple agents on separate worktrees, I need every store-mutating command to commit only its own task's paths, so one agent's unlink/delete/doctor-repair/archive never commits or pushes another agent's uncommitted work under its own message.
