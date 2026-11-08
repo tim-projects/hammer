@@ -269,6 +269,16 @@
       "branch": "369-task-write-user-tests-for-368-clean",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/369-task-write-user-tests-for-368-clean",
       "task_file": "369-task-write-user-tests-for-368-clean"
+    },
+    "370": {
+      "branch": "370-task-global-j-or-json-output-flag-m",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/370-task-global-j-or-json-output-flag-m",
+      "task_file": "370-task-global-j-or-json-output-flag-m"
+    },
+    "371": {
+      "branch": "371-task-write-user-tests-for-370-globa",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/371-task-write-user-tests-for-370-globa",
+      "task_file": "371-task-write-user-tests-for-370-globa"
     }
   }
 }

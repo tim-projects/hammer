@@ -1,0 +1,12 @@
+diff --git a/tests/test_guard.py b/tests/test_guard.py
+index 775b4eda..e5ae1cb6 100755
+--- a/tests/test_guard.py
++++ b/tests/test_guard.py
+@@ -79,6 +79,7 @@ class GuardTestBase(HammerTestBase):
+             "repo.py",
+             "tasks.py",
+             "tasks_ai/guard_engine.py",
++            "tasks_ai/help_text.py",
+             "tasks_ai/pipeline_hooks.py",
+             "tasks_ai/context.py",
+             "tasks_ai/git_service.py",
