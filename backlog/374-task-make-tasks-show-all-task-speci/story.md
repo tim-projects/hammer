@@ -1,0 +1,1 @@
+As a user I want tasks show <id> --all to output all data for that single task: its metadata plus every .md file, with -j emitting the same as JSON.
