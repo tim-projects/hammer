@@ -1,0 +1,1 @@
+Verified in --dev: tasks show <id> unchanged (current-task.md dump); tasks show --all prints every task's .md files and metadata in text mode; tasks show --all -j emits all task metadata as valid JSON; show --help documents --all. ./hammer check all green; 4 new user tests in tests/test_show_all.py follow the task 316 pattern.
