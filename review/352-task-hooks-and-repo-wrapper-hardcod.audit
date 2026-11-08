@@ -1,0 +1,10 @@
+{
+    "task_id": "352-task-hooks-and-repo-wrapper-hardcod",
+    "patch_hash": "08abf72276bc2a9b0efde2001dfda836",
+    "patch_files": [
+        "repo.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tests_test_hooks_default_branch.py.patch"
+    ],
+    "status": "verified"
+}
