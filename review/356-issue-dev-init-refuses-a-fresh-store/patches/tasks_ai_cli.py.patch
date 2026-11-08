@@ -1,0 +1,20 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 2bd3ef73..10d06073 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -642,7 +642,14 @@ class TasksCLI:
+ 
+     def init(self, force=False):
+         if self.dev:
+-            if os.path.exists(self.tasks_path):
++            # Every dev command pre-creates the store directory, so bare
++            # existence proves nothing: a fresh path must still initialize.
++            # A store counts as initialized only by content init itself wrote --
++            # its git repo, or task records a plain directory never gets.
++            initialized = os.path.isdir(
++                os.path.join(self.tasks_path, ".git")
++            ) or self._tasks_directory_has_data(self.tasks_path)
++            if initialized:
+                 if not force:
+                     self.error("Dev tasks already initialized. Use --force to reset.")
+                 else:

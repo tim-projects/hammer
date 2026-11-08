@@ -1,0 +1,122 @@
+diff --git a/tests/test_dev_isolation.py b/tests/test_dev_isolation.py
+index a4526b66..e8a01155 100644
+--- a/tests/test_dev_isolation.py
++++ b/tests/test_dev_isolation.py
+@@ -256,5 +256,117 @@ class TestDevRefusesWhatItCannotIsolate(DevIsolationTestBase):
+         self.assertIn("without --dev", payload["hint"])
+ 
+ 
++class TestDevInitOnAFreshStore(DevIsolationTestBase):
++    """`--dev init` must initialize a store the CLI itself only pre-created.
++
++    The CLI opens every dev command by creating the store directory, so init
++    must judge the store by its contents -- its git repo, or task records --
++    never by the directory's existence. A fresh path has to initialize, and
++    only a genuinely initialized store may refuse.
++    """
++
++    def run_against_store(self, args, store):
++        """Run the --dev CLI with the store pointed at a separate path."""
++        env = {**os.environ, "HAMMER_DEV_TASKS_DIR": store}
++        return subprocess.run(
++            [self.script_path, "tasks", "-j", "--dev"] + args,
++            cwd=self.repo_path,
++            capture_output=True,
++            text=True,
++            check=False,
++            env=env,
++        )
++
++    def fresh_store(self, name):
++        """A store path that does not exist yet, as the repro starts from."""
++        store = os.path.join(self.test_root, name)
++        self.assertFalse(
++            os.path.exists(store), f"{store} must start as a fresh path"
++        )
++        return store
++
++    def seed_store_counter(self, store, value):
++        counter = os.path.join(store, ".task_counter")
++        with open(counter, "w") as handle:
++            handle.write(str(value))
++        with open(os.path.join(store, ".task_counter.hash"), "w") as handle:
++            handle.write(hashlib.md5(str(value).encode()).hexdigest())
++
++    def test_fresh_path_initializes_into_a_git_repo(self):
++        store = self.fresh_store("fresh-init")
++        result = self.run_against_store(["init"], store)
++        self.assertEqual(result.returncode, 0, result.stdout)
++        self.assertTrue(
++            os.path.isdir(os.path.join(store, ".git")),
++            f"initialized store is not a git repo: {result.stdout}",
++        )
++
++    def test_initialized_store_refuses_without_force_and_resets_with_force(self):
++        store = self.fresh_store("fresh-refuse")
++        self.assertEqual(self.run_against_store(["init"], store).returncode, 0)
++
++        again = self.run_against_store(["init"], store)
++        self.assertEqual(again.returncode, 1, again.stdout)
++        self.assertIn("already initialized", json.loads(again.stdout)["error"])
++
++        forced = self.run_against_store(["init", "--force"], store)
++        self.assertEqual(forced.returncode, 0, forced.stdout)
++        self.assertTrue(os.path.isdir(os.path.join(store, ".git")))
++
++    def test_store_records_without_a_git_repo_are_refused_not_clobbered(self):
++        store = os.path.join(self.test_root, "record-store")
++        os.makedirs(store)
++        counter = os.path.join(store, ".task_counter")
++        with open(counter, "w") as handle:
++            handle.write("7")
++
++        refused = self.run_against_store(["init"], store)
++        self.assertEqual(refused.returncode, 1, refused.stdout)
++        self.assertTrue(
++            os.path.exists(counter),
++            "a refused init destroyed the task records it found",
++        )
++
++        forced = self.run_against_store(["init", "--force"], store)
++        self.assertEqual(forced.returncode, 0, forced.stdout)
++        self.assertTrue(os.path.isdir(os.path.join(store, ".git")))
++
++    def test_create_and_checkpoint_commit_against_a_fresh_store(self):
++        store = self.fresh_store("fresh-cycle")
++        self.assertEqual(self.run_against_store(["init"], store).returncode, 0)
++        self.seed_store_counter(store, BASE_ID - 1)
++
++        created = self.run_against_store(
++            [
++                "create",
++                TITLE,
++                "--story",
++                STORY,
++                "--tech",
++                TECH,
++                "--criteria",
++                CRITERIA,
++                "--plan",
++                PLAN,
++            ],
++            store,
++        )
++        self.assertEqual(created.returncode, 0, f"create failed: {created.stdout}")
++        payload = json.loads(created.stdout)
++        task_file = payload["data"]["file"]
++
++        checkpointed = self.run_against_store(
++            ["checkpoint", str(payload["data"]["id"])], store
++        )
++        self.assertEqual(checkpointed.returncode, 0, checkpointed.stdout)
++
++        history = self.git(["log", "--all", "--oneline"], cwd=store).stdout
++        self.assertIn(
++            task_file,
++            history,
++            f"the create/checkpoint cycle never reached the store's git log:\n{history}",
++        )
++
++
+ if __name__ == "__main__":
+     unittest.main()
