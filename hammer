@@ -21,6 +21,11 @@ Examples:
   hammer move 42 PROGRESSING
   hammer all
   hammer lint --fix
+  hammer audit 42
+  hammer verify 42 --proof "tests green"
+
+IMPORTANT: Always use -j for JSON output (machine-parseable for agents).
+For help on any command, use hammer <tool> <command> -h
 """
 
 import sys
@@ -58,12 +63,13 @@ COMMAND_TO_TOOL = {
     "cleanup": "tasks",
     "config": "tasks",
     "upgrade": "tasks",
-    "run": "tasks",
     "undo": "tasks",
     "doctor": "tasks",
-    "help": "tasks",
-    "-h": "tasks",
-    "--help": "tasks",
+    "audit": "tasks",
+    "verify": "tasks",
+    "restore": "tasks",
+    "unarchive": "tasks",
+    "init-hooks": "tasks",
     # check commands
     "lint": "check",
     "test": "check",
@@ -123,10 +129,8 @@ def main():
             f"Known commands: {', '.join(sorted(COMMAND_TO_TOOL.keys()))}"
         )
 
-    if not args:
-        print(f"HAMMER DEMAND: Specify command for {tool}")
-        sys.exit(1)
-
+    # A bare tool invocation delegates to the tool, which prints its own usage
+    # and exits 1 (same rule for every tool).
     tool_path = TOOLS[tool]
     cmd = [sys.executable, str(tool_path)] + args
     result = subprocess.run(cmd)
