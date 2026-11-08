@@ -1,0 +1,15 @@
+{
+    "task_id": "322",
+    "patch_hash": "71a75586052f8e5a3199a0a8a426de94",
+    "patch_files": [
+        "guard.py.patch",
+        "hammer.patch",
+        "repo.py.patch",
+        "tasks.py.patch",
+        "tasks_ai_check_wrapper.py.patch",
+        "tasks_ai_help_text.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_help_coverage.py.patch"
+    ],
+    "status": "verified"
+}
