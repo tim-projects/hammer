@@ -806,7 +806,9 @@ class TasksCLI:
     def save(self, branch="tasks"):
         from .commands import save as save_cmd
 
-        if self.dev:
+        if self.dev and not self.git.dev_push_allowed():
+            # Refused at the command so the agent sees the actionable error; the
+            # push helper refuses again for the paths that bypass this command.
             self.error("DEV_COMMAND_REFUSED", command="./hammer tasks save")
 
         result = save_cmd.run(self, branch=branch, fatal=True)

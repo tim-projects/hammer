@@ -214,24 +214,26 @@ class GitService:
         self.log(f"Regression diff generated at {diff_path}")
         return diff_path
 
+    def dev_push_allowed(self) -> bool:
+        """True only when a dev push targets a remote the store was deliberately
+        given. The parent repo's own remote - or no remote, where the fallback
+        would add it - is production and stays off limits in dev mode."""
+        if not self.context.dev:
+            return True
+        parent = self.run(["remote", "get-url", "origin"], cwd=self.context.repo_root)
+        parent_url = parent.stdout.strip() if parent.returncode == 0 else ""
+        store = self.run(["remote", "get-url", "origin"], cwd=self.context.tasks_path)
+        store_url = store.stdout.strip() if store.returncode == 0 else ""
+        return bool(store_url) and store_url != parent_url
+
     def push_tasks_branch(self, branch="tasks", fatal=True):
         """Internal: push current .tasks worktree branch to remote."""
         tasks_path = self.context.tasks_path
-        if self.context.dev:
-            # Dev mode must never move the parent repo's refs. The store may
-            # still push to a remote it was deliberately given (e.g. a test's
-            # mock remote); the parent repo's own remote - or no remote, where
-            # the fallback below would add it - is production and stays put.
-            parent = self.run(
-                ["remote", "get-url", "origin"], cwd=self.context.repo_root
-            )
-            parent_url = parent.stdout.strip() if parent.returncode == 0 else ""
-            store = self.run(["remote", "get-url", "origin"], cwd=tasks_path)
-            store_url = store.stdout.strip() if store.returncode == 0 else ""
-            if not store_url or store_url == parent_url:
-                self.log("Dev mode: push to remote skipped (throwaway store).")
-                return {"branch": branch, "remote": None}
-            self.log(f"DEBUG: Dev mode pushing to the store's own remote '{store_url}'")
+        if self.context.dev and not self.dev_push_allowed():
+            # The parent repo's refs, or no remote at all (where the fallback
+            # below would wire the store to the parent's remote), are production.
+            self.log("Dev mode: push to remote skipped (throwaway store).")
+            return {"branch": branch, "remote": None}
         if not os.path.exists(tasks_path):
             msg = "Tasks not initialized."
             if fatal and self.logger:
