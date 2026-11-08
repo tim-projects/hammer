@@ -1,0 +1,10 @@
+{
+  "Id": 365,
+  "Ti": "Write user tests for 364: Suite regression: harness runs every command with --dev, which now swaps the repo",
+  "Ty": "task",
+  "Cr": "261108 09:15",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "365-task-write-user-tests-for-364-suite",
+  "Pt": 364
+}
