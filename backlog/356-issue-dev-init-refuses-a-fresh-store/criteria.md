@@ -1,0 +1,5 @@
+- [ ] './hammer tasks --dev init' on a fresh path succeeds and the store is a git repo (git -C $HAMMER_DEV_TASKS_DIR rev-parse --git-dir works)
+- [ ] '--dev init' on an EXISTING store still refuses without --force and resets with --force
+- [ ] a dev create/checkpoint cycle against a freshly init'd dev store actually commits (git log in the store shows the task commit)
+- [ ] no half-created non-git store remains after a refused init on a fresh path
+- [ ] tests/test_dev_isolation.py (or a new test file) pins all of the above; ./hammer check all passes
