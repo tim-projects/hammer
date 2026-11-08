@@ -1,0 +1,51 @@
+{
+  "Id": 322,
+  "Ti": "Every hammer subcommand must respond to -h and --help",
+  "Ty": "task",
+  "Cr": "261105 07:28",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "322-task-every-hammer-subcommand-must-r",
+  "Pt": null,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794149562.100379,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/guard.py.patch"
+    },
+    {
+      "file": "hammer",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/hammer.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/tasks_ai_help_text.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_help_coverage.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/322-task-every-hammer-subcommand-must-r/patches/tests_test_help_coverage.py.patch"
+    }
+  ]
+}

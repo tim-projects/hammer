@@ -1,0 +1,16 @@
+diff --git a/tasks_ai/help_text.py b/tasks_ai/help_text.py
+index 7576cdd4..e34fdd46 100644
+--- a/tasks_ai/help_text.py
++++ b/tasks_ai/help_text.py
+@@ -2,3 +2,11 @@ AGENT_GUIDANCE = '\nIMPORTANT: Always use -j for JSON output (machine-parseable
+ 
+ def get_help_text():
+     return AGENT_GUIDANCE
++
++
++def agent_epilog(tool):
++    """The agent contract every tool's help must surface (see rules R3/R4)."""
++    return (
++        "IMPORTANT: Always use -j for JSON output (machine-parseable for agents).\n"
++        f"For help on any command, use {tool} <command> -h"
++    )
