@@ -1,1 +1,0 @@
-The show command currently focuses on current-task.md; add --all to iterate all task markdown files and metadata, and honor -j for JSON output.
