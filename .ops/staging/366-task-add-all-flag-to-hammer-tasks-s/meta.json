@@ -1,0 +1,35 @@
+{
+  "Id": 366,
+  "Ti": "Add --all flag to hammer tasks show command",
+  "Ty": "task",
+  "Cr": "261108 09:54",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "366-task-add-all-flag-to-hammer-tasks-s",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794163870.521298,
+  "DoneAt": 1794164033.317596,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/366-task-add-all-flag-to-hammer-tasks-s/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/366-task-add-all-flag-to-hammer-tasks-s/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/show.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/366-task-add-all-flag-to-hammer-tasks-s/patches/tasks_ai_commands_show.py.patch"
+    },
+    {
+      "file": "tests/test_show_all.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/366-task-add-all-flag-to-hammer-tasks-s/patches/tests_test_show_all.py.patch"
+    }
+  ]
+}
