@@ -1,1 +1,0 @@
-- [ ] Without --checkout no branch switch happens and a dirty tree still works; with --checkout the legacy behavior is preserved; the task branch exists either way so the pipeline guard still passes.
