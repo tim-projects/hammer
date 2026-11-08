@@ -185,15 +185,90 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/347-task-write-user-tests-for-346-guard",
       "task_file": "347-task-write-user-tests-for-346-guard"
     },
-    "352": {
-      "branch": "352-task-hooks-and-repo-wrapper-hardcod",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/352-task-hooks-and-repo-wrapper-hardcod",
-      "task_file": "352-task-hooks-and-repo-wrapper-hardcod"
-    },
     "353": {
       "branch": "353-task-write-user-tests-for-352-hooks",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/353-task-write-user-tests-for-352-hooks",
       "task_file": "353-task-write-user-tests-for-352-hooks"
+    },
+    "354": {
+      "branch": "354-task-task-create-must-not-auto-chec",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/354-task-task-create-must-not-auto-chec",
+      "task_file": "354-task-task-create-must-not-auto-chec"
+    },
+    "355": {
+      "branch": "355-task-write-user-tests-for-354-task",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/355-task-write-user-tests-for-354-task",
+      "task_file": "355-task-write-user-tests-for-354-task"
+    },
+    "356": {
+      "branch": "356-issue-dev-init-refuses-a-fresh-store",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/356-issue-dev-init-refuses-a-fresh-store",
+      "task_file": "356-issue-dev-init-refuses-a-fresh-store"
+    },
+    "357": {
+      "branch": "357-task-write-user-tests-for-356-dev-i",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/357-task-write-user-tests-for-356-dev-i",
+      "task_file": "357-task-write-user-tests-for-356-dev-i"
+    },
+    "358": {
+      "branch": "358-issue-unlink-delete-doctor-and-archi",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/358-issue-unlink-delete-doctor-and-archi",
+      "task_file": "358-issue-unlink-delete-doctor-and-archi"
+    },
+    "359": {
+      "branch": "359-task-write-user-tests-for-358-unlin",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/359-task-write-user-tests-for-358-unlin",
+      "task_file": "359-task-write-user-tests-for-358-unlin"
+    },
+    "360": {
+      "branch": "360-issue-move-leaves-the-task-in-two-st",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/360-issue-move-leaves-the-task-in-two-st",
+      "task_file": "360-issue-move-leaves-the-task-in-two-st"
+    },
+    "361": {
+      "branch": "361-task-write-user-tests-for-360-move",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/361-task-write-user-tests-for-360-move",
+      "task_file": "361-task-write-user-tests-for-360-move"
+    },
+    "362": {
+      "branch": "362-issue-store-readers-take-no-lock-and",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/362-issue-store-readers-take-no-lock-and",
+      "task_file": "362-issue-store-readers-take-no-lock-and"
+    },
+    "363": {
+      "branch": "363-task-write-user-tests-for-362-store",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/363-task-write-user-tests-for-362-store",
+      "task_file": "363-task-write-user-tests-for-362-store"
+    },
+    "364": {
+      "branch": "364-issue-suite-regression-harness-runs",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/364-issue-suite-regression-harness-runs",
+      "task_file": "364-issue-suite-regression-harness-runs"
+    },
+    "365": {
+      "branch": "365-task-write-user-tests-for-364-suite",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/365-task-write-user-tests-for-364-suite",
+      "task_file": "365-task-write-user-tests-for-364-suite"
+    },
+    "366": {
+      "branch": "366-task-add-all-flag-to-hammer-tasks-s",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/366-task-add-all-flag-to-hammer-tasks-s",
+      "task_file": "366-task-add-all-flag-to-hammer-tasks-s"
+    },
+    "367": {
+      "branch": "367-task-write-user-tests-for-366-add-a",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/367-task-write-user-tests-for-366-add-a",
+      "task_file": "367-task-write-user-tests-for-366-add-a"
+    },
+    "368": {
+      "branch": "368-task-clean-up-transient-scratch-and",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/368-task-clean-up-transient-scratch-and",
+      "task_file": "368-task-clean-up-transient-scratch-and"
+    },
+    "369": {
+      "branch": "369-task-write-user-tests-for-368-clean",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/369-task-write-user-tests-for-368-clean",
+      "task_file": "369-task-write-user-tests-for-368-clean"
     }
   }
 }
