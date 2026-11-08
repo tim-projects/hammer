@@ -70,7 +70,7 @@ if __name__ == "__main__":
     cur_p = subparsers.add_parser("current", help="Show active task.")
     cur_p.add_argument("filename", help="Task Id (or filename).")
     show_p = subparsers.add_parser(
-        "show", help="Show task details or list all tasks when no ID provided."
+        "show", help="Show task details or all task .md files and metadata with --all."
     )
     show_p.add_argument(
         "filename",
@@ -82,6 +82,11 @@ if __name__ == "__main__":
         nargs="?",
         choices=["story", "tech", "criteria", "plan", "repro", "notes", "progress"],
         help="Specific section to show: story, tech, criteria, plan, repro, notes, progress",
+    )
+    show_p.add_argument(
+        "--all",
+        action="store_true",
+        help="Output every task's .md files and metadata (with -j, all task metadata as JSON).",
     )
     cp_p = subparsers.add_parser("checkpoint", help="Sync commits/notes.")
     cp_p.add_argument("filename", help="Task Id (or filename).")
@@ -328,7 +333,9 @@ if __name__ == "__main__":
     elif args.command == "current":
         cli.current(args.filename)
     elif args.command == "show":
-        if args.filename:
+        if args.all:
+            cli.show(None, show_all=True)
+        elif args.filename:
             cli.show(args.filename, args.section)
         else:
             cli.list(show_all=False)
