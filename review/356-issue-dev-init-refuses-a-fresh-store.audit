@@ -1,0 +1,9 @@
+{
+    "task_id": "356",
+    "patch_hash": "226786c4cf2147421ac892c91734fb7f",
+    "patch_files": [
+        "tasks_ai_cli.py.patch",
+        "tests_test_dev_isolation.py.patch"
+    ],
+    "status": "verified"
+}
