@@ -222,7 +222,9 @@ class GitService:
             # still push to a remote it was deliberately given (e.g. a test's
             # mock remote); the parent repo's own remote - or no remote, where
             # the fallback below would add it - is production and stays put.
-            parent = self.run(["remote", "get-url", "origin"], cwd=self.context.repo_root)
+            parent = self.run(
+                ["remote", "get-url", "origin"], cwd=self.context.repo_root
+            )
             parent_url = parent.stdout.strip() if parent.returncode == 0 else ""
             store = self.run(["remote", "get-url", "origin"], cwd=tasks_path)
             store_url = store.stdout.strip() if store.returncode == 0 else ""

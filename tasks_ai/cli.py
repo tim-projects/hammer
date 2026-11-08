@@ -576,13 +576,13 @@ class TasksCLI:
         # 'main': same resolution as GitService.get_default_branch (origin/HEAD,
         # then the first existing of main/master, with main as final fallback).
         default_branch_snippet = (
-            'default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)\n'
+            "default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)\n"
             'if [ -z "$default_branch" ]; then\n'
-            '    if git rev-parse --verify --quiet main >/dev/null; then default_branch=main\n'
-            '    elif git rev-parse --verify --quiet master >/dev/null; then default_branch=master\n'
-            '    else default_branch=main\n'
-            '    fi\n'
-            'fi'
+            "    if git rev-parse --verify --quiet main >/dev/null; then default_branch=main\n"
+            "    elif git rev-parse --verify --quiet master >/dev/null; then default_branch=master\n"
+            "    else default_branch=main\n"
+            "    fi\n"
+            "fi"
         )
 
         # pre-commit hook
@@ -1039,7 +1039,9 @@ class TasksCLI:
             try:
                 default_branch = self._get_default_branch()
                 if not default_branch:
-                    print(f"⚠️ Skipping {branch}: no default branch (main/master) found.")
+                    print(
+                        f"⚠️ Skipping {branch}: no default branch (main/master) found."
+                    )
                     continue
                 main_sha = self._run_git(
                     ["rev-parse", default_branch], cwd=self.root
@@ -1232,7 +1234,11 @@ class TasksCLI:
 
         if self.dev:
             # install.sh writes the real installation; dev mode must not touch it.
-            self.error("DEV_WRITE_BLOCKED", detail="'tasks upgrade' installs into the live installation", command="upgrade")
+            self.error(
+                "DEV_WRITE_BLOCKED",
+                detail="'tasks upgrade' installs into the live installation",
+                command="upgrade",
+            )
         self.log("Upgrading tasks...")
         subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])  # noqa: PLW1510
 
