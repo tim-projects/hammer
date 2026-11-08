@@ -1,0 +1,6 @@
+- [ ] store_lock gains a shared read mode; find_task, list, current and the guard refresh take it
+- [ ] a reader launched during a writer's transaction blocks and then observes the last committed state (no torn record, no in-flight file reported as pending)
+- [ ] sync_task_content's pending-change scan never attributes another agent's in-flight write to this task's checkpoint
+- [ ] guard scan run during another agent's move does not cache a transient duplicate-state finding
+- [ ] no deadlock: nested lock acquisition in one thread still passes through
+- [ ] ./hammer check all passes
