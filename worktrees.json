@@ -165,11 +165,6 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/341-task-write-user-tests-for-340-track",
       "task_file": "341-task-write-user-tests-for-340-track"
     },
-    "342": {
-      "branch": "342-task-gates-and-sync-assume-main-whi",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/342-task-gates-and-sync-assume-main-whi",
-      "task_file": "342-task-gates-and-sync-assume-main-whi"
-    },
     "343": {
       "branch": "343-task-write-user-tests-for-342-gates",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/343-task-write-user-tests-for-342-gates",
@@ -189,6 +184,16 @@
       "branch": "347-task-write-user-tests-for-346-guard",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/347-task-write-user-tests-for-346-guard",
       "task_file": "347-task-write-user-tests-for-346-guard"
+    },
+    "352": {
+      "branch": "352-task-hooks-and-repo-wrapper-hardcod",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/352-task-hooks-and-repo-wrapper-hardcod",
+      "task_file": "352-task-hooks-and-repo-wrapper-hardcod"
+    },
+    "353": {
+      "branch": "353-task-write-user-tests-for-352-hooks",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/353-task-write-user-tests-for-352-hooks",
+      "task_file": "353-task-write-user-tests-for-352-hooks"
     }
   }
 }

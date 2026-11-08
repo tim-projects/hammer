@@ -1,0 +1,31 @@
+{
+  "Id": 352,
+  "Ti": "Hooks and repo wrapper hardcode main while repos may use master",
+  "Ty": "task",
+  "Cr": "261108 03:27",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "352-task-hooks-and-repo-wrapper-hardcod",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794112800.030227,
+  "DoneAt": 1794112846.790217,
+  "Tp": false,
+  "PatchFiles": [
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/352-task-hooks-and-repo-wrapper-hardcod/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/352-task-hooks-and-repo-wrapper-hardcod/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tests/test_hooks_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/352-task-hooks-and-repo-wrapper-hardcod/patches/tests_test_hooks_default_branch.py.patch"
+    }
+  ]
+}

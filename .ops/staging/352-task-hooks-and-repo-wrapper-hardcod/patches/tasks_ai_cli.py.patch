@@ -1,0 +1,57 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 3eff1626..d5cf3f26 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -572,31 +572,45 @@ class TasksCLI:
+         if not hook_dir:
+             return
+ 
++        # The hooks must target the repo's actual default branch, not assume
++        # 'main': same resolution as GitService.get_default_branch (origin/HEAD,
++        # then the first existing of main/master, with main as final fallback).
++        default_branch_snippet = (
++            'default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)\n'
++            'if [ -z "$default_branch" ]; then\n'
++            '    if git rev-parse --verify --quiet main >/dev/null; then default_branch=main\n'
++            '    elif git rev-parse --verify --quiet master >/dev/null; then default_branch=master\n'
++            '    else default_branch=main\n'
++            '    fi\n'
++            'fi'
++        )
++
+         # pre-commit hook
+         with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
+             f.write(
+-                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n\n# Allow pipeline branches (main, staging, testing)\nif [[ "$target_branch" == "main" || "$target_branch" == "staging" || "$target_branch" == "testing" ]]; then\n    exit 0\nfi\n\n# Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
++                f'#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n{default_branch_snippet}\n\n# Allow the default branch plus the pipeline branches\nif [[ "$target_branch" == "$default_branch" || "$target_branch" == "staging" || "$target_branch" == "testing" ]]; then\n    exit 0\nfi\n\n# Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
+             )
+         os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
+ 
+-        # pre-merge hook
+-        with open(os.path.join(hook_dir, "pre-merge"), "w") as f:
++        # pre-merge-commit hook (git-merge invokes this before a merge commit;
++        # 'pre-merge' is not a git hook name and would never run)
++        with open(os.path.join(hook_dir, "pre-merge-commit"), "w") as f:
+             f.write(
+-                '#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "⚠️  Direct git merge to main detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
++                f'#!/bin/bash\n\n# hammer\'s own pipeline/repo merges set this; only raw user merges are blocked\nif [ "$HAMMER_INTERNAL_CALL" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n{default_branch_snippet}\nif [ "$target_branch" == "$default_branch" ]; then\n    echo "⚠️  Direct git merge into $default_branch detected. Pipeline governance requires \'./hammer repo merge\'. Aborting."\n    exit 1\nfi'
+             )
+-        os.chmod(os.path.join(hook_dir, "pre-merge"), 0o755)
++        os.chmod(os.path.join(hook_dir, "pre-merge-commit"), 0o755)
+ 
+         # post-merge hook
+         with open(os.path.join(hook_dir, "post-merge"), "w") as f:
+             f.write(
+-                '#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\nif [ "$target_branch" == "main" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log main..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with main!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
++                f'#!/bin/bash\n\nif [ "$HAMMER_INTERNAL_MERGE" == "1" ]; then\n    exit 0\nfi\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n{default_branch_snippet}\nif [ "$target_branch" == "$default_branch" ]; then\n    echo "Checking pipeline sync..."\n    staging_diff=$(git log $default_branch..staging --oneline)\n    testing_diff=$(git log staging..testing --oneline)\n    if [ -n "$staging_diff" ] || [ -n "$testing_diff" ]; then\n        echo "⚠️  Pipeline branches (staging/testing) are out of sync with $default_branch!"\n        echo "Run \'./hammer repo sync\' to reconcile."\n    else\n        echo "✅ Pipeline branches are in sync."\n    fi\nfi'
+             )
+         os.chmod(os.path.join(hook_dir, "post-merge"), 0o755)
+ 
+         # pre-receive hook
+         with open(os.path.join(hook_dir, "pre-receive"), "w") as f:
+             f.write(
+-                '#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "main" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
++                f'#!/bin/bash\n\n{default_branch_snippet}\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" ]]; then\n        branch=$(basename "$refname")\n        if [[ "$branch" == "$default_branch" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
+             )
+         os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
+ 
