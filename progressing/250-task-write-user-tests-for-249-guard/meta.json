@@ -8,5 +8,9 @@
   "Br": "250-task-write-user-tests-for-249-guard",
   "Pt": 249,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
