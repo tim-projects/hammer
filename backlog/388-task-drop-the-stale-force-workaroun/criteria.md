@@ -1,3 +1,0 @@
-- [ ] all four dev-store setups in tests/test_dev_write_audit.py call plain 'init' (no --force) and pass
-- [ ] the stale comment explaining why --force was required is gone
-- [ ] no other test or tool path regresses: tests/test_dev_write_audit.py and the dev isolation tests pass; ./hammer check all passes
