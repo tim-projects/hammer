@@ -1,1 +1,0 @@
-Test helpers call move PROGRESSING without first recording --research, so tasks stick in READY and downstream gate assertions pass vacuously. Separately check.py test tool carries an explicit ignore list covering tests/test_tasks.py, test_audit_verify_integration.py, test_robustness.py, test_all_transitions.py and others, so check all stays green while these suites fail.
