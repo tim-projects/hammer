@@ -157,14 +157,23 @@ def resolve_content(cli, value, lines=False):
     page-sized story or criteria list can come from a temp file instead of a
     shell arg (one item per line when lines=True, matching the list flags'
     own normalization). A path-shaped value that names nothing is an error:
-    storing the path itself as prose would corrupt the task silently.
+    storing the path itself as prose would corrupt the task silently. Only a
+    single token counts as path-shaped, because criteria routinely name
+    ./hammer ... and a sentence is never a path; the cost of that rule is that
+    an intended path containing spaces which does not exist is kept as prose.
     """
     def _read(v):
         if os.path.isfile(v):
             with open(v, "r", encoding="utf-8") as fh:
                 content = fh.read()
             return content.splitlines() if lines else content
-        if v.startswith(("/", "./", "../", "~")) or v.endswith((".md", ".txt")):
+        # Whitespace means prose, not a path: criteria routinely name ./hammer ...
+        # shortcut: an intended path containing spaces that is missing is stored as
+        # prose instead of erroring.
+        path_shaped = v.startswith(("/", "./", "../", "~")) or v.endswith(
+            (".md", ".txt")
+        )
+        if path_shaped and not any(c.isspace() for c in v):
             cli.error("CONTENT_FILE_NOT_FOUND", path=v)
         return v
 
