@@ -1,0 +1,18 @@
+{
+    "task_id": "364",
+    "patch_hash": "0e0d7ebda8c092203174544969b9f4ca",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_context.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_dev_write_audit.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_repo.py.patch",
+        "tests_test_unlink.py.patch"
+    ],
+    "status": "verified"
+}
