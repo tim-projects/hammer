@@ -29,7 +29,7 @@ def _has_real_patches(task, patches_dir):
     return bool(patch_files) and os.path.isdir(patches_dir) and bool(os.listdir(patches_dir))
 
 
-def run(cli, filename, task_type=None, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, notes=None, progress=None, findings=None, mitigations=None, tests_passed=None, priority=None, regression_check=None, reviewed=None):
+def run(cli, filename, task_type=None, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, notes=None, research=None, progress=None, findings=None, mitigations=None, tests_passed=None, priority=None, regression_check=None, reviewed=None):
     """Execution logic for 'tasks modify'."""
     filepath, _ = cli.find_task(filename)
     if not filepath:
@@ -45,6 +45,7 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
     plan = resolve_content(cli, plan, lines=True)
     repro = resolve_content(cli, repro, lines=True)
     notes = resolve_content(cli, notes)
+    research = resolve_content(cli, research)
     updated = False
     if task_type:
         task.metadata['Ty'] = task_type
@@ -78,6 +79,12 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
             task.parts['repro'] = '\n'.join((f'{i}. {r}' for i, r in enumerate(repro, 1)))
         else:
             task.parts['repro'] = repro
+        updated = True
+    if research is not None:
+        task.parts['research'] = research
+        # Rr attests the pass happened; the gate also requires the findings
+        # themselves, so a flag flip alone cannot pass it.
+        task.metadata['Rr'] = bool(research.strip())
         updated = True
     if notes or progress or findings or mitigations:
         n = task.parts.get('notes', '- Progress: \n- Findings: \n- Mitigations: \n')

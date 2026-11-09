@@ -156,6 +156,9 @@ if __name__ == "__main__":
     mod_p.add_argument("--plan", nargs="+", help="Implementation plan, or path to a file.")
     mod_p.add_argument("--repro", nargs="+", help="Reproduction steps, or path to a file.")
     mod_p.add_argument("--notes", help="Notes content, or path to a file.")
+    mod_p.add_argument(
+        "--research", help="Research findings (read-only pass), or path to a file."
+    )
     mod_p.add_argument("--progress", help="Progress update.")
     mod_p.add_argument("--findings", help="Findings.")
     mod_p.add_argument("--mitigations", help="Mitigations.")
@@ -320,6 +323,7 @@ if __name__ == "__main__":
             criteria=args.criteria,
             plan=args.plan,
             repro=args.repro,
+            research=args.research,
             notes=args.notes,
             progress=args.progress,
             findings=args.findings,
