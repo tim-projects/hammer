@@ -107,6 +107,22 @@ class TestTasksAI(unittest.TestCase):
             check=False,
         )
 
+    def enter_progressing(self, file):
+        """Record a research pass, then start work.
+
+        The READY exit gate demands recorded research (Rr + findings) before
+        PROGRESSING; an unchecked move leaves the task stuck in READY and
+        makes every downstream gate assertion vacuous.
+        """
+        findings = (
+            "Read pipeline_hooks.py exit-hook registration, move_logic and the "
+            "tests covering this flow."
+        )
+        res = self.run_cmd(["modify", file, "--research", findings])
+        self.assertTrue(res["success"], f"research record failed for {file}: {res}")
+        res = self.run_cmd(["move", file, "PROGRESSING"])
+        self.assertTrue(res["success"], f"move to PROGRESSING failed for {file}: {res}")
+
     def complete_criteria(self, file, stage):
         """Helper to mark all criteria as done."""
         task_dir = os.path.join(self.dev_tasks_dir, stage, file)
@@ -237,7 +253,7 @@ class TestTasksAI(unittest.TestCase):
 
         # Move task to READY then PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.enter_progressing(task_file)
 
         # Verify blocked (already on PROGRESSING, can't move again)
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
@@ -247,7 +263,7 @@ class TestTasksAI(unittest.TestCase):
         issue_worktree = self.get_worktree_path(issue_id)
 
         # Move issue to PROGRESSING
-        self.run_cmd(["move", issue_file, "PROGRESSING"])
+        self.enter_progressing(issue_file)
 
         # Move issue through states
         for state in ["TESTING", "REVIEW", "STAGING", "DONE"]:
@@ -379,7 +395,7 @@ class TestTasksAI(unittest.TestCase):
         # A path-shaped value naming no file is an error, not stored prose
         res = self.run_cmd(["modify", task_file, "--story", "/tmp/no-such-story.md"])
         self.assertFalse(res["success"])
-        self.assertIn("CONTENT_FILE_NOT_FOUND", res["error"])
+        self.assertIn("Content file not found", res["error"])
 
     def test_research_gate_requires_recorded_research(self):
         """READY -> PROGRESSING is blocked until a research pass is recorded."""
@@ -404,7 +420,8 @@ class TestTasksAI(unittest.TestCase):
 
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertFalse(res["success"], "PROGRESSING must be blocked before research")
-        self.assertIn("RESEARCH_REQUIRED", res["error"])
+        self.assertIn("Research pass not recorded", res["error"])
+        self.assertIn("--research", res["hint"], "hint must name the remedy")
 
         # findings arrive as a file (bulk pass) like every other long-form flag
         research_path = os.path.join(self.test_dir, "research.md")
@@ -497,7 +514,7 @@ class TestTasksAI(unittest.TestCase):
         task_id = res["data"]["id"]
 
         self.run_cmd(["move", file, "READY"])
-        self.run_cmd(["move", file, "PROGRESSING"])
+        self.enter_progressing(file)
 
         branch = file
         worktree_path = self.get_worktree_path(task_id)
@@ -574,7 +591,7 @@ class TestTasksAI(unittest.TestCase):
 
         # Move through READY -> PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.enter_progressing(task_file)
 
         # Get worktree path for working in worktree
         worktree_path = self.get_worktree_path(task_id)
@@ -670,8 +687,7 @@ class TestTasksAI(unittest.TestCase):
         # Move back to PROGRESSING
         res = self.run_cmd(["move", task_file, "READY"])
         self.assertTrue(res["success"], res)
-        res = self.run_cmd(["move", task_file, "PROGRESSING"])
-        self.assertTrue(res["success"], res)
+        self.enter_progressing(task_file)
 
         # Create a code file and commit on the task branch
         wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
@@ -748,7 +764,7 @@ class TestTasksAI(unittest.TestCase):
 
         # Move task to READY then PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.enter_progressing(task_file)
         wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
         code_file = os.path.join(wt, "code.py")
         with open(code_file, "w") as f:
@@ -827,7 +843,7 @@ class TestTasksAI(unittest.TestCase):
 
         # Move to READY then PROGRESSING
         self.run_cmd(["move", task_file, "READY"])
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.enter_progressing(task_file)
         wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
         code_file = os.path.join(wt, "file.txt")
         with open(code_file, "w") as f:
@@ -903,7 +919,7 @@ class TestTasksAI(unittest.TestCase):
 
         # Initial commit on task branch
         self.run_cmd(["move", task_file, "READY"])
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.enter_progressing(task_file)
         wt = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
         with open(os.path.join(wt, "initial.txt"), "w") as f:

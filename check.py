@@ -393,10 +393,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     if tool == "pytest":
         # Add explicit path to the project root to ensure pytest finds tests
         cmd_to_run.append(project_root)
-        # Only run tests that don't have pipeline re-entrancy issues
-        # (tests that call tasks move internally cause validation to run in a subprocess
-        # which fails due to missing PYTHONPATH/environment)
-        # Also exclude known-failing tests that have pre-existing issues unrelated to task changes
+        # The pipeline suites exercise the move/gate hooks (and the research
+        # gate) for real; they are listed explicitly, never ignored. A suite
+        # that cannot pass here gets its own fix task before check stays green.
         cmd_to_run.extend(
             [
                 "tests/test_cli_robustness.py",
@@ -407,16 +406,15 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
                 "tests/test_git_hook_restrictions.py",
                 "tests/test_init_backup.py",
                 "tests/test_pairing.py",
-                # Explicitly ignore problematic tests
-                "--ignore=tests/test_tasks.py",
-                "--ignore=tests/test_robustness.py",
-                "--ignore=tests/test_robustness_bugfix.py",
-                "--ignore=tests/test_all_transitions.py",
-                "--ignore=tests/test_artifact_healing.py",
-                "--ignore=tests/test_audit_verify.py",
-                "--ignore=tests/test_audit_verify_integration.py",
-                "--ignore=tests/test_cli_endpoints.py",
-                "--ignore=tests/test_tasks_modular.py",
+                "tests/test_tasks.py",
+                "tests/test_robustness.py",
+                "tests/test_robustness_bugfix.py",
+                "tests/test_all_transitions.py",
+                "tests/test_artifact_healing.py",
+                "tests/test_audit_verify.py",
+                "tests/test_audit_verify_integration.py",
+                "tests/test_cli_endpoints.py",
+                "tests/test_tasks_modular.py",
             ]
         )
         # Add PYTHONPATH so tests can import tasks_ai modules

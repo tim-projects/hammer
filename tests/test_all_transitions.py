@@ -29,6 +29,9 @@ class TestAllTransitions(HammerTestBase):
         task_file = create_data.get('file')
         print(f'DEBUG: Task ID is {task_id}')
         self.run_tasks(['move', str(task_id), 'READY'])
+        # The READY exit gate demands recorded research before PROGRESSING;
+        # this suite maps the state machine, not the gate.
+        self.run_tasks(['modify', str(task_id), '--research', 'Read move_logic, the exit-hook registration in cli.py and the gate hooks before mapping allowed transitions.'])
         current = 'READY'
         states_to_test = [s for s in STATE_FOLDERS if s not in ['BACKLOG']]
         for target in states_to_test:
