@@ -7,13 +7,13 @@
   "Pr": 2,
   "Br": "386-task-ready-exit-gate-requires-a-rec",
   "Pt": null,
-  "Rc": "PASSED",
+  "Rc": "",
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
-  "PatchGenTime": 1794228029.240791,
+  "PatchGenTime": 1794231444.34478,
   "DoneAt": null,
-  "Tp": false,
+  "Tp": true,
   "PatchFiles": [
     {
       "file": "AGENTS.md",
