@@ -1,6 +1,0 @@
-- [ ] each of the six sites stages only its own task's paths: a test with a second task's pending edit proves the commit's name-status contains nothing from that task
-- [ ] ArchivedCommitHook pushes a store state that contains only the archived task's own changes
-- [ ] a concurrent unlink + checkpoint produces two commits each scoped to its own task (no interleaving, no shared commit)
-- [ ] doctor --fix repairs still commit their own paths only
-- [ ] the two documented whole-store sweep sites hold the store lock
-- [ ] ./hammer check all passes
