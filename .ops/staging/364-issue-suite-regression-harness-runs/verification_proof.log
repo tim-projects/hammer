@@ -1,1 +1,0 @@
-Branch suite 4 failed / 235 passed / 1 skipped: the four failures are task 326's pre-existing set, identical on main before this branch (main was 55). New tests/test_dev_write_audit.py pins the invariant. ./hammer check all: lint/test/typecheck/format exit 0.
