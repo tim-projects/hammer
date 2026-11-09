@@ -11,7 +11,13 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794228343.850467,
   "DoneAt": null,
-  "Tp": true
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/388-task-drop-the-stale-force-workaroun/patches/tests_test_dev_write_audit.py.patch"
+    }
+  ]
 }
