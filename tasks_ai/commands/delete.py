@@ -4,7 +4,7 @@ import shutil
 
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
-from ..utils import parse_filename
+from ..utils import commit_task_paths, parse_filename
 
 
 def run(cli, filename, confirm=None):
@@ -56,10 +56,9 @@ def run(cli, filename, confirm=None):
         else:
             os.remove(filepath_str)
 
-        cli._run_git(["add", "--all"], cwd=cli.tasks_path)
-        cli._run_git(
-            ["commit", "--allow-empty", "-m", f"Del {task_id}"], cwd=cli.tasks_path
-        )
+        # The record is already deleted on disk; commit records the deletion of
+        # this task's paths alone, not the whole shared store.
+        commit_task_paths(cli, filepath_str, f"Del {task_id}")
 
         cli.log(
             f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"

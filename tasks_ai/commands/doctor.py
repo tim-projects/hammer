@@ -4,7 +4,12 @@ import shutil
 
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
-from ..utils import derive_task_id, parse_filename, worktree_path_matches
+from ..utils import (
+    commit_task_paths,
+    derive_task_id,
+    parse_filename,
+    worktree_path_matches,
+)
 
 
 def extract_id_from_string(s):
@@ -243,20 +248,15 @@ def run(cli, fix=False):
                 if item != correct_dir_name or state != target_state:
                     task = FM.load(item_path)
 
-                # Git operations to record the fixes
-                try:
-                    cli._run_git(["add", "--all"], cwd=cli.tasks_path)
-                    cli._run_git(
-                        [
-                            "commit",
-                            "--allow-empty",
-                            "-m",
-                            f"Doctor: fixed task inconsistencies for {correct_dir_name}",
-                        ],
-                        cwd=cli.tasks_path,
-                    )
-                except Exception as e:  # noqa: BLE001
-                    cli.log(f"Warning: Could not commit fixes: {e}")
+                # Git operations to record the fixes. Scoped to this task's
+                # old and new paths: the store-wide add this replaces committed
+                # every other agent's pending work as 'Doctor: fixed...'.
+                commit_task_paths(
+                    cli,
+                    item_path,
+                    f"Doctor: fixed task inconsistencies for {correct_dir_name}",
+                    os.path.join(state_path, item),
+                )
 
             # Report bugs (whether fixed or not)
             if inconsistencies:
