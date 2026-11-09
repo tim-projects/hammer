@@ -81,10 +81,11 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
             task.parts['repro'] = repro
         updated = True
     if research is not None:
-        task.parts['research'] = research
-        # Rr attests the pass happened; the gate also requires the findings
-        # themselves, so a flag flip alone cannot pass it.
-        task.metadata['Rr'] = bool(research.strip())
+        if research.strip():
+            task.parts['research'] = research
+            # Rr attests the pass happened; the gate also requires the findings
+            # themselves, so a flag flip alone cannot pass it.
+            task.metadata['Rr'] = True
         updated = True
     if notes or progress or findings or mitigations:
         n = task.parts.get('notes', '- Progress: \n- Findings: \n- Mitigations: \n')
