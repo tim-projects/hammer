@@ -1,0 +1,1 @@
+Per-file review completed via tasks review on regenerated artifacts: 14/14 patches read with receipts; summary recorded; conflict-marker and unicode-escaping defects found in pass 1 fixed and re-verified. 26 tests pass (integration 14, tasks 7, worktree 4); ruff shows zero new findings vs main.
