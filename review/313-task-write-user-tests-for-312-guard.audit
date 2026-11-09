@@ -1,0 +1,8 @@
+{
+    "task_id": "313",
+    "patch_hash": "0caf57df7d163ee0db33ef2ea4467e51",
+    "patch_files": [
+        "testing_313-task-write-user-tests-for-312-guard_meta.json.patch"
+    ],
+    "status": "verified"
+}
