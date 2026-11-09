@@ -1,0 +1,11 @@
+{
+    "task_id": "394",
+    "patch_hash": "999c397b4ea9fda96ddb9193c109aed8",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
