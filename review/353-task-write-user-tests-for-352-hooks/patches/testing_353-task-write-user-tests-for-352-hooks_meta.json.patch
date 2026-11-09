@@ -1,0 +1,24 @@
+diff --git a/testing/353-task-write-user-tests-for-352-hooks/meta.json b/testing/353-task-write-user-tests-for-352-hooks/meta.json
+new file mode 100644
+index 00000000..0aec7e92
+--- /dev/null
++++ b/testing/353-task-write-user-tests-for-352-hooks/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 353,
++  "Ti": "Write user tests for 352: Hooks and repo wrapper hardcode main while repos may use master",
++  "Ty": "task",
++  "Cr": "261108 03:27",
++  "Bl": [],
++  "Pr": 2,
++  "Br": "353-task-write-user-tests-for-352-hooks",
++  "Pt": 352,
++  "Rc": "",
++  "Vp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file

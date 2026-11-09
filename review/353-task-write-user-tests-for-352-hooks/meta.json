@@ -1,0 +1,23 @@
+{
+  "Id": 353,
+  "Ti": "Write user tests for 352: Hooks and repo wrapper hardcode main while repos may use master",
+  "Ty": "task",
+  "Cr": "261108 03:27",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "353-task-write-user-tests-for-352-hooks",
+  "Pt": 352,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794188372.716847,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "testing/353-task-write-user-tests-for-352-hooks/meta.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/353-task-write-user-tests-for-352-hooks/patches/testing_353-task-write-user-tests-for-352-hooks_meta.json.patch"
+    }
+  ]
+}
