@@ -1,0 +1,16 @@
+{
+    "task_id": "386",
+    "patch_hash": "9531c094e502293cf8963e504fa8e2b1",
+    "patch_files": [
+        "AGENTS.md.patch",
+        "tasks.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_modify.py.patch",
+        "tasks_ai_help_text.py.patch",
+        "tasks_ai_models.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_tasks.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
