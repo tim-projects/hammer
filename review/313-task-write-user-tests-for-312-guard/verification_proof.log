@@ -1,0 +1,1 @@
+tests/test_guard.py: 27/27 pass on main incl. test_local_and_remote_rows, test_current_branch_keeps_local_kind, test_promoted_task_with_pushed_branch_is_not_rejected, test_remote_twin_does_not_hide_local_branch; worktree branch fully merged (git log main..313 empty); diff patch is meta.json bookkeeping only
