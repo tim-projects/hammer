@@ -1,0 +1,1 @@
+tests/test_worktree_path_ownership.py locks both directions (path==branch clean, mismatched path is drift, test_path_that_not_the_branch_name); guard engine codes GUARD_WORKTREE_PATH_DRIFT/UNREGISTERED on main; 30/30 targeted tests pass; branch fully merged; patch is meta.json only
