@@ -1,0 +1,1 @@
+1. Add ResearchGateHook in tasks_ai/pipeline_hooks.py and register it on READY exit in tasks_ai/cli.py;add --research to tasks modify plus argparse in tasks.py;add research to models.parts_order;add user tests;promote to REVIEW

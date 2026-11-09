@@ -1,0 +1,1 @@
+Exit hooks run pre-move (hooks.py run_exit_hooks), so a new ResearchGateHook registered on READY fails the transition before any files move. tasks modify --research stores the findings as the research part plus an Rr metadata attestation; file payloads already resolve via resolve_content from task 382. models.parts_order gains research so the part renders in task content.
