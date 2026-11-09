@@ -7,13 +7,13 @@
   "Pr": 2,
   "Br": "386-task-ready-exit-gate-requires-a-rec",
   "Pt": null,
-  "Rc": "PASSED",
+  "Rc": "",
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
-  "PatchGenTime": 1794196737.55785,
+  "PatchGenTime": 1794201253.354534,
   "DoneAt": null,
-  "Tp": false,
+  "Tp": true,
   "PatchFiles": [
     {
       "file": "tasks.py",
