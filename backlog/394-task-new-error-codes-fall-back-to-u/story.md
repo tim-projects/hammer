@@ -1,1 +1,0 @@
-As an agent hitting a pipeline block I must get the hammer-voice WHAT/WHY/HOW/CONSEQUENCE guidance, because RESEARCH_REQUIRED currently renders as 'Unknown error: RESEARCH_REQUIRED' with no hint, so I cannot tell what to do next.

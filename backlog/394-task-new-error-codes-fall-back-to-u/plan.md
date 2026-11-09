@@ -1,1 +1,0 @@
-1. Add registry entries in data/errors.json and data/hints.json for the missing codes;drop the dead hint kwarg in ResearchGateHook;add the no-Unknown-error regression test;promote to completion
