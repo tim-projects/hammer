@@ -1,0 +1,1 @@
+1. Create doc task; edit the four docs in the worktree; run check all; promote through pipeline
