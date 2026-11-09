@@ -1,0 +1,1 @@
+As a maintainer I need the review gate to always expose the current branch diff, so a review recorded against outdated patch files cannot pass for code that has since changed.
