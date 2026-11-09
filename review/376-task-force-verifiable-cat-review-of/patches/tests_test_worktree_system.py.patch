@@ -1,5 +1,5 @@
 diff --git a/tests/test_worktree_system.py b/tests/test_worktree_system.py
-index 52d83a23..507fb510 100644
+index 52d83a23..6b9eed59 100644
 --- a/tests/test_worktree_system.py
 +++ b/tests/test_worktree_system.py
 @@ -223,11 +223,16 @@ class TestWorktreeSystem(unittest.TestCase):
@@ -7,7 +7,7 @@ index 52d83a23..507fb510 100644
          self.assertTrue(res["success"], f"move REVIEW failed: {res}")
  
 -        # Mandatory review gate: audit, verify, reviewed, regression-check
-+        # Mandatory review gate: audit, verify, per-patch review, summary, regression-check
++        # Mandatory review gate: per-patch review, summary, audit, verify, regression-check
 +        while True:
 +            res = self.run_cmd(["review", task_file])
 +            self.assertTrue(res["success"], f"review failed: {res}")

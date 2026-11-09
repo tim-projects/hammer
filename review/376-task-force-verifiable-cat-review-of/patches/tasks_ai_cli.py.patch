@@ -1,8 +1,8 @@
 diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
-index 10d06073..bb8b623e 100644
+index 65ee0fab..6f873e41 100644
 --- a/tasks_ai/cli.py
 +++ b/tasks_ai/cli.py
-@@ -876,6 +876,11 @@ class TasksCLI:
+@@ -882,6 +882,11 @@ class TasksCLI:
  
          show_cmd.run(self, filename, section=section, show_all=show_all)
  

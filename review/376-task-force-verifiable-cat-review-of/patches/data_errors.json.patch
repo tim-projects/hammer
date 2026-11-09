@@ -1,8 +1,8 @@
 diff --git a/data/errors.json b/data/errors.json
-index a179aaa3..c03d6cde 100644
+index cece237b..bdc27ec9 100644
 --- a/data/errors.json
 +++ b/data/errors.json
-@@ -63,5 +63,11 @@
+@@ -64,5 +64,11 @@
    "GUARD_UNAVAILABLE": "GUARD REJECT: cannot verify task {task_id}. {detail}",
    "STORE_WRITE_FAIL": "Store write failed while {message}: {detail}",
    "DEV_REPO_UNAVAILABLE": "Dev mode cannot be isolated: {detail}",

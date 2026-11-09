@@ -1,8 +1,8 @@
 diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
-index d44b4926..ab353b12 100644
+index d44b4926..a6f77555 100644
 --- a/tasks_ai/commands/modify.py
 +++ b/tasks_ai/commands/modify.py
-@@ -2,10 +2,15 @@ import hashlib
+@@ -2,10 +2,11 @@ import hashlib
  import json
  import os
  import re
@@ -10,15 +10,12 @@ index d44b4926..ab353b12 100644
  
  from ..constants import CURRENT_TASK_FILENAME
  from ..file_manager import FM
-+<<<<<<< HEAD
-+from ..utils import _patch_name, commit_task_paths, parse_filename
-+=======
- from ..utils import commit_task_paths, parse_filename, resolve_content
-+>>>>>>> main
+-from ..utils import commit_task_paths, parse_filename, resolve_content
++from ..utils import _patch_name, commit_task_paths, parse_filename, resolve_content
  
  
  def _review_paths(cli, filepath, state_folder):
-@@ -95,48 +100,57 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+@@ -95,48 +96,57 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
          task.metadata['Tp'] = bool(tests_passed)
          updated = True
      if reviewed is not None:
@@ -115,7 +112,7 @@ index d44b4926..ab353b12 100644
          updated = True
      if priority is not None:
          task.metadata['Pr'] = priority
-@@ -161,8 +175,14 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+@@ -161,8 +171,14 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
                          hint=f"Run 'tasks modify {task_id} --reviewed' to record verifiable per-patch md5 reviews.",
                      )
                  with open(reviews_path) as fh:

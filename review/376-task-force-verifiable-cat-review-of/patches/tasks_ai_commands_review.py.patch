@@ -1,6 +1,6 @@
 diff --git a/tasks_ai/commands/review.py b/tasks_ai/commands/review.py
 new file mode 100644
-index 00000000..a1296e30
+index 00000000..be0d24ca
 --- /dev/null
 +++ b/tasks_ai/commands/review.py
 @@ -0,0 +1,145 @@
@@ -48,7 +48,7 @@ index 00000000..a1296e30
 +
 +def write_reviews(cli, task_path, data):
 +    with open(reviews_path(cli, task_path), 'w') as fh:
-+        json.dump(data, fh, indent=2)
++        json.dump(data, fh, indent=2, ensure_ascii=False)
 +
 +
 +def covered_patches(reviews, pdir, expected):

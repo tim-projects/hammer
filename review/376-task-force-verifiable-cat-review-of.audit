@@ -1,0 +1,21 @@
+{
+    "task_id": "376",
+    "patch_hash": "06b57fea4c081bfae5d09f023da95cab",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "docs_spec-worktrees.md.patch",
+        "hammer.patch",
+        "tasks.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_modify.py.patch",
+        "tasks_ai_commands_review.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}
