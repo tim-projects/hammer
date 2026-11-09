@@ -8,5 +8,9 @@
   "Br": "382-task-long-form-flags-accept-a-file",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
