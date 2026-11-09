@@ -17,7 +17,7 @@ class Task:
     @property
     def content(self):
         lines = [self.metadata.get('Ti', '')]
-        parts_order = ['story', 'tech', 'criteria', 'plan', 'repro', 'notes', 'commits']
+        parts_order = ['story', 'tech', 'criteria', 'plan', 'repro', 'research', 'notes', 'commits']
         for part in parts_order:
             if part in self.parts and self.parts[part].strip():
                 header = part.replace('_', ' ').title()

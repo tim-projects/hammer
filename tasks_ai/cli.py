@@ -30,6 +30,7 @@ from .pipeline_hooks import (
     MainBranchProtectionHook,
     PostMoveCommitHook,
     ProgressUpdateHook,
+    ResearchGateHook,
     ReviewDiffHook,
     SaveProgressHook,
     TaskRepairHook,
@@ -59,6 +60,7 @@ class TasksCLI:
 
         # Register EXIT hooks (Pre-move gates/checks)
         self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
+        self.hook_registry.register_exit_hook("READY", ResearchGateHook())
         self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
         # Guard runs at every gate: a duplicate ID must never progress
         for state in [
