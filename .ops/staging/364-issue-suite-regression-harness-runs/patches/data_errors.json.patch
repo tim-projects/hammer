@@ -1,0 +1,10 @@
+diff --git a/data/errors.json b/data/errors.json
+index a179aaa3..cece237b 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -1,4 +1,5 @@
+ {
++  "DEV_WRITE_BLOCKED": "Dev mode blocked a write to production: {detail}",
+   "TASK_NOT_FOUND": "Task '{filename}' not found.",
+   "INVALID_TASK_PATH": "Invalid task path: {filepath}",
+   "TITLE_TOO_VAGUE": "Task title WEAK. Min 10 character.",
