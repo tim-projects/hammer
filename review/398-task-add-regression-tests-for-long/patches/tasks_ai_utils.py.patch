@@ -1,0 +1,16 @@
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index 4b189e28..8459b23e 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -157,7 +157,10 @@ def resolve_content(cli, value, lines=False):
+     page-sized story or criteria list can come from a temp file instead of a
+     shell arg (one item per line when lines=True, matching the list flags'
+     own normalization). A path-shaped value that names nothing is an error:
+-    storing the path itself as prose would corrupt the task silently.
++    storing the path itself as prose would corrupt the task silently. Only a
++    single token counts as path-shaped, because criteria routinely name
++    ./hammer ... and a sentence is never a path; the cost of that rule is that
++    an intended path containing spaces which does not exist is kept as prose.
+     """
+     def _read(v):
+         if os.path.isfile(v):

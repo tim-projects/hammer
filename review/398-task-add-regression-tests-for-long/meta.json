@@ -1,0 +1,28 @@
+{
+  "Id": 398,
+  "Ti": "Add regression tests for long-form content flag prose handling",
+  "Ty": "task",
+  "Cr": "261109 18:42",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "398-task-add-regression-tests-for-long",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794250926.728911,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/398-task-add-regression-tests-for-long/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/398-task-add-regression-tests-for-long/patches/tests_test_tasks.py.patch"
+    }
+  ]
+}
