@@ -55,7 +55,7 @@ class TestTasksAI(unittest.TestCase):
         if not os.path.exists(counter_file):
             with open(counter_file, "w") as f:
                 f.write("0")
-        config_data = {"repo": {"lint": "ruff", "test": "/bin/true", "type_check": "/bin/true", "format": "ruff"}}
+        config_data = {"repo": {"lint": "ruff", "test": "noop", "type_check": "noop", "format": "ruff"}}
         with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
             json.dump(config_data, f)
 

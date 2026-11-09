@@ -72,6 +72,15 @@ class Validator:
             common_dir = os.path.join(self.project_root, common_dir)
         return Path(os.path.dirname(common_dir)) / ".tasks" / "config.yaml"
 
+    @staticmethod
+    def _is_noop_tool(tool) -> bool:
+        """A configured no-op (true, /bin/true) skips the check, so it must fail."""
+        if not tool:
+            return False
+        # YAML parses a bare `true` into the boolean, so compare case-insensitively.
+        text = str(tool).strip().lower()
+        return text == "true" or os.path.basename(text) == "true"
+
     def _get_commands(self, fix: bool) -> dict:
         """Returns the full set of supported commands."""
         return {
@@ -82,20 +91,20 @@ class Validator:
                 "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
                 "golangci-lint": ["golangci-lint", "run", "./..."]
                 + (["--fix"] if fix else []),
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
             "test": {
                 "pytest": ["pytest"],
                 "go test": ["go", "test", "./..."],
                 "cargo test": ["cargo", "test"],
                 "npm test": ["npm", "test"],
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
             "typecheck": {
                 "mypy": ["mypy", "."],
                 "pyright": ["npx", "pyright"],
                 "typescript": ["npx", "tsc", "--noEmit"],
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
             "format": {
                 "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
@@ -103,7 +112,7 @@ class Validator:
                 if fix
                 else ["npx", "prettier", "--check", "."],
                 "rustfmt": ["cargo", "fmt"] + (["--check"] if not fix else []),
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
         }
 
@@ -122,7 +131,14 @@ class Validator:
         if tool is None:
             tool = self.config.get("repo", {}).get(tool_config_key.replace("repo.", ""))
 
-        # A configured tool may be a command path (e.g. /bin/true), not just a name
+        if self._is_noop_tool(tool):
+            raise ValidationError(
+                f"Tool '{tool_type}' ({tool_config_key}) is configured as the no-op "
+                f"'{tool}', which skips the check. Run 'tasks config detect --save' "
+                f"or set a real tool: tasks config set {tool_config_key} <tool>."
+            )
+
+        # A configured tool may be a command path (e.g. /path/to/ruff), not just a name
         if tool and tool not in commands.get(tool_type, {}):
             basename = os.path.basename(str(tool))
             if basename in commands.get(tool_type, {}):
