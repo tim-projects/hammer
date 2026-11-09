@@ -248,6 +248,12 @@ class PipelineService:
             hasher.update(f.read())
         with open(proof_path, "rb") as f:
             hasher.update(f.read())
+        reviews_path = os.path.join(
+            cli.tasks_path, "review", os.path.basename(task_path), "reviews.json"
+        )
+        if os.path.exists(reviews_path):
+            with open(reviews_path, "rb") as f:
+                hasher.update(f.read())
         with open(audit_path, "rb") as f:
             hasher.update(f.read())
 
@@ -332,6 +338,12 @@ class PipelineService:
                 hasher.update(f.read())
             with open(proof_path, "rb") as f:
                 hasher.update(f.read())
+            reviews_path = os.path.join(
+                cli.tasks_path, "review", os.path.basename(task_path), "reviews.json"
+            )
+            if os.path.exists(reviews_path):
+                with open(reviews_path, "rb") as f:
+                    hasher.update(f.read())
             with open(audit_path, "rb") as f:
                 hasher.update(f.read())
         except FileNotFoundError as e:

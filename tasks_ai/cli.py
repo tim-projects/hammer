@@ -876,6 +876,11 @@ class TasksCLI:
 
         show_cmd.run(self, filename, section=section, show_all=show_all)
 
+    def review(self, filename, file=None):
+        from .commands import review as review_cmd
+
+        review_cmd.run(self, filename, file)
+
     def current(self, filename=None):
         from .commands import current as current_cmd
 

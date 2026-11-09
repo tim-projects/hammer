@@ -88,6 +88,15 @@ if __name__ == "__main__":
         action="store_true",
         help="All .md files and metadata of the given task (every task if no Id given; with -j, as JSON).",
     )
+    rev_p = subparsers.add_parser(
+        "review", help="Read one review patch in full and mark it reviewed."
+    )
+    rev_p.add_argument("filename", help="Task Id (or filename) in REVIEW.")
+    rev_p.add_argument(
+        "file",
+        nargs="?",
+        help="Patch file to read (default: the next patch not yet reviewed).",
+    )
     cp_p = subparsers.add_parser("checkpoint", help="Sync commits/notes.")
     cp_p.add_argument("filename", help="Task Id (or filename).")
     lk_p = subparsers.add_parser("link", help="Link tasks (blocker relationship).")
@@ -152,9 +161,10 @@ if __name__ == "__main__":
     )
     mod_p.add_argument(
         "--reviewed",
-        action="store_true",
+        nargs="?",
+        const=True,
         default=None,
-        help="Mark patch review as complete.",
+        help='Finalize the review with a short summary of what you read; requires every patch reviewed via "tasks review".',
     )
     mod_p.add_argument(
         "--regression-check",
@@ -339,6 +349,8 @@ if __name__ == "__main__":
             cli.show(args.filename, args.section)
         else:
             cli.list(show_all=False)
+    elif args.command == "review":
+        cli.review(args.filename, args.file)
     elif args.command == "checkpoint":
         cli.checkpoint(args.filename)
     elif args.command == "undo":

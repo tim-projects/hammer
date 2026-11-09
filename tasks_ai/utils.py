@@ -219,6 +219,11 @@ def _stageable(cli, path):
     return rel if tracked.returncode == 0 else None
 
 
+def _patch_name(file_path):
+    """Store filename of the patch holding one file's diff."""
+    return f"{file_path.replace(os.sep, '_')}.patch"
+
+
 def commit_task_paths(cli, task_filepath, message, *extra_paths):
     """Stage and commit only these task paths in the shared store.
 

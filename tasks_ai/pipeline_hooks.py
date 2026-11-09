@@ -221,12 +221,12 @@ class TestingToReviewGateHook(PipelineHook):
             cli._atomic_write(filepath, task)
             cli.console("gate", "review", "entered")
 
-            # PHASE 1: Manual Review
+            # PHASE 1: Manual Review, one patch at a time
             cli.log(
-                f"💡 HINT: Manual patch review required.\n"
-                f"1. Review all patches in: '.tasks/review/{os.path.basename(filepath)}/patches/'\n"
-                f"2. Mark review complete: './hammer tasks modify {task_id} --reviewed'\n"
-                f"Once reviewed, you will be prompted to run audit and regression check."
+                f"💡 HINT: Manual patch review required, one file at a time.\n"
+                f"1. './hammer tasks review {task_id}' — prints the next unread patch; repeat until every patch is marked reviewed.\n"
+                f"2. './hammer tasks modify {task_id} --reviewed \"<short summary of what you read>\"' — finalize the review.\n"
+                f"Then run audit, verify, and modify --regression-check."
             )
 
 

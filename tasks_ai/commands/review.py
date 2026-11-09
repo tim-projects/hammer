@@ -1,6 +1,6 @@
 """Execution logic for 'tasks review': read one patch at a time, one receipt per file.
 
-Reviewing is an act, not a file state: each invocation prints one patch in full
+Reviewing is an act, not a file state: each invocation exposes one patch in full
 and appends a receipt (content hashes, size, time, sequence, chain hash). Only
 when every patch carries a current receipt can 'modify --reviewed' finalize the
 stage, and only with a written summary.
@@ -12,20 +12,28 @@ import os
 import time
 
 from ..file_manager import FM
-from ..utils import _patch_name
+from ..utils import _patch_name, commit_task_paths
 
 
-def _reviews_path(cli, task_path):
-    return os.path.join(cli.tasks_path, 'review', os.path.basename(task_path), 'reviews.json')
+def review_dir(cli):
+    return os.path.join(cli.tasks_path, 'review')
 
 
-def _patches_dir(cli, task_path):
-    return os.path.join(cli.tasks_path, 'review', os.path.basename(task_path), 'patches')
+def task_review_dir(cli, task_path):
+    return os.path.join(review_dir(cli), os.path.basename(task_path))
+
+
+def patches_dir(cli, task_path):
+    return os.path.join(task_review_dir(cli, task_path), 'patches')
+
+
+def reviews_path(cli, task_path):
+    return os.path.join(task_review_dir(cli, task_path), 'reviews.json')
 
 
 def load_reviews(cli, task_path):
     """Read reviews.json, or empty receipts when the review has not started."""
-    path = _reviews_path(cli, task_path)
+    path = reviews_path(cli, task_path)
     if not os.path.exists(path):
         return {'reviews': []}
     with open(path) as fh:
@@ -33,18 +41,16 @@ def load_reviews(cli, task_path):
 
 
 def write_reviews(cli, task_path, data):
-    path = _reviews_path(cli, task_path)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w') as fh:
+    with open(reviews_path(cli, task_path), 'w') as fh:
         json.dump(data, fh, indent=2)
 
 
-def covered_patches(reviews, patches_dir, expected):
+def covered_patches(reviews, pdir, expected):
     """Expected patch names whose receipt still matches the file on disk."""
     covered = set()
     for receipt in reviews.get('reviews', []):
         name = receipt.get('patch')
-        patch_path = os.path.join(patches_dir, name or '')
+        patch_path = os.path.join(pdir, name or '')
         if name in expected and os.path.exists(patch_path):
             with open(patch_path, 'rb') as fh:
                 digest = hashlib.md5(fh.read()).hexdigest()
@@ -58,42 +64,45 @@ def receipt_hash(receipt):
 
 
 def run(cli, task_id, file=None):
-    """Print one patch in full and record the receipt for reading it."""
+    """Expose one patch in full and record the receipt for having read it."""
     task_path, state = cli.find_task(task_id)
     if not task_path:
-        cli.error(f"Task '{task_id}' not found.", hint="Use 'hammer tasks list' to see available task Ids.")
+        cli.error('TASK_NOT_FOUND', filename=task_id)
     if state != 'REVIEW':
-        cli.error(f'Task {task_id} must be in REVIEW to review patches.', hint=f'./hammer tasks move {task_id} REVIEW')
+        cli.error(
+            'REVIEW_STATE_REQUIRED',
+            task_id=task_id,
+            hint=f'Move the task to REVIEW first: ./hammer tasks move {task_id} REVIEW',
+        )
 
     task = FM.load(task_path)
     task_id = task.metadata.get('Id')
     patch_files = task.metadata.get('PatchFiles', [])
-    patches_dir = _patches_dir(cli, task_path)
+    pdir = patches_dir(cli, task_path)
     expected = [_patch_name(info['file']) for info in patch_files]
-    if not expected or not os.path.isdir(patches_dir):
+    if not expected or not os.path.isdir(pdir):
         cli.error('NO_PATCHES', task_id=task_id, hint=f"Run 'tasks audit {task_id}' to generate patches.")
 
     reviews = load_reviews(cli, task_path)
-    remaining = [name for name in expected if name not in covered_patches(reviews, patches_dir, expected)]
+    remaining = [name for name in expected if name not in covered_patches(reviews, pdir, expected)]
 
     if file:
         target = _patch_name(file)
         if target not in expected:
-            cli.error(f"Patch '{target}' is not part of task {task_id}.", expected=', '.join(expected))
+            cli.error('PATCH_NOT_IN_TASK', patch=file, task_id=task_id, expected=', '.join(expected))
     elif remaining:
         target = remaining[0]
     else:
-        cli.log(f"All {len(expected)} patch(es) of task {task_id} already reviewed.")
-        cli.log(f"Finalize the review with: ./hammer tasks modify {task_id} --reviewed \"<short summary of what you read>\"")
+        cli.log(f'All {len(expected)} patch(es) of task {task_id} already reviewed.')
+        cli.log(f'Finalize the review with: ./hammer tasks modify {task_id} --reviewed "<short summary of what you read>"')
         cli.finish({'id': task_id, 'reviewed': len(expected), 'total': len(expected), 'remaining': []})
         return
 
-    patch_path = os.path.join(patches_dir, target)
+    patch_path = os.path.join(pdir, target)
     if not os.path.exists(patch_path):
-        cli.error(f"Patch '{target}' missing.", hint=f"Run 'tasks audit {task_id}' to regenerate patches.")
+        cli.error('AUDIT_PATCH_MISSING', patches_dir=pdir, hint=f"Run 'tasks audit {task_id}' to regenerate patches.")
     with open(patch_path, 'rb') as fh:
         content = fh.read()
-    print(content.decode(errors='replace'))
 
     previous = reviews['reviews'][-1] if reviews['reviews'] else None
     reviews['reviews'].append({
@@ -106,16 +115,31 @@ def run(cli, task_id, file=None):
         'ts': time.time(),
         'prev_hash': receipt_hash(previous) if previous else None,
     })
-    # Reading again after a summary voids that summary: the stage must be
-    # finalized once more against the newest content.
+    # Reading again after a summary voids it: the stage must be finalized once
+    # more against the newest content.
     reviews.pop('summary', None)
     reviews.pop('summary_at', None)
     write_reviews(cli, task_path, reviews)
+    commit_task_paths(
+        cli,
+        task_review_dir(cli, task_path),
+        f'Review {task_id}: {target}',
+        reviews_path(cli, task_path),
+    )
 
-    covered = covered_patches(reviews, patches_dir, expected)
+    covered = covered_patches(reviews, pdir, expected)
     left = [name for name in expected if name not in covered]
+    if not cli.as_json:
+        print(content.decode(errors='replace'))
     if left:
-        cli.log(f"\n--- reviewed {target} ({len(covered)}/{len(expected)}). Next: ./hammer tasks review {task_id} ---")
+        cli.log(f'\n--- reviewed {target} ({len(covered)}/{len(expected)}). Next: ./hammer tasks review {task_id} ---')
     else:
-        cli.log(f"\n--- all {len(expected)} patch(es) reviewed. Finalize: ./hammer tasks modify {task_id} --reviewed \"<short summary>\" ---")
-    cli.finish({'id': task_id, 'patch': target, 'reviewed': len(covered), 'total': len(expected), 'remaining': left})
+        cli.log(f'\n--- all {len(expected)} patch(es) reviewed. Finalize: ./hammer tasks modify {task_id} --reviewed "<short summary>" ---')
+    cli.finish({
+        'id': task_id,
+        'patch': target,
+        'content': content.decode(errors='replace'),
+        'reviewed': len(covered),
+        'total': len(expected),
+        'remaining': left,
+    })

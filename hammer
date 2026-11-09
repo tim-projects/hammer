@@ -52,6 +52,7 @@ COMMAND_TO_TOOL = {
     "current": "tasks",
     "show": "tasks",
     "checkpoint": "tasks",
+    "review": "tasks",
     "link": "tasks",
     "unlink": "tasks",
     "create": "tasks",

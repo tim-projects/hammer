@@ -223,11 +223,20 @@ class TestWorktreeSystem(unittest.TestCase):
         res = self.run_cmd(["move", task_file, "REVIEW"])
         self.assertTrue(res["success"], f"move REVIEW failed: {res}")
 
-        # Mandatory review gate: audit, verify, reviewed, regression-check
+        # Mandatory review gate: audit, verify, per-patch review, summary, regression-check
         for args in (
             ["audit", task_file],
             ["verify", task_file, "--proof", "Reviewed patches and criteria."],
-            ["modify", task_file, "--reviewed"],
+        ):
+            res = self.run_cmd(args)
+            self.assertTrue(res["success"], f"{args} failed: {res}")
+        while True:
+            res = self.run_cmd(["review", task_file])
+            self.assertTrue(res["success"], f"review failed: {res}")
+            if not res["data"]["remaining"]:
+                break
+        for args in (
+            ["modify", task_file, "--reviewed", "Read every patch: the fix is scoped and the tests cover it."],
             ["modify", task_file, "--regression-check"],
         ):
             res = self.run_cmd(args)
