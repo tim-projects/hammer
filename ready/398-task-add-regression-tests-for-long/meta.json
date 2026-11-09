@@ -10,5 +10,7 @@
   "Br": "398-task-add-regression-tests-for-long",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
