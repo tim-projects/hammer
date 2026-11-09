@@ -43,6 +43,8 @@ tasks show 17
 ```bash
 # Add required fields
 tasks modify 17 --story "As a user..." --tech "Background..." --criteria "Criterion 1" --plan "Step 1"
+# long-form flags also accept a file path (bulk content):
+tasks modify 17 --story /tmp/story.md --criteria /tmp/criteria.md --plan /tmp/plan.md
 ```
 
 ### Cannot Move to TESTING

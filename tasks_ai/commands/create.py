@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..models import Task
-from ..utils import derive_task_id
+from ..utils import derive_task_id, resolve_content
 
 
 def run(
@@ -36,6 +36,13 @@ def run(
         cli.log(
             "Note: --branch flag is ignored; branch names are auto-generated from title."
         )
+
+    # Bulk submission: any long-form flag may name a file instead of a string.
+    story = resolve_content(cli, story)
+    tech = resolve_content(cli, tech)
+    criteria = resolve_content(cli, criteria, lines=True)
+    plan = resolve_content(cli, plan, lines=True)
+    repro = resolve_content(cli, repro, lines=True)
 
     missing = []
     if not story:
