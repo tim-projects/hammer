@@ -1,0 +1,5 @@
+- [ ] The JSON error field carries the error code in addition to the human message
+- [ ] tests/test_tasks.py::test_long_form_flags_accept_file_path passes without weakening its assertion
+- [ ] tests/test_tasks.py::test_research_gate_requires_recorded_research passes without weakening its assertion
+- [ ] The hint and data fields of the JSON payload are unchanged
+- [ ] A test asserts the code appears for a failure that has both a code and a formatted argument
