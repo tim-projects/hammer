@@ -1,1 +1,0 @@
-As an agent I should not start implementing a task before a read-only research pass (reading the relevant codebase files and/or an online search pass) has been done and recorded on the task, because skipping it produces plans built on assumptions.
