@@ -7,7 +7,7 @@
   "Pr": 1,
   "Br": "250-task-write-user-tests-for-249-guard",
   "Pt": 249,
-  "Rc": "",
+  "Rc": "PASSED",
   "Vp": true,
   "Reviewed": true,
   "AuditPassed": false,
