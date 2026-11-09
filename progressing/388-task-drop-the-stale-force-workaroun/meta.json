@@ -8,5 +8,9 @@
   "Br": "388-task-drop-the-stale-force-workaroun",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
