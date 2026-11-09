@@ -8,5 +8,9 @@
   "Br": "353-task-write-user-tests-for-352-hooks",
   "Pt": 352,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
