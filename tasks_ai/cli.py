@@ -666,7 +666,7 @@ class TasksCLI:
                     TASKS_BRANCH,
                     "--depth",
                     "1",
-                    self.root,
+                    self.context.invoked_repo_root or self.root,
                     self.tasks_path,
                 ],
                 check=False,

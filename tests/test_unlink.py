@@ -30,23 +30,21 @@ class UnlinkTestBase(HammerTestBase):
         self._install_unlink_into_fixture()
 
     def _install_unlink_into_fixture(self):
-        """The harness checks out `main`; make the unlink code available."""
-        for rel in (
-            "hammer",
-            "tasks.py",
-            "tasks_ai/cli.py",
-            "tasks_ai/context.py",
-            "tasks_ai/git_service.py",
-            "tasks_ai/pipeline.py",
-            "tasks_ai/utils.py",
-            "tasks_ai/commands/link.py",
-            "tasks_ai/commands/unlink.py",
-            "data/errors.json",
-            "data/hints.json",
-        ):
+        """The harness checks out `main`; install the branch's code as a whole.
+
+        Copying individual files let the fixture mix main's commands with the
+        branch's utils (ImportError: resolve_content), so the whole package and
+        its data files move together or not at all.
+        """
+        for rel in ("hammer", "tasks.py"):
             shutil.copy2(
                 os.path.join(os.getcwd(), rel), os.path.join(self.repo_path, rel)
             )
+        for rel in ("tasks_ai", "data"):
+            src = os.path.join(os.getcwd(), rel)
+            dst = os.path.join(self.repo_path, rel)
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
         self.script_path = os.path.join(self.repo_path, "hammer")
 
     def seed_counter(self, value):
