@@ -1,0 +1,11 @@
+{
+    "task_id": "384",
+    "patch_hash": "743fee07d75314a7d03fcf496eb7d1e0",
+    "patch_files": [
+        "AGENTS.md.patch",
+        "README.md.patch",
+        "docs_TROUBLESHOOTING.md.patch",
+        "tasks_ai_help_text.py.patch"
+    ],
+    "status": "verified"
+}
