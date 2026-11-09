@@ -1,0 +1,1 @@
+1. Force full rewrite in generate_file_patches;narrow the Rc==PASSED skip in commands/audit.py;add the stale-regeneration test;promote to review
