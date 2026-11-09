@@ -11,11 +11,13 @@ Locked down here:
 4. Sync: all task markdown parts reach the record, from any cwd (main repo root
    or a task worktree).
 """
+import fcntl
 import json
 import os
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 STORY = 'Sufficiently long story content here to pass validation'
@@ -427,3 +429,441 @@ class TestCheckpointStoreWrites(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
+    """unlink, delete, doctor --fix and the archive hook must own their own slice.
+
+    Every one of them used to run a store-wide 'git add --all' in the shared
+    .tasks repo, so a second agent's uncommitted edit landed in their commit
+    under their message - and the archive hook pushed that mixed state. Each
+    test below keeps a pending edit from a second task in the store and asserts
+    the commit's name-status contains nothing from it.
+    """
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.repo_dir = os.path.join(self.test_dir, 'repo')
+        os.makedirs(self.repo_dir)
+        subprocess.run(['git', 'init', '-b', 'main'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(['git', 'config', 'user.email', 'test@example.com'], cwd=self.repo_dir)  # noqa: PLW1510
+        subprocess.run(['git', 'config', 'user.name', 'Test User'], cwd=self.repo_dir)  # noqa: PLW1510
+        with open(os.path.join(self.repo_dir, 'README.md'), 'w') as handle:
+            handle.write('# Test Repo')
+        subprocess.run(['git', 'add', 'README.md'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(['git', 'commit', '-m', 'Initial commit'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.script_path = os.path.join(self.repo_dir, 'hammer')
+        os.symlink(os.path.join(project_root, 'hammer'), self.script_path)
+        subprocess.run(['git', 'add', 'hammer'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(['git', 'commit', '-m', 'Add hammer'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.seed_tasks_branch()
+        res = self.run_cmd(['init'])
+        self.assertTrue(res['success'], f'init must build a store repo: {res}')
+        # A real remote so the archive hook's store push can be observed.
+        self.bare = os.path.join(self.test_dir, 'origin.git')
+        subprocess.run(['git', 'init', '--bare', '-b', 'main', self.bare], capture_output=True)  # noqa: PLW1510
+        for args in (['remote', 'add', 'origin', self.bare], ['push', 'origin', 'main']):
+            subprocess.run(['git'] + args, cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    # --- helpers ---
+
+    @property
+    def store(self):
+        return os.path.join(self.repo_dir, '.tasks')
+
+    def seed_tasks_branch(self):
+        """Orphan 'tasks' branch carrying the store default config (see above)."""
+        index = os.path.join(self.test_dir, 'seed_index')
+        config_path = os.path.join(self.test_dir, 'seed_config.yaml')
+        with open(config_path, 'w') as handle:
+            json.dump(STORE_CONFIG, handle)
+        env = dict(os.environ, GIT_INDEX_FILE=index)
+
+        def git(*args, **kwargs):
+            return subprocess.run(  # noqa: PLW1510
+                ['git'] + list(args), cwd=self.repo_dir, capture_output=True, text=True,
+                env=env if kwargs.get('indexed') else None,
+            ).stdout.strip()
+
+        blob = git('hash-object', '-w', config_path, indexed=True)
+        tree = git('update-index', '--add', '--cacheinfo', f'100644,{blob},config.yaml',
+                   indexed=True) or git('write-tree', indexed=True)
+        commit = subprocess.run(  # noqa: PLW1510
+            ['git', 'commit-tree', tree, '-m', 'Store default config'],
+            cwd=self.repo_dir, capture_output=True, text=True,
+        ).stdout.strip()
+        subprocess.run(['git', 'branch', 'tasks', commit], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+
+    def run_cmd(self, args):
+        result = subprocess.run(  # noqa: PLW1510
+            [self.script_path, 'tasks', '-j'] + args,
+            cwd=self.repo_dir, capture_output=True, text=True,
+        )
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return {'success': False, 'stdout': result.stdout, 'stderr': result.stderr,
+                    'returncode': result.returncode}
+        payload['returncode'] = result.returncode
+        return payload
+
+    def store_git(self, *args):
+        return subprocess.run(  # noqa: PLW1510
+            ['git'] + list(args), cwd=self.store, capture_output=True, text=True
+        )
+
+    def git(self, *args, cwd=None):
+        return subprocess.run(  # noqa: PLW1510
+            ['git'] + list(args), cwd=cwd or self.repo_dir, capture_output=True, text=True
+        )
+
+    def make_task(self, title, state='backlog'):
+        res = self.run_cmd([
+            'create', title, '--story', STORY, '--tech', TECH,
+            '--criteria', CRITERIA, '--plan', PLAN,
+        ])
+        self.assertTrue(res['success'], res)
+        return res['data']['file']
+
+    def task_path(self, task_file, state='backlog'):
+        return os.path.join(self.store, state, task_file)
+
+    def write_part(self, task_file, part, text, state='backlog'):
+        path = os.path.join(self.task_path(task_file, state), f'{part}.md')
+        with open(path, 'w', encoding='utf-8') as handle:
+            handle.write(text)
+        return path
+
+    def edit_part(self, task_file, part, text, state='backlog'):
+        path = os.path.join(self.task_path(task_file, state), f'{part}.md')
+        with open(path, 'a', encoding='utf-8') as handle:
+            handle.write(text)
+        return path
+
+    def commit_files(self, rev='HEAD'):
+        out = self.store_git('show', '--name-only', '--no-renames', '--format=', rev).stdout
+        return [line for line in out.splitlines() if line.strip()]
+
+    def commit_subject(self, rev='HEAD'):
+        return self.store_git('log', '-1', '--format=%s', rev).stdout.strip()
+
+    def find_commit(self, prefix):
+        """Newest store commit whose subject starts with prefix."""
+        for line in self.store_git('log', '--format=%H%x09%s').stdout.splitlines():
+            sha, _, subject = line.partition('\t')
+            if subject.startswith(prefix):
+                return sha
+        return None
+
+    def pending_lines(self):
+        return self.store_git('status', '--porcelain', '--untracked-files=all').stdout.splitlines()
+
+    def assert_own_paths_only(self, rev, own_file, other_file):
+        committed = self.commit_files(rev)
+        self.assertTrue([p for p in committed if own_file in p],
+                        f"the task's own paths must be committed: {committed}")
+        self.assertFalse([p for p in committed if other_file in p],
+                         f"another task's paths leaked into this commit: {committed}")
+
+    # --- per-task sites ---
+
+    def test_unlink_commits_only_its_own_task(self):
+        file_a = self.make_task('Alpha task for unlink scoping')
+        file_b = self.make_task('Beta task for unlink scoping')
+        self.assertTrue(self.run_cmd(['link', file_a, file_b])['success'])
+        b_edit = f'{STORY}\nagent B uncommitted edit'
+        self.write_part(file_b, 'story', b_edit)
+
+        res = self.run_cmd(['unlink', file_a, file_b])
+        self.assertTrue(res['success'], res)
+
+        self.assertEqual(self.commit_subject(), f'Unlk {file_a}->{file_b}')
+        self.assert_own_paths_only('HEAD', file_a, file_b)
+        pending = self.pending_lines()
+        self.assertTrue(any(f'{file_b}/story.md' in line for line in pending),
+                        f'task B must still be pending: {pending}')
+        with open(os.path.join(self.task_path(file_b), 'story.md')) as handle:
+            self.assertEqual(handle.read(), b_edit, 'B must keep its uncommitted edit')
+
+    def test_permanent_delete_commits_only_its_own_task(self):
+        file_a = self.make_task('Alpha task for delete scoping')
+        file_b = self.make_task('Beta task for delete scoping')
+        b_edit = f'{STORY}\nagent B uncommitted edit'
+        self.write_part(file_b, 'story', b_edit)
+        marked = self.run_cmd(['delete', file_a])
+        self.assertTrue(marked['success'], marked)
+        code = marked['data']['delete_code']
+
+        res = self.run_cmd(['delete', file_a, '--confirm', code])
+        self.assertTrue(res['success'], res)
+
+        self.assertEqual(self.commit_subject(), f'Del {file_a}')
+        self.assert_own_paths_only('HEAD', file_a, file_b)
+        pending = self.pending_lines()
+        self.assertTrue(any(f'{file_b}/story.md' in line for line in pending),
+                        f'task B must still be pending: {pending}')
+        with open(os.path.join(self.task_path(file_b), 'story.md')) as handle:
+            self.assertEqual(handle.read(), b_edit, 'B must keep its uncommitted edit')
+
+    def test_doctor_fix_commits_only_its_own_task(self):
+        file_a = self.make_task('Alpha task for doctor scoping')
+        file_b = self.make_task('Beta task for doctor scoping')
+        b_edit = f'{STORY}\nagent B uncommitted edit'
+        self.write_part(file_b, 'story', b_edit)
+        # Break A's branch metadata and give it an uncommitted edit of its own,
+        # so the repair commit has this task's paths in it.
+        self.edit_part(file_a, 'story', '\nagent A own edit')
+        with open(os.path.join(self.task_path(file_a), 'meta.json')) as handle:
+            meta = json.load(handle)
+        meta['Br'] = '9999-task-alpha-task-for-doctor-scoping'
+        with open(os.path.join(self.task_path(file_a), 'meta.json'), 'w') as handle:
+            json.dump(meta, handle, indent=2)
+
+        res = self.run_cmd(['doctor', '--fix'])
+        self.assertTrue(res['success'], res)
+
+        sha = self.find_commit('Doctor: fixed task inconsistencies')
+        self.assertIsNotNone(sha, 'the repair must commit under its own message')
+        self.assertEqual(self.commit_subject(sha),
+                         f'Doctor: fixed task inconsistencies for {file_a}')
+        self.assert_own_paths_only(sha, file_a, file_b)
+        pending = self.pending_lines()
+        self.assertTrue(any(f'{file_b}/story.md' in line for line in pending),
+                        f'task B must still be pending: {pending}')
+        with open(os.path.join(self.task_path(file_b), 'story.md')) as handle:
+            self.assertEqual(handle.read(), b_edit, 'B must keep its uncommitted edit')
+
+    def test_archive_hook_pushes_only_the_archived_task(self):
+        file_c = self.make_task('Gamma task for archive scoping')
+        file_b = self.make_task('Beta task for archive scoping')
+        for state in ('READY', 'PROGRESSING'):
+            moved = self.run_cmd(['move', file_c, state])
+            self.assertTrue(moved['success'], moved)
+        worktree = os.path.join(self.repo_dir, '.task-worktrees', file_c)
+        self.assertTrue(os.path.isdir(worktree), worktree)
+        with open(os.path.join(worktree, 'feature.py'), 'w') as handle:
+            handle.write('def feature():\n    return True\n')
+        self.git('add', 'feature.py', cwd=worktree)
+        self.git('commit', '-m', 'Add feature', cwd=worktree)
+        b_edit = f'{STORY}\nagent B uncommitted edit'
+        self.write_part(file_b, 'story', b_edit)
+
+        # The branch must be merged (and pushed) before the archive proceeds
+        # past the hook, so the whole archive flow runs.
+        merged = self.git('merge', file_c)
+        self.assertEqual(merged.returncode, 0, merged.stderr)
+        self.assertEqual(self.git('push', 'origin', 'main').returncode, 0)
+
+        res = self.run_cmd(['move', file_c, 'ARCHIVED', '-f'])
+        self.assertTrue(res['success'], res)
+
+        archive_sha = self.find_commit('Archive [')
+        self.assertIsNotNone(archive_sha, 'the archive hook must commit the store')
+        self.assertTrue(os.path.isdir(os.path.join(self.store, 'archived', file_c)),
+                        'the task must be archived')
+
+        # The hook pushes before it removes the worktree, so the state it
+        # pushed is exactly the archive commit.
+        remote = self.store_git('remote', 'get-url', 'origin').stdout.strip()
+        self.assertTrue(os.path.isabs(remote) and os.path.isdir(remote), remote)
+        pushed = subprocess.run(  # noqa: PLW1510
+            ['git', 'rev-parse', 'tasks'], cwd=remote, capture_output=True, text=True,
+        ).stdout.strip()
+        self.assertEqual(pushed, archive_sha,
+                         'the pushed store state must be the archive commit')
+
+        self.assert_own_paths_only(archive_sha, file_c, file_b)
+        pending = self.pending_lines()
+        self.assertTrue(any(f'{file_b}/story.md' in line for line in pending),
+                        f'task B must still be pending after the push: {pending}')
+        with open(os.path.join(self.store, 'backlog', file_b, 'story.md')) as handle:
+            self.assertEqual(handle.read(), b_edit, 'B must keep its uncommitted edit')
+
+    def test_concurrent_unlink_and_checkpoint_stay_scoped(self):
+        """Two agents writing at once: two commits, each its own task's."""
+        file_a = self.make_task('Alpha task for concurrent scoping')
+        file_b = self.make_task('Beta task for concurrent scoping')
+        for state in ('READY', 'PROGRESSING'):
+            for task_file in (file_a, file_b):
+                moved = self.run_cmd(['move', task_file, state])
+                self.assertTrue(moved['success'], moved)
+        self.assertTrue(self.run_cmd(['link', file_a, file_b])['success'])
+        self.edit_part(file_b, 'story', '\nagent B uncommitted edit', state='progressing')
+        before = self.store_git('rev-parse', 'HEAD').stdout.strip()
+
+        procs = [
+            subprocess.Popen(
+                [self.script_path, 'tasks', '-j', 'unlink', file_a, file_b],
+                cwd=self.repo_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True,
+            ),
+            subprocess.Popen(
+                [self.script_path, 'tasks', '-j', 'checkpoint', file_b],
+                cwd=self.repo_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True,
+            ),
+        ]
+        for proc in procs:
+            out, _ = proc.communicate(timeout=120)
+            payload = json.loads(out)
+            self.assertTrue(payload['success'], payload)
+
+        new_log = [
+            line.split('\t', 1)[1]
+            for line in self.store_git(
+                'log', '--format=%H%x09%s', f'{before}..HEAD'
+            ).stdout.splitlines()
+            if line.strip()
+        ]
+        self.assertEqual(
+            sorted(new_log),
+            sorted([f'Unlk {file_a}->{file_b}', f'Cp: {file_b}']),
+            'the race must produce exactly one commit per command',
+        )
+        for line in self.store_git('log', '--format=%H%x09%s', f'{before}..HEAD').stdout.splitlines():
+            sha, _, subject = line.partition('\t')
+            if subject.startswith('Unlk'):
+                self.assert_own_paths_only(sha, file_a, file_b)
+            else:
+                self.assert_own_paths_only(sha, file_b, file_a)
+
+
+class TestWholeStoreSweepsHoldTheStoreLock(unittest.TestCase):
+    """The two documented whole-store sweeps must hold the store write lock.
+
+    They legitimately touch every record in the store (a LIVE->DONE migration
+    and the delete-mark sweep), so they cannot be scoped per task; the lock at
+    least stops another agent's commit landing inside theirs.
+    """
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.repo_dir = os.path.join(self.test_dir, 'repo')
+        os.makedirs(self.repo_dir)
+        subprocess.run(['git', 'init', '-b', 'main'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(['git', 'config', 'user.email', 'test@example.com'], cwd=self.repo_dir)  # noqa: PLW1510
+        subprocess.run(['git', 'config', 'user.name', 'Test User'], cwd=self.repo_dir)  # noqa: PLW1510
+        with open(os.path.join(self.repo_dir, 'README.md'), 'w') as handle:
+            handle.write('# Test Repo')
+        subprocess.run(['git', 'add', 'README.md'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(['git', 'commit', '-m', 'Initial commit'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.script_path = os.path.join(self.repo_dir, 'hammer')
+        os.symlink(os.path.join(project_root, 'hammer'), self.script_path)
+        subprocess.run(['git', 'add', 'hammer'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(['git', 'commit', '-m', 'Add hammer'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        index = os.path.join(self.test_dir, 'seed_index')
+        config_path = os.path.join(self.test_dir, 'seed_config.yaml')
+        with open(config_path, 'w') as handle:
+            json.dump(STORE_CONFIG, handle)
+        env = dict(os.environ, GIT_INDEX_FILE=index)
+
+        def git(*args, **kwargs):
+            return subprocess.run(  # noqa: PLW1510
+                ['git'] + list(args), cwd=self.repo_dir, capture_output=True, text=True,
+                env=env if kwargs.get('indexed') else None,
+            ).stdout.strip()
+
+        blob = git('hash-object', '-w', config_path, indexed=True)
+        tree = git('update-index', '--add', '--cacheinfo', f'100644,{blob},config.yaml',
+                   indexed=True) or git('write-tree', indexed=True)
+        commit = subprocess.run(  # noqa: PLW1510
+            ['git', 'commit-tree', tree, '-m', 'Store default config'],
+            cwd=self.repo_dir, capture_output=True, text=True,
+        ).stdout.strip()
+        subprocess.run(['git', 'branch', 'tasks', commit], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        res = self.run_cmd(['init'])
+        self.assertTrue(res['success'], f'init must build a store repo: {res}')
+        created = self.make_task('Alpha task for sweep locking')
+        self.assertTrue(created['success'], created)
+        self.addCleanup(shutil.rmtree, self.test_dir, ignore_errors=True)
+
+    @property
+    def store(self):
+        return os.path.join(self.repo_dir, '.tasks')
+
+    def run_cmd(self, args):
+        result = subprocess.run(  # noqa: PLW1510
+            [self.script_path, 'tasks', '-j'] + args,
+            cwd=self.repo_dir, capture_output=True, text=True,
+        )
+        try:
+            return json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return {'success': False, 'stdout': result.stdout, 'stderr': result.stderr,
+                    'returncode': result.returncode}
+
+    def make_task(self, title):
+        return self.run_cmd([
+            'create', title, '--story', STORY, '--tech', TECH,
+            '--criteria', CRITERIA, '--plan', PLAN,
+        ])
+
+    def store_git(self, *args):
+        return subprocess.run(  # noqa: PLW1510
+            ['git'] + list(args), cwd=self.store, capture_output=True, text=True
+        )
+
+    def hold_lock(self):
+        """Take the store lock here; a sweep that ignores it finishes anyway."""
+        fd = os.open(os.path.join(self.store, '.hammer-lock'), os.O_CREAT | os.O_RDWR, 0o644)
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        released = []
+
+        def release():
+            if not released:
+                released.append(True)
+                fcntl.flock(fd, fcntl.LOCK_UN)
+                os.close(fd)
+
+        self.addCleanup(release)
+        return release
+
+    def run_blocking_until_released(self, release, args):
+        proc = subprocess.Popen(
+            [self.script_path, 'tasks', '-j'] + args,
+            cwd=self.repo_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        )
+        time.sleep(2.0)
+        self.assertIsNone(proc.poll(), 'the sweep must block while the lock is held')
+        release()
+        out, _ = proc.communicate(timeout=60)
+        payload = json.loads(out)
+        self.assertTrue(payload['success'], payload)
+        return payload
+
+    def test_clear_delete_marks_holds_the_store_lock(self):
+        """A pending delete mark makes every command sweep the store."""
+        created = self.make_task('Beta task for delete mark sweep')
+        self.assertTrue(created['success'], created)
+        marked = self.run_cmd(['delete', str(created['data']['id'])])
+        self.assertTrue(marked['success'], marked)
+
+        release = self.hold_lock()
+        self.run_blocking_until_released(release, ['list'])
+
+        # The sweep that ran under the lock cleared the mark it found.
+        meta_path = os.path.join(
+            self.store, 'rejected', created['data']['file'], 'meta.json'
+        )
+        with open(meta_path) as handle:
+            self.assertNotIn('DeleteCode', handle.read(),
+                             'the sweep must clear the delete mark')
+
+    def test_live_to_done_migration_holds_the_store_lock(self):
+        """A stray live/ folder makes every command migrate it to done/."""
+        live_task = os.path.join(self.store, 'live', '0-task-legacy-live-record')
+        os.makedirs(live_task)
+        with open(os.path.join(live_task, 'meta.json'), 'w') as handle:
+            json.dump({'Id': 0, 'St': 'DONE'}, handle)
+
+        release = self.hold_lock()
+        self.run_blocking_until_released(release, ['list'])
+
+        self.assertTrue(
+            os.path.isdir(os.path.join(self.store, 'done', '0-task-legacy-live-record')),
+            'the migration must complete once the lock is free',
+        )

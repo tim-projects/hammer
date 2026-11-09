@@ -1,7 +1,7 @@
 import os
 
 from ..file_manager import FM
-from ..utils import parse_filename
+from ..utils import commit_task_paths, parse_filename
 
 
 def run(cli, filename, blocked_by_filename):
@@ -41,11 +41,9 @@ def run(cli, filename, blocked_by_filename):
     task.metadata["Bl"] = bl
     cli._atomic_write(f1_str, task)
     cli._append_log(f1_str, "Unlk")
-    cli._run_git(["add", "--all"], cwd=cli.tasks_path)
-    cli._run_git(
-        ["commit", "--allow-empty", "-m", f"Unlk {filename}->{b_name}"],
-        cwd=cli.tasks_path,
-    )
+    # Only this task's record: a store-wide add would commit every other
+    # agent's pending work under this unlink's message.
+    commit_task_paths(cli, f1_str, f"Unlk {filename}->{b_name}")
     cli.log(
         f"Unlinked: [{task_id_num}] {tt} | {task_title} -> [{b_id}] {b_tt} | {b_title}"
     )

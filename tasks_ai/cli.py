@@ -372,11 +372,15 @@ class TasksCLI:
                         shutil.move(src, dst)
 
                 if os.path.exists(os.path.join(self.tasks_path, ".git")):
-                    self._run_git(["add", "--all"], cwd=self.tasks_path)
-                    self._run_git(
-                        ["commit", "-m", "Migrate LIVE tasks to DONE"],
-                        cwd=self.tasks_path,
-                    )
+                    # Whole-store sweep by nature (every LIVE record moves), so it
+                    # cannot be scoped per task; the store lock at least keeps
+                    # another agent's commit from landing inside this commit.
+                    with store_lock(self):
+                        self._run_git(["add", "--all"], cwd=self.tasks_path)
+                        self._run_git(
+                            ["commit", "-m", "Migrate LIVE tasks to DONE"],
+                            cwd=self.tasks_path,
+                        )
                 self.log("Migration complete.")
 
             remaining = os.listdir(live_dir)
@@ -408,11 +412,15 @@ class TasksCLI:
                 except Exception as e:  # noqa: BLE001
                     self.log(f"Warning: Failed to load task at {path}: {e}")
         if updated:
-            self._run_git(["add", "--all"], cwd=self.tasks_path)
-            self._run_git(
-                ["commit", "--allow-empty", "-m", "Clear delete marks"],
-                cwd=self.tasks_path,
-            )
+            # Whole-store sweep by nature (a mark can sit in any state folder), so
+            # it cannot be scoped per task; the store lock at least keeps another
+            # agent's commit from landing inside this commit.
+            with store_lock(self):
+                self._run_git(["add", "--all"], cwd=self.tasks_path)
+                self._run_git(
+                    ["commit", "--allow-empty", "-m", "Clear delete marks"],
+                    cwd=self.tasks_path,
+                )
 
     def _validate_task_id(self, task_id):
         if not task_id:
