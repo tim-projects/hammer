@@ -1,0 +1,53 @@
+diff --git a/tasks.py b/tasks.py
+index 644a8709..145dc608 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -110,12 +110,22 @@ if __name__ == "__main__":
+         help="Task type: task or issue or docs.",
+     )
+     cr_p.add_argument("--priority", "-p", type=int, help="Priority (1=highest).")
+-    cr_p.add_argument("--story", nargs="+", help="User story description.")
+-    cr_p.add_argument("--tech", nargs="+", help="Technical background.")
+-    cr_p.add_argument("--criteria", nargs="+", help="Acceptance criteria (list).")
+-    cr_p.add_argument("--plan", nargs="+", help="Implementation plan (list).")
+     cr_p.add_argument(
+-        "--repro", nargs="+", help="Reproduction steps for issues (list)."
++        "--story", nargs="+", help="User story description, or path to a file."
++    )
++    cr_p.add_argument(
++        "--tech", nargs="+", help="Technical background, or path to a file."
++    )
++    cr_p.add_argument(
++        "--criteria", nargs="+", help="Acceptance criteria (list), or path to a file."
++    )
++    cr_p.add_argument(
++        "--plan", nargs="+", help="Implementation plan (list), or path to a file."
++    )
++    cr_p.add_argument(
++        "--repro",
++        nargs="+",
++        help="Reproduction steps for issues (list), or path to a file.",
+     )
+     cr_p.add_argument(
+         "--branch",
+@@ -138,12 +148,14 @@ if __name__ == "__main__":
+         help="Task type: task or issue or docs.",
+     )
+     mod_p.add_argument("--title", help="New title.")
+-    mod_p.add_argument("--story", help="User story.")
+-    mod_p.add_argument("--tech", help="Technical background.")
+-    mod_p.add_argument("--criteria", nargs="+", help="Acceptance criteria.")
+-    mod_p.add_argument("--plan", nargs="+", help="Implementation plan.")
+-    mod_p.add_argument("--repro", nargs="+", help="Reproduction steps.")
+-    mod_p.add_argument("--notes", help="Notes content.")
++    mod_p.add_argument("--story", help="User story, or path to a file.")
++    mod_p.add_argument("--tech", help="Technical background, or path to a file.")
++    mod_p.add_argument(
++        "--criteria", nargs="+", help="Acceptance criteria, or path to a file."
++    )
++    mod_p.add_argument("--plan", nargs="+", help="Implementation plan, or path to a file.")
++    mod_p.add_argument("--repro", nargs="+", help="Reproduction steps, or path to a file.")
++    mod_p.add_argument("--notes", help="Notes content, or path to a file.")
+     mod_p.add_argument("--progress", help="Progress update.")
+     mod_p.add_argument("--findings", help="Findings.")
+     mod_p.add_argument("--mitigations", help="Mitigations.")

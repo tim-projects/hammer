@@ -275,15 +275,50 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/373-task-write-user-tests-for-372-commi",
       "task_file": "373-task-write-user-tests-for-372-commi"
     },
-    "374": {
-      "branch": "374-task-make-tasks-show-all-task-speci",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/374-task-make-tasks-show-all-task-speci",
-      "task_file": "374-task-make-tasks-show-all-task-speci"
-    },
     "375": {
       "branch": "375-task-write-user-tests-for-374-make",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/375-task-write-user-tests-for-374-make",
       "task_file": "375-task-write-user-tests-for-374-make"
+    },
+    "376": {
+      "branch": "376-task-force-verifiable-cat-review-of",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/376-task-force-verifiable-cat-review-of",
+      "task_file": "376-task-force-verifiable-cat-review-of"
+    },
+    "377": {
+      "branch": "377-task-write-user-tests-for-376-force",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/377-task-write-user-tests-for-376-force",
+      "task_file": "377-task-write-user-tests-for-376-force"
+    },
+    "378": {
+      "branch": "378-task-block-manual-archive-and-delet",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/378-task-block-manual-archive-and-delet",
+      "task_file": "378-task-block-manual-archive-and-delet"
+    },
+    "379": {
+      "branch": "379-task-write-user-tests-for-378-block",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/379-task-write-user-tests-for-378-block",
+      "task_file": "379-task-write-user-tests-for-378-block"
+    },
+    "380": {
+      "branch": "380-issue-tasks-move-to-blocked-crashes",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/380-issue-tasks-move-to-blocked-crashes",
+      "task_file": "380-issue-tasks-move-to-blocked-crashes"
+    },
+    "381": {
+      "branch": "381-task-write-user-tests-for-380-tasks",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/381-task-write-user-tests-for-380-tasks",
+      "task_file": "381-task-write-user-tests-for-380-tasks"
+    },
+    "382": {
+      "branch": "382-task-long-form-flags-accept-a-file",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/382-task-long-form-flags-accept-a-file",
+      "task_file": "382-task-long-form-flags-accept-a-file"
+    },
+    "383": {
+      "branch": "383-task-write-user-tests-for-382-long",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/383-task-write-user-tests-for-382-long",
+      "task_file": "383-task-write-user-tests-for-382-long"
     }
   }
 }

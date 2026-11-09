@@ -1,6 +1,6 @@
 {
   "Id": 380,
-  "Ti": "tasks move to BLOCKED crashes with KeyError BLOCKED",
+  "Ti": "Convert BLOCKED state to BLOCKED_BY task relation",
   "Ty": "issue",
   "Cr": "261108 23:09",
   "Bl": [],

@@ -1,0 +1,27 @@
+diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
+index 06a0bb85..d44b4926 100644
+--- a/tasks_ai/commands/modify.py
++++ b/tasks_ai/commands/modify.py
+@@ -5,7 +5,7 @@ import re
+ 
+ from ..constants import CURRENT_TASK_FILENAME
+ from ..file_manager import FM
+-from ..utils import commit_task_paths, parse_filename
++from ..utils import commit_task_paths, parse_filename, resolve_content
+ 
+ 
+ def _review_paths(cli, filepath, state_folder):
+@@ -38,6 +38,13 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+     fname = os.path.basename(filepath)
+     task_id = fname.rsplit('.', 1)[0]
+     tt, _ = parse_filename(fname)
++    # Bulk submission: any long-form flag may name a file instead of a string.
++    story = resolve_content(cli, story)
++    tech = resolve_content(cli, tech)
++    criteria = resolve_content(cli, criteria, lines=True)
++    plan = resolve_content(cli, plan, lines=True)
++    repro = resolve_content(cli, repro, lines=True)
++    notes = resolve_content(cli, notes)
+     updated = False
+     if task_type:
+         task.metadata['Ty'] = task_type

@@ -1,0 +1,30 @@
+{
+  "reviews": [
+    {
+      "file": "tasks.py",
+      "patch": "tasks.py.patch",
+      "md5": "3d6b3bf79373b4ae6571e8a4ddc9da92"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch": "tasks_ai_commands_create.py.patch",
+      "md5": "277d76c39434eef5a2c40c467ec20c3a"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch": "tasks_ai_commands_modify.py.patch",
+      "md5": "0e60f7047f8fcb7634e8f4689c8a59a5"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch": "tasks_ai_utils.py.patch",
+      "md5": "07cf77ed30c7e1c7e29046db932525b7"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch": "tests_test_tasks.py.patch",
+      "md5": "263240256aea5b4374029c10a13fc559"
+    }
+  ],
+  "reviewed_at": 1794183576.2283154
+}
