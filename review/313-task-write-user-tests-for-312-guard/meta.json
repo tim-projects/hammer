@@ -9,11 +9,11 @@
   "Pt": 312,
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794187921.25422,
   "DoneAt": null,
-  "Tp": true,
+  "Tp": false,
   "PatchFiles": [
     {
       "file": "testing/313-task-write-user-tests-for-312-guard/meta.json",
