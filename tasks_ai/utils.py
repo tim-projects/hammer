@@ -164,7 +164,13 @@ def resolve_content(cli, value, lines=False):
             with open(v, "r", encoding="utf-8") as fh:
                 content = fh.read()
             return content.splitlines() if lines else content
-        if v.startswith(("/", "./", "../", "~")) or v.endswith((".md", ".txt")):
+        # Whitespace means prose, not a path: criteria routinely name ./hammer ...
+        # shortcut: an intended path containing spaces that is missing is stored as
+        # prose instead of erroring.
+        path_shaped = v.startswith(("/", "./", "../", "~")) or v.endswith(
+            (".md", ".txt")
+        )
+        if path_shaped and not any(c.isspace() for c in v):
             cli.error("CONTENT_FILE_NOT_FOUND", path=v)
         return v
 
