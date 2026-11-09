@@ -1,0 +1,12 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index a23964c5..be63f6de 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -106,6 +106,7 @@ Each task operates in a dedicated git worktree for isolation. Worktrees are crea
+ | `./hammer tasks move <id> <state>` | Move task to new state (use comma-separated for multi-step) |
+ | `./hammer tasks move <id> ARCHIVED -y` | Archive and auto-push/delete branch (requires branch merged to main) |
+ | `./hammer tasks modify <id> --plan "1. Step"` | Update task fields |
++| `./hammer tasks modify <id> --criteria /tmp/c.md` | Long-form flags (`--story --tech --criteria --plan --repro --notes`, also on `create`) accept a file path; its contents are used |
+ | `./hammer tasks reconcile <id>` | Archive a task whose branch no longer exists |
+ | `./hammer tasks mount <id>` | Mount (create/open) a task worktree |
+ | `./hammer repo <command>` | Repo management (merge, sync, branch) |

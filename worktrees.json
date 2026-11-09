@@ -310,15 +310,20 @@
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/381-task-write-user-tests-for-380-tasks",
       "task_file": "381-task-write-user-tests-for-380-tasks"
     },
-    "382": {
-      "branch": "382-task-long-form-flags-accept-a-file",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/382-task-long-form-flags-accept-a-file",
-      "task_file": "382-task-long-form-flags-accept-a-file"
-    },
     "383": {
       "branch": "383-task-write-user-tests-for-382-long",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/383-task-write-user-tests-for-382-long",
       "task_file": "383-task-write-user-tests-for-382-long"
+    },
+    "384": {
+      "branch": "384-task-document-file-path-submission",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/384-task-document-file-path-submission",
+      "task_file": "384-task-document-file-path-submission"
+    },
+    "385": {
+      "branch": "385-task-write-user-tests-for-384-docum",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/385-task-write-user-tests-for-384-docum",
+      "task_file": "385-task-write-user-tests-for-384-docum"
     }
   }
 }
