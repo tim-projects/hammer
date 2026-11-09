@@ -1,0 +1,13 @@
+{
+    "task_id": "358",
+    "patch_hash": "a528093f513ca65bdf63f6524743a7b6",
+    "patch_files": [
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_delete.py.patch",
+        "tasks_ai_commands_doctor.py.patch",
+        "tasks_ai_commands_unlink.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_test_store_writes.py.patch"
+    ],
+    "status": "verified"
+}
