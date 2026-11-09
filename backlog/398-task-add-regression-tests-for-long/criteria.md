@@ -1,0 +1,8 @@
+- [ ] tests/test_tasks.py asserts a criteria value beginning with ./ is stored as prose and create succeeds
+- [ ] tests/test_tasks.py asserts a value beginning with ../ or / or ~ followed by prose is stored as prose
+- [ ] tests/test_tasks.py asserts a value with whitespace ending in .md or .txt is stored as prose
+- [ ] tests/test_tasks.py asserts a single-token path-shaped value naming no file still fails with CONTENT_FILE_NOT_FOUND
+- [ ] tests/test_tasks.py asserts a value naming an existing file is read as file content rather than stored as a path string
+- [ ] The docstring on resolve_content records the whitespace rule and the limit for paths containing spaces
+- [ ] pytest tests/test_tasks.py -q introduces no new failures beyond the two pre-existing error-code failures tracked separately
+- [ ] ./hammer check all reports the true baseline once the skip bug is fixed; until then ruff check tasks_ai/utils.py passes
