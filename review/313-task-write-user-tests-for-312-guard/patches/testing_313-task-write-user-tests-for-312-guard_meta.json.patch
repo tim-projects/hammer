@@ -1,0 +1,24 @@
+diff --git a/testing/313-task-write-user-tests-for-312-guard/meta.json b/testing/313-task-write-user-tests-for-312-guard/meta.json
+new file mode 100644
+index 00000000..319e0de9
+--- /dev/null
++++ b/testing/313-task-write-user-tests-for-312-guard/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 313,
++  "Ti": "Write user tests for 312: Guard refs cache must not clobber local branches with remote twins",
++  "Ty": "task",
++  "Cr": "261104 18:12",
++  "Bl": [],
++  "Pr": 1,
++  "Br": "313-task-write-user-tests-for-312-guard",
++  "Pt": 312,
++  "Rc": "",
++  "Vp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file
