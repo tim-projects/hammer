@@ -6,7 +6,7 @@ import time
 
 from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
-from ..utils import commit_task_paths, parse_filename
+from ..utils import _patch_name, commit_task_paths, parse_filename
 
 
 def _review_paths(cli, filepath, state_folder):
@@ -106,7 +106,6 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
                     hint='Summarize what you read in each patch (at least 40 characters).',
                 )
             from .review import covered_patches, load_reviews, write_reviews
-            from ..utils import _patch_name
 
             reviews_path = os.path.join(review_dir, task_folder_name, 'reviews.json')
             if not os.path.exists(reviews_path):

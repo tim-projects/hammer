@@ -249,8 +249,12 @@ class PipelineService:
         with open(proof_path, "rb") as f:
             hasher.update(f.read())
         reviews_path = os.path.join(
-            cli.tasks_path, "review", os.path.basename(task_path), "reviews.json"
+            os.path.dirname(task_path), os.path.basename(task_path), "reviews.json"
         )
+        if not os.path.exists(reviews_path):
+            reviews_path = os.path.join(
+                os.path.dirname(task_path), "review", os.path.basename(task_path), "reviews.json"
+            )
         if os.path.exists(reviews_path):
             with open(reviews_path, "rb") as f:
                 hasher.update(f.read())

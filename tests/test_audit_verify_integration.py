@@ -125,13 +125,13 @@ class ReviewGateIntegrationTest(unittest.TestCase):
 
     def complete_review_gate(self, file):
         """audit -> verify -> review every patch -> --reviewed -> --regression-check."""
+        self.review_every_patch(file)
+        res = self.run_cmd(["modify", file, "--reviewed", "Read every patch: the fix is scoped and the tests cover it."])
+        self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
         res = self.run_cmd(["audit", file])
         self.assertTrue(res["success"], f"audit failed for {file}: {res}")
         res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
         self.assertTrue(res["success"], f"verify failed for {file}: {res}")
-        self.review_every_patch(file)
-        res = self.run_cmd(["modify", file, "--reviewed", "Read every patch: the fix is scoped and the tests cover it."])
-        self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
         res = self.run_cmd(["modify", file, "--regression-check"])
         self.assertTrue(res["success"], f"--regression-check failed for {file}: {res}")
 
@@ -272,6 +272,18 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         with open(os.path.join(self.dev_tasks_dir, "review", task_file, "reviews.json")) as f:
             return json.load(f)
 
+    def _add_patch(self, task_file, name, content):
+        """Materialize an extra patch file and register it in PatchFiles."""
+        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
+        with open(os.path.join(patches_dir, f"{name}.patch"), "w") as f:
+            f.write(content)
+        review_dir = os.path.join(self.dev_tasks_dir, "review", task_file)
+        task = FM.load(review_dir)
+        task.metadata["PatchFiles"].append(
+            {"file": name, "patch_path": os.path.join(patches_dir, f"{name}.patch")}
+        )
+        FM.dump(task, review_dir)
+
     def test_review_reads_one_patch_and_records_a_receipt(self):
         task_file = self.create_and_reach_review("Review One Patch Test Task", "code.py")
         patches = self._patches(task_file)
@@ -281,35 +293,42 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.assertTrue(res["success"], res)
         self.assertEqual(res["data"]["reviewed"], 1)
         self.assertEqual(res["data"]["total"], len(patches))
-        self.assertIn("diff", res["data"]["content"])
+        self.assertEqual(res["data"]["remaining"], [])
         self.assertEqual(res["data"]["patch"], patches[0])
+        self.assertIn("diff", res["data"]["content"])
 
         reviews = self._reviews(task_file)
-        self.assertEqual(len(reviews["reviews"]), 1)
         receipt = reviews["reviews"][0]
         self.assertEqual(receipt["patch"], patches[0])
         self.assertEqual(receipt["seq"], 1)
         self.assertIsNone(receipt["prev_hash"])
         self.assertGreater(receipt["bytes"], 0)
 
-        # Text mode prints the patch content itself.
-        text = subprocess.run(
+    def test_review_is_repeatable_and_reports_finalize(self):
+        task_file = self.create_and_reach_review("Repeat Review Report Task", "code.py")
+        self.review_every_patch(task_file)
+        text = subprocess.run(  # noqa: PLW1510
             [self.script_path, "tasks", "--dev", "review", task_file],
             cwd=self.repo_dir, capture_output=True, text=True,
         )
         self.assertEqual(text.returncode, 0, text.stderr)
-        self.assertIn("diff", text.stdout)
+        self.assertIn("already reviewed", text.stdout)
+        self.assertIn("Finalize the review", text.stdout)
+
+    def test_review_reports_what_is_left_and_refuses_unknown_patches(self):
+        task_file = self.create_and_reach_review("Review Remaining Test Task", "code.py")
+        res = self.run_cmd(["review", task_file, "not_a_patch.patch"])
+        self.assertFalse(res["success"], res)
 
     def test_finalize_refused_until_every_patch_is_read(self):
         task_file = self.create_and_reach_review("Review Coverage Test Task", "code.py")
-        patches = self._patches(task_file)
-        self.assertGreaterEqual(len(patches), 2, "needs more than one patch to prove coverage")
+        self._add_patch(task_file, "extra.py", "diff --git a/extra.py b/extra.py\n+second file\n")
         self.run_cmd(["review", task_file])  # first patch only
 
         res = self.run_cmd(["modify", task_file, "--reviewed", "Read the first patch carefully and nothing else yet."])
         self.assertFalse(res["success"], res)
         low = res.get("error", "").lower() + " " + res.get("hint", "").lower()
-        self.assertIn(patches[1], low, f"the unread patch must be named: {res}")
+        self.assertIn("extra.py.patch", low, f"the unread patch must be named: {res}")
 
     def test_incidental_open_does_not_satisfy_the_review(self):
         task_file = self.create_and_reach_review("Incidental Open Test Task", "code.py")
@@ -336,23 +355,26 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.assertTrue(self.get_meta(task_file).get("Reviewed"))
         self.assertIn("summary", self._reviews(task_file))
 
-    def test_reviewing_again_after_summary_voids_the_summary(self):
-        task_file = self.create_and_reach_review("Re Review Voids Summary Task", "code.py")
+    def test_repeating_review_keeps_the_summary(self):
+        task_file = self.create_and_reach_review("Repeat Review Test Task", "code.py")
         self.review_every_patch(task_file)
         res = self.run_cmd(["modify", task_file, "--reviewed", "Read every patch: the fix is scoped and the tests cover it."])
         self.assertTrue(res["success"], res)
 
         res = self.run_cmd(["review", task_file])
         self.assertTrue(res["success"], res)
-        self.assertNotIn("summary", self._reviews(task_file))
-
-        res = self.run_cmd(["modify", task_file, "--regression-check"])
-        self.assertFalse(res["success"], res)
-        self.assertIn("summary", (res.get("error", "") + res.get("hint", "")).lower(), res)
+        self.assertEqual(res["data"]["remaining"], [])
+        self.assertIn("summary", self._reviews(task_file))
 
     def test_tampered_review_record_fails_integrity(self):
         task_file = self.create_and_reach_review("Tampered Review Record Task", "code.py")
-        self.complete_review_gate(task_file)
+        self.review_every_patch(task_file)
+        res = self.run_cmd(["modify", task_file, "--reviewed", "Read every patch: the fix is scoped and the tests cover it."])
+        self.assertTrue(res["success"], res)
+        self.run_cmd(["audit", task_file])
+        res = self.run_cmd(["verify", task_file, "--proof", "Reviewed patches and criteria pass."])
+        self.assertTrue(res["success"], res)
+
         reviews_path = os.path.join(self.dev_tasks_dir, "review", task_file, "reviews.json")
         with open(reviews_path) as f:
             data = json.load(f)

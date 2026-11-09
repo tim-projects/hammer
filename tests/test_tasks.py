@@ -133,14 +133,22 @@ class TestTasksAI(unittest.TestCase):
         res = self.run_cmd(["audit", file])
         self.assertTrue(res["success"], f"audit failed for {file}: {res}")
 
+    def review_every_patch(self, file):
+        """Read each review patch in turn via 'tasks review' until none remain."""
+        while True:
+            res = self.run_cmd(["review", file])
+            self.assertTrue(res["success"], f"review failed for {file}: {res}")
+            if not res["data"]["remaining"]:
+                return
+
     def complete_review_gate(self, file):
         """Run the full, now-mandatory review workflow."""
-        self.generate_audit(file)
-        res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
-        self.assertTrue(res["success"], f"verify failed for {file}: {res}")
         self.review_every_patch(file)
         res = self.run_cmd(["modify", file, "--reviewed", "Read every patch: the fix is scoped and the tests cover it."])
         self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
+        self.generate_audit(file)
+        res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
+        self.assertTrue(res["success"], f"verify failed for {file}: {res}")
         res = self.run_cmd(["modify", file, "--regression-check"])
         self.assertTrue(res["success"], f"--regression-check failed for {file}: {res}")
 
