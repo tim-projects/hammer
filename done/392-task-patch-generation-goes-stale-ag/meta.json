@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794240086.93178,
-  "DoneAt": null,
+  "DoneAt": 1794240205.25974,
   "PatchFiles": [
     {
       "file": "tasks_ai/audit.py",
