@@ -8,5 +8,7 @@
   "Br": "392-task-patch-generation-goes-stale-ag",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
