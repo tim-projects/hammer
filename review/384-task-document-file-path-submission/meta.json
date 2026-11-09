@@ -1,0 +1,35 @@
+{
+  "Id": 384,
+  "Ti": "Document file-path submission for long-form content flags",
+  "Ty": "task",
+  "Cr": "261109 00:41",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "384-task-document-file-path-submission",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794187020.738787,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/384-task-document-file-path-submission/patches/AGENTS.md.patch"
+    },
+    {
+      "file": "README.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/384-task-document-file-path-submission/patches/README.md.patch"
+    },
+    {
+      "file": "docs/TROUBLESHOOTING.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/384-task-document-file-path-submission/patches/docs_TROUBLESHOOTING.md.patch"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/384-task-document-file-path-submission/patches/tasks_ai_help_text.py.patch"
+    }
+  ]
+}

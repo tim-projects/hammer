@@ -1,0 +1,12 @@
+diff --git a/README.md b/README.md
+index 5e582576..bcc8adf5 100644
+--- a/README.md
++++ b/README.md
+@@ -97,6 +97,7 @@ BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE 
+ hammer tasks init                    # HAMMER BUILD SYSTEM!
+ hammer tasks list                     # SHOW ALL!
+ hammer tasks create "SMASH BUG"       # NEW METAL!
++hammer tasks create "SMASH BUG" --criteria /tmp/criteria.md   # FLAGS TAKE A FILE PATH!
+ hammer tasks show 42                  # METAL DETAIL!
+ hammer tasks current                  # ACTIVE METAL!
+ ```
