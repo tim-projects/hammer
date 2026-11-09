@@ -1,1 +1,1 @@
-Reviewed 6 patches: ResearchGateHook class, READY exit registration, --research flag wiring (argparse, dispatch, modify.run), models.parts_order, user test. Gate verified blocked-then-passed in the test and check all green.
+Reviewed 6 patches incl. the empty-research guard: hook, READY exit registration, --research wiring, parts_order, user test, plus fix commit e5d21313.
