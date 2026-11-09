@@ -1,0 +1,1 @@
+tests/test_dev_write_audit.py 5 passed and tests/test_dev_isolation.py 10 passed on the branch; ./hammer check all exit 0; diff is one test file (four 'init --force' -> 'init', stale comment replaced).
