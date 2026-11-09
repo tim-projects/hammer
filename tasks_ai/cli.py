@@ -576,13 +576,13 @@ class TasksCLI:
         # 'main': same resolution as GitService.get_default_branch (origin/HEAD,
         # then the first existing of main/master, with main as final fallback).
         default_branch_snippet = (
-            'default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)\n'
+            "default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)\n"
             'if [ -z "$default_branch" ]; then\n'
-            '    if git rev-parse --verify --quiet main >/dev/null; then default_branch=main\n'
-            '    elif git rev-parse --verify --quiet master >/dev/null; then default_branch=master\n'
-            '    else default_branch=main\n'
-            '    fi\n'
-            'fi'
+            "    if git rev-parse --verify --quiet main >/dev/null; then default_branch=main\n"
+            "    elif git rev-parse --verify --quiet master >/dev/null; then default_branch=master\n"
+            "    else default_branch=main\n"
+            "    fi\n"
+            "fi"
         )
 
         # pre-commit hook
@@ -666,7 +666,7 @@ class TasksCLI:
                     TASKS_BRANCH,
                     "--depth",
                     "1",
-                    self.root,
+                    self.context.invoked_repo_root or self.root,
                     self.tasks_path,
                 ],
                 check=False,
@@ -676,6 +676,10 @@ class TasksCLI:
                     f"Failed to clone tasks branch '{TASKS_BRANCH}' from parent repo. "
                     "Ensure the branch exists and the parent repo is a valid git repository."
                 )
+            if self.dev:
+                # Cloning sets origin to the invoked repo; a dev store must carry
+                # no remote at all, so no dev command can push anywhere.
+                self._run_git(["remote", "remove", "origin"], cwd=self.tasks_path)
 
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
@@ -806,7 +810,9 @@ class TasksCLI:
     def save(self, branch="tasks"):
         from .commands import save as save_cmd
 
-        if self.dev:
+        if self.dev and not self.git.dev_push_allowed():
+            # Refused at the command so the agent sees the actionable error; the
+            # push helper refuses again for the paths that bypass this command.
             self.error("DEV_COMMAND_REFUSED", command="./hammer tasks save")
 
         result = save_cmd.run(self, branch=branch, fatal=True)
@@ -1039,7 +1045,9 @@ class TasksCLI:
             try:
                 default_branch = self._get_default_branch()
                 if not default_branch:
-                    print(f"⚠️ Skipping {branch}: no default branch (main/master) found.")
+                    print(
+                        f"⚠️ Skipping {branch}: no default branch (main/master) found."
+                    )
                     continue
                 main_sha = self._run_git(
                     ["rev-parse", default_branch], cwd=self.root
@@ -1230,6 +1238,13 @@ class TasksCLI:
     def upgrade(self):
         import subprocess
 
+        if self.dev:
+            # install.sh writes the real installation; dev mode must not touch it.
+            self.error(
+                "DEV_WRITE_BLOCKED",
+                detail="'tasks upgrade' installs into the live installation",
+                command="upgrade",
+            )
         self.log("Upgrading tasks...")
         subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])  # noqa: PLW1510
 

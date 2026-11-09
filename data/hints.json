@@ -1,4 +1,5 @@
 {
+  "DEV_WRITE_BLOCKED": "WHAT: {command} would write outside the dev store and its throwaway repo.\nWHY: Everything --dev does must stay inside <HAMMER_DEV_TASKS_DIR> and its <store>-repo; production paths are off limits.\nHOW: Run '{command}' WITHOUT --dev if you really intend to change the real environment.\nCONSEQUENCE: Stopped before any production write.",
   "TASK_NOT_FOUND": "WHAT: Task '{filename}' missing.\nWHY: HAMMER cannot operate on ghost. \nHOW: Run 'hammer tasks list' to see all existing task ID.\nCONSEQUENCE: Pipeline remain BROKEN. SMASH BUG NOW.",
   "INVALID_TASK_PATH": "WHAT: Path {filepath} invalid.\nWHY: HAMMER require absolute obedience to directory structure.\nHOW: Verify path exist, within task worktree.\nCONSEQUENCE: Data corruption imminent. OBEY STRUCTURE.",
   "TITLE_TOO_VAGUE": "WHAT: Title WEAK. Less than 10 character.\nWHY: Weak title lead to weak task. HAMMER demand clarity.\nHOW: Run: ./hammer tasks modify <id> --title \"Stronger, clearer title here.\"\nCONSEQUENCE: Task remain ignored. POUND INTO SHAPE.",

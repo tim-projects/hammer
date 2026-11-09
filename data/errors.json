@@ -1,4 +1,5 @@
 {
+  "DEV_WRITE_BLOCKED": "Dev mode blocked a write to production: {detail}",
   "TASK_NOT_FOUND": "Task '{filename}' not found.",
   "INVALID_TASK_PATH": "Invalid task path: {filepath}",
   "TITLE_TOO_VAGUE": "Task title WEAK. Min 10 character.",

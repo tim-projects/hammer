@@ -13,6 +13,7 @@ real patch changes:
 * A patch tampered with after review makes --regression-check fail (md5
   mismatch) and blocks STAGING.
 """
+
 import json
 import os
 import shutil
@@ -28,6 +29,17 @@ class ReviewGateIntegrationTest(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        # Restore the variable even if setUp fails later: this file runs before
+        # tests that issue non-dev commands, and a leaked value pointing at a
+        # deleted store silently redirects their store (task 364).
+        prev_env = os.environ.get("HAMMER_DEV_TASKS_DIR")
+        self.addCleanup(
+            lambda: (
+                os.environ.__setitem__("HAMMER_DEV_TASKS_DIR", prev_env)
+                if prev_env is not None
+                else os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
+            )
+        )
         os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
@@ -46,7 +58,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
-        subprocess.run(["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(
+            ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True
+        )  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
         )
@@ -57,11 +71,14 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             ["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Add hammer"], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Add hammer"],
+            cwd=self.repo_dir,
+            capture_output=True,
         )
 
         # Manually initialize dev tasks dir (init in dev mode tries to clone 'tasks' branch which doesn't exist)
         from tasks_ai.constants import STATE_FOLDERS
+
         counter_file = os.path.join(self.dev_tasks_dir, ".task_counter")
         os.makedirs(self.dev_tasks_dir, exist_ok=True)
         for folder in STATE_FOLDERS.values():
@@ -71,7 +88,14 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             with open(counter_file, "w") as f:
                 f.write("0")
         # Write config so validation passes
-        config_data = {"repo": {"lint": "ruff", "test": "/bin/true", "type_check": "/bin/true", "format": "ruff"}}
+        config_data = {
+            "repo": {
+                "lint": "ruff",
+                "test": "/bin/true",
+                "type_check": "/bin/true",
+                "format": "ruff",
+            }
+        }
         with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
             json.dump(config_data, f)
 
@@ -119,7 +143,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         """audit -> verify -> --reviewed -> --regression-check."""
         res = self.run_cmd(["audit", file])
         self.assertTrue(res["success"], f"audit failed for {file}: {res}")
-        res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
+        res = self.run_cmd(
+            ["verify", file, "--proof", "Reviewed patches and criteria pass."]
+        )
         self.assertTrue(res["success"], f"verify failed for {file}: {res}")
         res = self.run_cmd(["modify", file, "--reviewed"])
         self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
@@ -155,7 +181,11 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.run_cmd(["move", task_file, "PROGRESSING"])
 
         # Commit real work in the worktree (not main repo) so the branch gets the commit
-        work_dir = worktree_path if worktree_path and os.path.exists(worktree_path) else self.repo_dir
+        work_dir = (
+            worktree_path
+            if worktree_path and os.path.exists(worktree_path)
+            else self.repo_dir
+        )
         subprocess.run(["git", "checkout", branch], cwd=work_dir, capture_output=True)  # noqa: PLW1510
         with open(os.path.join(work_dir, work_file), "w") as f:
             f.write("def func():\n    pass\n")
@@ -169,7 +199,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.run_cmd(["move", task_file, "TESTING"])
 
         # REVIEW move: testing->review needs tests-passed; sync testing branch.
-        subprocess.run(["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(
+            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+        )  # noqa: PLW1510
         self.run_cmd(["modify", task_file, "--tests-passed"])
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True
@@ -185,8 +217,15 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         """Mark the criteria file in the task's current pipeline stage as done."""
         tasks_root = self.dev_tasks_dir
         for stage in [
-            "backlog", "ready", "progressing", "testing", "review",
-            "staging", "done", "archived", "rejected",
+            "backlog",
+            "ready",
+            "progressing",
+            "testing",
+            "review",
+            "staging",
+            "done",
+            "archived",
+            "rejected",
         ]:
             criteria_path = os.path.join(tasks_root, stage, file, "criteria.md")
             if os.path.exists(criteria_path):
@@ -210,7 +249,10 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         # In REVIEW only; no audit/verify/--reviewed/--regression-check yet.
         res = self.run_cmd(["move", task_file, "STAGING"])
         self.assertFalse(res["success"], res)
-        self.assertIn("regression", res.get("error", "").lower() + " " + res.get("hint", "").lower())
+        self.assertIn(
+            "regression",
+            res.get("error", "").lower() + " " + res.get("hint", "").lower(),
+        )
 
     def test_regression_check_requires_reviewed(self):
         task_file = self.create_and_reach_review(
@@ -218,10 +260,15 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         # audit + verify alone do NOT satisfy the gate; Reviewed is still False.
         self.run_cmd(["audit", task_file])
-        self.run_cmd(["verify", task_file, "--proof", "Reviewed patches and criteria pass."])
+        self.run_cmd(
+            ["verify", task_file, "--proof", "Reviewed patches and criteria pass."]
+        )
         res = self.run_cmd(["modify", task_file, "--regression-check"])
         self.assertFalse(res["success"], res)
-        self.assertIn("regression", res.get("error", "").lower() + " " + res.get("hint", "").lower())
+        self.assertIn(
+            "regression",
+            res.get("error", "").lower() + " " + res.get("hint", "").lower(),
+        )
         # Rc must NOT have been flipped to PASSED.
         self.assertNotEqual(self.get_meta(task_file).get("Rc"), "PASSED")
 

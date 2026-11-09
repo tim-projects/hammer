@@ -8,7 +8,7 @@ import unittest
 
 def dev_repo_path(tasks_dir):
     """Where the --dev CLI keeps its throwaway repo (see tasks_ai/context.py)."""
-    return os.path.abspath(tasks_dir) + '-repo'
+    return os.path.abspath(tasks_dir) + "-repo"
 
 
 def ensure_dev_repo(tasks_dir):
@@ -25,59 +25,137 @@ def ensure_dev_repo(tasks_dir):
 
 class MockGitRemote:
     def __init__(self, repo_dir):
-        self.remote_dir = tempfile.mkdtemp(prefix='hammer_remote_')
+        self.remote_dir = tempfile.mkdtemp(prefix="hammer_remote_")
         self.repo_dir = repo_dir
-        subprocess.run(['git', 'init', '--bare', self.remote_dir], check=True)
+        subprocess.run(["git", "init", "--bare", self.remote_dir], check=True)
 
     def __enter__(self):
-        subprocess.run(['git', 'remote', 'remove', 'origin'], cwd=self.repo_dir, check=False, capture_output=True)
-        subprocess.run(['git', 'remote', 'add', 'origin', self.remote_dir], cwd=self.repo_dir, check=True)
+        subprocess.run(
+            ["git", "remote", "remove", "origin"],
+            cwd=self.repo_dir,
+            check=False,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", self.remote_dir],
+            cwd=self.repo_dir,
+            check=True,
+        )
         return self.remote_dir
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         shutil.rmtree(self.remote_dir)
 
-class HammerTestBase(unittest.TestCase):
 
+class HammerTestBase(unittest.TestCase):
     def setUp(self):
-        self.test_root = tempfile.mkdtemp(prefix='hammer_test_')
-        self.dev_tasks_dir = tempfile.mkdtemp(prefix='hammer_tasks_')
-        os.environ['HAMMER_DEV_TASKS_DIR'] = self.dev_tasks_dir
-        self.repo_path = os.path.join(self.test_root, 'repo')
-        subprocess.run(['git', 'clone', os.getcwd(), self.repo_path], check=True, capture_output=True)
-        subprocess.run(['git', 'fetch', 'origin', 'tasks'], cwd=self.repo_path, check=True, capture_output=True)
-        subprocess.run(['git', 'branch', 'tasks', 'origin/tasks'], cwd=self.repo_path, check=True, capture_output=True)
-        subprocess.run(['git', 'checkout', '--detach'], cwd=self.repo_path, check=True, capture_output=True)
-        subprocess.run(['git', 'branch', '-f', 'main', 'origin/main'], cwd=self.repo_path, check=True, capture_output=True)
-        subprocess.run(['git', 'checkout', 'main'], cwd=self.repo_path, check=True, capture_output=True)
-        subprocess.run(['git', 'remote', 'set-head', 'origin', 'main'], cwd=self.repo_path, check=True, capture_output=True)
-        tasks_clone_path = os.path.join(self.repo_path, '.tasks')
+        self.test_root = tempfile.mkdtemp(prefix="hammer_test_")
+        self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        # Leak-proofing: register the restores BEFORE any mutation. A test that
+        # failed mid-way used to skip tearDown and leak the env var (and a
+        # deleted cwd) into every later test file in the same run.
+        prev_env = os.environ.get("HAMMER_DEV_TASKS_DIR")
+        prev_cwd = os.getcwd()
+
+        def _restore_env():
+            if prev_env is None:
+                os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
+            else:
+                os.environ["HAMMER_DEV_TASKS_DIR"] = prev_env
+
+        def _restore_cwd():
+            if os.path.isdir(prev_cwd):
+                os.chdir(prev_cwd)
+
+        self.addCleanup(_restore_env)
+        self.addCleanup(_restore_cwd)
+        os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
+        self.repo_path = os.path.join(self.test_root, "repo")
+        subprocess.run(
+            ["git", "clone", os.getcwd(), self.repo_path],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "fetch", "origin", "tasks"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "branch", "tasks", "origin/tasks"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "checkout", "--detach"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "branch", "-f", "main", "origin/main"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "checkout", "main"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "remote", "set-head", "origin", "main"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        tasks_clone_path = os.path.join(self.repo_path, ".tasks")
         if os.path.exists(tasks_clone_path):
             shutil.rmtree(tasks_clone_path)
-        self.script_path = os.path.join(self.repo_path, 'hammer')
+        self.script_path = os.path.join(self.repo_path, "hammer")
         if os.path.exists(self.dev_tasks_dir):
             shutil.rmtree(self.dev_tasks_dir)
         os.makedirs(self.dev_tasks_dir, exist_ok=True)
-        tasks_dir = os.path.join(self.repo_path, '.tasks')
+        tasks_dir = os.path.join(self.repo_path, ".tasks")
         os.makedirs(tasks_dir, exist_ok=True)
-        with open(os.path.join(tasks_dir, 'config.yaml'), 'w') as f:
+        with open(os.path.join(tasks_dir, "config.yaml"), "w") as f:
             json.dump({}, f)
-        subprocess.run([self.script_path, 'tasks', '--dev', 'init', '--force'], cwd=self.repo_path, check=True, capture_output=True)
-        ops_path = os.path.join(self.dev_tasks_dir, '.ops')
+        subprocess.run(
+            [self.script_path, "tasks", "--dev", "init", "--force"],
+            cwd=self.repo_path,
+            check=True,
+            capture_output=True,
+        )
+        ops_path = os.path.join(self.dev_tasks_dir, ".ops")
         if os.path.exists(ops_path):
             shutil.rmtree(ops_path)
-        config_data = {'repo': {'lint': 'ruff', 'test': '/bin/true', 'type_check': '/bin/true', 'format': 'ruff'}}
-        with open(os.path.join(self.dev_tasks_dir, 'config.yaml'), 'w') as f:
+        config_data = {
+            "repo": {
+                "lint": "ruff",
+                "test": "/bin/true",
+                "type_check": "/bin/true",
+                "format": "ruff",
+            }
+        }
+        with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
             json.dump(config_data, f)
 
     def tearDown(self):
         shutil.rmtree(self.test_root)
         shutil.rmtree(self.dev_tasks_dir)
         shutil.rmtree(dev_repo_path(self.dev_tasks_dir), ignore_errors=True)
-        del os.environ['HAMMER_DEV_TASKS_DIR']
 
     def run_tasks(self, args):
-        return subprocess.run([self.script_path, 'tasks', '-j', '--dev'] + args, cwd=self.repo_path, capture_output=True, text=True, check=False)
+        return subprocess.run(
+            [self.script_path, "tasks", "-j", "--dev"] + args,
+            cwd=self.repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
     def seed_counter(self, value):
         """Force the next task id, so fixtures never collide with real branches.
@@ -87,8 +165,8 @@ class HammerTestBase(unittest.TestCase):
         and the guard correctly rejects it; tests that do not pin an id must
         stay above the highest real task id (see tests/test_guard.py BASE_ID).
         """
-        counter = os.path.join(self.dev_tasks_dir, '.task_counter')
+        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
         if os.path.exists(counter):
             os.remove(counter)
-        with open(counter, 'w') as handle:
+        with open(counter, "w") as handle:
             handle.write(str(value))
