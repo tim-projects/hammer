@@ -69,6 +69,16 @@
       "bytes": 7313,
       "ts": 1794201843.1190047,
       "prev_hash": "4a4b8ea3831199c0dc8d9609f80d4126ba0cb745c3f8aac8740e0b6f666e6cb8"
+    },
+    {
+      "seq": 8,
+      "file": "tasks_ai/commands/modify.py",
+      "patch": "tasks_ai_commands_modify.py.patch",
+      "md5": "7ff53e306950f76d82779188b187b122",
+      "sha256": "848420f47427d27b34ff97cac9578673f933d34766f6d86c38c447bb63644408",
+      "bytes": 7313,
+      "ts": 1794201848.9500794,
+      "prev_hash": "9ec6d794858a85ab48ce3e57dba62e94b296d9881afbdc0fc93a1bf8a18f4d43"
     }
   ]
 }
