@@ -1,0 +1,1 @@
+- [ ] RESEARCH_REQUIRED renders a hammer-voice error plus a WHAT/WHY/HOW/CONSEQUENCE hint naming the fix command;CONTENT_FILE_NOT_FOUND and PARENT_NOT_FOUND also get registry entries;the research gate call site no longer passes a dead hint kwarg;a test asserts no code raised by the CLI falls back to 'Unknown error';check all passes
