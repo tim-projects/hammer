@@ -6,7 +6,11 @@ import time
 
 from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
+<<<<<<< HEAD
 from ..utils import _patch_name, commit_task_paths, parse_filename
+=======
+from ..utils import commit_task_paths, parse_filename, resolve_content
+>>>>>>> main
 
 
 def _review_paths(cli, filepath, state_folder):
@@ -39,6 +43,13 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
     fname = os.path.basename(filepath)
     task_id = fname.rsplit('.', 1)[0]
     tt, _ = parse_filename(fname)
+    # Bulk submission: any long-form flag may name a file instead of a string.
+    story = resolve_content(cli, story)
+    tech = resolve_content(cli, tech)
+    criteria = resolve_content(cli, criteria, lines=True)
+    plan = resolve_content(cli, plan, lines=True)
+    repro = resolve_content(cli, repro, lines=True)
+    notes = resolve_content(cli, notes)
     updated = False
     if task_type:
         task.metadata['Ty'] = task_type

@@ -339,6 +339,56 @@ class TestTasksAI(unittest.TestCase):
             "Already on PROGRESSING should be blocked",
         )
 
+    def test_long_form_flags_accept_file_path(self):
+        """Long-form flags may name a file: bulk content comes from disk."""
+        story_path = os.path.join(self.test_dir, "story.txt")
+        with open(story_path, "w") as f:
+            f.write("As a user I want long-form content from a file.\nSecond line.")
+        criteria_path = os.path.join(self.test_dir, "criteria.md")
+        with open(criteria_path, "w") as f:
+            f.write("- [ ] one\n- [ ] two\n")
+        plan_path = os.path.join(self.test_dir, "plan.txt")
+        with open(plan_path, "w") as f:
+            f.write("step one\nstep two\n")
+
+        res = self.run_cmd(
+            [
+                "create",
+                "File Submission Task",
+                "--story",
+                story_path,
+                "--tech",
+                "Python and Git orchestration.",
+                "--criteria",
+                criteria_path,
+                "--plan",
+                plan_path,
+            ]
+        )
+        self.assertTrue(res["success"], res)
+        task_file = res["data"]["file"]
+
+        task = FM.load(os.path.join(self.dev_tasks_dir, "backlog", task_file))
+        with open(story_path) as f:
+            self.assertEqual(task.parts["story"], f.read())
+        self.assertEqual(task.parts["criteria"], "- [ ] one\n- [ ] two")
+        self.assertEqual(task.parts["plan"], "1. step one\n2. step two")
+
+        # modify accepts the same file convention
+        tech_path = os.path.join(self.test_dir, "tech.txt")
+        with open(tech_path, "w") as f:
+            f.write("Technical background from a file.\nMore detail.")
+        res = self.run_cmd(["modify", task_file, "--tech", tech_path])
+        self.assertTrue(res["success"], res)
+        task = FM.load(os.path.join(self.dev_tasks_dir, "backlog", task_file))
+        with open(tech_path) as f:
+            self.assertEqual(task.parts["tech"], f.read())
+
+        # A path-shaped value naming no file is an error, not stored prose
+        res = self.run_cmd(["modify", task_file, "--story", "/tmp/no-such-story.md"])
+        self.assertFalse(res["success"])
+        self.assertIn("CONTENT_FILE_NOT_FOUND", res["error"])
+
     def test_auto_archival(self):
         res = self.run_cmd(
             [
