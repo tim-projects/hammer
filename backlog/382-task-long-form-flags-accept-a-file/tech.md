@@ -1,1 +1,0 @@
-Content parts already persist as separate .md files per task dir (file_manager), so resolving a file path to its contents at the create/modify entry points is the only change needed.

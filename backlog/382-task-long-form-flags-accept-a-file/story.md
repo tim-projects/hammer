@@ -1,1 +1,0 @@
-As an agent I want to submit page-sized story/criteria/plan/notes content without shell-arg length limits, so I can pass a temp file path instead of an inline string.

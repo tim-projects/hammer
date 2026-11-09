@@ -1,1 +1,0 @@
-1. Add resolve_content helper in tasks_ai/utils.py;wire it into commands/create.py and commands/modify.py after title validation and before min-length checks;document the file-path convention in tasks.py argparse help;add user tests in tests/test_tasks.py;run check all
