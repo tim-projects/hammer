@@ -9,11 +9,11 @@
   "Pt": 346,
   "Rc": "",
   "Vp": true,
-  "Reviewed": false,
+  "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794188298.532203,
   "DoneAt": null,
-  "Tp": true,
+  "Tp": false,
   "PatchFiles": [
     {
       "file": "testing/347-task-write-user-tests-for-346-guard/meta.json",
