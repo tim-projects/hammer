@@ -1,0 +1,63 @@
+{
+  "Id": 364,
+  "Ti": "Suite regression: harness runs every command with --dev, which now swaps the repo",
+  "Ty": "issue",
+  "Cr": "261108 09:15",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "364-issue-suite-regression-harness-runs",
+  "Pt": null,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794190950.331271,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/context.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tasks_ai_context.py.patch"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tests_test_dev_write_audit.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tests_test_repo.py.patch"
+    },
+    {
+      "file": "tests/test_unlink.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/364-issue-suite-regression-harness-runs/patches/tests_test_unlink.py.patch"
+    }
+  ]
+}
