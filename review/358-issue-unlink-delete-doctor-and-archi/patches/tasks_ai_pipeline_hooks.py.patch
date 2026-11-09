@@ -1,0 +1,46 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index 44fd8f19..8c1246de 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -2,11 +2,11 @@ import os
+ import shutil
+ from datetime import datetime
+ 
+-from .constants import CURRENT_TASK_FILENAME, load_config
++from .constants import CURRENT_TASK_FILENAME, STATE_FOLDERS, load_config
+ from .guard_engine import GuardEngine, GuardUnavailable
+ from .hooks import PipelineHook
+ from .models import Task
+-from .utils import parse_filename
++from .utils import commit_task_paths, parse_filename
+ 
+ 
+ def get_guard_engine(cli) -> GuardEngine:
+@@ -312,14 +312,19 @@ class ArchivedCommitHook(PipelineHook):
+         if new_status == "ARCHIVED":
+             task_id = str(task.metadata.get("Id", ""))
+ 
+-            cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+-            cli._run_git(
+-                [
+-                    "commit",
+-                    "-m",
+-                    f"Archive [{task.metadata.get('Id')}] {task.metadata.get('Ti')}",
+-                ],
+-                cwd=cli.tasks_path,
++            # The push below is only safe if the pushed state is this task's own:
++            # a store-wide add would commit every other agent's pending work and
++            # then propagate it to origin under this archive's message.
++            old_path = os.path.join(
++                cli.tasks_path,
++                STATE_FOLDERS.get(current_state, current_state),
++                os.path.basename(filepath),
++            )
++            commit_task_paths(
++                cli,
++                filepath,
++                f"Archive [{task.metadata.get('Id')}] {task.metadata.get('Ti')}",
++                old_path,
+             )
+             try:
+                 cli._push_tasks_branch("tasks", fatal=False)
