@@ -44,7 +44,10 @@ class TestDevWriteAudit(unittest.TestCase):
         # The dev store is cloned from the invoked repo's 'tasks' branch, so the
         # stand-in needs one, exactly like every real repo has.
         subprocess.run(
-            ["git", "checkout", "--orphan", "tasks"], cwd=self.prod, capture_output=True
+            ["git", "checkout", "--orphan", "tasks"],
+            cwd=self.prod,
+            capture_output=True,
+            check=False,
         )
         with open(os.path.join(self.prod, "config.yaml"), "w") as handle:
             handle.write("{}\n")
