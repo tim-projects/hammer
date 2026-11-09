@@ -8,5 +8,9 @@
   "Br": "386-task-ready-exit-gate-requires-a-rec",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
