@@ -8,5 +8,9 @@
   "Br": "313-task-write-user-tests-for-312-guard",
   "Pt": 312,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
