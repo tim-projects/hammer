@@ -1,0 +1,75 @@
+{
+  "Id": 376,
+  "Ti": "Force verifiable cat review of patches before promotion",
+  "Ty": "task",
+  "Cr": "261108 22:42",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "376-task-force-verifiable-cat-review-of",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794187838.442688,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/data_hints.json.patch"
+    },
+    {
+      "file": "docs/spec-worktrees.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/docs_spec-worktrees.md.patch"
+    },
+    {
+      "file": "hammer",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/hammer.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks_ai_commands_modify.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/review.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks_ai_commands_review.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks_ai_pipeline.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/376-task-force-verifiable-cat-review-of/patches/tests_test_worktree_system.py.patch"
+    }
+  ]
+}

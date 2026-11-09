@@ -1,0 +1,16 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 10d06073..bb8b623e 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -876,6 +876,11 @@ class TasksCLI:
+ 
+         show_cmd.run(self, filename, section=section, show_all=show_all)
+ 
++    def review(self, filename, file=None):
++        from .commands import review as review_cmd
++
++        review_cmd.run(self, filename, file)
++
+     def current(self, filename=None):
+         from .commands import current as current_cmd
+ 

@@ -1,0 +1,16 @@
+diff --git a/docs/spec-worktrees.md b/docs/spec-worktrees.md
+index 83f3bac2..ef043e17 100644
+--- a/docs/spec-worktrees.md
++++ b/docs/spec-worktrees.md
+@@ -213,8 +213,9 @@ $ vi code.py && git add . && git commit -m work          # edits live in the ISO
+ $ cd <main_repo>
+ $ hammer tasks move 42 TESTING
+ $ hammer tasks move 42 REVIEW
+-$ hammer tasks audit 42 && hammer tasks verify 42 --proof "..." \
+-    && hammer tasks modify 42 --reviewed \
++$ hammer tasks review 42 && hammer tasks review 42   # one patch at a time, until all are read
++    && hammer tasks modify 42 --reviewed "Read every patch: the fix is scoped and tests cover it" \
++    && hammer tasks audit 42 && hammer tasks verify 42 --proof "..." \
+     && hammer tasks modify 42 --regression-check
+ $ hammer tasks move 42 STAGING
+ $ hammer tasks move 42 DONE

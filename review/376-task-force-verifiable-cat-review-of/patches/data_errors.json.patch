@@ -1,0 +1,19 @@
+diff --git a/data/errors.json b/data/errors.json
+index a179aaa3..c03d6cde 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -63,5 +63,11 @@
+   "GUARD_UNAVAILABLE": "GUARD REJECT: cannot verify task {task_id}. {detail}",
+   "STORE_WRITE_FAIL": "Store write failed while {message}: {detail}",
+   "DEV_REPO_UNAVAILABLE": "Dev mode cannot be isolated: {detail}",
+-  "DEV_COMMAND_REFUSED": "'{command}' is refused in --dev mode."
+-}
++  "DEV_COMMAND_REFUSED": "'{command}' is refused in --dev mode.",
++  "REVIEW_STATE_REQUIRED": "Task {task_id} is not in REVIEW.",
++  "NO_PATCHES": "No review patches exist for task {task_id}.",
++  "PATCH_NOT_IN_TASK": "Patch '{patch}' is not part of task {task_id}.",
++  "REVIEW_INCOMPLETE": "Review incomplete: {missing} not yet read.",
++  "REVIEW_SUMMARY_REQUIRED": "A review summary is required to finalize the review.",
++  "REVIEW_SUMMARY_TOO_SHORT": "Review summary too short."
++}
+\ No newline at end of file

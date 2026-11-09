@@ -1,0 +1,16 @@
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index 13a22266..07953d26 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -250,6 +250,11 @@ def _stageable(cli, path):
+     return rel if tracked.returncode == 0 else None
+ 
+ 
++def _patch_name(file_path):
++    """Store filename of the patch holding one file's diff."""
++    return f"{file_path.replace(os.sep, '_')}.patch"
++
++
+ def commit_task_paths(cli, task_filepath, message, *extra_paths):
+     """Stage and commit only these task paths in the shared store.
+ 

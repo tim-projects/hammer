@@ -1,0 +1,134 @@
+diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
+index d44b4926..ab353b12 100644
+--- a/tasks_ai/commands/modify.py
++++ b/tasks_ai/commands/modify.py
+@@ -2,10 +2,15 @@ import hashlib
+ import json
+ import os
+ import re
++import time
+ 
+ from ..constants import CURRENT_TASK_FILENAME
+ from ..file_manager import FM
++<<<<<<< HEAD
++from ..utils import _patch_name, commit_task_paths, parse_filename
++=======
+ from ..utils import commit_task_paths, parse_filename, resolve_content
++>>>>>>> main
+ 
+ 
+ def _review_paths(cli, filepath, state_folder):
+@@ -95,48 +100,57 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+         task.metadata['Tp'] = bool(tests_passed)
+         updated = True
+     if reviewed is not None:
+-        task.metadata['Reviewed'] = bool(reviewed)
+-        if reviewed:
+-            review_dir, task_folder_name, patches_dir = _review_paths(cli, filepath, 'REVIEW')
+-            gen_time = task.metadata.get('PatchGenTime')
+-            patch_files = task.metadata.get('PatchFiles', [])
+-            if gen_time and patch_files and os.path.isdir(patches_dir) and os.listdir(patches_dir):
+-                # Real changes to review: the user must have opened each patch file
+-                # (at least once after generation) and we record a verifiable md5.
+-                import time
++        review_dir, task_folder_name, patches_dir = _review_paths(cli, filepath, 'REVIEW')
++        has_changes = _has_real_patches(task, patches_dir)
++        if has_changes:
++            summary = reviewed if isinstance(reviewed, str) else None
++            if summary is None:
++                cli.error(
++                    'REVIEW_SUMMARY_REQUIRED',
++                    task_id=task_id,
++                    hint=f"Finalize with a summary: 'tasks modify {task_id} --reviewed \"<what you read in each patch>\"'.",
++                )
++            if len(summary.strip()) < 40:
++                cli.error(
++                    'REVIEW_SUMMARY_TOO_SHORT',
++                    task_id=task_id,
++                    hint='Summarize what you read in each patch (at least 40 characters).',
++                )
++            from .review import covered_patches, load_reviews, write_reviews
+ 
+-                records = []
+-                for patch_info in patch_files:
+-                    patch_filename = f"{patch_info['file'].replace(os.sep, '_')}.patch"
+-                    patch_path = os.path.join(patches_dir, patch_filename)
+-                    if not os.path.exists(patch_path):
+-                        cli.error(
+-                            f"Patch file '{patch_filename}' missing.",
+-                            hint=f"Run 'tasks audit {task.metadata.get('Id')}' to regenerate patches.",
+-                        )
+-                    if gen_time and os.path.getatime(patch_path) < gen_time:
+-                        cli.error(
+-                            f"Patch '{patch_filename}' has not been reviewed since generation.",
+-                            hint=f"Open the file to confirm review, e.g. 'cat {patch_path}'",
+-                        )
+-                    records.append(
+-                        {
+-                            "file": patch_info["file"],
+-                            "patch": patch_filename,
+-                            "md5": _patch_md5(patch_path),
+-                        }
+-                    )
+-                reviews_path = os.path.join(review_dir, task_folder_name, "reviews.json")
+-                with open(reviews_path, "w") as fh:
+-                    json.dump(
+-                        {"reviews": records, "reviewed_at": time.time()}, fh, indent=2
+-                    )
++            reviews_path = os.path.join(review_dir, task_folder_name, 'reviews.json')
++            if not os.path.exists(reviews_path):
++                cli.error(
++                    'REVIEW_INCOMPLETE',
++                    task_id=task_id,
++                    missing=', '.join(_patch_name(info['file']) for info in task.metadata.get('PatchFiles', [])),
++                    hint=f"Read each patch with 'tasks review {task_id}' before finalizing.",
++                )
++            reviews = load_reviews(cli, filepath)
++            expected = [_patch_name(info['file']) for info in task.metadata.get('PatchFiles', [])]
++            missing = [name for name in expected if name not in covered_patches(reviews, patches_dir, expected)]
++            if missing:
++                cli.error(
++                    'REVIEW_INCOMPLETE',
++                    task_id=task_id,
++                    missing=', '.join(missing),
++                    hint=f"{len(missing)} patch(es) unread. Run 'tasks review {task_id}'.",
++                )
++            reviews['summary'] = summary.strip()
++            reviews['summary_at'] = time.time()
++            reviews['reviewed_at'] = reviews.get('reviewed_at', time.time())
++            write_reviews(cli, filepath, reviews)
++            commit_task_paths(cli, os.path.join(review_dir, task_folder_name), f'Review summary {task_id}', reviews_path)
++            task.metadata['Reviewed'] = True
+             cli.log(
+-                f"💡 HINT: Manual review confirmed for [{task.metadata.get('Id')}].\n"
+-                f"Now run:\n1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
+-                f"2. './hammer tasks verify {task.metadata.get('Id')} --proof \"<evidence>\"' to bind proof to the audit hash.\n"
+-                f"3. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
++                f"💡 Review finalized for [{task_id}] ({len(expected)} patch(es), summary recorded).\n"
++                f"Now run:\n1. './hammer tasks audit {task_id}' to generate a formal audit record.\n"
++                f"2. './hammer tasks verify {task_id} --proof \"<evidence>\"' to bind proof to the audit hash.\n"
++                f"3. './hammer tasks modify {task_id} --regression-check' to pass the gate."
+             )
++        else:
++            task.metadata['Reviewed'] = True
++            cli.log(f'No patch changes to review for [{task_id}]; review auto-passed.')
+         updated = True
+     if priority is not None:
+         task.metadata['Pr'] = priority
+@@ -161,8 +175,14 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+                         hint=f"Run 'tasks modify {task_id} --reviewed' to record verifiable per-patch md5 reviews.",
+                     )
+                 with open(reviews_path) as fh:
+-                    review_records = json.load(fh).get('reviews', [])
+-                for rec in review_records:
++                    review_records = json.load(fh)
++                if not review_records.get('summary'):
++                    cli.error(
++                        'REVIEW_SUMMARY_REQUIRED',
++                        task_id=task_id,
++                        hint=f"Finalize the review: 'tasks modify {task_id} --reviewed \"<what you read in each patch>\"'.",
++                    )
++                for rec in review_records.get('reviews', []):
+                     patch_path = os.path.join(patches_dir, rec["patch"])
+                     if not os.path.exists(patch_path) or _patch_md5(patch_path) != rec.get("md5"):
+                         cli.error(
