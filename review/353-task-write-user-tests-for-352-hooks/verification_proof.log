@@ -1,0 +1,1 @@
+tests/test_hooks_default_branch.py passes (30/30 targeted incl. hooks/worktree tests); tests exist on main for default-branch hooks and repo wrapper; branch fully merged; patch is meta.json only
