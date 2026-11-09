@@ -1,1 +1,0 @@
-Feature shipped in task 382 (resolve_content in tasks_ai/utils.py). Documentation lives in tasks_ai/help_text.py (in-CLI agent guidance), README.md commands section, AGENTS.md useful-commands table and docs/TROUBLESHOOTING.md modify example.

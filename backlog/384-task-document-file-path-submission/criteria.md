@@ -1,1 +1,0 @@
-- [ ] AGENT_GUIDANCE in tasks_ai/help_text.py mentions the file-path convention for long-form flags;README.md Task Management section shows a file-path example;AGENTS.md useful-commands table annotates the file-path convention;docs/TROUBLESHOOTING.md modify example mentions file paths;hammer check all passes
