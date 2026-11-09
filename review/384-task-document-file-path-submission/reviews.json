@@ -1,0 +1,25 @@
+{
+  "reviews": [
+    {
+      "file": "AGENTS.md",
+      "patch": "AGENTS.md.patch",
+      "md5": "343d0394acd1950a9fc449870d950d51"
+    },
+    {
+      "file": "README.md",
+      "patch": "README.md.patch",
+      "md5": "0899c0a7495fa4ad2a7a50035c08cbe2"
+    },
+    {
+      "file": "docs/TROUBLESHOOTING.md",
+      "patch": "docs_TROUBLESHOOTING.md.patch",
+      "md5": "61a744d42501b0f6d4505e27e4e0e11f"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch": "tasks_ai_help_text.py.patch",
+      "md5": "619e4a9f4da8101abca54fc6f9b6797b"
+    }
+  ],
+  "reviewed_at": 1794187096.2370238
+}
