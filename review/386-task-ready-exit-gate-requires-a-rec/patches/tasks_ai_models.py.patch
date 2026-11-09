@@ -1,0 +1,13 @@
+diff --git a/tasks_ai/models.py b/tasks_ai/models.py
+index b5f9b82c..45fcc8e6 100644
+--- a/tasks_ai/models.py
++++ b/tasks_ai/models.py
+@@ -17,7 +17,7 @@ class Task:
+     @property
+     def content(self):
+         lines = [self.metadata.get('Ti', '')]
+-        parts_order = ['story', 'tech', 'criteria', 'plan', 'repro', 'notes', 'commits']
++        parts_order = ['story', 'tech', 'criteria', 'plan', 'repro', 'research', 'notes', 'commits']
+         for part in parts_order:
+             if part in self.parts and self.parts[part].strip():
+                 header = part.replace('_', ' ').title()
