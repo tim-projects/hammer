@@ -1,1 +1,0 @@
-GuardEngine._live_refs builds a dict keyed by short ref name, but local refs/heads/X and remote refs/remotes/origin/X both map to key X, so the remote entry overwrites the local one in the dict and in the refs table. task_id_of then cannot see remote task ids.
