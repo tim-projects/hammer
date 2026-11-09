@@ -66,33 +66,27 @@ BASE_ID = 9001
 
 
 class GuardTestBase(HammerTestBase):
-
     def setUp(self):
         super().setUp()
         self._install_guard_into_fixture()
 
     def _install_guard_into_fixture(self):
-        """The harness checks out `main`; make the guard code available."""
-        for rel in (
-            "guard.py",
-            "hammer",
-            "repo.py",
-            "tasks.py",
-            "tasks_ai/guard_engine.py",
-            "tasks_ai/help_text.py",
-            "tasks_ai/pipeline_hooks.py",
-            "tasks_ai/context.py",
-            "tasks_ai/git_service.py",
-            "tasks_ai/pipeline.py",
-            "tasks_ai/cli.py",
-            "tasks_ai/utils.py",
-            "tasks_ai/commands/move.py",
-            "data/errors.json",
-            "data/hints.json",
-        ):
+        """The harness checks out `main`; install the branch's code as a whole.
+
+        The harness overlays latest main with copied branch files: copying
+        individual modules mixes main's commands with the branch's utils (the
+        ImportError that appeared once main moved past the branch). The whole
+        package and its data move together or not at all.
+        """
+        for rel in ("guard.py", "hammer", "repo.py", "tasks.py"):
             shutil.copy2(
                 os.path.join(os.getcwd(), rel), os.path.join(self.repo_path, rel)
             )
+        for rel in ("tasks_ai", "data"):
+            src = os.path.join(os.getcwd(), rel)
+            dst = os.path.join(self.repo_path, rel)
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
         self.script_path = os.path.join(self.repo_path, "hammer")
 
     # --- helpers ---
@@ -162,9 +156,7 @@ class GuardTestBase(HammerTestBase):
 
     @property
     def guard_db(self):
-        return os.path.join(
-            self.dev_repo_dir, ".git", "hammer-guard", "guard.db"
-        )
+        return os.path.join(self.dev_repo_dir, ".git", "hammer-guard", "guard.db")
 
     def scan_json(self):
         result = self.run_guard(["scan", "--json", "--dev"])
@@ -210,7 +202,8 @@ class TestGuardScan(GuardTestBase):
         second = self.run_guard(["rebuild", "--json", "--dev"])
         self.assertEqual(first.returncode, 0, first.stderr)
         self.assertEqual(
-            json.loads(first.stdout)["anomalies"], json.loads(second.stdout)["anomalies"]
+            json.loads(first.stdout)["anomalies"],
+            json.loads(second.stdout)["anomalies"],
         )
 
     def test_adding_a_branch_changes_exactly_one_verdict(self):
@@ -348,7 +341,10 @@ class TestGuardCache(GuardTestBase):
             self.git(["commit", "-m", "init"], cwd=tmp)
 
             engine_mod = load_guard_engine()
-            GuardEngine, GuardUnavailable = engine_mod.GuardEngine, engine_mod.GuardUnavailable
+            GuardEngine, GuardUnavailable = (
+                engine_mod.GuardEngine,
+                engine_mod.GuardUnavailable,
+            )
 
             GuardEngine(repo_root=tmp, tasks_path=None).scan()
             self.git(["checkout", "--detach"], cwd=tmp)
@@ -429,7 +425,13 @@ class TestGuardIntegration(GuardTestBase):
 
     def test_guard_cli_is_reachable_via_hammer(self):
         result = subprocess.run(
-            ["python3", os.path.join(self.repo_path, "hammer"), "guard", "scan", "--dev"],
+            [
+                "python3",
+                os.path.join(self.repo_path, "hammer"),
+                "guard",
+                "scan",
+                "--dev",
+            ],
             cwd=self.repo_path,
             capture_output=True,
             text=True,
@@ -551,7 +553,9 @@ class TestGuardStrictness(GuardTestBase):
         """The WARN severity and per-code exemption must be gone."""
         module = load_guard_engine()
         self.assertFalse(hasattr(module, "SEVERITY_WARN"), "WARN severity still exists")
-        self.assertFalse(hasattr(module, "WARN_CODES"), "per-code exemption still exists")
+        self.assertFalse(
+            hasattr(module, "WARN_CODES"), "per-code exemption still exists"
+        )
 
     def test_severity_for_is_always_reject(self):
         module = load_guard_engine()
@@ -590,11 +594,13 @@ class TestGuardStrictness(GuardTestBase):
 
         # The disposable cache DB is the only thing guard may write.
         self.assertEqual(
-            before_refs, self.git(["for-each-ref", "--format=%(refname)"]).stdout,
+            before_refs,
+            self.git(["for-each-ref", "--format=%(refname)"]).stdout,
             "guard changed refs",
         )
         self.assertEqual(
-            before_worktrees, self.git(["worktree", "list", "--porcelain"]).stdout,
+            before_worktrees,
+            self.git(["worktree", "list", "--porcelain"]).stdout,
             "guard changed worktrees",
         )
 

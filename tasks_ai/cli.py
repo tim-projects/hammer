@@ -676,6 +676,10 @@ class TasksCLI:
                     f"Failed to clone tasks branch '{TASKS_BRANCH}' from parent repo. "
                     "Ensure the branch exists and the parent repo is a valid git repository."
                 )
+            if self.dev:
+                # Cloning sets origin to the invoked repo; a dev store must carry
+                # no remote at all, so no dev command can push anywhere.
+                self._run_git(["remote", "remove", "origin"], cwd=self.tasks_path)
 
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
