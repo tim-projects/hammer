@@ -1,0 +1,23 @@
+{
+  "Id": 250,
+  "Ti": "Write user tests for 249: Guard refs cache clobbers local branches with remote twins",
+  "Ty": "task",
+  "Cr": "261104 12:15",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "250-task-write-user-tests-for-249-guard",
+  "Pt": 249,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794188059.214893,
+  "DoneAt": null,
+  "Tp": true,
+  "PatchFiles": [
+    {
+      "file": "testing/250-task-write-user-tests-for-249-guard/meta.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/250-task-write-user-tests-for-249-guard/patches/testing_250-task-write-user-tests-for-249-guard_meta.json.patch"
+    }
+  ]
+}

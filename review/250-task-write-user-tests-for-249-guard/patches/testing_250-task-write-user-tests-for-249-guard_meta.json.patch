@@ -1,0 +1,24 @@
+diff --git a/testing/250-task-write-user-tests-for-249-guard/meta.json b/testing/250-task-write-user-tests-for-249-guard/meta.json
+new file mode 100644
+index 00000000..cbcb8d53
+--- /dev/null
++++ b/testing/250-task-write-user-tests-for-249-guard/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 250,
++  "Ti": "Write user tests for 249: Guard refs cache clobbers local branches with remote twins",
++  "Ty": "task",
++  "Cr": "261104 12:15",
++  "Bl": [],
++  "Pr": 1,
++  "Br": "250-task-write-user-tests-for-249-guard",
++  "Pt": 249,
++  "Rc": "",
++  "Vp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file
