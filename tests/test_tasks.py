@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -420,6 +421,61 @@ class TestTasksAI(unittest.TestCase):
 
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(res["success"], res)
+
+    def test_error_codes_carry_hammer_voice_registry_entries(self):
+        """No cli.error code may render as 'Unknown error' (hammer voice registry).
+
+        The gate message is the visible half: it must state WHAT/WHY/HOW/
+        CONSEQUENCE, and every code the CLI can raise must exist in both
+        data/errors.json and data/hints.json.
+        """
+        import tasks_ai as _pkg
+
+        data_dir = os.path.join(os.path.dirname(_pkg.__file__), "..", "data")
+        errors = json.load(open(os.path.join(data_dir, "errors.json")))
+        hints = json.load(open(os.path.join(data_dir, "hints.json")))
+
+        codes = set()
+        for root, _dirs, files in os.walk(os.path.dirname(_pkg.__file__)):
+            for fname in files:
+                if not fname.endswith(".py"):
+                    continue
+                with open(os.path.join(root, fname)) as fh:
+                    for m in re.finditer(r'cli\.error\(\s*["\']([A-Z][A-Z0-9_]+)["\']', fh.read()):
+                        codes.add(m.group(1))
+        self.assertEqual(
+            sorted(codes - set(errors)), [],
+            f"codes missing from errors.json: {sorted(codes - set(errors))}",
+        )
+        self.assertEqual(
+            sorted(codes - set(hints)), [],
+            f"codes missing from hints.json: {sorted(codes - set(hints))}",
+        )
+
+        # the research gate specifically renders the full hammer voice
+        res = self.run_cmd(
+            [
+                "create",
+                "Voice Check Task",
+                "--story",
+                "As a user I want gate errors rendered in hammer voice.",
+                "--tech",
+                "cli.error resolves codes against the data registry files.",
+                "--criteria",
+                "Gate error renders WHAT/WHY/HOW/CONSEQUENCE guidance.",
+                "--plan",
+                "1. Block\n2. Assert voice\n3. Record research",
+            ]
+        )
+        self.assertTrue(res["success"], res)
+        task_file = res["data"]["file"]
+        self.run_cmd(["move", task_file, "READY"])
+        res = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertFalse(res["success"])
+        self.assertNotIn("Unknown error", res["error"])
+        self.assertIn("Research", res["error"])
+        for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
+            self.assertIn(section, res["hint"], f"hint missing {section}")
 
     def test_auto_archival(self):
         res = self.run_cmd(
