@@ -11,10 +11,14 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794228029.240791,
   "DoneAt": null,
   "Tp": true,
   "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/AGENTS.md.patch"
+    },
     {
       "file": "tasks.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/tasks.py.patch"
@@ -28,12 +32,20 @@
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/tasks_ai_commands_modify.py.patch"
     },
     {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/tasks_ai_help_text.py.patch"
+    },
+    {
       "file": "tasks_ai/models.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/tasks_ai_models.py.patch"
     },
     {
       "file": "tasks_ai/pipeline_hooks.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/386-task-ready-exit-gate-requires-a-rec/patches/tests_tasks.py.patch"
     },
     {
       "file": "tests/test_tasks.py",
