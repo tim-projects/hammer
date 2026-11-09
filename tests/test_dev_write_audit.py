@@ -116,9 +116,9 @@ class TestDevWriteAudit(unittest.TestCase):
 
     def test_full_dev_workflow_writes_nothing_outside_the_dev_roots(self):
         before = self.snapshot_prod()
-        # 'init' needs --force: the CLI pre-creates the store directory before
-        # checking it (task 356); an empty fresh dir still initializes then.
-        self.assertTrue(self.payload(self.run_dev(["init", "--force"]))["success"])
+        # Plain init works on a fresh path since task 356 removed the
+        # pre-created-directory refusal.
+        self.assertTrue(self.payload(self.run_dev(["init"]))["success"])
 
         id_a, file_a = self.make_task("Alpha dev audit task")
         id_b, file_b = self.make_task("Beta dev audit task")
@@ -149,7 +149,7 @@ class TestDevWriteAudit(unittest.TestCase):
         )
 
     def test_dev_save_never_wires_the_store_to_the_production_remote(self):
-        self.assertTrue(self.payload(self.run_dev(["init", "--force"]))["success"])
+        self.assertTrue(self.payload(self.run_dev(["init"]))["success"])
         self.make_task("Alpha dev remote probe task")
         self.payload(self.run_dev(["save", "-y"]))
         origin = self.git("remote", "get-url", "origin", cwd=self.store)
@@ -170,7 +170,7 @@ class TestDevWriteAudit(unittest.TestCase):
 
     def test_dev_save_allows_a_deliberate_mock_remote_only(self):
         """The narrowed policy: a mock remote may be pushed, production may not."""
-        self.assertTrue(self.payload(self.run_dev(["init", "--force"]))["success"])
+        self.assertTrue(self.payload(self.run_dev(["init"]))["success"])
         mock = os.path.join(self.test_dir, "mock.git")
         subprocess.run(["git", "init", "--bare", mock], capture_output=True)  # noqa: PLW1510
         for args in (["remote", "remove", "origin"], ["remote", "add", "origin", mock]):
@@ -182,7 +182,7 @@ class TestDevWriteAudit(unittest.TestCase):
         self.assertNotIn("refused in --dev mode", refused_before.get("error", ""))
 
     def test_dev_artifacts_live_under_the_dev_roots(self):
-        self.assertTrue(self.payload(self.run_dev(["init", "--force"]))["success"])
+        self.assertTrue(self.payload(self.run_dev(["init"]))["success"])
         _, file_a = self.make_task("Alpha dev roots probe task")
         moved = self.payload(self.run_dev(["move", file_a, "READY"]))
         self.assertTrue(moved["success"], moved)
