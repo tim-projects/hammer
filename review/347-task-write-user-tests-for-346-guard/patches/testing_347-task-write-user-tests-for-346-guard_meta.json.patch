@@ -1,0 +1,24 @@
+diff --git a/testing/347-task-write-user-tests-for-346-guard/meta.json b/testing/347-task-write-user-tests-for-346-guard/meta.json
+new file mode 100644
+index 00000000..dae370d9
+--- /dev/null
++++ b/testing/347-task-write-user-tests-for-346-guard/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 347,
++  "Ti": "Write user tests for 346: Guard must reject a worktree whose directory name differs from its branch",
++  "Ty": "task",
++  "Cr": "261107 12:02",
++  "Bl": [],
++  "Pr": 2,
++  "Br": "347-task-write-user-tests-for-346-guard",
++  "Pt": 346,
++  "Rc": "",
++  "Vp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file
