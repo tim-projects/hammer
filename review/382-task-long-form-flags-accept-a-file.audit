@@ -1,0 +1,12 @@
+{
+    "task_id": "382",
+    "patch_hash": "c9ea2d1685f5d6f032ecb12c897c8ec0",
+    "patch_files": [
+        "tasks.py.patch",
+        "tasks_ai_commands_create.py.patch",
+        "tasks_ai_commands_modify.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
