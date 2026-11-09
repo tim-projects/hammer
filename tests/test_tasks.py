@@ -381,6 +381,46 @@ class TestTasksAI(unittest.TestCase):
         self.assertFalse(res["success"])
         self.assertIn("CONTENT_FILE_NOT_FOUND", res["error"])
 
+    def test_long_form_flags_accept_prose_that_looks_path_shaped(self):
+        """Prose naming ./hammer is content, not a missing file path.
+
+        resolve_content may only read a value that is a single token; any
+        whitespace means the submitter meant prose. Asserted on the message
+        rather than the error code, which task 400 tracks separately.
+        """
+        story = "Run ./hammer check all and confirm it exits non-zero."
+        tech = "Criteria routinely name ./hammer; shape alone must not mean path."
+        criteria = "./hammer check all must exit 1 when a tool is skipped"
+        plan = "Reproduce with the /bin/true config, then fix it."
+
+        res = self.run_cmd(
+            [
+                "create",
+                "Prose Path Shaped Task",
+                "--story",
+                story,
+                "--tech",
+                tech,
+                "--criteria",
+                criteria,
+                "--plan",
+                plan,
+            ]
+        )
+        self.assertTrue(res["success"], res)
+        task_file = res["data"]["file"]
+
+        task = FM.load(os.path.join(self.dev_tasks_dir, "backlog", task_file))
+        self.assertEqual(task.parts["story"], story)
+        self.assertEqual(task.parts["tech"], tech)
+        self.assertEqual(task.parts["criteria"], f"- [ ] {criteria}")
+        self.assertEqual(task.parts["plan"], f"1. {plan}")
+
+        # A bare path-shaped token still has to name a real file
+        res = self.run_cmd(["modify", task_file, "--story", "./no-such-story.md"])
+        self.assertFalse(res["success"])
+        self.assertIn("not found", res["error"])
+
     def test_research_gate_requires_recorded_research(self):
         """READY -> PROGRESSING is blocked until a research pass is recorded."""
         res = self.run_cmd(
