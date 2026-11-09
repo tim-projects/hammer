@@ -9,12 +9,39 @@ def get_changed_files(cli, task_path, branch):
     res = cli.git.run(['diff', '--name-only', f'{main_branch}...{branch}'], cwd=cli.root)
     return [f for f in res.stdout.splitlines() if f]
 
+def patches_are_fresh(cli, branch, patches_dir, patch_files) -> bool:
+    """True when every patch on disk equals its diff against the branch tip.
+
+    A patch set goes stale whenever its diff base moves (main advances, the
+    branch is reworked). A stale set is dangerous: the audit/review md5s then
+    bind content that no longer exists on the branch, and the whole gate
+    attests to fiction.
+    """
+    if not patch_files or not os.path.isdir(patches_dir):
+        return False
+    main_branch = cli.git.get_default_branch()
+    for info in patch_files:
+        file_path = info['file'] if isinstance(info, dict) else info
+        patch_path = os.path.join(patches_dir, file_path.replace(os.sep, '_') + '.patch')
+        if not os.path.exists(patch_path):
+            return False
+        res = cli.git.run(['diff', f'{main_branch}..{branch}', '--', file_path], cwd=cli.root)
+        with open(patch_path, encoding='utf-8') as fh:
+            if fh.read() != res.stdout:
+                return False
+    return True
+
+
 def generate_file_patches(cli, task_id, task_path, branch):
     """Generate individual patches for each changed file."""
     changed_files = get_changed_files(cli, task_path, branch)
     task_folder_name = os.path.basename(task_path)
     patches_dir = os.path.join(cli.tasks_path, 'review', task_folder_name, 'patches')
     os.makedirs(patches_dir, exist_ok=True)
+    # Replace the whole set: keeping a file the generator did not rewrite is
+    # how a stale patch survives a regeneration.
+    for stale in os.listdir(patches_dir):
+        os.remove(os.path.join(patches_dir, stale))
 
     # If no changes found in main repo, check tasks sub-repo (dev mode)
     diff_cwd = cli.root
