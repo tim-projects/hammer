@@ -1,0 +1,24 @@
+diff --git a/testing/315-task-write-user-tests-for-314-guard/meta.json b/testing/315-task-write-user-tests-for-314-guard/meta.json
+new file mode 100644
+index 00000000..f90717ef
+--- /dev/null
++++ b/testing/315-task-write-user-tests-for-314-guard/meta.json
+@@ -0,0 +1,17 @@
++{
++  "Id": 315,
++  "Ti": "Write user tests for 314: Guard must assess strictly with no warning fallbacks",
++  "Ty": "task",
++  "Cr": "261105 04:19",
++  "Bl": [],
++  "Pr": 1,
++  "Br": "315-task-write-user-tests-for-314-guard",
++  "Pt": 314,
++  "Rc": "",
++  "Vp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null,
++  "Tp": true
++}
+\ No newline at end of file
