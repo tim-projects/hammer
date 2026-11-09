@@ -1,1 +1,0 @@
-Reviewed all 5 patches: additive resolve_content helper in tasks_ai/utils.py, wirings in create.py/modify.py, argparse help text, and one new test. Tests pass and check all green in the worktree.
