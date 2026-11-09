@@ -205,15 +205,7 @@ class ResearchGateHook(PipelineHook):
         if task.metadata.get("Rr") and len(research) >= self.MIN_RESEARCH_LEN:
             return
 
-        cli.error(
-            "RESEARCH_REQUIRED",
-            task_id=task.metadata.get("Id"),
-            hint=(
-                f"Do the read-only pass (codebase files / online search), then run "
-                f"'tasks modify {task.metadata.get('Id')} --research \"<findings>\"' "
-                f"(a file path works too) before moving to PROGRESSING."
-            ),
-        )
+        cli.error("RESEARCH_REQUIRED", task_id=task.metadata.get("Id"))
 
 
 class BlockerCheckHook(PipelineHook):
