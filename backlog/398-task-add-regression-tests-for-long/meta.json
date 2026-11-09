@@ -3,7 +3,9 @@
   "Ti": "Add regression tests for long-form content flag prose handling",
   "Ty": "task",
   "Cr": "261109 18:42",
-  "Bl": [],
+  "Bl": [
+    "400-task-expose-error-codes-in-the-json"
+  ],
   "Pr": 2,
   "Br": "398-task-add-regression-tests-for-long",
   "Pt": null
