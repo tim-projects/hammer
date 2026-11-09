@@ -1,0 +1,1 @@
+Reviewed 4 patches: patches_are_fresh helper, audit skip gated on freshness, whole-set replacement in generate_file_patches, Br branch key fix. Regression test corrupts a patch and asserts audit restores branch-tip content before and after Rc=PASSED.
