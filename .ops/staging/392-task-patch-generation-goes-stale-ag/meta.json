@@ -1,0 +1,32 @@
+{
+  "Id": 392,
+  "Ti": "Patch generation goes stale against a moving main",
+  "Ty": "task",
+  "Cr": "261109 14:11",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "392-task-patch-generation-goes-stale-ag",
+  "Pt": null,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Rr": true,
+  "Tp": false,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794240086.93178,
+  "DoneAt": 1794240205.25974,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/392-task-patch-generation-goes-stale-ag/patches/tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/392-task-patch-generation-goes-stale-ag/patches/tasks_ai_commands_audit.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/392-task-patch-generation-goes-stale-ag/patches/tests_test_audit_verify_integration.py.patch"
+    }
+  ]
+}
