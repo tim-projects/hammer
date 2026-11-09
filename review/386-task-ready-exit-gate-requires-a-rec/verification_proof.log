@@ -1,1 +1,1 @@
-Reviewed refreshed patch set (mirror CLI, docs, hook, flag, tests, empty-input guard). Gates and docs verified in the worktree; check all green.
+Re-reviewed regenerated patch set (round-trip forced full regeneration): 9/9 patches now match the branch tip including the empty-research guard. Hook, flags, mirror sync, docs and tests verified.

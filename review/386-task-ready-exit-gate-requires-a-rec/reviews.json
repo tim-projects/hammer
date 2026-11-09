@@ -13,12 +13,12 @@
     {
       "file": "tasks_ai/cli.py",
       "patch": "tasks_ai_cli.py.patch",
-      "md5": "7c30480fd4747cda87d8d7e43d5765b4"
+      "md5": "35c4a3a058f1a299951aa1d0465a4345"
     },
     {
       "file": "tasks_ai/commands/modify.py",
       "patch": "tasks_ai_commands_modify.py.patch",
-      "md5": "bbdb64810d19faaef7fc2ca3f5e07a16"
+      "md5": "67fc39d7d308f27ba38cbd524c4be80d"
     },
     {
       "file": "tasks_ai/help_text.py",
@@ -33,7 +33,7 @@
     {
       "file": "tasks_ai/pipeline_hooks.py",
       "patch": "tasks_ai_pipeline_hooks.py.patch",
-      "md5": "7b116b00d74d78fcff45be04b705778a"
+      "md5": "5c13ab5a87090c31354deb296822be9d"
     },
     {
       "file": "tests/tasks.py",
@@ -46,5 +46,5 @@
       "md5": "49bc915969d3c254d9ce765841b4408b"
     }
   ],
-  "reviewed_at": 1794228039.0338228
+  "reviewed_at": 1794231477.7166293
 }
