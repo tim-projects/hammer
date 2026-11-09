@@ -1,0 +1,1 @@
+As a maintainer I need the pipeline test suites to actually exercise gates, because tests/test_tasks.py fails 9 tests and test_audit_verify_integration.py failed 4 after the task-386 research gate, every one a vacuous pass from unchecked helper moves that the READY->PROGRESSING gate now blocks.

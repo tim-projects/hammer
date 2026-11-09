@@ -1,0 +1,1 @@
+- [ ] test helpers in tests/test_tasks.py record research before moving to PROGRESSING;tests/test_tasks.py passes in full;check.py ignore list reviewed with a decision per file (un-ignore the pipeline suites that now pass, or document why each stays ignored);check all covers the re-enabled suites
