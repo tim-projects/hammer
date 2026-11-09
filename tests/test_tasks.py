@@ -389,7 +389,7 @@ class TestTasksAI(unittest.TestCase):
         rather than the error code, which task 400 tracks separately.
         """
         story = "Run ./hammer check all and confirm it exits non-zero."
-        tech = "Criteria routinely name ./hammer; shape alone must not mean path."
+        tech = "See docs/spec-worktrees.md for the worktree rules in prose."
         criteria = "./hammer check all must exit 1 when a tool is skipped"
         plan = "Reproduce with the /bin/true config, then fix it."
 
@@ -415,6 +415,18 @@ class TestTasksAI(unittest.TestCase):
         self.assertEqual(task.parts["tech"], tech)
         self.assertEqual(task.parts["criteria"], f"- [ ] {criteria}")
         self.assertEqual(task.parts["plan"], f"1. {plan}")
+
+        # The same holds for every other path prefix and for .md / .txt suffixes
+        for prose in [
+            "../parent-relative reference stays prose in a sentence",
+            "/absolute style reference stays prose in a sentence",
+            "~/home relative reference stays prose in a sentence",
+            "A sentence that merely ends with a filename like plan.txt",
+        ]:
+            res = self.run_cmd(["modify", task_file, "--notes", prose])
+            self.assertTrue(res["success"], res)
+            task = FM.load(os.path.join(self.dev_tasks_dir, "backlog", task_file))
+            self.assertEqual(task.parts["notes"], prose)
 
         # A bare path-shaped token still has to name a real file
         res = self.run_cmd(["modify", task_file, "--story", "./no-such-story.md"])
