@@ -40,21 +40,42 @@ if __name__ == '__main__':
     cr_p.add_argument('--criteria', nargs='+', help='Acceptance criteria (list).')
     cr_p.add_argument('--plan', nargs='+', help='Implementation plan (list).')
     cr_p.add_argument('--repro', nargs='+', help='Reproduction steps for issues (list).')
-    mod_p = subparsers.add_parser('modify', help='Update task.')
-    mod_p.add_argument('filename', help='Task Id (or filename).')
-    mod_p.add_argument('--title', help='New title.')
-    mod_p.add_argument('--story', help='User story.')
-    mod_p.add_argument('--tech', help='Technical background.')
-    mod_p.add_argument('--criteria', nargs='+', help='Acceptance criteria.')
-    mod_p.add_argument('--plan', nargs='+', help='Implementation plan.')
-    mod_p.add_argument('--repro', nargs='+', help='Reproduction steps.')
-    mod_p.add_argument('--notes', help='Notes content.')
-    mod_p.add_argument('--progress', help='Progress update.')
-    mod_p.add_argument('--findings', help='Findings.')
-    mod_p.add_argument('--mitigations', help='Mitigations.')
-    mod_p.add_argument('--tests-passed', action='store_true', help='Mark tests as passed.')
-    mod_p.add_argument('--regression-check', action='store_true', help='Mark regression check as passed (enables STAGING from REVIEW).')
-    mod_p.add_argument('-p', '--priority', type=int, help='Update priority.')
+    mod_p = subparsers.add_parser("modify", help="Update task.")
+    mod_p.add_argument("filename", help="Task Id (or filename).")
+    mod_p.add_argument(
+        "--type",
+        "-t",
+        choices=["task", "issue", "docs"],
+        help="Task type: task or issue or docs.",
+    )
+    mod_p.add_argument("--title", help="New title.")
+    mod_p.add_argument("--story", help="User story, or path to a file.")
+    mod_p.add_argument("--tech", help="Technical background, or path to a file.")
+    mod_p.add_argument(
+        "--criteria", nargs="+", help="Acceptance criteria, or path to a file."
+    )
+    mod_p.add_argument("--plan", nargs="+", help="Implementation plan, or path to a file.")
+    mod_p.add_argument("--repro", nargs="+", help="Reproduction steps, or path to a file.")
+    mod_p.add_argument("--notes", help="Notes content, or path to a file.")
+    mod_p.add_argument("--progress", help="Progress update.")
+    mod_p.add_argument("--findings", help="Findings.")
+    mod_p.add_argument("--mitigations", help="Mitigations.")
+    mod_p.add_argument(
+        "--tests-passed", action="store_true", help="Mark tests as passed."
+    )
+    mod_p.add_argument(
+        "--reviewed",
+        action="store_true",
+        default=None,
+        help="Mark patch review as complete.",
+    )
+    mod_p.add_argument(
+        "--regression-check",
+        action="store_true",
+        default=None,
+        help="Mark regression check as passed (enables STAGING from REVIEW).",
+    )
+    mod_p.add_argument("-p", "--priority", type=int, help="Update priority.")
     mv_p = subparsers.add_parser('move', help='Move task.')
     mv_p.add_argument('filename', help="Task Id (or filename). Use numeric Id from 'list' output.")
     mv_p.add_argument('status', help="Target state. Use comma-separated for multi-step (e.g., 'READY,PROGRESSING,TESTING').")
@@ -93,7 +114,7 @@ if __name__ == '__main__':
     elif args.command == 'create':
         cli.create(args.title, args.type, args.priority, story=args.story, tech=args.tech, criteria=args.criteria, plan=args.plan, repro=args.repro)
     elif args.command == 'modify':
-        cli.modify(args.filename, title=args.title, story=args.story, tech=args.tech, criteria=args.criteria, plan=args.plan, repro=args.repro, notes=args.notes, progress=args.progress, findings=args.findings, mitigations=args.mitigations, tests_passed=args.tests_passed, priority=args.priority, regression_check=args.regression_check)
+        cli.modify(args.filename, task_type=args.type, title=args.title, story=args.story, tech=args.tech, criteria=args.criteria, plan=args.plan, repro=args.repro, notes=args.notes, research=args.research, progress=args.progress, findings=args.findings, mitigations=args.mitigations, tests_passed=args.tests_passed, priority=args.priority, regression_check=args.regression_check, reviewed=args.reviewed)
     elif args.command == 'move':
         cli.move(args.filename, args.status, yes=args.yes)
     elif args.command == 'delete':
