@@ -1,0 +1,8 @@
+{
+    "task_id": "353",
+    "patch_hash": "b63d91ca95f0370921b164e12ba1f443",
+    "patch_files": [
+        "testing_353-task-write-user-tests-for-352-hooks_meta.json.patch"
+    ],
+    "status": "verified"
+}
