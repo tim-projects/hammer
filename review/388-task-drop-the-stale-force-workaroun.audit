@@ -1,0 +1,8 @@
+{
+    "task_id": "388",
+    "patch_hash": "9b12c52cf9847fe52342382b84d2fc31",
+    "patch_files": [
+        "tests_test_dev_write_audit.py.patch"
+    ],
+    "status": "verified"
+}
