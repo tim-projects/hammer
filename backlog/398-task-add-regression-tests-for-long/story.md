@@ -1,1 +1,0 @@
-As a contributor I need to submit criteria and story text that names ./hammer commands, because the path heuristic in resolve_content rejected any value starting with ./ as a missing file and blocked task creation entirely.
