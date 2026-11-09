@@ -1,1 +1,1 @@
-Reviewed 6 patches incl. the empty-research guard: hook, READY exit registration, --research wiring, parts_order, user test, plus fix commit e5d21313.
+Reviewed refreshed patch set (mirror CLI, docs, hook, flag, tests, empty-input guard). Gates and docs verified in the worktree; check all green.

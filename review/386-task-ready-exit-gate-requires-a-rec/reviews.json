@@ -1,6 +1,11 @@
 {
   "reviews": [
     {
+      "file": "AGENTS.md",
+      "patch": "AGENTS.md.patch",
+      "md5": "3664d9ed3ada351fc07d161047c1a19b"
+    },
+    {
       "file": "tasks.py",
       "patch": "tasks.py.patch",
       "md5": "0c4f6f172fee3e1cfc21222eb4411b56"
@@ -16,6 +21,11 @@
       "md5": "bbdb64810d19faaef7fc2ca3f5e07a16"
     },
     {
+      "file": "tasks_ai/help_text.py",
+      "patch": "tasks_ai_help_text.py.patch",
+      "md5": "66886c99f7ae2a742efabb9f222eb7a8"
+    },
+    {
       "file": "tasks_ai/models.py",
       "patch": "tasks_ai_models.py.patch",
       "md5": "3274874496bd5d925f1ffd9138fcfe56"
@@ -26,10 +36,15 @@
       "md5": "7b116b00d74d78fcff45be04b705778a"
     },
     {
+      "file": "tests/tasks.py",
+      "patch": "tests_tasks.py.patch",
+      "md5": "f97d0590fcc0ebd5559862b8a9682bc2"
+    },
+    {
       "file": "tests/test_tasks.py",
       "patch": "tests_test_tasks.py.patch",
       "md5": "49bc915969d3c254d9ce765841b4408b"
     }
   ],
-  "reviewed_at": 1794201263.616106
+  "reviewed_at": 1794228039.0338228
 }
