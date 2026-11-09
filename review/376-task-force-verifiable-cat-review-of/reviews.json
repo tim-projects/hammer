@@ -150,5 +150,8 @@
       "ts": 1794201942.7435033,
       "prev_hash": "123f17d09774e26a273f2644215058193368c6392894a712d39649bd98adf8e1"
     }
-  ]
+  ],
+  "summary": "Re-reviewed all 14 patches after regenerating artifacts. Pass 1 found conflict markers committed into modify.py by the worktree sync merge and em-dash escaping in hints.json; both are fixed and confirmed clean in the regenerated patches. Gate logic correct: receipts per patch with chained prev_hash, finalize requires full coverage plus >=40 char summary, reviews.json is hashed into the audit chain, empty-diff auto-pass preserved. 26 tests green, zero new lint findings. Remaining known limits: patch artifacts are only regenerated on audit or REVIEW entry when the dir is cleared, and post-Rc tampering stays out of scope as before.",
+  "summary_at": 1794201956.6484296,
+  "reviewed_at": 1794201956.648431
 }
