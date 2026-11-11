@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794398233.644389,
-  "DoneAt": null,
+  "DoneAt": 1794404278.84711,
   "PatchFiles": [
     {
       "file": "tests/test_default_branch.py",
