@@ -24,8 +24,8 @@ import subprocess
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tasks_ai.help_text import agent_epilog  # noqa: E402
-from tasks_ai.validator import Validator  # noqa: E402
+from tasks_ai.help_text import agent_epilog
+from tasks_ai.validator import Validator
 
 COMMAND_HELP = {
     "lint": "Run linter (exit 0 = pass, 1 = fail)",
@@ -55,8 +55,12 @@ def build_parser():
         epilog=agent_epilog("check"),
     )
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--fix", action="store_true", help="Apply fixes where possible.")
-    common.add_argument("--dev", action="store_true", help="Use /tmp/.tasks for config.")
+    common.add_argument(
+        "--fix", action="store_true", help="Apply fixes where possible."
+    )
+    common.add_argument(
+        "--dev", action="store_true", help="Use /tmp/.tasks for config."
+    )
     sub = parser.add_subparsers(dest="command", metavar="command")
     for name, help_text in COMMAND_HELP.items():
         sub.add_parser(

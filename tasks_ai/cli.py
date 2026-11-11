@@ -169,8 +169,9 @@ class TasksCLI:
         self.tasks_path = self.context.tasks_path
 
         if not self.tasks_path:
-            self.tasks_path = os.path.join(self.root, ".tasks")
-            self.context.tasks_path = self.tasks_path
+            # Never invent a store: an unresolvable path would silently create
+            # one wherever the command happens to run.
+            self.error("STORE_NOT_CENTRAL")
 
         # Load config to override tasks_dir (works in dev and prod)
         cfg = self._get_config()
@@ -185,12 +186,31 @@ class TasksCLI:
                     self.tasks_path = self.context.resolve_path(self.tasks_dir)
                 self.context.tasks_path = self.tasks_path
 
+        # A store resolved inside a worktree is invisible to the central store
+        # and is destroyed by the next branch checkout: refuse, do not write.
+        if (
+            not dev
+            and self.context.is_worktree
+            and self._is_within(self.tasks_path, self.context.repo_root)
+        ):
+            self.error("STORE_NOT_CENTRAL", store_path=self.tasks_path)
+
         self.logs_path = os.path.join(self.tasks_path, "logs")
 
         if os.path.exists(self.tasks_path):
             self._migrate_live_to_done()
             if command and command != "delete":
                 self._clear_delete_marks()
+
+    @staticmethod
+    def _is_within(path, directory):
+        """True when path is directory itself or lives under it."""
+        path = os.path.realpath(path)
+        directory = os.path.realpath(directory)
+        try:
+            return os.path.commonpath([path, directory]) == directory
+        except ValueError:
+            return False  # different drives: never inside
 
     # --- CLI IO ---
     def log(self, message):

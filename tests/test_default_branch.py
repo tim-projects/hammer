@@ -5,6 +5,7 @@ Two things are verified end to end:
   - a repo whose default branch is 'master' promotes through the whole pipeline
   - a repo with neither main nor master fails with an actionable error
 """
+
 import json
 import os
 import shutil
@@ -122,7 +123,9 @@ class MasterRepoTestBase(unittest.TestCase):
             "done",
             "archived",
         ):
-            criteria = os.path.join(self.repo_dir, ".tasks", state, task_file, "criteria.md")
+            criteria = os.path.join(
+                self.repo_dir, ".tasks", state, task_file, "criteria.md"
+            )
             if os.path.exists(criteria):
                 with open(criteria) as f:
                     content = f.read()
@@ -193,7 +196,6 @@ class TestMasterNamedRepo(MasterRepoTestBase):
     def test_promotion_resolves_master(self):
         """create -> move -> checkpoint -> gate -> merge works on a master repo."""
         data = self.create_task()
-        task_file = data["file"]
         self.promote(data)
 
         # The promotion merges landed on master, not a nonexistent main.
@@ -226,7 +228,6 @@ class TestMasterNamedRepo(MasterRepoTestBase):
             "move PROGRESSING failed",
         )
 
-        task_id = str(data["id"])
         worktree_path = os.path.join(self.repo_dir, ".task-worktrees", task_file)
         merged = subprocess.run(  # noqa: PLW1510
             ["git", "merge-base", "--is-ancestor", master_tip, "HEAD"],
@@ -234,7 +235,9 @@ class TestMasterNamedRepo(MasterRepoTestBase):
             capture_output=True,
             text=True,
         )
-        self.assertEqual(merged.returncode, 0, "master tip not merged into the worktree")
+        self.assertEqual(
+            merged.returncode, 0, "master tip not merged into the worktree"
+        )
 
 
 class TestNoDefaultBranch(MasterRepoTestBase):

@@ -6,4 +6,6 @@ def get_terminal_width():
         return os.get_terminal_size().columns
     except OSError:
         return 80
+
+
 print(get_terminal_width())
