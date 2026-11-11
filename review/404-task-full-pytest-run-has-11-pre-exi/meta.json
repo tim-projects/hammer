@@ -1,0 +1,44 @@
+{
+  "Id": 404,
+  "Ti": "Full pytest run has 11 pre-existing failures",
+  "Ty": "task",
+  "Cr": "261111 06:12",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "404-task-full-pytest-run-has-11-pre-exi",
+  "Pt": null,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794398233.644389,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tests/test_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/404-task-full-pytest-run-has-11-pre-exi/patches/tests_test_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/404-task-full-pytest-run-has-11-pre-exi/patches/tests_test_dev_write_audit.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/404-task-full-pytest-run-has-11-pre-exi/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_require_task_id.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/404-task-full-pytest-run-has-11-pre-exi/patches/tests_test_require_task_id.py.patch"
+    },
+    {
+      "file": "tests/test_store_concurrency.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/404-task-full-pytest-run-has-11-pre-exi/patches/tests_test_store_concurrency.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/404-task-full-pytest-run-has-11-pre-exi/patches/tests_test_worktree_system.py.patch"
+    }
+  ]
+}
