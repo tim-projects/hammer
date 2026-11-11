@@ -1,0 +1,10 @@
+{
+  "Id": 411,
+  "Ti": "Write user tests for 410: Guard the store against a worktree-local .tasks",
+  "Ty": "task",
+  "Cr": "261111 09:23",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "411-task-write-user-tests-for-410-guard",
+  "Pt": 410
+}
