@@ -136,9 +136,7 @@ class ValidationHook(PipelineHook):
         if current_state not in ["PROGRESSING", "TESTING"]:
             return
 
-        cli.console(
-            "validate", "pre-transition", f"{current_state} -> {new_status}"
-        )
+        cli.console("validate", "pre-transition", f"{current_state} -> {new_status}")
 
         # Enforce presence of essential files
         for required_file in ["criteria.md", "progress.md"]:
@@ -254,9 +252,7 @@ class TestingToReviewGateHook(PipelineHook):
 
 
 def _remote_has_branch(cli, branch):
-    return bool(
-        cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout.strip()
-    )
+    return bool(cli._run_git(["ls-remote", "--heads", "origin", branch]).stdout.strip())
 
 
 def _push_task_branch(cli, task_id, branch):
@@ -290,7 +286,9 @@ class WorktreeCheckHook(PipelineHook):
         if new_status == "PROGRESSING":  # noqa: SIM102
             if not cli.git.worktrees.has_worktree(task_id):  # noqa: SIM102
                 if branch and has_origin:
-                    remote_check = cli._run_git(["ls-remote", "--heads", "origin", branch])
+                    remote_check = cli._run_git(
+                        ["ls-remote", "--heads", "origin", branch]
+                    )
                     if remote_check.stdout.strip():
                         cli.git.worktrees.create_task_worktree(task_id, branch)
                         cli.console("worktree", "restore", f"{branch} from origin")
@@ -456,11 +454,15 @@ class WorktreeSyncHook(PipelineHook):
                 return
             merge_source = f"origin/{default_branch}"
             fetch_res = cli.git.run(
-                ["fetch", "origin", default_branch], check=False, cwd=cli.context.main_repo_root
+                ["fetch", "origin", default_branch],
+                check=False,
+                cwd=cli.context.main_repo_root,
             )
             if fetch_res.returncode != 0:
                 local_res = cli.git.run(
-                    ["rev-parse", "--verify", default_branch], check=False, cwd=cli.context.main_repo_root
+                    ["rev-parse", "--verify", default_branch],
+                    check=False,
+                    cwd=cli.context.main_repo_root,
                 )
                 if local_res.returncode == 0:
                     merge_source = default_branch
@@ -472,7 +474,9 @@ class WorktreeSyncHook(PipelineHook):
             if merge_res.returncode != 0:
                 cli.console("worktree", "merge", "conflict")
                 cli.git.run(["merge", "--abort"], cwd=worktree_path)
-                cli.error("WORKTREE_MERGE_CONFLICT", branch=branch, default=default_branch)
+                cli.error(
+                    "WORKTREE_MERGE_CONFLICT", branch=branch, default=default_branch
+                )
 
             cli.console("worktree", "sync", "complete")
 
@@ -684,9 +688,14 @@ class WorktreeExistsHook(PipelineHook):
             return
 
         has_worktree = cli.git.worktrees.has_worktree(task_id)
-        branch_exists = cli.git.run(
-            ["rev-parse", "--verify", branch], cwd=cli.context.main_repo_root, check=False
-        ).returncode == 0
+        branch_exists = (
+            cli.git.run(
+                ["rev-parse", "--verify", branch],
+                cwd=cli.context.main_repo_root,
+                check=False,
+            ).returncode
+            == 0
+        )
 
         if not has_worktree and not branch_exists:
             cli.log(f"Worktree {branch} missing. Auto-demoting to PROGRESSING.")

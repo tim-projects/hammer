@@ -94,7 +94,11 @@ class TestCheckFromWorktree(unittest.TestCase):
             text=True,
             env=env,
         )
-        return result.returncode, result.stdout + result.stderr, parse_results(result.stdout)
+        return (
+            result.returncode,
+            result.stdout + result.stderr,
+            parse_results(result.stdout),
+        )
 
     # --- tests ---
 
@@ -150,7 +154,9 @@ class TestCheckFromWorktree(unittest.TestCase):
 
     def test_check_all_is_not_silently_skipped_when_unchanged(self):
         head = self.git("rev-parse", "HEAD").stdout.strip()
-        with open(os.path.join(self.main_dir, ".tasks", ".last_validation_hash"), "w") as h:
+        with open(
+            os.path.join(self.main_dir, ".tasks", ".last_validation_hash"), "w"
+        ) as h:
             h.write(head + "\n")
 
         code, out = self.run_check("all", cwd=self.wt)
