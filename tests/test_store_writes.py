@@ -389,6 +389,36 @@ class TestCheckpointStoreWrites(unittest.TestCase):
         shown = self.store_git("show", f"HEAD:progressing/{file_a}/plan.md").stdout
         self.assertEqual(shown.strip(), plan)
 
+    def test_store_inside_worktree_is_refused(self):
+        """A store that resolves inside a worktree must be refused, not created."""
+        _, file_a = self.make_task("Theta task for central store guard")
+        worktree = os.path.join(self.test_dir, "wt")
+        added = subprocess.run(  # noqa: PLW1510
+            ["git", "worktree", "add", "--detach", worktree, "HEAD"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(added.returncode, 0, added.stderr)
+
+        # tasks_dir override pointing into the worktree: the exact shape of the
+        # bug that put a .tasks checkout inside two task worktrees.
+        with open(os.path.join(self.store, "config.yaml"), "w") as handle:
+            handle.write(f"tasks_dir: {os.path.join(worktree, '.tasks')}\n")
+
+        res = self.run_cmd(["show", file_a], cwd=worktree)
+        self.assertFalse(res["success"], res)
+        self.assertEqual(res["returncode"], 1, res)
+        self.assertIn("central", res["error"].lower(), res)
+        self.assertFalse(
+            os.path.exists(os.path.join(worktree, ".tasks")),
+            "no store may be created inside the worktree",
+        )
+        self.assertTrue(
+            os.path.isdir(os.path.join(self.store, "backlog", file_a)),
+            "the central store keeps the record",
+        )
+
     # --- move path ---
 
     def test_move_does_not_commit_other_task_pending_changes(self):
