@@ -319,6 +319,16 @@
       "branch": "385-task-write-user-tests-for-384-docum",
       "path": "/home/vscode/git/tasks-ai/.task-worktrees/385-task-write-user-tests-for-384-docum",
       "task_file": "385-task-write-user-tests-for-384-docum"
+    },
+    "402": {
+      "branch": "402-task-guard-the-store-against-a-work",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/402-task-guard-the-store-against-a-work",
+      "task_file": "402-task-guard-the-store-against-a-work"
+    },
+    "403": {
+      "branch": "403-task-write-user-tests-for-402-guard",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/403-task-write-user-tests-for-402-guard",
+      "task_file": "403-task-write-user-tests-for-402-guard"
     }
   }
 }
