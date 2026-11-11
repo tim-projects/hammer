@@ -2,5 +2,6 @@
   "Tp": false,
   "Ty": "task",
   "Ti": "Full pytest run has 11 pre-existing failures",
-  "Pr": 1
+  "Pr": 1,
+  "Rr": true
 }
