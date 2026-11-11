@@ -1,0 +1,36 @@
+diff --git a/tests/test_init_backup.py b/tests/test_init_backup.py
+index 0a26e2a6..408e6000 100644
+--- a/tests/test_init_backup.py
++++ b/tests/test_init_backup.py
+@@ -2,13 +2,19 @@ import json
+ import os
+ import shutil
+ import subprocess
++import tempfile
+ import unittest
+ 
+ 
+ class TestInitBackup(unittest.TestCase):
+     def setUp(self):
+         self.repo_root = os.getcwd()
+-        self.dev_tasks = "/tmp/.tasks"
++        # Own isolated dev store, exported so the CLI child sees it: a dev
++        # 'init --force' against an inherited or hardcoded /tmp/.tasks wipes and
++        # re-clones whatever store that name points at.
++        self.prev_dev_env = os.environ.get("HAMMER_DEV_TASKS_DIR")
++        self.dev_tasks = tempfile.mkdtemp(prefix="hammer_tasks_")
++        os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks
+         if os.path.exists(self.dev_tasks):
+             shutil.rmtree(self.dev_tasks)
+         os.makedirs(self.dev_tasks, exist_ok=True)
+@@ -25,6 +31,10 @@ class TestInitBackup(unittest.TestCase):
+         backup_root = os.path.join(os.path.dirname(self.dev_tasks), ".tasks.backup")
+         if os.path.exists(backup_root):
+             shutil.rmtree(backup_root)
++        if self.prev_dev_env is None:
++            os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
++        else:
++            os.environ["HAMMER_DEV_TASKS_DIR"] = self.prev_dev_env
+ 
+     def test_init_creates_backup_in_dev_mode(self):
+         subprocess.run(["./hammer", "tasks", "--dev", "init", "--force"], check=True)

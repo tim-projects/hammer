@@ -1,0 +1,12 @@
+diff --git a/data/hints.json b/data/hints.json
+index c1607539..25e79244 100644
+--- a/data/hints.json
++++ b/data/hints.json
+@@ -67,5 +67,6 @@
+   "RESEARCH_REQUIRED": "WHAT: Research pass not recorded.\nWHY: HAMMER demand read-only research (codebase file / online search) before BUILD.\nHOW: Run 'hammer tasks modify {task_id} --research \"<findings>\"'. File path work for bulk note.\nCONSEQUENCE: READY -> PROGRESSING stay blocked. NO research, NO submit.",
+   "CONTENT_FILE_NOT_FOUND": "WHAT: Content file not found: {path}.\nWHY: Long-form flag got path-shaped value that name no file.\nHOW: Pass real path, or plain string content.\nCONSEQUENCE: Task not modified.",
+   "PARENT_NOT_FOUND": "WHAT: Parent task not found: {parent}.\nWHY: HAMMER cannot link child task to missing parent.\nHOW: Run 'hammer tasks list' and pass valid parent id.\nCONSEQUENCE: Task not created.",
+-  "TASK_METADATA_CORRUPTED": "WHAT: Task metadata corrupted.\nWHY: HAMMER cannot read task record.\nHOW: Run 'hammer doctor --fix' or recreate the task.\nCONSEQUENCE: Pipeline flow halted."
++  "TASK_METADATA_CORRUPTED": "WHAT: Task metadata corrupted.\nWHY: HAMMER cannot read task record.\nHOW: Run 'hammer doctor --fix' or recreate the task.\nCONSEQUENCE: Pipeline flow halted.",
++  "STORE_NOT_CENTRAL": "WHAT: The task store resolved inside a task worktree.\nWHY: .tasks is a central store. A worktree-local copy is invisible to every other task and dies on the next branch checkout.\nHOW: Run from the main repo root, or set tasks_dir (store config / pyproject tool.tasks_ai.tasks_dir) to the main repo's .tasks.\nCONSEQUENCE: Task records lost silently. SMASH IT BACK TO CENTRAL."
+ }

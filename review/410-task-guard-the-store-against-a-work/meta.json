@@ -1,0 +1,48 @@
+{
+  "Id": 410,
+  "Ti": "Guard the store against a worktree-local .tasks",
+  "Ty": "task",
+  "Cr": "261111 09:23",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "410-task-guard-the-store-against-a-work",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794393007.950106,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/data_hints.json.patch"
+    },
+    {
+      "file": "error_report.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/error_report.json.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/tasks_ai_validation.py.patch"
+    },
+    {
+      "file": "tests/test_init_backup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/tests_test_init_backup.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/410-task-guard-the-store-against-a-work/patches/tests_test_store_writes.py.patch"
+    }
+  ]
+}
