@@ -63,8 +63,8 @@ class TestTasksAI(unittest.TestCase):
         config_data = {
             "repo": {
                 "lint": "ruff",
-                "test": "/bin/true",
-                "type_check": "/bin/true",
+                "test": "noop",
+                "type_check": "noop",
                 "format": "ruff",
             }
         }

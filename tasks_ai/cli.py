@@ -821,12 +821,27 @@ class TasksCLI:
 
         config_file = os.path.join(self.tasks_path, "config.yaml")
         if not os.path.exists(config_file):
-            with open(config_file, "w") as f:
-                f.write(
-                    "repo:\n  lint: /bin/true\n  test: /bin/true\n  type_check: /bin/true\n  format: /bin/true\n"
+            # Seed only what detection actually finds. A missing key is the loud,
+            # actionable path ('set repo.<key>'); a vacuous /bin/true would let the
+            # gate pass without running anything.
+            detected = {
+                key: value
+                for key, value in self._detect_tools().items()
+                if key in ("lint", "test", "type_check", "format") and value
+            }
+            if detected:
+                body = "".join(f"  {key}: {value}\n" for key, value in detected.items())
+                with open(config_file, "w") as f:
+                    f.write("repo:\n" + body)
+                self._run_git(["add", "config.yaml"], cwd=self.tasks_path)
+                self._run_git(
+                    ["commit", "-m", "Init default config"], cwd=self.tasks_path
                 )
-            self._run_git(["add", "config.yaml"], cwd=self.tasks_path)
-            self._run_git(["commit", "-m", "Init default config"], cwd=self.tasks_path)
+            else:
+                self.log(
+                    "No validation tools detected. Run 'tasks config detect --save' "
+                    "once you have chosen lint, test, type_check and format tools."
+                )
 
         self.install_hooks()
         subprocess.run(  # noqa: PLW1510

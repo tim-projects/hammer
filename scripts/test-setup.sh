@@ -25,10 +25,10 @@ init_dev() {
     
     cat > /tmp/.tasks/config.yaml << 'EOF'
 repo:
-  lint: /bin/true
-  test: /bin/true
-  type_check: /bin/true
-  format: /bin/true
+  lint: noop
+  test: noop
+  type_check: noop
+  format: noop
   skip_push: true
 EOF
     

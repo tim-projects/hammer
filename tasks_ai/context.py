@@ -25,7 +25,20 @@ class ProjectContext:
         # fails 'clone --branch tasks'.
         self.invoked_repo_root = self.main_repo_root
         if self.dev:
-            self.tasks_path = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
+            dev_store = os.environ.get("HAMMER_DEV_TASKS_DIR", "/tmp/.tasks")
+            # A dev store must never be the real one: 'init --force' backs up and
+            # rmtree's whatever tasks_path resolves to, so a variable aimed at the
+            # production store (inherited env, a leaked gate export, a scratch
+            # script running at import) re-clones the real store from a throwaway
+            # repo and loses every commit that was not pushed.
+            production_store = os.path.join(self.main_repo_root, ".tasks")
+            if os.path.realpath(dev_store) == os.path.realpath(production_store):
+                raise DevRepoUnavailable(
+                    f"HAMMER_DEV_TASKS_DIR points at the real store "
+                    f"({production_store}); dev mode needs an isolated store, "
+                    "for example /tmp/.tasks"
+                )
+            self.tasks_path = dev_store
             # Dev mode swaps the store AND the repo it acts on. Binding only the
             # store leaves every git write on the real repo: dev-created branches
             # and worktrees collide with real task ids and the guard then rejects
