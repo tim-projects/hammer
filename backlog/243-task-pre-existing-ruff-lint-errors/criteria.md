@@ -1,1 +1,2 @@
-- [ ] pytest tests/ passes (at minimum test_robustness.py, test_tasks.py, test_audit_verify_integration.py)
+- [x] ruff check . exits 0
+- [x] tech refreshed
