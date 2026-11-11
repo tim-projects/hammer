@@ -13,6 +13,12 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
-  "DoneAt": null
+  "PatchGenTime": 1794406662.846145,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": ".tasks-repo",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/406-task-fix-the-check-all-baseline-deb/patches/.tasks-repo.patch"
+    }
+  ]
 }
