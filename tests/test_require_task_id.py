@@ -31,8 +31,11 @@ class TestRequireTaskId(unittest.TestCase):
         with open(os.path.join(self.repo_dir, "README.md"), "w") as handle:
             handle.write("# Test Repo")
         subprocess.run(
-            ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "add", "README.md"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
         )

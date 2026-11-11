@@ -44,19 +44,25 @@ class TestCheckpointStoreWrites(unittest.TestCase):
         os.makedirs(self.repo_dir)
         subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(
-            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
-        )  # noqa: PLW1510
+            ["git", "config", "user.email", "test@example.com"],
+            cwd=self.repo_dir,
+            check=False,
+        )
         subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
         with open(os.path.join(self.repo_dir, "README.md"), "w") as handle:
             handle.write("# Test Repo")
         subprocess.run(
-            ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "add", "README.md"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(
             ["git", "commit", "-m", "Initial commit"],
             cwd=self.repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         # The symlinked hammer resolves to the working tree under test, so these
         # tests exercise the branch code, not a clone of main.
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -67,7 +73,8 @@ class TestCheckpointStoreWrites(unittest.TestCase):
             ["git", "commit", "-m", "Add hammer"],
             cwd=self.repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         # The store is a real git repo of its own (branch 'tasks'), mirroring
         # production: .tasks is gitignored in the main repo and never merged.
         self.seed_tasks_branch()
@@ -118,8 +125,11 @@ class TestCheckpointStoreWrites(unittest.TestCase):
             text=True,
         ).stdout.strip()
         subprocess.run(
-            ["git", "branch", "tasks", commit], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "branch", "tasks", commit],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
 
     def tearDown(self):
         shutil.rmtree(self.test_dir, ignore_errors=True)
@@ -571,22 +581,31 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
         subprocess.run(
-            ["git", "init", "-b", "main"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "init", "-b", "main"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(
-            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
-        )  # noqa: PLW1510
+            ["git", "config", "user.email", "test@example.com"],
+            cwd=self.repo_dir,
+            check=False,
+        )
         subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
         with open(os.path.join(self.repo_dir, "README.md"), "w") as handle:
             handle.write("# Test Repo")
         subprocess.run(
-            ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "add", "README.md"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(
             ["git", "commit", "-m", "Initial commit"],
             cwd=self.repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.script_path = os.path.join(self.repo_dir, "hammer")
         os.symlink(os.path.join(project_root, "hammer"), self.script_path)
@@ -595,15 +614,18 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
             ["git", "commit", "-m", "Add hammer"],
             cwd=self.repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         self.seed_tasks_branch()
         res = self.run_cmd(["init"])
         self.assertTrue(res["success"], f"init must build a store repo: {res}")
         # A real remote so the archive hook's store push can be observed.
         self.bare = os.path.join(self.test_dir, "origin.git")
         subprocess.run(
-            ["git", "init", "--bare", "-b", "main", self.bare], capture_output=True
-        )  # noqa: PLW1510
+            ["git", "init", "--bare", "-b", "main", self.bare],
+            capture_output=True,
+            check=False,
+        )
         for args in (
             ["remote", "add", "origin", self.bare],
             ["push", "origin", "main"],
@@ -651,8 +673,11 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
             text=True,
         ).stdout.strip()
         subprocess.run(
-            ["git", "branch", "tasks", commit], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "branch", "tasks", commit],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
 
     def run_cmd(self, args):
         result = subprocess.run(  # noqa: PLW1510
@@ -951,22 +976,31 @@ class TestWholeStoreSweepsHoldTheStoreLock(unittest.TestCase):
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
         subprocess.run(
-            ["git", "init", "-b", "main"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "init", "-b", "main"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(
-            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
-        )  # noqa: PLW1510
+            ["git", "config", "user.email", "test@example.com"],
+            cwd=self.repo_dir,
+            check=False,
+        )
         subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
         with open(os.path.join(self.repo_dir, "README.md"), "w") as handle:
             handle.write("# Test Repo")
         subprocess.run(
-            ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "add", "README.md"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(
             ["git", "commit", "-m", "Initial commit"],
             cwd=self.repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.script_path = os.path.join(self.repo_dir, "hammer")
         os.symlink(os.path.join(project_root, "hammer"), self.script_path)
@@ -975,7 +1009,8 @@ class TestWholeStoreSweepsHoldTheStoreLock(unittest.TestCase):
             ["git", "commit", "-m", "Add hammer"],
             cwd=self.repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         index = os.path.join(self.test_dir, "seed_index")
         config_path = os.path.join(self.test_dir, "seed_config.yaml")
         with open(config_path, "w") as handle:
@@ -1006,8 +1041,11 @@ class TestWholeStoreSweepsHoldTheStoreLock(unittest.TestCase):
             text=True,
         ).stdout.strip()
         subprocess.run(
-            ["git", "branch", "tasks", commit], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "branch", "tasks", commit],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         res = self.run_cmd(["init"])
         self.assertTrue(res["success"], f"init must build a store repo: {res}")
         created = self.make_task("Alpha task for sweep locking")

@@ -1767,8 +1767,11 @@ class TestRobustness(unittest.TestCase):
             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
         )
         subprocess.run(
-            ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "merge", "testing"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
         )

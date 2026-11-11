@@ -303,8 +303,11 @@ class TestTasksAI(unittest.TestCase):
                     capture_output=True,
                 )
                 subprocess.run(
-                    ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-                )  # noqa: PLW1510
+                    ["git", "merge", branch],
+                    cwd=self.dev_repo_dir,
+                    capture_output=True,
+                    check=False,
+                )
                 subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
             elif state == "DONE":
                 self.git_checkout_main()
@@ -624,10 +627,14 @@ class TestTasksAI(unittest.TestCase):
                     ["git", "checkout", "-b", "testing"],
                     cwd=self.dev_repo_dir,
                     capture_output=True,
-                )  # noqa: PLW1510
+                    check=False,
+                )
                 subprocess.run(
-                    ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-                )  # noqa: PLW1510
+                    ["git", "merge", branch],
+                    cwd=self.dev_repo_dir,
+                    capture_output=True,
+                    check=False,
+                )
                 self.git_checkout_main()
 
             # Mark all criteria as done before promotion
@@ -815,8 +822,11 @@ class TestTasksAI(unittest.TestCase):
             capture_output=True,
         )
         subprocess.run(
-            ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "merge", branch],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Mark tests as passed (required for REVIEW)
@@ -896,8 +906,11 @@ class TestTasksAI(unittest.TestCase):
             capture_output=True,
         )
         subprocess.run(
-            ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "merge", branch],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=wt, capture_output=True
         )
@@ -982,8 +995,11 @@ class TestTasksAI(unittest.TestCase):
             capture_output=True,
         )
         subprocess.run(
-            ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "merge", branch],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=wt, capture_output=True
         )
@@ -1064,10 +1080,14 @@ class TestTasksAI(unittest.TestCase):
             ["git", "checkout", "-b", "testing"],
             cwd=self.dev_repo_dir,
             capture_output=True,
-        )  # noqa: PLW1510
+            check=False,
+        )
         subprocess.run(
-            ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "merge", branch],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Set tests passed and move to REVIEW
@@ -1110,11 +1130,17 @@ class TestTasksAI(unittest.TestCase):
         # Update testing to include fix (fast-forward merge)
         self.git_checkout_main()
         subprocess.run(
-            ["git", "checkout", "testing"], cwd=self.dev_repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "checkout", "testing"],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(
-            ["git", "merge", branch], cwd=self.dev_repo_dir, capture_output=True
-        )  # noqa: PLW1510
+            ["git", "merge", branch],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Move to REVIEW (new diff regenerated, Rc reset)
