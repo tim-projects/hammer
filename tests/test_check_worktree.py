@@ -175,3 +175,15 @@ class TestCheckFromWorktree(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("Running /bin/true (lint)", out)
         self.assertNotIn("not configured", out)
+
+
+class TestPinnedPytestList(unittest.TestCase):
+    """'hammer check' and the promotion gate must run the same pytest list."""
+
+    def test_validator_uses_the_pinned_list(self):
+        # A bare 'pytest' collects the whole tree (~909s) and blows check.py's
+        # 300s timeout; both entry points must pin the same files.
+        from tasks_ai.validator import PINNED_PYTEST_ARGS, Validator
+
+        cmd = Validator(os.getcwd())._get_commands(False)["test"]["pytest"]
+        self.assertEqual(cmd, ["pytest"] + PINNED_PYTEST_ARGS)
