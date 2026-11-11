@@ -29,6 +29,7 @@ TECH = "Sufficiently long technical description here to pass validation"
 PLAN = "Sufficiently long planning details here to pass validation"
 ACCEPT = "Sufficiently long acceptance criteria here to pass validation"
 BOXES = "- [ ] Sufficiently long acceptance criteria here to pass validation"
+RESEARCH = "Read pipeline_hooks.py ResearchGateHook and pipeline.validate_gate before driving the task."
 
 
 class TestStoreConcurrency(unittest.TestCase):
@@ -112,9 +113,13 @@ class TestStoreConcurrency(unittest.TestCase):
 
     def make_processing_task(self, title, criteria=ACCEPT):
         task_id, task_file = self.make_task(title, criteria)
-        for state in ("READY", "PROGRESSING"):
-            moved = self.run_cmd(["move", task_file, state])
-            self.assertTrue(moved["success"], moved)
+        moved = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(moved["success"], moved)
+        # The READY exit gate demands a recorded research pass before PROGRESSING.
+        recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+        self.assertTrue(recorded["success"], recorded)
+        moved = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertTrue(moved["success"], moved)
         return task_id, task_file
 
     def seed_counter(self, value):
@@ -286,8 +291,12 @@ class TestStoreConcurrency(unittest.TestCase):
         _, task_file = self.make_task(
             "Alpha task for fresh branch gate", criteria=BOXES
         )
-        self.run_cmd(["move", task_file, "READY"])
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        moved = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(moved["success"], moved)
+        recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+        self.assertTrue(recorded["success"], recorded)
+        moved = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertTrue(moved["success"], moved)
         task_path = os.path.join(self.store, "progressing", task_file)
 
         # Deferred imports: pytest's collection hook cannot resolve tasks_ai at

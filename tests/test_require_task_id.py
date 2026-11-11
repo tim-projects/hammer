@@ -12,6 +12,7 @@ import tempfile
 import unittest
 
 STORY = 'Sufficiently long story content here to pass validation'
+RESEARCH = 'Read pipeline_hooks.py exit-hook registration and this suite before driving the task.'
 TECH = 'Sufficiently long technical description here to pass validation'
 CRITERIA = 'Sufficiently long acceptance criteria here to pass validation'
 PLAN = 'Sufficiently long planning details here to pass validation'
@@ -83,8 +84,13 @@ class TestRequireTaskId(unittest.TestCase):
         ])
         self.assertTrue(res['success'], res)
         task_file = res['data']['file']
-        self.run_cmd(['move', task_file, 'READY'])
-        self.run_cmd(['move', task_file, 'PROGRESSING'])
+        ready = self.run_cmd(['move', task_file, 'READY'])
+        self.assertTrue(ready['success'], ready)
+        # The READY exit gate demands a recorded research pass before PROGRESSING.
+        research = self.run_cmd(['modify', task_file, '--research', RESEARCH])
+        self.assertTrue(research['success'], research)
+        progressing = self.run_cmd(['move', task_file, 'PROGRESSING'])
+        self.assertTrue(progressing['success'], progressing)
         return res['data']['id'], task_file
 
     def snapshot(self, task_file):

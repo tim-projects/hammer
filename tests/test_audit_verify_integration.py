@@ -61,7 +61,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             f.write("# Test Repo")
         subprocess.run(
             ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+        )
         subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
         )
@@ -213,7 +213,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         # REVIEW move: testing->review needs tests-passed; sync testing branch.
         subprocess.run(
             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
-        )  # noqa: PLW1510
+        )
         self.run_cmd(["modify", task_file, "--tests-passed"])
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", "-b", "testing"], cwd=self.repo_dir, capture_output=True

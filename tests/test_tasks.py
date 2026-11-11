@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-import re
 import os
+import re
 import shutil
 import subprocess
 import sys

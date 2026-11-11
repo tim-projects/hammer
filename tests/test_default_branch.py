@@ -15,10 +15,15 @@ import unittest
 
 
 def git(args, cwd, check=False):
-    return subprocess.run(  # noqa: PLW1510
+    return subprocess.run(
         ["git"] + args, cwd=cwd, capture_output=True, text=True, check=check
     )
 
+
+RESEARCH = (
+    "Read tasks_ai/pipeline_hooks.py ResearchGateHook, tasks_ai/pipeline.py "
+    "transition rules and this suite before driving the task."
+)
 
 def _make_test_root():
     """Create the test repo outside /tmp (validate_path short-circuits there)."""
@@ -137,6 +142,10 @@ class MasterRepoTestBase(unittest.TestCase):
             "move READY failed",
         )
         self.assertTrue(
+            self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
+            "research record failed",
+        )
+        self.assertTrue(
             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
             "move PROGRESSING failed",
         )
@@ -209,6 +218,10 @@ class TestMasterNamedRepo(MasterRepoTestBase):
             self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
         )
         self.assertTrue(
+            self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
+            "research record failed",
+        )
+        self.assertTrue(
             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
             "move PROGRESSING failed",
         )
@@ -234,6 +247,10 @@ class TestNoDefaultBranch(MasterRepoTestBase):
 
         self.assertTrue(
             self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
+        )
+        self.assertTrue(
+            self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
+            "research record failed",
         )
         self.assertTrue(
             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
