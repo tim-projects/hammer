@@ -1,0 +1,1 @@
+Merged origin/main (243+410) with conflicts resolved. pytest on the six suites: 56 passed, 0 failed (245s). ruff check 0, ruff format --check 0. Store record rebuilt (meta/Id/Br, story/tech/criteria/plan) after the leak-induced store reset; 404 worktree entry restored in worktrees.json.
