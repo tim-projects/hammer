@@ -8,5 +8,7 @@
   "Br": "243-task-pre-existing-ruff-lint-errors",
   "Pt": null,
   "Tp": false,
-  "Rr": true
+  "Rr": true,
+  "Rc": "",
+  "Vp": false
 }
