@@ -1,0 +1,1 @@
+Reviewed all 69 patches: semantic diff is confined to conftest collect_ignore, check.py's project_root append removal, the audit.py/create.py/doctor.py noqa annotations, the audit.py branch assignment reorder, and mechanical ruff format output. ruff check . = 0 errors, npx pyright = 0 errors, hammer check test = 13 passed 1 skipped.
