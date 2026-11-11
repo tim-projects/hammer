@@ -1,0 +1,1 @@
+On 406's branch (origin/main merged): ruff check . -> 0 errors, ruff format --check . -> 0, npx pyright -> 0. The .tasks-repo gitlink is untracked and the regenerable clone deleted; all 27 lint errors and 68 format files on main were under .tasks-repo/. Promotion gate: check all green.
