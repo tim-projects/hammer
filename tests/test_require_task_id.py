@@ -54,21 +54,12 @@ class TestRequireTaskId(unittest.TestCase):
         config_dir = os.path.join(self.repo_dir, ".tasks")
         os.makedirs(config_dir, exist_ok=True)
         config_data = {
-<<<<<<< HEAD
-            'repo': {
-                'lint': 'noop',
-                'test': 'noop',
-                'type_check': 'noop',
-                'format': 'noop',
-                'skip_push': True,
-=======
             "repo": {
-                "lint": "/bin/true",
-                "test": "/bin/true",
-                "type_check": "/bin/true",
-                "format": "/bin/true",
+                "lint": "noop",
+                "test": "noop",
+                "type_check": "noop",
+                "format": "noop",
                 "skip_push": True,
->>>>>>> main
             }
         }
         with open(os.path.join(config_dir, "config.yaml"), "w") as handle:

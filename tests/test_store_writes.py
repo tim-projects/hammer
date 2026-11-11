@@ -27,21 +27,12 @@ CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
 PLAN = "Sufficiently long planning details here to pass validation"
 
 STORE_CONFIG = {
-<<<<<<< HEAD
-    'repo': {
-        'lint': 'noop',
-        'test': 'noop',
-        'type_check': 'noop',
-        'format': 'noop',
-        'skip_push': True,
-=======
     "repo": {
-        "lint": "/bin/true",
-        "test": "/bin/true",
-        "type_check": "/bin/true",
-        "format": "/bin/true",
+        "lint": "noop",
+        "test": "noop",
+        "type_check": "noop",
+        "format": "noop",
         "skip_push": True,
->>>>>>> main
     }
 }
 
