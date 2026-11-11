@@ -5,6 +5,7 @@ Two things are verified end to end:
   - a repo whose default branch is 'master' promotes through the whole pipeline
   - a repo with neither main nor master fails with an actionable error
 """
+
 import json
 import os
 import shutil
@@ -117,7 +118,9 @@ class MasterRepoTestBase(unittest.TestCase):
             "done",
             "archived",
         ):
-            criteria = os.path.join(self.repo_dir, ".tasks", state, task_file, "criteria.md")
+            criteria = os.path.join(
+                self.repo_dir, ".tasks", state, task_file, "criteria.md"
+            )
             if os.path.exists(criteria):
                 with open(criteria) as f:
                     content = f.read()
@@ -219,7 +222,9 @@ class TestMasterNamedRepo(MasterRepoTestBase):
             capture_output=True,
             text=True,
         )
-        self.assertEqual(merged.returncode, 0, "master tip not merged into the worktree")
+        self.assertEqual(
+            merged.returncode, 0, "master tip not merged into the worktree"
+        )
 
 
 class TestNoDefaultBranch(MasterRepoTestBase):

@@ -139,10 +139,14 @@ class PipelineService:
         # 4. Integration gate: STAGING/DONE require worktree branch to be merged into appropriate pipeline branch
         if "main_sync" in enabled_gates and branch:
             # Target branch for integration check
-            integration_target = "staging" if target_state == "STAGING" else default_branch
+            integration_target = (
+                "staging" if target_state == "STAGING" else default_branch
+            )
 
             # Check if worktree branch is merged into target
-            if integration_target and not self.git.is_merged(branch, integration_target):
+            if integration_target and not self.git.is_merged(
+                branch, integration_target
+            ):
                 raise PipelineError(
                     "BRANCH_NOT_MERGED",
                     task_id=task_id,

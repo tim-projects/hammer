@@ -60,7 +60,10 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
             f.write("# Test Repo")
         subprocess.run(
-            ["git", "add", "README.md"], cwd=self.repo_dir, capture_output=True, check=False
+            ["git", "add", "README.md"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
         )
         subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
@@ -212,7 +215,10 @@ class ReviewGateIntegrationTest(unittest.TestCase):
 
         # REVIEW move: testing->review needs tests-passed; sync testing branch.
         subprocess.run(
-            ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True, check=False
+            ["git", "checkout", "main"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
         )
         self.run_cmd(["modify", task_file, "--tests-passed"])
         subprocess.run(  # noqa: PLW1510
@@ -355,7 +361,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         with open(os.path.join(patches_dir, target)) as f:
             self.assertEqual(
-                f.read(), res.stdout, f"patch {target} was not refreshed to the branch tip"
+                f.read(),
+                res.stdout,
+                f"patch {target} was not refreshed to the branch tip",
             )
         with open(os.path.join(patches_dir, target)) as fh:
             self.assertNotIn("stale content", fh.read())

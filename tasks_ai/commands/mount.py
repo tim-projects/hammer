@@ -14,7 +14,9 @@ def run(cli, task_id):
     if not branch:
         branch = str(task_id)
 
-    wt_path = cli.git.worktrees.create_task_worktree(str(task.metadata.get("Id", task_id)), branch)
+    wt_path = cli.git.worktrees.create_task_worktree(
+        str(task.metadata.get("Id", task_id)), branch
+    )
     if not wt_path:
         cli.error("Failed to create worktree for task.")
 

@@ -55,8 +55,12 @@ def build_parser():
         epilog=agent_epilog("check"),
     )
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--fix", action="store_true", help="Apply fixes where possible.")
-    common.add_argument("--dev", action="store_true", help="Use /tmp/.tasks for config.")
+    common.add_argument(
+        "--fix", action="store_true", help="Apply fixes where possible."
+    )
+    common.add_argument(
+        "--dev", action="store_true", help="Use /tmp/.tasks for config."
+    )
     sub = parser.add_subparsers(dest="command", metavar="command")
     for name, help_text in COMMAND_HELP.items():
         sub.add_parser(

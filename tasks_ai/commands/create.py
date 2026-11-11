@@ -173,7 +173,8 @@ def run(
         # Force add in case .gitignore ignores .md files
         try:
             cli._run_git(
-                ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
+                ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)],
+                cwd=cli.tasks_path,
             )
         except Exception:  # noqa: BLE001
             cli._run_git(
