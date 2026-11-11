@@ -1,0 +1,20 @@
+diff --git a/tasks_ai/libs/list_layout.py b/tasks_ai/libs/list_layout.py
+index 90c47368..a9308d3d 100644
+--- a/tasks_ai/libs/list_layout.py
++++ b/tasks_ai/libs/list_layout.py
+@@ -2,9 +2,11 @@ from ..cli_utils import format_table
+ 
+ 
+ def render_table(all_data):
+-    headers = ['#', 'P', 'Summary', 'Status', 'Type', 'Branch']
++    headers = ["#", "P", "Summary", "Status", "Type", "Branch"]
+     rows = []
+     for tasks in all_data.values():
+         for t in tasks:
+-            rows.append([t['id'], t['p'], t['summary'], t['state'], t['type'], t['branch']])
+-    print(format_table(headers, rows, status_idx=3, prio_idx=1))
+\ No newline at end of file
++            rows.append(
++                [t["id"], t["p"], t["summary"], t["state"], t["type"], t["branch"]]
++            )
++    print(format_table(headers, rows, status_idx=3, prio_idx=1))

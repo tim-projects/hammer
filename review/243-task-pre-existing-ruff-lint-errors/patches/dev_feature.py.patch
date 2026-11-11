@@ -1,0 +1,9 @@
+diff --git a/dev_feature.py b/dev_feature.py
+index 21ee898a..73f38798 100644
+--- a/dev_feature.py
++++ b/dev_feature.py
+@@ -1,2 +1,2 @@
+ def dev_feature():
+-    return 'dev'
+\ No newline at end of file
++    return "dev"

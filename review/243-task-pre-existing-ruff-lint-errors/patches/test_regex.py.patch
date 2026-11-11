@@ -1,0 +1,16 @@
+diff --git a/test_regex.py b/test_regex.py
+index c1340a62..496a0c6d 100644
+--- a/test_regex.py
++++ b/test_regex.py
+@@ -2,6 +2,8 @@ import re
+ 
+ 
+ def get_task_id(branch_name):
+-    match = re.match('^(\\d+)-', branch_name)
++    match = re.match("^(\\d+)-", branch_name)
+     return match.group(1) if match else None
+-print(get_task_id('274-task-formalize-commit-messages-to-i'))
+\ No newline at end of file
++
++
++print(get_task_id("274-task-formalize-commit-messages-to-i"))

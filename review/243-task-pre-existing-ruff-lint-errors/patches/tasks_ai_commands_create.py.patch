@@ -1,0 +1,35 @@
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 05406a6f..e0dcacbf 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -113,7 +113,7 @@ def run(
+             path = os.path.join(fp, item)
+             try:
+                 existing = FM.load(path)
+-            except Exception:  # noqa: BLE001
++            except Exception:  # noqa: BLE001, S112
+                 continue
+             if existing.metadata.get("Id") == numeric_id:
+                 cli.error("TASK_ID_EXISTS", numeric_id=numeric_id, state=state)
+@@ -173,9 +173,10 @@ def run(
+         # Force add in case .gitignore ignores .md files
+         try:
+             cli._run_git(
+-                ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
++                ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)],
++                cwd=cli.tasks_path,
+             )
+-        except Exception:
++        except Exception:  # noqa: BLE001
+             cli._run_git(
+                 ["add", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
+             )
+@@ -216,7 +217,7 @@ def run(
+                 path = os.path.join(fp, item)
+                 try:
+                     existing_task = FM.load(path)
+-                except Exception:  # noqa: BLE001
++                except Exception:  # noqa: BLE001, S112
+                     continue
+                 if existing_task.metadata.get("Id") == pair_numeric_id:
+                     cli.error("TASK_ID_EXISTS", numeric_id=pair_numeric_id, state=state)

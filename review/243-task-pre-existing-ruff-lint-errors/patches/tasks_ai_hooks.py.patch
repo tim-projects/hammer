@@ -1,0 +1,34 @@
+diff --git a/tasks_ai/hooks.py b/tasks_ai/hooks.py
+index 1db8c699..4dee1551 100644
+--- a/tasks_ai/hooks.py
++++ b/tasks_ai/hooks.py
+@@ -2,13 +2,12 @@ from abc import ABC, abstractmethod
+ 
+ 
+ class PipelineHook(ABC):
+-
+     @abstractmethod
+     def execute(self, cli, task, current_state, new_status, filepath):
+         pass
+ 
+-class HookRegistry:
+ 
++class HookRegistry:
+     def __init__(self):
+         self._enter_hooks = {}
+         self._exit_hooks = {}
+@@ -24,9 +23,11 @@ class HookRegistry:
+         for hook in hooks:
+             hook.execute(cli, task, current_state, new_status, filepath)
+ 
+-    def run_exit_hooks(self, cli, task, current_state, new_status, filepath, force=False):
++    def run_exit_hooks(
++        self, cli, task, current_state, new_status, filepath, force=False
++    ):
+         if force:
+             return
+         hooks = self._exit_hooks.get(current_state, [])
+         for hook in hooks:
+-            hook.execute(cli, task, current_state, new_status, filepath)
+\ No newline at end of file
++            hook.execute(cli, task, current_state, new_status, filepath)

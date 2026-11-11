@@ -1,0 +1,296 @@
+{
+  "Id": 243,
+  "Ti": "Pre-existing ruff lint errors in tasks_ai package",
+  "Ty": "task",
+  "Cr": "261025 03:44",
+  "Bl": [],
+  "Pr": 3,
+  "Br": "243-task-pre-existing-ruff-lint-errors",
+  "Pt": null,
+  "Tp": true,
+  "Rr": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794371359.636057,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/check.py.patch"
+    },
+    {
+      "file": "check_cols.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/check_cols.py.patch"
+    },
+    {
+      "file": "check_env.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/check_env.py.patch"
+    },
+    {
+      "file": "check_shutil.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/check_shutil.py.patch"
+    },
+    {
+      "file": "check_width.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/check_width.py.patch"
+    },
+    {
+      "file": "conftest.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/conftest.py.patch"
+    },
+    {
+      "file": "dev_feature.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/dev_feature.py.patch"
+    },
+    {
+      "file": "docs/spec-worktrees.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/docs_spec-worktrees.md.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/repo.py.patch"
+    },
+    {
+      "file": "setup_test_env.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/setup_test_env.py.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/__init__.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai___init__.py.patch"
+    },
+    {
+      "file": "tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_errors.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_cli_errors.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_cli_io.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_cli_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/checkpoint.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_checkpoint.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/cleanup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_cleanup.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/config.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_config.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/current.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_current.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/link.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_link.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_modify.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/mount.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_mount.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/save.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_save.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/show.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_show.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/unarchive.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_unarchive.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/verify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_commands_verify.py.patch"
+    },
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_help_text.py.patch"
+    },
+    {
+      "file": "tasks_ai/hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/libs/file_utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_libs_file_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/libs/list_layout.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_libs_list_layout.py.patch"
+    },
+    {
+      "file": "tasks_ai/libs/path_utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_libs_path_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/messages.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_messages.py.patch"
+    },
+    {
+      "file": "tasks_ai/models.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_models.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_pipeline.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/task_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_task_service.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "test_create_logic.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/test_create_logic.py.patch"
+    },
+    {
+      "file": "test_is_merged.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/test_is_merged.py.patch"
+    },
+    {
+      "file": "test_pairing_logic.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/test_pairing_logic.py.patch"
+    },
+    {
+      "file": "test_regex.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/test_regex.py.patch"
+    },
+    {
+      "file": "tests/tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_all_transitions.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_all_transitions.py.patch"
+    },
+    {
+      "file": "tests/test_artifact_healing.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_artifact_healing.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_audit_verify.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_check_worktree.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_check_worktree.py.patch"
+    },
+    {
+      "file": "tests/test_cli_endpoints.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_cli_endpoints.py.patch"
+    },
+    {
+      "file": "tests/test_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_dev_isolation.py.patch"
+    },
+    {
+      "file": "tests/test_dev_mode.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_dev_mode.py.patch"
+    },
+    {
+      "file": "tests/test_help_coverage.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_help_coverage.py.patch"
+    },
+    {
+      "file": "tests/test_hooks_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_hooks_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_init_backup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_init_backup.py.patch"
+    },
+    {
+      "file": "tests/test_require_task_id.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_require_task_id.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_show_all.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_show_all.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_store_writes.py.patch"
+    },
+    {
+      "file": "tests/test_task_naming.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_task_naming.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/243-task-pre-existing-ruff-lint-errors/patches/tests_test_worktree_system.py.patch"
+    }
+  ]
+}

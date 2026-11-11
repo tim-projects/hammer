@@ -1,0 +1,68 @@
+diff --git a/tests/test_help_coverage.py b/tests/test_help_coverage.py
+index 150e718f..bf517b76 100644
+--- a/tests/test_help_coverage.py
++++ b/tests/test_help_coverage.py
+@@ -17,7 +17,6 @@ import importlib.util
+ import os
+ import re
+ import subprocess
+-import sys
+ import unittest
+ from concurrent.futures import ThreadPoolExecutor
+ 
+@@ -93,12 +92,10 @@ def advertised_commands(*path):
+     assert result.returncode == 0, f"{path} -h failed: {result.stderr}"
+     braces = re.search(r"\{([^}]*)\}", result.stdout)
+     if braces:
+-        return [
+-            name for name in braces.group(1).split(",") if not name.startswith("-")
+-        ]
+-    section = result.stdout.split("positional arguments:", 1)[1].split(
+-        "\noptions:", 1
+-    )[0]
++        return [name for name in braces.group(1).split(",") if not name.startswith("-")]
++    section = result.stdout.split("positional arguments:", 1)[1].split("\noptions:", 1)[
++        0
++    ]
+     commands = []
+     for line in section.splitlines():
+         entry = re.match(r"^ {4}(\S+)", line)
+@@ -110,7 +107,9 @@ def advertised_commands(*path):
+ class TestHelpCoverage(unittest.TestCase):
+     def assert_help_works(self, path, commands):
+         invocations = [
+-            (*(path or ()), command, flag) for command in commands for flag in ("-h", "--help")
++            (*(path or ()), command, flag)
++            for command in commands
++            for flag in ("-h", "--help")
+         ]
+         for args, result in run_many(invocations).items():
+             with self.subTest(cmd=" ".join(args)):
+@@ -154,7 +153,9 @@ class TestHelpCoverage(unittest.TestCase):
+                 self.assertIn("usage", (result.stdout + result.stderr).lower())
+ 
+     def test_subcommand_help_explicit_form(self):
+-        for path in [(tool,) for tool in ("tasks", "check", "repo", "guard")] + NESTED_PATHS:
++        for path in [
++            (tool,) for tool in ("tasks", "check", "repo", "guard")
++        ] + NESTED_PATHS:
+             self.assert_help_works(path, advertised_commands(*path))
+ 
+     def test_subcommand_help_auto_detect_form(self):
+@@ -169,9 +170,14 @@ class TestHelpCoverage(unittest.TestCase):
+ 
+     def test_help_flag_wins_from_any_position(self):
+         """-h is global: it wins before the subcommand, and after positionals."""
+-        for path in [(tool,) for tool in ("tasks", "check", "repo", "guard")] + NESTED_PATHS:
++        for path in [
++            (tool,) for tool in ("tasks", "check", "repo", "guard")
++        ] + NESTED_PATHS:
+             tool = path[0]
+-            before = [(tool, "-h", *path[1:], command) for command in advertised_commands(*path)]
++            before = [
++                (tool, "-h", *path[1:], command)
++                for command in advertised_commands(*path)
++            ]
+             after = [
+                 (*path, command, *POSITIONAL_SAMPLE[(tool, command)], "-h")
+                 for command in advertised_commands(*path)

@@ -1,0 +1,15 @@
+diff --git a/tests/test_robustness.py b/tests/test_robustness.py
+index d61132cf..f7e9ff73 100755
+--- a/tests/test_robustness.py
++++ b/tests/test_robustness.py
+@@ -1766,7 +1766,9 @@ class TestRobustness(unittest.TestCase):
+         subprocess.run(  # noqa: PLW1510
+             ["git", "checkout", "-b", "staging"], cwd=self.repo_dir, capture_output=True
+         )
+-        subprocess.run(["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
++        subprocess.run(
++            ["git", "merge", "testing"], cwd=self.repo_dir, capture_output=True
++        )  # noqa: PLW1510
+         subprocess.run(  # noqa: PLW1510
+             ["git", "checkout", "main"], cwd=self.repo_dir, capture_output=True
+         )

@@ -1,0 +1,23 @@
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index 8459b23e..ee0d2e70 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -162,6 +162,7 @@ def resolve_content(cli, value, lines=False):
+     ./hammer ... and a sentence is never a path; the cost of that rule is that
+     an intended path containing spaces which does not exist is kept as prose.
+     """
++
+     def _read(v):
+         if os.path.isfile(v):
+             with open(v, "r", encoding="utf-8") as fh:
+@@ -178,9 +179,7 @@ def resolve_content(cli, value, lines=False):
+         return v
+ 
+     if isinstance(value, list):
+-        resolved = [
+-            _read(v) if isinstance(v, str) and v.strip() else v for v in value
+-        ]
++        resolved = [_read(v) if isinstance(v, str) and v.strip() else v for v in value]
+         if not lines:
+             return resolved
+         flat = []

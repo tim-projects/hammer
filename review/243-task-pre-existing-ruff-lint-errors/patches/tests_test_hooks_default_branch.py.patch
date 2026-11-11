@@ -1,0 +1,61 @@
+diff --git a/tests/test_hooks_default_branch.py b/tests/test_hooks_default_branch.py
+index e684ac84..52a44b5d 100644
+--- a/tests/test_hooks_default_branch.py
++++ b/tests/test_hooks_default_branch.py
+@@ -4,6 +4,7 @@ resolve the repo's actual default branch instead of hardcoding 'main'.
+ Hook scripts are generated text, so each case installs hooks into a temp repo
+ and drives real git operations through them.
+ """
++
+ import importlib.util
+ import os
+ import shutil
+@@ -146,7 +147,9 @@ class TestHookBehaviorOnMasterRepo(HookRepoTestCase):
+         self.commit_file("topic.txt")
+         git(["checkout", "42-task-topic-branch"], self.repo_dir)
+         res = git(["merge", "43-task-other-branch"], self.repo_dir)
+-        self.assertEqual(res.returncode, 0, f"merge between task branches failed: {res.stderr}")
++        self.assertEqual(
++            res.returncode, 0, f"merge between task branches failed: {res.stderr}"
++        )
+ 
+     def test_post_merge_reports_sync_on_master(self):
+         """post-merge must compare master (not a nonexistent main) to staging.
+@@ -165,7 +168,14 @@ class TestHookBehaviorOnMasterRepo(HookRepoTestCase):
+         git(["checkout", self.default_branch], self.repo_dir)
+         self.commit_file("masterside.txt")
+         res = subprocess.run(  # noqa: PLW1510
+-            ["git", "merge", "--no-ff", "43-task-scratch-branch", "-m", "merge scratch"],
++            [
++                "git",
++                "merge",
++                "--no-ff",
++                "43-task-scratch-branch",
++                "-m",
++                "merge scratch",
++            ],
+             cwd=self.repo_dir,
+             capture_output=True,
+             text=True,
+@@ -227,7 +237,9 @@ class TestPreReceiveProtectsDefaultBranchDeletion(HookRepoTestCase):
+ 
+         res = git(["push", "origin", f":{self.default_branch}"], self.repo_dir)
+         self.assertNotEqual(
+-            res.returncode, 0, f"deleting {self.default_branch} on the remote was allowed"
++            res.returncode,
++            0,
++            f"deleting {self.default_branch} on the remote was allowed",
+         )
+         self.assertIn("Cannot delete critical pipeline branch", res.stderr)
+ 
+@@ -240,7 +252,9 @@ class TestPreReceiveProtectsDefaultBranchDeletion(HookRepoTestCase):
+         self.install_hooks(cwd=remote_dir)
+ 
+         res = git(["push", "origin", ":42-task-topic-branch"], self.repo_dir)
+-        self.assertEqual(res.returncode, 0, f"feature branch delete failed: {res.stderr}")
++        self.assertEqual(
++            res.returncode, 0, f"feature branch delete failed: {res.stderr}"
++        )
+ 
+ 
+ class TestRepoWrapperPipeline(unittest.TestCase):

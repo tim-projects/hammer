@@ -1,0 +1,27 @@
+diff --git a/check.py b/check.py
+index 7af8cfc5..876e1ca8 100755
+--- a/check.py
++++ b/check.py
+@@ -55,7 +55,9 @@ def get_main_repo_root(project_root=None):
+     except (subprocess.CalledProcessError, OSError):
+         return get_git_root()
+     if not os.path.isabs(common_dir):
+-        common_dir = os.path.abspath(os.path.join(project_root or os.getcwd(), common_dir))
++        common_dir = os.path.abspath(
++            os.path.join(project_root or os.getcwd(), common_dir)
++        )
+     return os.path.dirname(common_dir)
+ 
+ 
+@@ -391,8 +393,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
+     cmd_to_run = cmd.copy()
+     env = os.environ.copy()
+     if tool == "pytest":
+-        # Add explicit path to the project root to ensure pytest finds tests
+-        cmd_to_run.append(project_root)
++        # The explicit file list below is the run: appending project_root here as
++        # well made pytest collect the whole tree on top of it, so the pinned list
++        # grew into the full suite and blew the 300s timeout.
+         # Only run tests that don't have pipeline re-entrancy issues
+         # (tests that call tasks move internally cause validation to run in a subprocess
+         # which fails due to missing PYTHONPATH/environment)

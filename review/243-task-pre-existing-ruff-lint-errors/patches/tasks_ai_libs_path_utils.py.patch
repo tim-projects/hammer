@@ -1,0 +1,11 @@
+diff --git a/tasks_ai/libs/path_utils.py b/tasks_ai/libs/path_utils.py
+index f81212bf..6e385ab0 100644
+--- a/tasks_ai/libs/path_utils.py
++++ b/tasks_ai/libs/path_utils.py
+@@ -3,4 +3,4 @@ import os
+ 
+ def get_task_path(cli, folder, task_id):
+     """Safely resolve task path based on CLI context."""
+-    return os.path.join(cli.tasks_path, folder, task_id)
+\ No newline at end of file
++    return os.path.join(cli.tasks_path, folder, task_id)

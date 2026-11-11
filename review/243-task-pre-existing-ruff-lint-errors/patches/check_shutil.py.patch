@@ -1,0 +1,13 @@
+diff --git a/check_shutil.py b/check_shutil.py
+index 618e3d93..18dc5abd 100644
+--- a/check_shutil.py
++++ b/check_shutil.py
+@@ -1,5 +1,5 @@
+ import os
+ import shutil
+ 
+-print(f'os.get_terminal_size: {os.get_terminal_size().columns}')
+-print(f'shutil.get_terminal_size: {shutil.get_terminal_size().columns}')
+\ No newline at end of file
++print(f"os.get_terminal_size: {os.get_terminal_size().columns}")
++print(f"shutil.get_terminal_size: {shutil.get_terminal_size().columns}")

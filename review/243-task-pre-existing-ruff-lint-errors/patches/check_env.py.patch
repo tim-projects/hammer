@@ -1,0 +1,10 @@
+diff --git a/check_env.py b/check_env.py
+index a82bc7ad..11fcca2c 100644
+--- a/check_env.py
++++ b/check_env.py
+@@ -1,3 +1,3 @@
+ import os
+ 
+-print(f"COLUMNS: {os.environ.get('COLUMNS')}")
+\ No newline at end of file
++print(f"COLUMNS: {os.environ.get('COLUMNS')}")

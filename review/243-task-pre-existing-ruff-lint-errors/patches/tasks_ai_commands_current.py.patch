@@ -1,0 +1,63 @@
+diff --git a/tasks_ai/commands/current.py b/tasks_ai/commands/current.py
+index d540643f..41e26dc0 100644
+--- a/tasks_ai/commands/current.py
++++ b/tasks_ai/commands/current.py
+@@ -10,26 +10,43 @@ def run(cli, filename=None):
+     filepath, task = cli.get_active_task(filename)
+     if not filepath or not task:
+         candidates = cli.processing_candidates()
+-        cli.error('NO_ACTIVE_TASK', usage='./hammer tasks current <id>',
+-                  candidates=', '.join(candidates) if candidates else 'none')
++        cli.error(
++            "NO_ACTIVE_TASK",
++            usage="./hammer tasks current <id>",
++            candidates=", ".join(candidates) if candidates else "none",
++        )
+     filepath_str = str(filepath)
+     tn = os.path.basename(filepath_str)
+     tt, br = parse_filename(tn)
+-    data = {'file': os.path.relpath(filepath_str, cli.root), 'name': tn, 'type': tt, 'branch': br, 'metadata': {str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()}, 'log_file': os.path.relpath(os.path.join(filepath_str, 'activity.log'), cli.root)}
+-    wt_path = cli.git.worktrees.get_worktree_path(str(task.metadata.get('Id', '')))
+-    data['worktree_path'] = wt_path or br
++    data = {
++        "file": os.path.relpath(filepath_str, cli.root),
++        "name": tn,
++        "type": tt,
++        "branch": br,
++        "metadata": {str(KEY_MAP.get(str(k), k)): v for k, v in task.metadata.items()},
++        "log_file": os.path.relpath(
++            os.path.join(filepath_str, "activity.log"), cli.root
++        ),
++    }
++    wt_path = cli.git.worktrees.get_worktree_path(str(task.metadata.get("Id", "")))
++    data["worktree_path"] = wt_path or br
+     dp = os.path.join(filepath_str, CURRENT_TASK_FILENAME)
+     if os.path.exists(dp):
+         d = FM.load(dp)
+-        data['dump'] = {'file': os.path.relpath(dp, cli.root), 'content': d.parts.get('content', '').strip()}
++        data["dump"] = {
++            "file": os.path.relpath(dp, cli.root),
++            "content": d.parts.get("content", "").strip(),
++        }
+     if not cli.as_json:
+-        meta = data['metadata']
+-        print(f"# TASK: {meta.get('Title', data['name'])}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`\n- **Worktree**: `{data['worktree_path']}`")
+-        for k, v in data['metadata'].items():
+-            if k != 'Title':
+-                print(f'- **{k}**: {v}')
+-        if 'dump' in data:
++        meta = data["metadata"]
++        print(
++            f"# TASK: {meta.get('Title', data['name'])}\n- **File**: `{data['file']}`\n- **Type**: {data['type']} | **Branch**: `{data['branch']}`\n- **Worktree**: `{data['worktree_path']}`"
++        )
++        for k, v in data["metadata"].items():
++            if k != "Title":
++                print(f"- **{k}**: {v}")
++        if "dump" in data:
+             print(f"\n## Active Progress\n{data['dump']['content']}")
+         else:
+-            print(f'\n## Content\n{task.content}')
+-    cli.finish(data)
+\ No newline at end of file
++            print(f"\n## Content\n{task.content}")
++    cli.finish(data)

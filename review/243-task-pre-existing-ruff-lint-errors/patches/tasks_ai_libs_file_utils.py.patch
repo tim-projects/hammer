@@ -1,0 +1,11 @@
+diff --git a/tasks_ai/libs/file_utils.py b/tasks_ai/libs/file_utils.py
+index 32867fdd..5e76f1fb 100644
+--- a/tasks_ai/libs/file_utils.py
++++ b/tasks_ai/libs/file_utils.py
+@@ -9,4 +9,4 @@ def wait_for_file(filepath, timeout=5):
+         if time.time() - start_time > timeout:
+             return False
+         time.sleep(0.1)
+-    return True
+\ No newline at end of file
++    return True

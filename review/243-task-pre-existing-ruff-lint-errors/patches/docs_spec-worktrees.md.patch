@@ -1,0 +1,57 @@
+diff --git a/docs/spec-worktrees.md b/docs/spec-worktrees.md
+index 83f3bac2..c98f86ba 100644
+--- a/docs/spec-worktrees.md
++++ b/docs/spec-worktrees.md
+@@ -282,9 +282,14 @@ else goes through `GitService` (which lazy-loads it as `cli.git.worktrees`).
+ ### 5.3 The `create_task_worktree` two-step
+ 
+ ```python
+-result = self.git.run(["worktree", "add", worktree_path, branch], cwd=self.context.main_repo_root)
+-if result.returncode != 0:                       # branch doesn't exist yet
+-    result = self.git.run(["worktree", "add", "-b", branch, worktree_path], cwd=self.context.main_repo_root)
++result = self.git.run(
++    ["worktree", "add", worktree_path, branch], cwd=self.context.main_repo_root
++)
++if result.returncode != 0:  # branch doesn't exist yet
++    result = self.git.run(
++        ["worktree", "add", "-b", branch, worktree_path],
++        cwd=self.context.main_repo_root,
++    )
+ ```
+ 
+ `git worktree add <path> <branch>` requires `<branch>` to already exist; for a
+@@ -350,9 +355,12 @@ New:
+ ```python
+ if current_branch == default_branch:
+     task_branch = task.metadata.get("Br", "")
+-    if not task_branch:                       # no task branch -> genuinely on main, block
+-        cli.error("MAIN_BRANCH_PROTECTION", new_status=new_status,
+-                  default_branch=default_branch)
++    if not task_branch:  # no task branch -> genuinely on main, block
++        cli.error(
++            "MAIN_BRANCH_PROTECTION",
++            new_status=new_status,
++            default_branch=default_branch,
++        )
+ ```
+ 
+ Rationale: when the task carries a `Br`, the pipeline engine owns the
+@@ -369,13 +377,15 @@ Old behavior committed/pushed `.tasks` on `ARCHIVED`. New behavior:
+ if new_status == "ARCHIVED":
+     cli._run_git(["add", "--all"], cwd=cli.tasks_path)
+     cli._run_git(["commit", "-m", f"Archive [{Id}] {Ti}"], cwd=cli.tasks_path)
+-    try: cli._push_tasks_branch("tasks", fatal=False)
+-    except Exception: pass
++    try:
++        cli._push_tasks_branch("tasks", fatal=False)
++    except Exception:
++        pass
+ 
+     branch = task.metadata.get("Br", "")
+     default_branch = cli.git.get_default_branch()
+     if branch and not cli.git.is_merged(branch, default_branch):
+-        cli.error("BRANCH_NOT_MERGED", branch=branch)     # never lose work
++        cli.error("BRANCH_NOT_MERGED", branch=branch)  # never lose work
+ 
+     if cli.git.worktrees.has_worktree(task_id):
+         cli.git.worktrees.remove_task_worktree(task_id, force=True)

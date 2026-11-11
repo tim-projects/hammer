@@ -1,0 +1,23 @@
+diff --git a/tasks_ai/commands/unarchive.py b/tasks_ai/commands/unarchive.py
+index d697a515..89631dde 100644
+--- a/tasks_ai/commands/unarchive.py
++++ b/tasks_ai/commands/unarchive.py
+@@ -35,7 +35,9 @@ def run(cli, task_id):
+     if worktree_path:
+         cli.console("worktree", "mount", f"{branch}")
+     else:
+-        cli.log(f"Warning: Could not create worktree for branch {branch}, continuing anyway.")
++        cli.log(
++            f"Warning: Could not create worktree for branch {branch}, continuing anyway."
++        )
+ 
+     # 4. Move folder
+     progressing_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["PROGRESSING"])
+@@ -54,4 +56,6 @@ def run(cli, task_id):
+             f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ARCHIVED->PROGRESSING (UNARCHIVE)\n"  # noqa: DTZ005
+         )
+ 
+-    print(f"Task {task_id} successfully unarchived to PROGRESSING. Worktree: {worktree_path}")
++    print(
++        f"Task {task_id} successfully unarchived to PROGRESSING. Worktree: {worktree_path}"
++    )

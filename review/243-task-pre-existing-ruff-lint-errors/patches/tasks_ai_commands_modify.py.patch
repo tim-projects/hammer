@@ -1,0 +1,282 @@
+diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
+index d58e0139..7558f7a9 100644
+--- a/tasks_ai/commands/modify.py
++++ b/tasks_ai/commands/modify.py
+@@ -12,7 +12,9 @@ def _review_paths(cli, filepath, state_folder):
+     """Resolve the review directory and patches directory for a task."""
+     from ..constants import STATE_FOLDERS
+ 
+-    review_dir = os.path.join(cli.tasks_path, STATE_FOLDERS.get(state_folder, state_folder.lower()))
++    review_dir = os.path.join(
++        cli.tasks_path, STATE_FOLDERS.get(state_folder, state_folder.lower())
++    )
+     task_folder_name = os.path.basename(filepath)
+     patches_dir = os.path.join(review_dir, task_folder_name, "patches")
+     return review_dir, task_folder_name, patches_dir
+@@ -26,17 +28,40 @@ def _patch_md5(patch_path):
+ def _has_real_patches(task, patches_dir):
+     """A task has real changes to review only if it has patch files on disk."""
+     patch_files = task.metadata.get("PatchFiles", [])
+-    return bool(patch_files) and os.path.isdir(patches_dir) and bool(os.listdir(patches_dir))
++    return (
++        bool(patch_files)
++        and os.path.isdir(patches_dir)
++        and bool(os.listdir(patches_dir))
++    )
+ 
+ 
+-def run(cli, filename, task_type=None, title=None, story=None, tech=None, criteria=None, plan=None, repro=None, notes=None, research=None, progress=None, findings=None, mitigations=None, tests_passed=None, priority=None, regression_check=None, reviewed=None):
++def run(
++    cli,
++    filename,
++    task_type=None,
++    title=None,
++    story=None,
++    tech=None,
++    criteria=None,
++    plan=None,
++    repro=None,
++    notes=None,
++    research=None,
++    progress=None,
++    findings=None,
++    mitigations=None,
++    tests_passed=None,
++    priority=None,
++    regression_check=None,
++    reviewed=None,
++):
+     """Execution logic for 'tasks modify'."""
+     filepath, _ = cli.find_task(filename)
+     if not filepath:
+         cli.error(f"Task '{filename}' not found.")
+     task = FM.load(filepath)
+     fname = os.path.basename(filepath)
+-    task_id = fname.rsplit('.', 1)[0]
++    task_id = fname.rsplit(".", 1)[0]
+     tt, _ = parse_filename(fname)
+     # Bulk submission: any long-form flag may name a file instead of a string.
+     story = resolve_content(cli, story)
+@@ -48,67 +73,79 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+     research = resolve_content(cli, research)
+     updated = False
+     if task_type:
+-        task.metadata['Ty'] = task_type
++        task.metadata["Ty"] = task_type
+         updated = True
+     if title:
+         title = title.strip()
+         if len(title) < 10:
+-            cli.error('Title too vague.')
+-        task.metadata['Ti'] = title
++            cli.error("Title too vague.")
++        task.metadata["Ti"] = title
+         updated = True
+     if story:
+-        task.parts['story'] = story
++        task.parts["story"] = story
+         updated = True
+     if tech:
+-        task.parts['tech'] = tech
++        task.parts["tech"] = tech
+         updated = True
+     if criteria:
+         if isinstance(criteria, list):
+-            task.parts['criteria'] = '\n'.join(c if re.match('^\\s*- \\[( |x)\\] ', c) else f'- [ ] {c}' for c in criteria)
++            task.parts["criteria"] = "\n".join(
++                c if re.match("^\\s*- \\[( |x)\\] ", c) else f"- [ ] {c}"
++                for c in criteria
++            )
+         else:
+-            task.parts['criteria'] = criteria
++            task.parts["criteria"] = criteria
+         updated = True
+     if plan:
+         if isinstance(plan, list):
+-            task.parts['plan'] = '\n'.join((f'{i}. {p}' for i, p in enumerate(plan, 1)))
++            task.parts["plan"] = "\n".join((f"{i}. {p}" for i, p in enumerate(plan, 1)))
+         else:
+-            task.parts['plan'] = plan
++            task.parts["plan"] = plan
+         updated = True
+     if repro:
+         if isinstance(repro, list):
+-            task.parts['repro'] = '\n'.join((f'{i}. {r}' for i, r in enumerate(repro, 1)))
++            task.parts["repro"] = "\n".join(
++                (f"{i}. {r}" for i, r in enumerate(repro, 1))
++            )
+         else:
+-            task.parts['repro'] = repro
++            task.parts["repro"] = repro
+         updated = True
+     if research is not None:
+         if research.strip():
+-            task.parts['research'] = research
++            task.parts["research"] = research
+             # Rr attests the pass happened; the gate also requires the findings
+             # themselves, so a flag flip alone cannot pass it.
+-            task.metadata['Rr'] = True
++            task.metadata["Rr"] = True
+         updated = True
+     if notes or progress or findings or mitigations:
+-        n = task.parts.get('notes', '- Progress: \n- Findings: \n- Mitigations: \n')
++        n = task.parts.get("notes", "- Progress: \n- Findings: \n- Mitigations: \n")
+         if notes:
+             n = notes
+         if progress:
+-            n = re.sub('- Progress:.*', f'- Progress: {progress}', n)
++            n = re.sub("- Progress:.*", f"- Progress: {progress}", n)
+         if findings:
+-            n = re.sub('- Findings:.*', f'- Findings: {findings}', n)
++            n = re.sub("- Findings:.*", f"- Findings: {findings}", n)
+         if mitigations:
+-            n = re.sub('- Mitigations:.*', f'- Mitigations: {mitigations}', n)
+-        task.parts['notes'] = n
++            n = re.sub("- Mitigations:.*", f"- Mitigations: {mitigations}", n)
++        task.parts["notes"] = n
+         updated = True
+     if tests_passed is not None:
+-        task.metadata['Tp'] = bool(tests_passed)
++        task.metadata["Tp"] = bool(tests_passed)
+         updated = True
+     if reviewed is not None:
+-        task.metadata['Reviewed'] = bool(reviewed)
++        task.metadata["Reviewed"] = bool(reviewed)
+         if reviewed:
+-            review_dir, task_folder_name, patches_dir = _review_paths(cli, filepath, 'REVIEW')
+-            gen_time = task.metadata.get('PatchGenTime')
+-            patch_files = task.metadata.get('PatchFiles', [])
+-            if gen_time and patch_files and os.path.isdir(patches_dir) and os.listdir(patches_dir):
++            review_dir, task_folder_name, patches_dir = _review_paths(
++                cli, filepath, "REVIEW"
++            )
++            gen_time = task.metadata.get("PatchGenTime")
++            patch_files = task.metadata.get("PatchFiles", [])
++            if (
++                gen_time
++                and patch_files
++                and os.path.isdir(patches_dir)
++                and os.listdir(patches_dir)
++            ):
+                 # Real changes to review: the user must have opened each patch file
+                 # (at least once after generation) and we record a verifiable md5.
+                 import time
+@@ -134,7 +171,9 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+                             "md5": _patch_md5(patch_path),
+                         }
+                     )
+-                reviews_path = os.path.join(review_dir, task_folder_name, "reviews.json")
++                reviews_path = os.path.join(
++                    review_dir, task_folder_name, "reviews.json"
++                )
+                 with open(reviews_path, "w") as fh:
+                     json.dump(
+                         {"reviews": records, "reviewed_at": time.time()}, fh, indent=2
+@@ -147,46 +186,52 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+             )
+         updated = True
+     if priority is not None:
+-        task.metadata['Pr'] = priority
++        task.metadata["Pr"] = priority
+         updated = True
+     if regression_check is not None:
+         if regression_check:
+-            review_dir, task_folder_name, patches_dir = _review_paths(cli, filepath, 'REVIEW')
++            review_dir, task_folder_name, patches_dir = _review_paths(
++                cli, filepath, "REVIEW"
++            )
+             has_changes = _has_real_patches(task, patches_dir)
+             if has_changes:
+                 # Reviews are verifiable and mandatory when there are real changes.
+-                if not task.metadata.get('Reviewed'):
++                if not task.metadata.get("Reviewed"):
+                     cli.error(
+-                        'REGRESSION_CHECK_NOT_PASSED',
++                        "REGRESSION_CHECK_NOT_PASSED",
+                         task_id=task_id,
+                         hint=f"Run 'tasks modify {task_id} --reviewed' after manually reading the patches.",
+                     )
+-                reviews_path = os.path.join(review_dir, task_folder_name, 'reviews.json')
++                reviews_path = os.path.join(
++                    review_dir, task_folder_name, "reviews.json"
++                )
+                 if not os.path.exists(reviews_path):
+                     cli.error(
+-                        'REGRESSION_CHECK_NOT_PASSED',
++                        "REGRESSION_CHECK_NOT_PASSED",
+                         task_id=task_id,
+                         hint=f"Run 'tasks modify {task_id} --reviewed' to record verifiable per-patch md5 reviews.",
+                     )
+                 with open(reviews_path) as fh:
+-                    review_records = json.load(fh).get('reviews', [])
++                    review_records = json.load(fh).get("reviews", [])
+                 for rec in review_records:
+                     patch_path = os.path.join(patches_dir, rec["patch"])
+-                    if not os.path.exists(patch_path) or _patch_md5(patch_path) != rec.get("md5"):
++                    if not os.path.exists(patch_path) or _patch_md5(
++                        patch_path
++                    ) != rec.get("md5"):
+                         cli.error(
+-                            'AUDIT_MISMATCH',
++                            "AUDIT_MISMATCH",
+                             task_id=task_id,
+                             hint=f"Patch content changed since review of '{rec.get('patch')}'. Re-run 'tasks modify {task_id} --reviewed' after re-reading.",
+                         )
+                 # The audit record binds an MD5 of all patch file contents.
+-                audit_path = os.path.join(review_dir, f'{task_id}.audit')
++                audit_path = os.path.join(review_dir, f"{task_id}.audit")
+                 if not os.path.exists(audit_path):
+-                    cli.error('AUDIT_MISSING', audit_path=audit_path)
++                    cli.error("AUDIT_MISSING", audit_path=audit_path)
+                 from ..audit import verify_audit
+                 from ..pipeline import PipelineError
+ 
+                 if not verify_audit(filepath, patches_dir, audit_path):
+-                    cli.error('AUDIT_MISMATCH', task_id=task_id)
++                    cli.error("AUDIT_MISMATCH", task_id=task_id)
+                 # sha256 integrity over criteria.md + verification_proof.log + audit (.audit_hash)
+                 try:
+                     cli.pipeline.check_audit_integrity(cli, task_id, filepath)
+@@ -194,22 +239,32 @@ def run(cli, filename, task_type=None, title=None, story=None, tech=None, criter
+                     cli.error(e.code, **e.kwargs)
+             else:
+                 # No actual changes to review: auto-pass (do not require Reviewed).
+-                cli.log(f"No patch changes to verify for [{task_id}]; auto-passing regression check.")
+-            task.metadata['Rc'] = 'PASSED'
++                cli.log(
++                    f"No patch changes to verify for [{task_id}]; auto-passing regression check."
++                )
++            task.metadata["Rc"] = "PASSED"
+         else:
+-            task.metadata['Rc'] = ''
++            task.metadata["Rc"] = ""
+         updated = True
+     if updated:
+         cli._atomic_write(filepath, task)
+         dump_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
+         if os.path.exists(dump_path):
+             dump = FM.load(dump_path)
+-            dump.parts['content'] = task.parts.get('notes', '')
++            dump.parts["content"] = task.parts.get("notes", "")
+             cli._atomic_write(dump_path, dump)
+-        cli._append_log(filepath, 'Mod')
+-        commit_task_paths(cli, filepath, f'Mod {os.path.basename(filepath)}')
+-        cli.log(f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}")
++        cli._append_log(filepath, "Mod")
++        commit_task_paths(cli, filepath, f"Mod {os.path.basename(filepath)}")
++        cli.log(
++            f"Modified: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
++        )
+         _, _branch = parse_filename(os.path.basename(filepath))
+     else:
+-        cli.log('No changes.')
+-    cli.finish({'id': task.metadata.get('Id'), 'task_id': task_id, 'title': task.metadata.get('Ti', '')})
+\ No newline at end of file
++        cli.log("No changes.")
++    cli.finish(
++        {
++            "id": task.metadata.get("Id"),
++            "task_id": task_id,
++            "title": task.metadata.get("Ti", ""),
++        }
++    )

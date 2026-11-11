@@ -1,0 +1,11 @@
+diff --git a/tasks_ai/cli_errors.py b/tasks_ai/cli_errors.py
+index 2247da7f..e6ab26ff 100644
+--- a/tasks_ai/cli_errors.py
++++ b/tasks_ai/cli_errors.py
+@@ -4,4 +4,4 @@ class PipelineMergeConflict(Exception):
+     def __init__(self, branch, default):
+         self.branch = branch
+         self.default = default
+-        super().__init__(f'Merge conflict {branch} -> {default}.')
+\ No newline at end of file
++        super().__init__(f"Merge conflict {branch} -> {default}.")

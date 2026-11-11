@@ -1,0 +1,68 @@
+diff --git a/tasks_ai/commands/doctor.py b/tasks_ai/commands/doctor.py
+index a38b2861..c3fdcdfe 100644
+--- a/tasks_ai/commands/doctor.py
++++ b/tasks_ai/commands/doctor.py
+@@ -139,7 +139,11 @@ def run(cli, fix=False):
+             metadata_state = task.metadata.get("St")
+             if metadata_state and metadata_state != state:
+                 inconsistencies.append(
+-                    ("state-mismatch", f"metadata.St={metadata_state}", f"folder={state}")
++                    (
++                        "state-mismatch",
++                        f"metadata.St={metadata_state}",
++                        f"folder={state}",
++                    )
+                 )
+ 
+             # Add state transition inconsistency check
+@@ -174,9 +178,13 @@ def run(cli, fix=False):
+             if wt_path and not worktree_path_matches(
+                 wt_path, cli.git.worktrees.worktrees_base, expected_br
+             ):
+-                inconsistencies.append(("worktree path", wt_path, os.path.join(
+-                    cli.git.worktrees.worktrees_base, expected_br
+-                )))
++                inconsistencies.append(
++                    (
++                        "worktree path",
++                        wt_path,
++                        os.path.join(cli.git.worktrees.worktrees_base, expected_br),
++                    )
++                )
+ 
+             # If there are inconsistencies and fix is enabled, repair them
+             if inconsistencies and fix:
+@@ -186,7 +194,9 @@ def run(cli, fix=False):
+                 # Determine target state folder based on metadata state or current folder
+                 target_state = task.metadata.get("St", state)
+                 target_folder = STATE_FOLDERS.get(target_state, state)
+-                target_path = os.path.join(cli.tasks_path, target_folder, correct_dir_name)
++                target_path = os.path.join(
++                    cli.tasks_path, target_folder, correct_dir_name
++                )
+ 
+                 # Only move if directory name is wrong or state folder is wrong
+                 if item != correct_dir_name or state != target_state:
+@@ -287,7 +297,7 @@ def run(cli, fix=False):
+                         "actual": f"Counter is {counter_val}",
+                     }
+                 )
+-        except Exception:  # noqa: BLE001
++        except Exception:  # noqa: BLE001, S110
+             pass
+ 
+     # Worktree ownership: the manifest, git and .task-worktrees/ must agree.
+@@ -325,7 +335,12 @@ def run(cli, fix=False):
+                         f.write(str(max_task_id + 1))
+                     cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
+                     cli._run_git(
+-                        ["commit", "--allow-empty", "-m", "Doctor: fixed stale task counter"],
++                        [
++                            "commit",
++                            "--allow-empty",
++                            "-m",
++                            "Doctor: fixed stale task counter",
++                        ],
+                         cwd=cli.tasks_path,
+                     )
+                 except Exception as e:  # noqa: BLE001

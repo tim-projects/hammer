@@ -1,0 +1,45 @@
+diff --git a/tests/test_dev_isolation.py b/tests/test_dev_isolation.py
+index e8a01155..b30691f9 100644
+--- a/tests/test_dev_isolation.py
++++ b/tests/test_dev_isolation.py
+@@ -28,7 +28,6 @@ BASE_ID = 9100
+ 
+ 
+ class DevIsolationTestBase(HammerTestBase):
+-
+     def setUp(self):
+         super().setUp()
+         # The fixture is a clone of the committed tree; point its entry point at
+@@ -69,7 +68,9 @@ class DevIsolationTestBase(HammerTestBase):
+         with open(counter, "w") as handle:
+             handle.write(str(value))
+         digest = hashlib.md5(str(value).encode()).hexdigest()
+-        with open(os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w") as handle:
++        with open(
++            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
++        ) as handle:
+             handle.write(digest)
+ 
+     def create_dev_task(self, counter_value=None, title=TITLE):
+@@ -165,9 +166,7 @@ class TestDevCannotBlockARealTask(DevIsolationTestBase):
+             f"the real promotion was blocked by dev-created state: {promoted.stdout}",
+         )
+         self.assertTrue(
+-            os.path.isdir(
+-                os.path.join(self.repo_path, ".tasks", "ready", real_branch)
+-            ),
++            os.path.isdir(os.path.join(self.repo_path, ".tasks", "ready", real_branch)),
+             "the real task never left backlog",
+         )
+ 
+@@ -280,9 +279,7 @@ class TestDevInitOnAFreshStore(DevIsolationTestBase):
+     def fresh_store(self, name):
+         """A store path that does not exist yet, as the repro starts from."""
+         store = os.path.join(self.test_root, name)
+-        self.assertFalse(
+-            os.path.exists(store), f"{store} must start as a fresh path"
+-        )
++        self.assertFalse(os.path.exists(store), f"{store} must start as a fresh path")
+         return store
+ 
+     def seed_store_counter(self, store, value):

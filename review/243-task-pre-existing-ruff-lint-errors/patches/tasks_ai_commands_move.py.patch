@@ -1,0 +1,65 @@
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index 9ae27347..2441af72 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -135,23 +135,23 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+     )
+ 
+     if not force:
+-            if new_status not in allowed_transitions.get(current_state, []):
+-                next_valid = cli.git.get_next_logical_state(current_state) or "PROGRESSING"
+-                cli.error(
+-                    "FORBIDDEN_TRANSITION",
+-                    from_state=current_state,
+-                    to_state=new_status,
+-                    task_id=os.path.basename(filepath_str).split("-")[0],
+-                    next_valid_state=next_valid,
+-                )
++        if new_status not in allowed_transitions.get(current_state, []):
++            next_valid = cli.git.get_next_logical_state(current_state) or "PROGRESSING"
++            cli.error(
++                "FORBIDDEN_TRANSITION",
++                from_state=current_state,
++                to_state=new_status,
++                task_id=os.path.basename(filepath_str).split("-")[0],
++                next_valid_state=next_valid,
++            )
+ 
+-            # Archived check: Enforce worktree branch merge to main
+-            if new_status == "ARCHIVED":
+-                branch = task.metadata.get("Br", "")
+-                if not branch:
+-                    _, branch = parse_filename(os.path.basename(filepath_str))
+-                if not cli.git.is_merged(branch):
+-                    cli.error("BRANCH_NOT_MERGED", branch=branch)
++        # Archived check: Enforce worktree branch merge to main
++        if new_status == "ARCHIVED":
++            branch = task.metadata.get("Br", "")
++            if not branch:
++                _, branch = parse_filename(os.path.basename(filepath_str))
++            if not cli.git.is_merged(branch):
++                cli.error("BRANCH_NOT_MERGED", branch=branch)
+ 
+     # Perform Git Merge if applicable
+     if sync and not force:
+@@ -223,9 +223,16 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+     # legacy store-wide adds committed) too, and the task's audit sibling, which
+     # 'tasks audit' writes into review/ and which must not stay pending for
+     # someone else's commit to sweep up.
+-    audit_sibling = os.path.join(cli.tasks_path, 'review',
+-                                 f'{os.path.basename(filepath_str)}.audit')
+-    commit_task_paths(cli, new_filepath, f'Mv {os.path.basename(filepath_str)} -> {new_status}',
+-                      filepath_str, staged_task_path, audit_sibling)
++    audit_sibling = os.path.join(
++        cli.tasks_path, "review", f"{os.path.basename(filepath_str)}.audit"
++    )
++    commit_task_paths(
++        cli,
++        new_filepath,
++        f"Mv {os.path.basename(filepath_str)} -> {new_status}",
++        filepath_str,
++        staged_task_path,
++        audit_sibling,
++    )
+ 
+     return True

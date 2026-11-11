@@ -1,0 +1,8 @@
+diff --git a/tasks_ai/__init__.py b/tasks_ai/__init__.py
+index 27635c37..52cdbb27 100644
+--- a/tasks_ai/__init__.py
++++ b/tasks_ai/__init__.py
+@@ -1 +1 @@
+-from .cli_engine import TasksCLI as TasksCLI
+\ No newline at end of file
++from .cli_engine import TasksCLI as TasksCLI

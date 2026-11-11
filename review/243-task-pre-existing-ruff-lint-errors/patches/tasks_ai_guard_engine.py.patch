@@ -1,0 +1,90 @@
+diff --git a/tasks_ai/guard_engine.py b/tasks_ai/guard_engine.py
+index 17eebdd9..8ffdb538 100644
+--- a/tasks_ai/guard_engine.py
++++ b/tasks_ai/guard_engine.py
+@@ -135,7 +135,9 @@ def now_iso():
+ class GuardEngine:
+     """Cache + verdicts. Read-only against git and `.tasks`."""
+ 
+-    def __init__(self, repo_root=None, tasks_path=None, dev=False, config=None, cwd=None):
++    def __init__(
++        self, repo_root=None, tasks_path=None, dev=False, config=None, cwd=None
++    ):
+         self.cwd = cwd or repo_root or os.getcwd()
+         self.tasks_path = tasks_path
+         self.dev = dev
+@@ -152,7 +154,9 @@ class GuardEngine:
+         """<common_git_dir>/hammer-guard: one cache per repo, worktree-safe."""
+         result = run_git(["rev-parse", "--git-common-dir"], cwd=self.cwd)
+         if result.returncode != 0:
+-            raise GuardUnavailable("not a git repository; guard cannot verify integrity")
++            raise GuardUnavailable(
++                "not a git repository; guard cannot verify integrity"
++            )
+         common = result.stdout.strip()
+         if not common:
+             raise GuardUnavailable("empty git common dir; cannot locate guard cache")
+@@ -191,7 +195,8 @@ class GuardEngine:
+         version = conn.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+         if not version:
+             conn.execute(
+-                "INSERT INTO meta (k, v) VALUES ('schema_version', ?)", (SCHEMA_VERSION,)
++                "INSERT INTO meta (k, v) VALUES ('schema_version', ?)",
++                (SCHEMA_VERSION,),
+             )
+         conn.commit()
+ 
+@@ -232,16 +237,16 @@ class GuardEngine:
+                 continue
+             full, obj = parts[0], parts[1]
+             if full.startswith("refs/heads/"):
+-                refs[full[len("refs/heads/"):]] = (obj, "branch")
++                refs[full[len("refs/heads/") :]] = (obj, "branch")
+             elif full.startswith("refs/remotes/"):
+-                rest = full[len("refs/remotes/"):]
++                rest = full[len("refs/remotes/") :]
+                 if "/" in rest:
+                     # Key remotes "<remote>/<branch>": a remote twin must not
+                     # overwrite the local branch of the same short name, or
+                     # every pushed branch loses its local identity (task 312).
+                     refs[rest] = (obj, "remote")
+             elif full.startswith("refs/tags/"):
+-                refs[full[len("refs/tags/"):]] = (obj, "tag")
++                refs[full[len("refs/tags/") :]] = (obj, "tag")
+         return refs
+ 
+     def _tasks_ref_object(self, conn):
+@@ -328,9 +333,7 @@ class GuardEngine:
+                 f"total ref loss: cache knew {previous} refs, git now reports none. "
+                 f"Refusing to read a wiped repo as an empty one. {UNAVAILABLE_HINT}"
+             )
+-        ref_signature = hashlib.sha256(
+-            repr(sorted(refs.items())).encode()
+-        ).hexdigest()
++        ref_signature = hashlib.sha256(repr(sorted(refs.items())).encode()).hexdigest()
+         tasks_ref_object = self._current_tasks_ref(conn, refs)
+         known_signature = self._get_meta(conn, "ref_signature")
+         known_tasks_ref = self._get_meta(conn, "tasks_ref_object")
+@@ -476,7 +479,9 @@ class GuardEngine:
+             branch = worktree.get("branch")
+             tid = task_id_of(branch)
+             if tid is not None:
+-                wt_entries.setdefault(tid, []).append((branch, worktree.get("path", "")))
++                wt_entries.setdefault(tid, []).append(
++                    (branch, worktree.get("path", ""))
++                )
+         for tid, entries in sorted(wt_entries.items()):
+             if len(entries) > 1:
+                 add(
+@@ -516,10 +521,7 @@ class GuardEngine:
+         conn.execute("DELETE FROM anomalies")
+         conn.executemany(
+             "INSERT INTO anomalies (code, task_id, detail, ts) VALUES (?, ?, ?, ?)",
+-            [
+-                (code, tid, detail, now_iso())
+-                for code, tid, detail in sorted(findings)
+-            ],
++            [(code, tid, detail, now_iso()) for code, tid, detail in sorted(findings)],
+         )
+ 
+     # --- verdicts ---
