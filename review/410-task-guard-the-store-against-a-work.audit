@@ -1,0 +1,14 @@
+{
+    "task_id": "410",
+    "patch_hash": "2d6b7ad419ff0a3e0176db74ba11c2e3",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "error_report.json.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_validation.py.patch",
+        "tests_test_init_backup.py.patch",
+        "tests_test_store_writes.py.patch"
+    ],
+    "status": "verified"
+}
