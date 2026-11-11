@@ -377,7 +377,11 @@ def cmd_demote(task_id_input, target_state):
     from tasks_ai.file_manager import FM
 
     task_id = task_id_input.split("-")[0]
-    cli = TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"]) if TasksCLI else None
+    cli = (
+        TasksCLI(quiet=FLAGS["quiet"], dev=FLAGS["dev"], yes=FLAGS["yes"])
+        if TasksCLI
+        else None
+    )
     if cli:
         path, _ = cli.find_task(task_id)
     else:
@@ -537,7 +541,9 @@ def build_parser():
         parents=[global_flags()],
         help="Exit 0 if <branch> is merged to testing (read-only).",
     )
-    check_merged_testing.add_argument("branch", help="Branch name, task id, or 'current'.")
+    check_merged_testing.add_argument(
+        "branch", help="Branch name, task id, or 'current'."
+    )
 
     branch = sub.add_parser(
         "branch", parents=[global_flags()], help="Branch helpers (see actions below)."

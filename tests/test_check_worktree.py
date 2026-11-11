@@ -94,7 +94,11 @@ class TestCheckFromWorktree(unittest.TestCase):
             text=True,
             env=env,
         )
-        return result.returncode, result.stdout + result.stderr, parse_results(result.stdout)
+        return (
+            result.returncode,
+            result.stdout + result.stderr,
+            parse_results(result.stdout),
+        )
 
     # --- tests ---
 
@@ -150,7 +154,9 @@ class TestCheckFromWorktree(unittest.TestCase):
 
     def test_check_all_is_not_silently_skipped_when_unchanged(self):
         head = self.git("rev-parse", "HEAD").stdout.strip()
-        with open(os.path.join(self.main_dir, ".tasks", ".last_validation_hash"), "w") as h:
+        with open(
+            os.path.join(self.main_dir, ".tasks", ".last_validation_hash"), "w"
+        ) as h:
             h.write(head + "\n")
 
         code, out = self.run_check("all", cwd=self.wt)
@@ -169,3 +175,15 @@ class TestCheckFromWorktree(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("Running noop (lint)", out)
         self.assertNotIn("not configured", out)
+
+
+class TestPinnedPytestList(unittest.TestCase):
+    """'hammer check' and the promotion gate must run the same pytest list."""
+
+    def test_validator_uses_the_pinned_list(self):
+        # A bare 'pytest' collects the whole tree (~909s) and blows check.py's
+        # 300s timeout; both entry points must pin the same files.
+        from tasks_ai.validator import PINNED_PYTEST_ARGS, Validator
+
+        cmd = Validator(os.getcwd())._get_commands(False)["test"]["pytest"]
+        self.assertEqual(cmd, ["pytest"] + PINNED_PYTEST_ARGS)

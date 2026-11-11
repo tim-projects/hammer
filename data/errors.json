@@ -67,5 +67,6 @@
   "DEV_COMMAND_REFUSED": "'{command}' is refused in --dev mode.",
   "RESEARCH_REQUIRED": "Research pass not recorded.",
   "CONTENT_FILE_NOT_FOUND": "Content file not found: {path}",
-  "PARENT_NOT_FOUND": "Parent task not found: {parent}"
+  "PARENT_NOT_FOUND": "Parent task not found: {parent}",
+  "STORE_NOT_CENTRAL": "Store is not central: '{store_path}' resolves inside a task worktree. .tasks is the central store at the main repo root; a copy inside a worktree is invisible to it and is destroyed by the next branch checkout."
 }

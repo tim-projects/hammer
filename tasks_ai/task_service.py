@@ -5,7 +5,6 @@ from .file_manager import FM
 
 
 class TaskService:
-
     def __init__(self, cli):
         self.cli = cli
 
@@ -16,7 +15,7 @@ class TaskService:
         name = str(name)
         if not name or not self.cli._validate_task_id(name):
             return (None, None)
-        task_id = name.rsplit('.', 1)[0]
+        task_id = name.rsplit(".", 1)[0]
         matches = []
         for state, folder in STATE_FOLDERS.items():
             state_dir = os.path.join(self.cli.tasks_path, folder)
@@ -26,7 +25,7 @@ class TaskService:
             if os.path.isdir(direct_path):
                 matches.append((direct_path, state))
             if task_id.isdigit():
-                prefix = f'{task_id}-'
+                prefix = f"{task_id}-"
                 for item in os.listdir(state_dir):
                     if item.startswith(prefix):
                         path = os.path.join(state_dir, item)
@@ -38,13 +37,13 @@ class TaskService:
                 if not os.path.exists(fp):
                     continue
                 for item in os.listdir(fp):
-                    if item == '.gitkeep':
+                    if item == ".gitkeep":
                         continue
                     path = os.path.join(fp, item)
                     if os.path.isdir(path):
                         try:
                             task = FM.load(path)
-                            if str(task.metadata.get('Id')) == task_id:
+                            if str(task.metadata.get("Id")) == task_id:
                                 matches.append((path, state))
                         except Exception:  # noqa: BLE001, S112
                             continue
@@ -55,12 +54,12 @@ class TaskService:
             selected = matches[0]
         else:
             for path, state in matches:
-                if state not in ('ARCHIVED', 'REJECTED', 'BACKLOG'):
+                if state not in ("ARCHIVED", "REJECTED", "BACKLOG"):
                     selected = (path, state)
                     break
             if not selected:
                 for path, state in matches:
-                    if state in ('READY', 'BACKLOG'):
+                    if state in ("READY", "BACKLOG"):
                         selected = (path, state)
                         break
             if not selected:
@@ -69,7 +68,7 @@ class TaskService:
             task_path, state = selected
             folder_name = os.path.basename(os.path.dirname(task_path))
             if folder_name != STATE_FOLDERS.get(state):
-                self.cli.error('INTEGRITY_VIOLATION')
+                self.cli.error("INTEGRITY_VIOLATION")
             return selected
         return (None, None)
 
@@ -83,7 +82,7 @@ class TaskService:
 
     def processing_candidates(self):
         """Task directories currently in PROGRESSING, for error messages."""
-        prog_dir = os.path.join(self.cli.tasks_path, STATE_FOLDERS['PROGRESSING'])
+        prog_dir = os.path.join(self.cli.tasks_path, STATE_FOLDERS["PROGRESSING"])
         if not os.path.exists(prog_dir):
             return []
-        return sorted(i for i in os.listdir(prog_dir) if i != '.gitkeep')
+        return sorted(i for i in os.listdir(prog_dir) if i != ".gitkeep")
