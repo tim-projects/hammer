@@ -13,6 +13,8 @@ import subprocess
 import tempfile
 import unittest
 
+RESEARCH = "Read worktree_manager.py and the archive hook before driving the task."
+
 
 def git(args, cwd, check=False):
     return subprocess.run(
@@ -212,7 +214,10 @@ class TestWorktreeSystem(unittest.TestCase):
         worktree_path = data["worktree"]
         self.assertTrue(os.path.isdir(worktree_path))
 
-        self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(self.run_cmd(["move", task_file, "READY"])["success"])
+        # The READY exit gate demands a recorded research pass before PROGRESSING.
+        research = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+        self.assertTrue(research["success"], f"research record failed: {research}")
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(res["success"], f"move PROGRESSING failed: {res}")
 

@@ -63,6 +63,7 @@ TITLE = "Comprehensive Guard Verification Task"
 
 # IDs above the real repo's highest task id -> no collision with fixture data.
 BASE_ID = 9001
+RESEARCH = "Read pipeline_hooks.py ResearchGateHook and guard_engine.py before driving the task."
 
 
 class GuardTestBase(HammerTestBase):
@@ -263,6 +264,16 @@ class TestGuardGate(GuardTestBase):
     def test_clean_task_passes_gates(self):
         folder = self.create_task(counter_value=BASE_ID - 1)
         for target in ("READY", "PROGRESSING"):
+            if target == "PROGRESSING":
+                # The READY exit gate demands a recorded research pass first.
+                research = self.run_tasks(
+                    ["modify", str(BASE_ID), "--research", RESEARCH]
+                )
+                self.assertEqual(
+                    research.returncode,
+                    0,
+                    f"research record failed: {research.stdout} {research.stderr}",
+                )
             result = self.run_tasks(["move", str(BASE_ID), target])
             self.assertEqual(
                 result.returncode,
