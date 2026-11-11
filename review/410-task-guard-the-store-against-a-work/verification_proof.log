@@ -1,0 +1,1 @@
+Pinned pytest set 13 passed/1 skipped with store HEAD unchanged; ruff check 0, ruff format --check 0, pyright 0. Regression test test_store_inside_worktree_is_refused passes: tasks_dir override into a worktree exits 1 with STORE_NOT_CENTRAL and creates no <worktree>/.tasks. Store restored from .tasks.backup/2026-11-11-09-51-27 after the leak-induced re-clone.

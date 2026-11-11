@@ -1,0 +1,40 @@
+{
+  "reviews": [
+    {
+      "file": "data/errors.json",
+      "patch": "data_errors.json.patch",
+      "md5": "c5494909879436d4d9e7171ae6dbe83e"
+    },
+    {
+      "file": "data/hints.json",
+      "patch": "data_hints.json.patch",
+      "md5": "3dd58c754c384f9ef18bb0c45b87cf6a"
+    },
+    {
+      "file": "error_report.json",
+      "patch": "error_report.json.patch",
+      "md5": "4d379aa3f15d5235ed7310ecff5527b4"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch": "tasks_ai_cli.py.patch",
+      "md5": "7bc440f49fc40c47e7067a792e48aef5"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch": "tasks_ai_validation.py.patch",
+      "md5": "a16c957f3b8432595385bf0a0f3bac67"
+    },
+    {
+      "file": "tests/test_init_backup.py",
+      "patch": "tests_test_init_backup.py.patch",
+      "md5": "a37c753d11750991f56e6fcee2763ba9"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch": "tests_test_store_writes.py.patch",
+      "md5": "aac8d1e26bf076524e5d999334a28503"
+    }
+  ],
+  "reviewed_at": 1794393069.2313592
+}
