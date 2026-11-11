@@ -1,0 +1,1 @@
+As a maintainer I need the task store to be central, because a store that can be created inside a task worktree loses records silently: they are invisible to the central store and are destroyed by the next branch checkout.
