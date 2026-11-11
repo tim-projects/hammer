@@ -287,7 +287,7 @@ def run(cli, fix=False):
                         "actual": f"Counter is {counter_val}",
                     }
                 )
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
 
     # Worktree ownership: the manifest, git and .task-worktrees/ must agree.

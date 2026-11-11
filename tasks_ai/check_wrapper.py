@@ -24,8 +24,8 @@ import subprocess
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tasks_ai.help_text import agent_epilog  # noqa: E402
-from tasks_ai.validator import Validator  # noqa: E402
+from tasks_ai.help_text import agent_epilog
+from tasks_ai.validator import Validator
 
 COMMAND_HELP = {
     "lint": "Run linter (exit 0 = pass, 1 = fail)",

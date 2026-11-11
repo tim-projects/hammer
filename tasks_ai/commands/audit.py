@@ -11,10 +11,10 @@ def run(cli, task_id):
         cli.error(f'Task {task_id} must be in REVIEW state to perform audit.', hint='Move task to REVIEW: ./hammer tasks move <id> REVIEW')
     current_path, _ = cli.find_task(task_id)
     task = FM.load(current_path)
+    task_folder_name = os.path.basename(current_path)
     # the store writes the branch under 'Br'; parse_filename is the fallback
     # (same source ReviewDiffHook uses) so an alias typo cannot blank it.
     branch = task.metadata.get('Br') or parse_filename(task_folder_name)[1]
-    task_folder_name = os.path.basename(current_path)
     review_dir = os.path.join(cli.tasks_path, 'review')
     patches_dir = os.path.join(review_dir, task_folder_name, 'patches')
     from ..audit import generate_file_patches, patches_are_fresh
@@ -38,7 +38,7 @@ def run(cli, task_id):
                 cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
             task.metadata["PatchFiles"] = patches
             FM.dump(task, current_path)
-        except Exception:
+        except Exception:  # noqa: BLE001
             cli.error('AUDIT_PATCH_MISSING', patches_dir=patches_dir)
     output_path = os.path.join(review_dir, f'{task_folder_name}.audit')
     generate_audit(task_id, current_path, patches_dir, output_path)

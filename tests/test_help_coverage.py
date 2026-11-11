@@ -17,7 +17,6 @@ import importlib.util
 import os
 import re
 import subprocess
-import sys
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 

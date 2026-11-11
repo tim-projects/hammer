@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-import re
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -484,8 +484,12 @@ class TestTasksAI(unittest.TestCase):
         import tasks_ai as _pkg
 
         data_dir = os.path.join(os.path.dirname(_pkg.__file__), "..", "data")
-        errors = json.load(open(os.path.join(data_dir, "errors.json")))
-        hints = json.load(open(os.path.join(data_dir, "hints.json")))
+        with (
+            open(os.path.join(data_dir, "errors.json")) as ef,
+            open(os.path.join(data_dir, "hints.json")) as hf,
+        ):
+            errors = json.load(ef)
+            hints = json.load(hf)
 
         codes = set()
         for root, _dirs, files in os.walk(os.path.dirname(_pkg.__file__)):

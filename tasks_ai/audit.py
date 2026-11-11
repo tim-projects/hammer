@@ -82,10 +82,9 @@ def generate_file_patches(cli, task_id, task_path, branch):
                     if not changed_files:
                         # Look for files in task folder directly
                         import glob
-                        task_rel = task_folder_name
                         candidates = []
                         for pat in ['**/*.md', '**/*.json', '**/*.txt', 'progress.md', 'meta.json', 'story.md', 'tech.md', 'criteria.md', 'plan.md']:
-                            candidates.extend(glob.glob(os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]) if '/' not in pat else os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]), recursive=True))
+                            candidates.extend(glob.glob(os.path.join(cli.tasks_path, task_folder_name, pat.split('/')[-1]), recursive=True))
                         # easier: just walk
                         # Look in common locations
                         search_roots = []
@@ -100,7 +99,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
                                         if rel not in changed_files:
                                             changed_files.append(rel)
                         cli.log(f'DEBUG: found by walk: {changed_files}')
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     cli.log(f'DEBUG: force add failed: {e}')
 
     generated_patches = []
@@ -135,7 +134,7 @@ def generate_file_patches(cli, task_id, task_path, branch):
                         with open(patch_path, 'w') as f:
                             f.write(f'diff --git a/{rel} b/{rel}\n')
                         generated_patches.append({'file': rel, 'patch_path': patch_path})
-                    except:
+                    except Exception:  # noqa: BLE001, S110
                         pass
     return generated_patches
 
