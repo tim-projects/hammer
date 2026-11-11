@@ -1,4 +1,0 @@
-- [ ] a store path inside a task worktree is refused with an error code, not silently created
-- [ ] the guard fires after any tasks_dir/config override
-- [ ] a regression test drives a task command from inside a worktree and asserts no <worktree>/.tasks appears
-- [ ] the two existing stray fragments are removed and their central records verified intact
