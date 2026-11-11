@@ -1,0 +1,13 @@
+{
+    "task_id": "404",
+    "patch_hash": "2d623ac4a79fa7df91a867ab1a283d9e",
+    "patch_files": [
+        "tests_test_default_branch.py.patch",
+        "tests_test_dev_write_audit.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_require_task_id.py.patch",
+        "tests_test_store_concurrency.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}
