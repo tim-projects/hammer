@@ -124,7 +124,13 @@ class Validation:
         repo_root = self.cli.context.repo_root or os.getcwd()
         capture = True
         run_env = os.environ.copy()
-        run_env["HAMMER_DEV_TASKS_DIR"] = self.cli.context.tasks_path or "/tmp/.tasks"
+        if self.cli.dev:
+            # Dev-only: pointing HAMMER_DEV_TASKS_DIR at a non-dev store path
+            # makes every nested command treat that store as the dev store, and
+            # a dev 'init --force' then wipes and re-clones it.
+            run_env["HAMMER_DEV_TASKS_DIR"] = (
+                self.cli.context.tasks_path or "/tmp/.tasks"
+            )
         result = subprocess.run(  # noqa: PLW1510
             cmd, cwd=repo_root, capture_output=capture, text=True, env=run_env
         )
