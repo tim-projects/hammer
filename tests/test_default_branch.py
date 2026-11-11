@@ -26,6 +26,7 @@ RESEARCH = (
     "transition rules and this suite before driving the task."
 )
 
+
 def _make_test_root():
     """Create the test repo outside /tmp (validate_path short-circuits there)."""
     try:

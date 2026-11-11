@@ -143,7 +143,9 @@ class TestDevWriteAudit(unittest.TestCase):
             )
         for task_file in (file_a, file_b):
             self.assertTrue(
-                self.payload(self.run_dev(["move", task_file, "PROGRESSING"]))["success"]
+                self.payload(self.run_dev(["move", task_file, "PROGRESSING"]))[
+                    "success"
+                ]
             )
         self.assertTrue(self.payload(self.run_dev(["mount", str(id_a)]))["success"])
         self.assertTrue(
