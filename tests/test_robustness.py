@@ -80,7 +80,9 @@ class TestRobustness(unittest.TestCase):
         """
         res = self.run_cmd(["audit", file])
         self.assertTrue(res["success"], f"audit failed for {file}: {res}")
-        res = self.run_cmd(["verify", file, "--proof", "Reviewed patches and criteria pass."])
+        res = self.run_cmd(
+            ["verify", file, "--proof", "Reviewed patches and criteria pass."]
+        )
         self.assertTrue(res["success"], f"verify failed for {file}: {res}")
         res = self.run_cmd(["modify", file, "--reviewed"])
         self.assertTrue(res["success"], f"--reviewed failed for {file}: {res}")
@@ -95,7 +97,15 @@ class TestRobustness(unittest.TestCase):
         "Write user tests for <id>" pair in BACKLOG, which comes back as an
         unfinished checkbox at the STAGING gate.
         """
-        stages = ("backlog", "ready", "progressing", "testing", "review", "staging", "done")
+        stages = (
+            "backlog",
+            "ready",
+            "progressing",
+            "testing",
+            "review",
+            "staging",
+            "done",
+        )
         for stage in stages:
             stage_dir = os.path.join(self.repo_dir, ".tasks", stage)
             if not os.path.isdir(stage_dir):

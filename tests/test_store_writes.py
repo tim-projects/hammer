@@ -951,7 +951,9 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
         for state in ("READY", "PROGRESSING"):
             for task_file in (file_a, file_b):
                 if state == "PROGRESSING":
-                    recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+                    recorded = self.run_cmd(
+                        ["modify", task_file, "--research", RESEARCH]
+                    )
                     self.assertTrue(recorded["success"], recorded)
                 moved = self.run_cmd(["move", task_file, state])
                 self.assertTrue(moved["success"], moved)
