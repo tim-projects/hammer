@@ -163,6 +163,8 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                 "MERGE_CONFLICT", branch=e.branch, default=e.default, task_id=task_id
             )
             return False
+    elif sync:
+        cli.log("Warning: --force skips the pipeline merge; no conflict check ran.")
 
     # 2. Final Execution (Atomic staged transition)
     staging_path = os.path.join(cli.tasks_path, ".ops", "staging")
