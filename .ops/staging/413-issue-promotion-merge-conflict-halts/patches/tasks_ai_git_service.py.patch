@@ -1,0 +1,18 @@
+diff --git a/tasks_ai/git_service.py b/tasks_ai/git_service.py
+index 159ee5a3..dfb3500a 100644
+--- a/tasks_ai/git_service.py
++++ b/tasks_ai/git_service.py
+@@ -353,7 +353,12 @@ class GitService:
+         merge_res = self.run(["merge", "--no-ff", src, "-m", msg], cwd=repo_root)
+ 
+         if merge_res.returncode != 0:
+-            raise RuntimeError(f"Merge conflict {src} -> {target}. Resolve manually.")
++            # Abort leaves no conflict markers and no in-progress merge for the
++            # next command to trip over, then the caller reports MERGE_CONFLICT.
++            self.run(["merge", "--abort"], cwd=repo_root, check=False)
++            from .cli_errors import PipelineMergeConflict
++
++            raise PipelineMergeConflict(src, target)
+ 
+         # 5. Push if confirmed (never in dev: the dev repo's origin is the real repo)
+         if yes and not self.context.dev:
