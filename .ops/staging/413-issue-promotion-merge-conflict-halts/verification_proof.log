@@ -1,1 +1,0 @@
-Conflicting promotion now aborts the merge and halts with MERGE_CONFLICT; regression test plus full pinned suite green.
