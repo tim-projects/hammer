@@ -321,14 +321,129 @@
       "task_file": "385-task-write-user-tests-for-384-docum"
     },
     "402": {
-      "branch": "402-task-guard-the-store-against-a-work",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/402-task-guard-the-store-against-a-work",
-      "task_file": "402-task-guard-the-store-against-a-work"
+      "branch": "402-task-new-feature-implementation",
+      "path": "/tmp/tmpz67y88o4/repo/.task-worktrees/402-task-new-feature-implementation",
+      "task_file": "402-task-new-feature-implementation"
     },
     "403": {
-      "branch": "403-task-write-user-tests-for-402-guard",
-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/403-task-write-user-tests-for-402-guard",
-      "task_file": "403-task-write-user-tests-for-402-guard"
+      "branch": "403-task-write-user-tests-for-402-new-f",
+      "path": "/tmp/tmpz67y88o4/repo/.task-worktrees/403-task-write-user-tests-for-402-new-f",
+      "task_file": "403-task-write-user-tests-for-402-new-f"
+    },
+    "399": {
+      "branch": "399-task-write-user-tests-for-398-add-r",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/399-task-write-user-tests-for-398-add-r",
+      "task_file": "399-task-write-user-tests-for-398-add-r"
+    },
+    "412": {
+      "branch": "412-task-fix-hammer-check-all-so-valida",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/412-task-fix-hammer-check-all-so-valida",
+      "task_file": "412-task-fix-hammer-check-all-so-valida"
+    },
+    "406": {
+      "branch": "406-task-fix-the-check-all-baseline-deb",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/406-task-fix-the-check-all-baseline-deb",
+      "task_file": "406-task-fix-the-check-all-baseline-deb"
+    },
+    "401": {
+      "branch": "401-task-write-user-tests-for-400-expos",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/401-task-write-user-tests-for-400-expos",
+      "task_file": "401-task-write-user-tests-for-400-expos"
+    },
+    "388": {
+      "branch": "388-task-drop-the-stale-force-workaroun",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/388-task-drop-the-stale-force-workaroun",
+      "task_file": "388-task-drop-the-stale-force-workaroun"
+    },
+    "6": {
+      "branch": "6-task-write-user-tests-for-5-undo-re",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/6-task-write-user-tests-for-5-undo-re",
+      "task_file": "6-task-write-user-tests-for-5-undo-re"
+    },
+    "408": {
+      "branch": "408-task-tasks-init-force-silently-roll",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/408-task-tasks-init-force-silently-roll",
+      "task_file": "408-task-tasks-init-force-silently-roll"
+    },
+    "391": {
+      "branch": "391-task-write-user-tests-for-390-tasks",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/391-task-write-user-tests-for-390-tasks",
+      "task_file": "391-task-write-user-tests-for-390-tasks"
+    },
+    "407": {
+      "branch": "407-task-write-user-tests-for-406-fix-t",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/407-task-write-user-tests-for-406-fix-t",
+      "task_file": "407-task-write-user-tests-for-406-fix-t"
+    },
+    "411": {
+      "branch": "411-task-write-user-tests-for-410-guard",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/411-task-write-user-tests-for-410-guard",
+      "task_file": "411-task-write-user-tests-for-410-guard"
+    },
+    "387": {
+      "branch": "387-task-write-user-tests-for-386-ready",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/387-task-write-user-tests-for-386-ready",
+      "task_file": "387-task-write-user-tests-for-386-ready"
+    },
+    "398": {
+      "branch": "398-task-add-regression-tests-for-long",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/398-task-add-regression-tests-for-long",
+      "task_file": "398-task-add-regression-tests-for-long"
+    },
+    "390": {
+      "branch": "390-task-tasks-review-can-pass-against",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/390-task-tasks-review-can-pass-against",
+      "task_file": "390-task-tasks-review-can-pass-against"
+    },
+    "409": {
+      "branch": "409-task-write-user-tests-for-408-tasks",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/409-task-write-user-tests-for-408-tasks",
+      "task_file": "409-task-write-user-tests-for-408-tasks"
+    },
+    "397": {
+      "branch": "397-task-write-user-tests-for-396-pipel",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/397-task-write-user-tests-for-396-pipel",
+      "task_file": "397-task-write-user-tests-for-396-pipel"
+    },
+    "400": {
+      "branch": "400-task-expose-error-codes-in-the-json",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/400-task-expose-error-codes-in-the-json",
+      "task_file": "400-task-expose-error-codes-in-the-json"
+    },
+    "5": {
+      "branch": "5-task-undo-repro-task-one",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/5-task-undo-repro-task-one",
+      "task_file": "5-task-undo-repro-task-one"
+    },
+    "395": {
+      "branch": "395-task-write-user-tests-for-394-new-e",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/395-task-write-user-tests-for-394-new-e",
+      "task_file": "395-task-write-user-tests-for-394-new-e"
+    },
+    "404": {
+      "branch": "404-task-full-pytest-run-has-11-pre-exi",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/404-task-full-pytest-run-has-11-pre-exi",
+      "task_file": "404-task-full-pytest-run-has-11-pre-exi"
+    },
+    "410": {
+      "branch": "410-task-guard-the-store-against-a-work",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/410-task-guard-the-store-against-a-work",
+      "task_file": "410-task-guard-the-store-against-a-work"
+    },
+    "396": {
+      "branch": "396-task-pipeline-suites-are-vacuous-be",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/396-task-pipeline-suites-are-vacuous-be",
+      "task_file": "396-task-pipeline-suites-are-vacuous-be"
+    },
+    "393": {
+      "branch": "393-task-write-user-tests-for-392-patch",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/393-task-write-user-tests-for-392-patch",
+      "task_file": "393-task-write-user-tests-for-392-patch"
+    },
+    "389": {
+      "branch": "389-task-write-user-tests-for-388-drop",
+      "path": "/home/vscode/git/tasks-ai/.task-worktrees/389-task-write-user-tests-for-388-drop",
+      "task_file": "389-task-write-user-tests-for-388-drop"
     }
   }
 }

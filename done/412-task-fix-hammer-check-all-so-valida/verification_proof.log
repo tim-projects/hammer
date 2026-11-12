@@ -1,0 +1,11 @@
+All ten criteria verified against branch 412-task-fix-hammer-check-all-so-valida.
+
+1-4. tests/test_check_no_skip.py (6 tests, green) proves a repo.<key> of /bin/true or bare true exits 1 and names the key plus the 'tasks config detect --save' fix, on the check.py path and the hammer/Validator path, and that the named noop still passes; the true entries are removed from both command tables and the /bin/ prefix normalization is deleted; run_all counts a skipped tool as a failure, so 'All checks passed' cannot appear.
+5. The init seeder writes only detected tools and no key when detection finds nothing, verified end to end in two scratch repos (seeds lint: ruff / type_check: pyright / test: pytest; a repo with no pyproject or pyrightconfig gets no config.yaml at all).
+6. .tasks/config.yaml backfilled to ruff/pytest/pyright/ruff format; ./hammer check all now exits 1 with the true baseline (ruff 27 errors at landing, pytest exit 2 aborting at collection on root scratch test_is_merged.py, pyright 1 error on tasks_ai/commands/audit.py:16, ~80 unformatted files) and that debt is filed as task 406.
+7. scripts/test-setup.sh no longer seeds /bin/true.
+8. The nine fixture files that seeded /bin/true show an identical failure set before and after (31 failed / 64 passed on main and on the branch, all pre-existing and tracked by 404/243/245); the fixture strategy is the documented named noop, recorded in current-task.md.
+9. tests/test_check_no_skip.py is the regression test.
+10. Baseline reported and task 406 filed.
+
+Separately on this branch: tasks_ai/context.py refuses a dev store that resolves to the real .tasks, tested by tests/test_dev_store_guard.py (3 tests, green), after the reflog showed the store being re-cloned from /tmp/tmpzhgnoyri by a dev 'init --force'. ruff check and ruff format --check are clean on every file this branch touches; the three fixtures that carried committed merge-conflict markers from the REVIEW auto-commit were resolved (keeping the noop side) in 6909a28c and re-formatted to match main.

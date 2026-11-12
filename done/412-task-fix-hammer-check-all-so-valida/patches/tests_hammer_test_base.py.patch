@@ -1,0 +1,15 @@
+diff --git a/tests/hammer_test_base.py b/tests/hammer_test_base.py
+index d5427c1f..0e09011a 100644
+--- a/tests/hammer_test_base.py
++++ b/tests/hammer_test_base.py
+@@ -135,8 +135,8 @@ class HammerTestBase(unittest.TestCase):
+         config_data = {
+             "repo": {
+                 "lint": "ruff",
+-                "test": "/bin/true",
+-                "type_check": "/bin/true",
++                "test": "noop",
++                "type_check": "noop",
+                 "format": "ruff",
+             }
+         }

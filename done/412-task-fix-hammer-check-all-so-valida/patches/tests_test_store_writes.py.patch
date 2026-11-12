@@ -1,0 +1,19 @@
+diff --git a/tests/test_store_writes.py b/tests/test_store_writes.py
+index 6ffaad35..93143cd0 100644
+--- a/tests/test_store_writes.py
++++ b/tests/test_store_writes.py
+@@ -28,10 +28,10 @@ PLAN = "Sufficiently long planning details here to pass validation"
+ 
+ STORE_CONFIG = {
+     "repo": {
+-        "lint": "/bin/true",
+-        "test": "/bin/true",
+-        "type_check": "/bin/true",
+-        "format": "/bin/true",
++        "lint": "noop",
++        "test": "noop",
++        "type_check": "noop",
++        "format": "noop",
+         "skip_push": True,
+     }
+ }

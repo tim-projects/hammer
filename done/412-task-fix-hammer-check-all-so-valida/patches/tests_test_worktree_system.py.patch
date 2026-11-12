@@ -1,0 +1,19 @@
+diff --git a/tests/test_worktree_system.py b/tests/test_worktree_system.py
+index aa7c143d..7a749e08 100644
+--- a/tests/test_worktree_system.py
++++ b/tests/test_worktree_system.py
+@@ -63,10 +63,10 @@ class TestWorktreeSystem(unittest.TestCase):
+             json.dump(
+                 {
+                     "repo": {
+-                        "lint": "/bin/true",
+-                        "test": "/bin/true",
+-                        "type_check": "/bin/true",
+-                        "format": "/bin/true",
++                        "lint": "noop",
++                        "test": "noop",
++                        "type_check": "noop",
++                        "format": "noop",
+                         "skip_push": True,
+                     }
+                 },

@@ -1,0 +1,23 @@
+{
+    "task_id": "412",
+    "patch_hash": "b5b3007fa83c85e242aebe062b38f72a",
+    "patch_files": [
+        "check.py.patch",
+        "scripts_test-setup.sh.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_context.py.patch",
+        "tasks_ai_validator.py.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_check_no_skip.py.patch",
+        "tests_test_check_worktree.py.patch",
+        "tests_test_default_branch.py.patch",
+        "tests_test_dev_store_guard.py.patch",
+        "tests_test_require_task_id.py.patch",
+        "tests_test_robustness.py.patch",
+        "tests_test_store_writes.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}

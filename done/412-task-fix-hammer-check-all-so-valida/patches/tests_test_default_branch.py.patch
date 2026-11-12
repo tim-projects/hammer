@@ -1,0 +1,19 @@
+diff --git a/tests/test_default_branch.py b/tests/test_default_branch.py
+index 9771a114..96366be6 100644
+--- a/tests/test_default_branch.py
++++ b/tests/test_default_branch.py
+@@ -65,10 +65,10 @@ class MasterRepoTestBase(unittest.TestCase):
+             json.dump(
+                 {
+                     "repo": {
+-                        "lint": "/bin/true",
+-                        "test": "/bin/true",
+-                        "type_check": "/bin/true",
+-                        "format": "/bin/true",
++                        "lint": "noop",
++                        "test": "noop",
++                        "type_check": "noop",
++                        "format": "noop",
+                         "skip_push": True,
+                     }
+                 },

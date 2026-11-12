@@ -1,0 +1,15 @@
+diff --git a/tests/test_tasks.py b/tests/test_tasks.py
+index 60331f10..42ae0fb4 100755
+--- a/tests/test_tasks.py
++++ b/tests/test_tasks.py
+@@ -63,8 +63,8 @@ class TestTasksAI(unittest.TestCase):
+         config_data = {
+             "repo": {
+                 "lint": "ruff",
+-                "test": "/bin/true",
+-                "type_check": "/bin/true",
++                "test": "noop",
++                "type_check": "noop",
+                 "format": "ruff",
+             }
+         }

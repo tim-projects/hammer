@@ -1,0 +1,84 @@
+{
+  "Id": 412,
+  "Ti": "Fix hammer check all so validation never silently skips",
+  "Ty": "task",
+  "Cr": "261109 19:19",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "412-task-fix-hammer-check-all-so-valida",
+  "Pt": null,
+  "Tp": false,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Rr": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794440317.951715,
+  "DoneAt": 1794440660.265956,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/check.py.patch"
+    },
+    {
+      "file": "scripts/test-setup.sh",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/scripts_test-setup.sh.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/context.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tasks_ai_context.py.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_check_no_skip.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_check_no_skip.py.patch"
+    },
+    {
+      "file": "tests/test_check_worktree.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_check_worktree.py.patch"
+    },
+    {
+      "file": "tests/test_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_dev_store_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_dev_store_guard.py.patch"
+    },
+    {
+      "file": "tests/test_require_task_id.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_require_task_id.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_store_writes.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/412-task-fix-hammer-check-all-so-valida/patches/tests_test_worktree_system.py.patch"
+    }
+  ]
+}

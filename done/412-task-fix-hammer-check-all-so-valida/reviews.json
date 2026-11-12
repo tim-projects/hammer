@@ -1,0 +1,85 @@
+{
+  "reviews": [
+    {
+      "file": "check.py",
+      "patch": "check.py.patch",
+      "md5": "ce86b2673c33098660cd67e63863c19d"
+    },
+    {
+      "file": "scripts/test-setup.sh",
+      "patch": "scripts_test-setup.sh.patch",
+      "md5": "6ded9139c2dbb3809c45eb2d24066fc2"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch": "tasks_ai_cli.py.patch",
+      "md5": "1a776c60b7d875fe79c18e2f1b4f51e0"
+    },
+    {
+      "file": "tasks_ai/context.py",
+      "patch": "tasks_ai_context.py.patch",
+      "md5": "8d01457fb767e1f2f4b26bf8610733eb"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch": "tasks_ai_validator.py.patch",
+      "md5": "48db82cfc9680bf871b8e38489fcd261"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch": "tests_hammer_test_base.py.patch",
+      "md5": "a31ac47f0c132bd4ead16bf1fbafeb9e"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch": "tests_test_audit_verify_integration.py.patch",
+      "md5": "158890b2a3ed3b00ceed34f39e5c3953"
+    },
+    {
+      "file": "tests/test_check_no_skip.py",
+      "patch": "tests_test_check_no_skip.py.patch",
+      "md5": "5b11e7f639b0de793bbf22153e5adce3"
+    },
+    {
+      "file": "tests/test_check_worktree.py",
+      "patch": "tests_test_check_worktree.py.patch",
+      "md5": "14086dd6ee65d2612422f4edccd0426d"
+    },
+    {
+      "file": "tests/test_default_branch.py",
+      "patch": "tests_test_default_branch.py.patch",
+      "md5": "c119de7f729bce2ce8ba0c60336ac7f1"
+    },
+    {
+      "file": "tests/test_dev_store_guard.py",
+      "patch": "tests_test_dev_store_guard.py.patch",
+      "md5": "1fb1f65665dbeb163ad7b5af1effad9a"
+    },
+    {
+      "file": "tests/test_require_task_id.py",
+      "patch": "tests_test_require_task_id.py.patch",
+      "md5": "a4a121f6835ea8b11f2bd5f119c66d9e"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch": "tests_test_robustness.py.patch",
+      "md5": "559098f17182d0f3e4bdfe865a9e7252"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch": "tests_test_store_writes.py.patch",
+      "md5": "b4016454ae8b7b40f113f6f379f40d90"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch": "tests_test_tasks.py.patch",
+      "md5": "40c8f56c4fea0bb88015a2c7ed5a736d"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch": "tests_test_worktree_system.py.patch",
+      "md5": "d4dcffe7d72370267f61b85c7d89f846"
+    }
+  ],
+  "reviewed_at": 1794440579.0152562
+}

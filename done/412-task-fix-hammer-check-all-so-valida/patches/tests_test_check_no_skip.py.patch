@@ -1,0 +1,134 @@
+diff --git a/tests/test_check_no_skip.py b/tests/test_check_no_skip.py
+new file mode 100644
+index 00000000..06961dc5
+--- /dev/null
++++ b/tests/test_check_no_skip.py
+@@ -0,0 +1,128 @@
++"""A configured no-op is a failed check, not a green one.
++
++Locked down here:
++
++1. repo.<key> = /bin/true (or bare true) makes `check all` exit 1 and names the
++   offending key plus the fix, on the check.py path and on the ./hammer
++   (Validator) path.
++2. A missing repo.<key> still fails loudly.
++3. The named 'noop' entry stays an accepted, passing tool for fixtures and
++   repos with genuinely no such tool.
++
++Task 402: ./hammer check all must never print "All checks passed" while any of
++lint / test / type_check / format is unconfigured or set to /bin/true.
++"""
++
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++import unittest
++
++PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++
++NOOP_CONFIG = b"repo:\n  lint: /bin/true\n  test: /bin/true\n  type_check: /bin/true\n  format: /bin/true\n"
++MISSING_KEY_CONFIG = b"repo:\n  skip_push: true\n"
++NOOP_ENTRY_CONFIG = (
++    b"repo:\n  lint: noop\n  test: noop\n  type_check: noop\n  format: noop\n"
++)
++
++
++class TestNoSkipGate(unittest.TestCase):
++    def setUp(self):
++        self.test_dir = tempfile.mkdtemp()
++        self.repo = os.path.join(self.test_dir, "repo")
++        os.makedirs(self.repo)
++        self.git("init")
++        shutil.copy(os.path.join(PROJECT_ROOT, "check.py"), self.repo)
++        # The symlinked hammer resolves to the working tree under test, so these
++        # tests exercise the branch code, not a clone of main.
++        os.symlink(
++            os.path.join(PROJECT_ROOT, "hammer"), os.path.join(self.repo, "hammer")
++        )
++        os.makedirs(os.path.join(self.repo, ".tasks"))
++        self.write_config(NOOP_CONFIG)
++        with open(os.path.join(self.repo, "README.md"), "w") as handle:
++            handle.write("# Test Repo\n")
++        self.git("add", "-A")
++        self.git("commit", "-m", "Initial commit")
++
++    def tearDown(self):
++        shutil.rmtree(self.test_dir, ignore_errors=True)
++
++    def git(self, *args):
++        return subprocess.run(
++            ["git", "-c", "user.email=t@t.io", "-c", "user.name=t", *args],
++            cwd=self.repo,
++            capture_output=True,
++            text=True,
++            check=True,
++        )
++
++    def write_config(self, content):
++        with open(os.path.join(self.repo, ".tasks", "config.yaml"), "wb") as handle:
++            handle.write(content)
++
++    def run_check_py(self, *args):
++        result = subprocess.run(  # noqa: PLW1510
++            [sys.executable, "check.py", *args],
++            cwd=self.repo,
++            capture_output=True,
++            text=True,
++        )
++        return result.returncode, result.stdout + result.stderr
++
++    def run_hammer_check(self, *args):
++        result = subprocess.run(  # noqa: PLW1510
++            [os.path.join(self.repo, "hammer"), "check", *args],
++            cwd=self.repo,
++            capture_output=True,
++            text=True,
++        )
++        return result.returncode, result.stdout + result.stderr
++
++    def test_check_all_refuses_bin_true(self):
++        code, out = self.run_check_py("all")
++        self.assertEqual(code, 1, out)
++        self.assertIn("repo.lint", out)
++        self.assertIn("tasks config set repo.lint", out)
++        self.assertNotIn("All checks passed", out)
++
++    def test_hammer_check_all_refuses_bin_true(self):
++        code, out = self.run_hammer_check("all")
++        self.assertEqual(code, 1, out)
++        self.assertIn("repo.lint", out)
++        self.assertNotIn("All checks passed", out)
++
++    def test_bare_true_is_refused_too(self):
++        self.write_config(
++            b"repo:\n  lint: true\n  test: true\n  type_check: true\n  format: true\n"
++        )
++        code, out = self.run_check_py("lint")
++        self.assertEqual(code, 1, out)
++        self.assertIn("repo.lint", out)
++
++    def test_missing_key_is_a_failure(self):
++        self.write_config(MISSING_KEY_CONFIG)
++        code, out = self.run_check_py("lint")
++        self.assertEqual(code, 1, out)
++        self.assertIn("repo.lint", out)
++
++    def test_validator_refuses_bin_true(self):
++        sys.path.insert(0, PROJECT_ROOT)
++        from tasks_ai.validator import ValidationError, Validator
++
++        validator = Validator(self.repo)
++        with self.assertRaises(ValidationError) as caught:
++            validator.run_check("lint")
++        self.assertIn("repo.lint", str(caught.exception))
++        self.assertIn("tasks config set repo.lint", str(caught.exception))
++
++    def test_named_noop_entry_still_passes(self):
++        # Explicit opt-in for fixtures and repos with no such tool: it runs, it
++        # passes, and it is named in the output instead of hiding as /bin/true.
++        self.write_config(NOOP_ENTRY_CONFIG)
++        code, out = self.run_check_py("lint")
++        self.assertEqual(code, 0, out)
++        self.assertIn("Running noop (lint)", out)

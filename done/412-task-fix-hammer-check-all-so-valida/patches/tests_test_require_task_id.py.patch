@@ -1,0 +1,19 @@
+diff --git a/tests/test_require_task_id.py b/tests/test_require_task_id.py
+index 68caa88b..13c4560b 100644
+--- a/tests/test_require_task_id.py
++++ b/tests/test_require_task_id.py
+@@ -55,10 +55,10 @@ class TestRequireTaskId(unittest.TestCase):
+         os.makedirs(config_dir, exist_ok=True)
+         config_data = {
+             "repo": {
+-                "lint": "/bin/true",
+-                "test": "/bin/true",
+-                "type_check": "/bin/true",
+-                "format": "/bin/true",
++                "lint": "noop",
++                "test": "noop",
++                "type_check": "noop",
++                "format": "noop",
+                 "skip_push": True,
+             }
+         }

@@ -1,0 +1,119 @@
+diff --git a/tests/test_dev_store_guard.py b/tests/test_dev_store_guard.py
+new file mode 100644
+index 00000000..b245f12d
+--- /dev/null
++++ b/tests/test_dev_store_guard.py
+@@ -0,0 +1,113 @@
++"""Dev mode must never be pointed at the real store.
++
++Locked down here:
++
++1. ProjectContext(dev=True) refuses when HAMMER_DEV_TASKS_DIR resolves to the
++   production store (<main repo>/.tasks), so no dev command can operate on it.
++2. `hammer tasks --dev init --force` with that variable aimed at the production
++   store fails and leaves the store byte-for-byte intact: 'init --force' backs
++   up and rmtree's tasks_path, which is how the store kept being wiped and
++   re-cloned from throwaway /tmp repos.
++3. An isolated dev store still works, so the guard does not over-block.
++
++Background: the store was re-initialised repeatedly because two scratch scripts
++(tests/debug_test.py, tests/reproduce_persistence_issue.py) run
++`hammer tasks --dev init --force` at module import - during pytest collection,
++which check.py triggers with project_root appended - and neither isolates the
++variable. Task 410 stopped the gate from exporting it; this guard stops every
++remaining source, including a shell that exported it by hand.
++"""
++
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++import unittest
++
++TEST_DIR = os.path.dirname(os.path.abspath(__file__))
++PROJECT_ROOT = os.path.dirname(TEST_DIR)
++
++
++def _main_repo_root():
++    """The store lives in the main repo even when tests run in a worktree."""
++    common_dir = subprocess.check_output(
++        ["git", "rev-parse", "--git-common-dir"], cwd=TEST_DIR, text=True
++    ).strip()
++    if not os.path.isabs(common_dir):
++        common_dir = os.path.abspath(os.path.join(TEST_DIR, common_dir))
++    return os.path.dirname(common_dir)
++
++
++MAIN_ROOT = _main_repo_root()
++PRODUCTION_STORE = os.path.join(MAIN_ROOT, ".tasks")
++
++
++def store_fingerprint(store):
++    """Cheap identity of a store: counter, config and the task folders."""
++    fingerprint = {}
++    for name in (".task_counter", "config.yaml"):
++        path = os.path.join(store, name)
++        if os.path.exists(path):
++            with open(path) as handle:
++                fingerprint[name] = handle.read()
++        else:
++            fingerprint[name] = None
++    fingerprint["folders"] = sorted(
++        f"{state}/{name}"
++        for state in ("backlog", "progressing", "testing", "review", "staging", "done")
++        if os.path.isdir(os.path.join(store, state))
++        for name in os.listdir(os.path.join(store, state))
++    )
++    return fingerprint
++
++
++class TestDevStoreGuard(unittest.TestCase):
++    def setUp(self):
++        self.prev_env = os.environ.get("HAMMER_DEV_TASKS_DIR")
++        self.addCleanup(self._restore_env)
++        self.script = os.path.join(PROJECT_ROOT, "hammer")
++
++    def _restore_env(self):
++        if self.prev_env is None:
++            os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
++        else:
++            os.environ["HAMMER_DEV_TASKS_DIR"] = self.prev_env
++
++    def test_context_refuses_the_real_store_in_dev_mode(self):
++        sys.path.insert(0, PROJECT_ROOT)
++        from tasks_ai.context import DevRepoUnavailable, ProjectContext
++
++        os.environ["HAMMER_DEV_TASKS_DIR"] = PRODUCTION_STORE
++        with self.assertRaises(DevRepoUnavailable) as caught:
++            ProjectContext(dev=True)
++        self.assertIn(PRODUCTION_STORE, str(caught.exception))
++
++    def test_dev_init_force_cannot_wipe_the_real_store(self):
++        before = store_fingerprint(PRODUCTION_STORE)
++        os.environ["HAMMER_DEV_TASKS_DIR"] = PRODUCTION_STORE
++        result = subprocess.run(  # noqa: PLW1510
++            [sys.executable, self.script, "tasks", "--dev", "init", "--force"],
++            cwd=MAIN_ROOT,
++            capture_output=True,
++            text=True,
++        )
++        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
++        self.assertEqual(before, store_fingerprint(PRODUCTION_STORE))
++
++    def test_isolated_dev_store_still_initializes(self):
++        self.dev_tasks = tempfile.mkdtemp(prefix="hammer_guard_")
++        self.addCleanup(shutil.rmtree, self.dev_tasks, ignore_errors=True)
++        self.addCleanup(shutil.rmtree, self.dev_tasks + "-repo", ignore_errors=True)
++        os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks
++        result = subprocess.run(  # noqa: PLW1510
++            [sys.executable, self.script, "tasks", "--dev", "init", "--force"],
++            cwd=MAIN_ROOT,
++            capture_output=True,
++            text=True,
++        )
++        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
++
++
++if __name__ == "__main__":
++    unittest.main()
