@@ -1,0 +1,11 @@
+{
+    "task_id": "415",
+    "patch_hash": "8bca928a79971503655715f74991d678",
+    "patch_files": [
+        "tasks_ai_commands_mount.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_test_mount_sync.py.patch"
+    ],
+    "status": "verified"
+}
