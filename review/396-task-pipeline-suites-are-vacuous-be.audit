@@ -1,0 +1,13 @@
+{
+    "task_id": "396",
+    "patch_hash": "1565e2a0cbfa997c4ede2997d5427921",
+    "patch_files": [
+        "check.py.patch",
+        "tasks_ai_validator.py.patch",
+        "tests_test_all_transitions.py.patch",
+        "tests_test_robustness.py.patch",
+        "tests_test_store_writes.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
