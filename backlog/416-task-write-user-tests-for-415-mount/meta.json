@@ -1,0 +1,10 @@
+{
+  "Id": 416,
+  "Ti": "Write user tests for 415: Mount should sync clean worktrees and warn on conflicts",
+  "Ty": "task",
+  "Cr": "261112 04:25",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "416-task-write-user-tests-for-415-mount",
+  "Pt": 415
+}
