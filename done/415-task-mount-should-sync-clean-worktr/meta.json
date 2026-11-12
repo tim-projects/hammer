@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794471340.843523,
-  "DoneAt": null,
+  "DoneAt": 1794471626.898632,
   "PatchFiles": [
     {
       "file": "tasks_ai/commands/mount.py",
