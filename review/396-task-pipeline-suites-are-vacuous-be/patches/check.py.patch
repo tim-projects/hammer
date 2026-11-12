@@ -1,0 +1,24 @@
+diff --git a/check.py b/check.py
+index b770beb9..25c39c09 100755
+--- a/check.py
++++ b/check.py
+@@ -443,7 +443,9 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
+                     cwd=project_root,
+                     stdout=stdout_file,
+                     stderr=stderr_file,
+-                    timeout=300,
++                    # The pinned pytest list includes the slow pipeline suites
++                    # (test_robustness, test_store_writes); they run in ~8 min.
++                    timeout=900,
+                     env=env,
+                     check=False,
+                 )
+@@ -462,7 +464,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
+             result = subprocess.run(
+                 cmd_to_run,
+                 cwd=project_root,
+-                timeout=300,
++                timeout=900,
+                 env=env,
+                 check=False,
+             )
