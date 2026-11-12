@@ -1,2 +1,0 @@
-1. python3 -m pytest tests/test_robustness.py -q -k 'test_delete_done_task_fails or test_regression_check_gate_blocks_staging or test_regression_workflow_cycle or test_revert_staging_to_progressing'
-2. Observe: 4 failed on clean main (pre-existing, unrelated to task 324)

@@ -1,3 +1,0 @@
-- [ ] All four tests pass on main in isolation and in a full-suite run
-- [ ] Root cause of each failure documented in current-task.md
-- [ ] ./hammer check all --force passes

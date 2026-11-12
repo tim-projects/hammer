@@ -1,1 +1,0 @@
-As a maintainer, I want the four failing tests fixed so the suite is green.
