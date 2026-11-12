@@ -4,13 +4,14 @@ from ..cli_errors import PipelineMergeConflict
 from ..file_manager import FM
 
 
-def _sync_or_warn(cli, wt_path, branch):
+def _sync_or_warn(cli, wt_path, branch, task_id):
     """Bring the mounted worktree up to date with the default branch.
 
     A worktree with no work of its own is merged (a fast-forward, so it cannot
     conflict). A worktree with local work is never merged here -- that would
     write conflict markers into the user's files -- so the conflicts that a
-    later promotion would hit are reported instead.
+    later promotion would hit are reported instead, in the voice the message
+    registry already owns (CONFLICT_DETECTED).
     """
     default_branch = cli.git.get_default_branch()
     if not default_branch:
@@ -32,16 +33,16 @@ def _sync_or_warn(cli, wt_path, branch):
 
     conflicts = cli.git.conflicting_files(wt_path, merge_source)
     if conflicts is None:
-        cli.console("worktree", "conflicts", "could not check (old git)")
+        cli.console("worktree", "conflicts", "CHECK FAILED (old git)")
     elif conflicts:
-        cli.console(
-            "worktree",
-            "conflicts",
-            f"{len(conflicts)} file(s) conflict with {merge_source}:",
+        message = cli.messages.get_error("CONFLICT_DETECTED", branch=branch)
+        hint = cli.messages.get_hint(
+            "CONFLICT_DETECTED", branch=branch, task_id=str(task_id)
         )
+        cli.log(f"Warning: {message} | HINT: {hint}")
         for path in conflicts:
-            cli.console("conflict", "file", path)
-        cli.log(f"Resolve in the worktree, then re-run: git merge {merge_source}")
+            cli.console("conflict", "block", path)
+        cli.log(f"CONSEQUENCE: merge {merge_source} BLOCK. FIX conflict first.")
     else:
         cli.console("worktree", "sync", f"up to date with {merge_source}")
 
@@ -63,10 +64,11 @@ def run(cli, task_id):
     if not wt_path:
         cli.error("Failed to create worktree for task.")
 
-    _sync_or_warn(cli, wt_path, branch)
-
+    # Path first: the sync/warning below must never bury where to go.
     cli.log(f"Worktree mounted at: {wt_path}")
     cli.log(f"Run: cd {wt_path}")
+
+    _sync_or_warn(cli, wt_path, branch, task_id)
 
     cli.finish(
         {

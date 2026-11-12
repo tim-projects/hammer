@@ -170,9 +170,20 @@ class FakeGit:
         return f"origin/{default_branch}"
 
 
+class FakeMessages:
+    """Stands in for the real registry: records what mount asked it to say."""
+
+    def get_error(self, code, **kwargs):
+        return f"ERROR[{code}]:{kwargs.get('branch', '')}"
+
+    def get_hint(self, code, **kwargs):
+        return f"HINT[{code}]"
+
+
 class FakeCLI:
     def __init__(self, git):
         self.git = git
+        self.messages = FakeMessages()
         self.lines = []
         self.errors = []
 
@@ -186,6 +197,9 @@ class FakeCLI:
         self.errors.append(code)
         raise SystemExit(1)
 
+    def finish(self, data=None):
+        pass
+
 
 class MountWarnTest(unittest.TestCase):
     """mount decides between syncing and warning; it never merges local work."""
@@ -193,7 +207,7 @@ class MountWarnTest(unittest.TestCase):
     def _mount(self, local_work, conflicts, default_branch="main"):
         git = FakeGit(local_work, conflicts, default_branch)
         cli = FakeCLI(git)
-        mount_cmd._sync_or_warn(cli, "/wt", "415-branch")
+        mount_cmd._sync_or_warn(cli, "/wt", "415-branch", 415)
         return cli, git
 
     def test_clean_worktree_is_synced(self):
@@ -206,10 +220,19 @@ class MountWarnTest(unittest.TestCase):
         cli, git = self._mount(local_work=True, conflicts=["shared.txt", "app.py"])
         self.assertEqual([], git.merged)
         self.assertIn(
-            ("worktree", "conflicts", "2 file(s) conflict with origin/main:"), cli.lines
+            (
+                "log",
+                "",
+                "Warning: ERROR[CONFLICT_DETECTED]:415-branch | HINT: HINT[CONFLICT_DETECTED]",
+            ),
+            cli.lines,
         )
-        self.assertIn(("conflict", "file", "shared.txt"), cli.lines)
-        self.assertIn(("conflict", "file", "app.py"), cli.lines)
+        self.assertIn(("conflict", "block", "shared.txt"), cli.lines)
+        self.assertIn(("conflict", "block", "app.py"), cli.lines)
+        self.assertIn(
+            ("log", "", "CONSEQUENCE: merge origin/main BLOCK. FIX conflict first."),
+            cli.lines,
+        )
 
     def test_local_work_without_conflicts_reports_up_to_date(self):
         cli, git = self._mount(local_work=True, conflicts=[])
@@ -222,10 +245,56 @@ class MountWarnTest(unittest.TestCase):
         self.assertEqual([], git.checks)
         self.assertIn(("worktree", "sync", "skipped (no default branch)"), cli.lines)
 
+    def test_mount_prints_the_path_before_the_warning(self):
+        """A conflicted mount must still hand the user the worktree path."""
+        order = []
+        git = FakeGit(local_work=True, conflicts=["shared.txt"])
+        cli = FakeCLI(git)
+        cli.log = lambda message: order.append(message)
+        cli.find_task = lambda task_id: ("/fake/415-task", "PROGRESSING")
+
+        class FakeFM:
+            @staticmethod
+            def load(path):
+                task = type("Task", (), {"metadata": {"Id": 415, "Br": "415-branch"}})()
+                return task
+
+        git.worktrees = type(
+            "W", (), {"create_task_worktree": staticmethod(lambda tid, br: "/wt")}
+        )()
+        original_fm, mount_cmd.FM = mount_cmd.FM, FakeFM
+        try:
+            mount_cmd.run(cli, 415)
+        finally:
+            mount_cmd.FM = original_fm
+
+        self.assertIn("Run: cd /wt", order)
+        warning = "Warning: ERROR[CONFLICT_DETECTED]:415-branch | HINT: HINT[CONFLICT_DETECTED]"
+        self.assertIn(warning, order)
+        self.assertLess(order.index("Run: cd /wt"), order.index(warning))
+
     def test_no_mergeable_ref_skips_the_whole_step(self):
         git = FakeGit(local_work=False, conflicts=[])
         git.resolve_merge_source = lambda db: None
         cli = FakeCLI(git)
-        mount_cmd._sync_or_warn(cli, "/wt", "415-branch")
+        mount_cmd._sync_or_warn(cli, "/wt", "415-branch", 415)
         self.assertEqual([], git.merged)
         self.assertIn(("worktree", "sync", "skipped (no main/master ref)"), cli.lines)
+
+
+class VoiceRegistryTest(unittest.TestCase):
+    """The warning mount emits must speak the documented hammer voice."""
+
+    def setUp(self):
+        from tasks_ai.messages import MessageRegistry
+
+        self.registry = MessageRegistry("data")
+
+    def test_conflict_detected_carries_the_four_sections(self):
+        hint = self.registry.get_hint("CONFLICT_DETECTED", branch="b", task_id="1")
+        for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
+            self.assertIn(section, hint)
+
+    def test_conflict_detected_commands_the_fix(self):
+        message = self.registry.get_error("CONFLICT_DETECTED", branch="b")
+        self.assertIn("Resolve", message)
