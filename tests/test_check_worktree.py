@@ -6,8 +6,8 @@ Locked down here:
    the worktree itself instead of the main repo.
 2. Config: the store config (repo.lint/test/type_check/format) is found from a
    worktree even though only the main repo carries .tasks.
-3. Paths: a configured tool may be a command path (e.g. /bin/true or a custom
-   script path), not just a tool name.
+3. Paths: a configured tool may be a command path (e.g. /path/to/ruff), not just a
+   tool name. A no-op value (true, /bin/true) is refused by check/validator.
 4. Loudness: 'check all' is never silently skipped by the
    .last_validation_hash short-circuit, in a worktree or on main.
 """
@@ -24,10 +24,10 @@ import unittest
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 STORE_CONFIG = """repo:
-  lint: /bin/true
-  test: /bin/true
-  type_check: /bin/true
-  format: /bin/true
+  lint: noop
+  test: noop
+  type_check: noop
+  format: noop
 """
 
 
@@ -94,7 +94,11 @@ class TestCheckFromWorktree(unittest.TestCase):
             text=True,
             env=env,
         )
-        return result.returncode, result.stdout + result.stderr, parse_results(result.stdout)
+        return (
+            result.returncode,
+            result.stdout + result.stderr,
+            parse_results(result.stdout),
+        )
 
     # --- tests ---
 
@@ -115,7 +119,7 @@ class TestCheckFromWorktree(unittest.TestCase):
     def test_check_all_runs_tools_from_worktree(self):
         code, out = self.run_check("all", cwd=self.wt)
         self.assertEqual(code, 0, out)
-        self.assertIn("Running /bin/true (lint)", out)
+        self.assertIn("Running noop (lint)", out)
         self.assertNotIn("not configured", out)
         self.assertNotIn("skipping validation", out)
 
@@ -139,7 +143,7 @@ class TestCheckFromWorktree(unittest.TestCase):
             handle.write("#!/bin/sh\necho RUFF-PATH-RAN\n")
         os.chmod(fake_ruff, 0o755)
         with open(os.path.join(self.main_dir, ".tasks", "config.yaml"), "w") as handle:
-            handle.write(STORE_CONFIG.replace("lint: /bin/true", f"lint: {fake_ruff}"))
+            handle.write(STORE_CONFIG.replace("lint: noop", f"lint: {fake_ruff}"))
 
         env = dict(os.environ, PATH=f"{fake_bin}{os.pathsep}{os.environ['PATH']}")
         _code, _out, results = self.run_hammer_check(self.wt, env=env)
@@ -150,13 +154,15 @@ class TestCheckFromWorktree(unittest.TestCase):
 
     def test_check_all_is_not_silently_skipped_when_unchanged(self):
         head = self.git("rev-parse", "HEAD").stdout.strip()
-        with open(os.path.join(self.main_dir, ".tasks", ".last_validation_hash"), "w") as h:
+        with open(
+            os.path.join(self.main_dir, ".tasks", ".last_validation_hash"), "w"
+        ) as h:
             h.write(head + "\n")
 
         code, out = self.run_check("all", cwd=self.wt)
         self.assertEqual(code, 0, out)
         self.assertNotIn("skipping validation", out)
-        self.assertIn("Running /bin/true (lint)", out)
+        self.assertIn("Running noop (lint)", out)
 
         # The wrapper drives Validator.run_all: a stale hash must not collapse
         # it into the single 'all' skip entry either.
@@ -167,5 +173,17 @@ class TestCheckFromWorktree(unittest.TestCase):
     def test_check_all_still_runs_on_main(self):
         code, out = self.run_check("all", cwd=self.main_dir)
         self.assertEqual(code, 0, out)
-        self.assertIn("Running /bin/true (lint)", out)
+        self.assertIn("Running noop (lint)", out)
         self.assertNotIn("not configured", out)
+
+
+class TestPinnedPytestList(unittest.TestCase):
+    """'hammer check' and the promotion gate must run the same pytest list."""
+
+    def test_validator_uses_the_pinned_list(self):
+        # A bare 'pytest' collects the whole tree (~909s) and blows check.py's
+        # 300s timeout; both entry points must pin the same files.
+        from tasks_ai.validator import PINNED_PYTEST_ARGS, Validator
+
+        cmd = Validator(os.getcwd())._get_commands(False)["test"]["pytest"]
+        self.assertEqual(cmd, ["pytest"] + PINNED_PYTEST_ARGS)

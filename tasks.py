@@ -153,8 +153,12 @@ if __name__ == "__main__":
     mod_p.add_argument(
         "--criteria", nargs="+", help="Acceptance criteria, or path to a file."
     )
-    mod_p.add_argument("--plan", nargs="+", help="Implementation plan, or path to a file.")
-    mod_p.add_argument("--repro", nargs="+", help="Reproduction steps, or path to a file.")
+    mod_p.add_argument(
+        "--plan", nargs="+", help="Implementation plan, or path to a file."
+    )
+    mod_p.add_argument(
+        "--repro", nargs="+", help="Reproduction steps, or path to a file."
+    )
     mod_p.add_argument("--notes", help="Notes content, or path to a file.")
     mod_p.add_argument(
         "--research", help="Research findings (read-only pass), or path to a file."

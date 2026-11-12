@@ -20,6 +20,11 @@ import unittest
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+RESEARCH = (
+    "Read tasks_ai/pipeline_hooks.py ResearchGateHook and tasks_ai/context.py "
+    "dev-mode path resolution before driving the task."
+)
+
 STORY = "Sufficiently long story content here to pass validation"
 TECH = "Sufficiently long technical description here to pass validation"
 ACCEPT = "Sufficiently long acceptance criteria here to pass validation"
@@ -125,11 +130,23 @@ class TestDevWriteAudit(unittest.TestCase):
 
         id_a, file_a = self.make_task("Alpha dev audit task")
         id_b, file_b = self.make_task("Beta dev audit task")
-        for state in ("READY", "PROGRESSING"):
-            for task_file in (file_a, file_b):
-                self.assertTrue(
-                    self.payload(self.run_dev(["move", task_file, state]))["success"]
-                )
+        for task_file in (file_a, file_b):
+            self.assertTrue(
+                self.payload(self.run_dev(["move", task_file, "READY"]))["success"]
+            )
+        # The READY exit gate demands a recorded research pass before PROGRESSING.
+        for task_file in (file_a, file_b):
+            self.assertTrue(
+                self.payload(
+                    self.run_dev(["modify", task_file, "--research", RESEARCH])
+                )["success"]
+            )
+        for task_file in (file_a, file_b):
+            self.assertTrue(
+                self.payload(self.run_dev(["move", task_file, "PROGRESSING"]))[
+                    "success"
+                ]
+            )
         self.assertTrue(self.payload(self.run_dev(["mount", str(id_a)]))["success"])
         self.assertTrue(
             self.payload(self.run_dev(["checkpoint", str(id_a)]))["success"]
@@ -189,6 +206,10 @@ class TestDevWriteAudit(unittest.TestCase):
         _, file_a = self.make_task("Alpha dev roots probe task")
         moved = self.payload(self.run_dev(["move", file_a, "READY"]))
         self.assertTrue(moved["success"], moved)
+        recorded = self.payload(
+            self.run_dev(["modify", file_a, "--research", RESEARCH])
+        )
+        self.assertTrue(recorded["success"], recorded)
         moved = self.payload(self.run_dev(["move", file_a, "PROGRESSING"]))
         self.assertTrue(moved["success"], moved)
         with open(os.path.join(self.store, "worktrees.json")) as handle:

@@ -8,6 +8,33 @@ class ValidationError(Exception):
     """Exception raised for validation errors."""
 
 
+# The list the promotion gate runs (check.py). 'hammer check' must run the same
+# one: a bare 'pytest' collects the whole tree (~909s) and blows the 300s
+# timeout, so the user-facing check could never go green.
+PINNED_PYTEST_ARGS = [
+    "tests/test_cli_robustness.py",
+    "tests/test_repo.py",
+    "tests/test_security.py",
+    "tests/test_dev_mode.py",
+    "tests/test_error_reporting.py",
+    "tests/test_git_hook_restrictions.py",
+    "tests/test_init_backup.py",
+    "tests/test_pairing.py",
+    # The pipeline suites exercise the move/gate hooks (and the research
+    # gate) for real, so they are listed explicitly, never ignored. A suite
+    # that cannot pass here gets its own fix task before check stays green.
+    "tests/test_tasks.py",
+    "tests/test_robustness.py",
+    "tests/test_robustness_bugfix.py",
+    "tests/test_all_transitions.py",
+    "tests/test_artifact_healing.py",
+    "tests/test_audit_verify.py",
+    "tests/test_audit_verify_integration.py",
+    "tests/test_cli_endpoints.py",
+    "tests/test_tasks_modular.py",
+]
+
+
 class Validator:
     def __init__(self, project_root: str, dev: bool = False):
         self.project_root = Path(project_root).resolve()
@@ -72,6 +99,15 @@ class Validator:
             common_dir = os.path.join(self.project_root, common_dir)
         return Path(os.path.dirname(common_dir)) / ".tasks" / "config.yaml"
 
+    @staticmethod
+    def _is_noop_tool(tool) -> bool:
+        """A configured no-op (true, /bin/true) skips the check, so it must fail."""
+        if not tool:
+            return False
+        # YAML parses a bare `true` into the boolean, so compare case-insensitively.
+        text = str(tool).strip().lower()
+        return text == "true" or os.path.basename(text) == "true"
+
     def _get_commands(self, fix: bool) -> dict:
         """Returns the full set of supported commands."""
         return {
@@ -82,20 +118,20 @@ class Validator:
                 "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
                 "golangci-lint": ["golangci-lint", "run", "./..."]
                 + (["--fix"] if fix else []),
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
             "test": {
-                "pytest": ["pytest"],
+                "pytest": ["pytest"] + PINNED_PYTEST_ARGS,
                 "go test": ["go", "test", "./..."],
                 "cargo test": ["cargo", "test"],
                 "npm test": ["npm", "test"],
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
             "typecheck": {
                 "mypy": ["mypy", "."],
                 "pyright": ["npx", "pyright"],
                 "typescript": ["npx", "tsc", "--noEmit"],
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
             "format": {
                 "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
@@ -103,7 +139,7 @@ class Validator:
                 if fix
                 else ["npx", "prettier", "--check", "."],
                 "rustfmt": ["cargo", "fmt"] + (["--check"] if not fix else []),
-                "true": ["/bin/true"],
+                "noop": ["/bin/true"],
             },
         }
 
@@ -122,7 +158,14 @@ class Validator:
         if tool is None:
             tool = self.config.get("repo", {}).get(tool_config_key.replace("repo.", ""))
 
-        # A configured tool may be a command path (e.g. /bin/true), not just a name
+        if self._is_noop_tool(tool):
+            raise ValidationError(
+                f"Tool '{tool_type}' ({tool_config_key}) is configured as the no-op "
+                f"'{tool}', which skips the check. Run 'tasks config detect --save' "
+                f"or set a real tool: tasks config set {tool_config_key} <tool>."
+            )
+
+        # A configured tool may be a command path (e.g. /path/to/ruff), not just a name
         if tool and tool not in commands.get(tool_type, {}):
             basename = os.path.basename(str(tool))
             if basename in commands.get(tool_type, {}):

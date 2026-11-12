@@ -15,7 +15,9 @@ class TestDeriveTaskId(unittest.TestCase):
     def test_long_title_is_cut_at_the_same_place_it_always_was(self):
         self.assertEqual(
             derive_task_id(
-                344, "task", "Pipeline should auto-push branches instead of demanding manual push"
+                344,
+                "task",
+                "Pipeline should auto-push branches instead of demanding manual push",
             ),
             "344-task-pipeline-should-auto-push-bran",
         )
@@ -39,9 +41,7 @@ class TestWorktreePathMatches(unittest.TestCase):
 
     def test_matching_worktree_path(self):
         self.assertTrue(
-            worktree_path_matches(
-                self.BASE + "/" + self.BRANCH, self.BASE, self.BRANCH
-            )
+            worktree_path_matches(self.BASE + "/" + self.BRANCH, self.BASE, self.BRANCH)
         )
 
     def test_mismatched_worktree_path_is_caught(self):
@@ -52,4 +52,6 @@ class TestWorktreePathMatches(unittest.TestCase):
         )
 
     def test_path_outside_the_base_is_caught(self):
-        self.assertFalse(worktree_path_matches("/elsewhere/" + self.BRANCH, self.BASE, self.BRANCH))
+        self.assertFalse(
+            worktree_path_matches("/elsewhere/" + self.BRANCH, self.BASE, self.BRANCH)
+        )

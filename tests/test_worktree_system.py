@@ -5,12 +5,15 @@ short-circuits in dev mode, which is why the dev-based tests never caught the
 "Path outside repository" failure when resolving task paths from inside a
 worktree (task metadata lives in the main repo's .tasks/, not the worktree).
 """
+
 import json
 import os
 import shutil
 import subprocess
 import tempfile
 import unittest
+
+RESEARCH = "Read worktree_manager.py and the archive hook before driving the task."
 
 
 def git(args, cwd, check=False):
@@ -60,10 +63,10 @@ class TestWorktreeSystem(unittest.TestCase):
             json.dump(
                 {
                     "repo": {
-                        "lint": "/bin/true",
-                        "test": "/bin/true",
-                        "type_check": "/bin/true",
-                        "format": "/bin/true",
+                        "lint": "noop",
+                        "test": "noop",
+                        "type_check": "noop",
+                        "format": "noop",
                         "skip_push": True,
                     }
                 },
@@ -122,7 +125,9 @@ class TestWorktreeSystem(unittest.TestCase):
             "done",
             "archived",
         ):
-            criteria = os.path.join(self.repo_dir, ".tasks", state, task_file, "criteria.md")
+            criteria = os.path.join(
+                self.repo_dir, ".tasks", state, task_file, "criteria.md"
+            )
             if os.path.exists(criteria):
                 with open(criteria) as f:
                     content = f.read()
@@ -139,10 +144,14 @@ class TestWorktreeSystem(unittest.TestCase):
         task_id = str(data["id"])
         worktree_path = data.get("worktree")
         self.assertTrue(worktree_path, f"no worktree returned: {data}")
-        self.assertTrue(os.path.isdir(worktree_path), f"worktree dir missing: {worktree_path}")
+        self.assertTrue(
+            os.path.isdir(worktree_path), f"worktree dir missing: {worktree_path}"
+        )
 
         entry = self.manifest().get(task_id)
-        self.assertIsNotNone(entry, f"manifest has no entry for {task_id}: {self.manifest()}")
+        self.assertIsNotNone(
+            entry, f"manifest has no entry for {task_id}: {self.manifest()}"
+        )
         self.assertEqual(entry["path"], worktree_path)
         self.assertEqual(entry["branch"], data["branch"])
 
@@ -166,7 +175,9 @@ class TestWorktreeSystem(unittest.TestCase):
 
         for args in (["show", str(data["id"])], ["list"]):
             res = self.run_cmd(args, cwd=worktree_path)
-            self.assertTrue(res["success"], f"{args} failed from inside worktree: {res}")
+            self.assertTrue(
+                res["success"], f"{args} failed from inside worktree: {res}"
+            )
 
         # mount also resolves and reports the worktree path
         res = self.run_cmd(["mount", str(data["id"])], cwd=worktree_path)
@@ -175,7 +186,9 @@ class TestWorktreeSystem(unittest.TestCase):
         # Pipeline gates enforce correctly when the transition is driven from
         # inside the worktree (MainBranchProtectionHook sees the task branch)
         res = self.run_cmd(["move", data["file"], "READY"], cwd=worktree_path)
-        self.assertTrue(res["success"], f"move READY from inside worktree failed: {res}")
+        self.assertTrue(
+            res["success"], f"move READY from inside worktree failed: {res}"
+        )
 
         # ...and the same commands still work from the main repo
         res = self.run_cmd(["show", str(data["id"])], cwd=self.repo_dir)
@@ -201,7 +214,10 @@ class TestWorktreeSystem(unittest.TestCase):
         worktree_path = data["worktree"]
         self.assertTrue(os.path.isdir(worktree_path))
 
-        self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(self.run_cmd(["move", task_file, "READY"])["success"])
+        # The READY exit gate demands a recorded research pass before PROGRESSING.
+        research = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+        self.assertTrue(research["success"], f"research record failed: {research}")
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(res["success"], f"move PROGRESSING failed: {res}")
 

@@ -55,7 +55,9 @@ def get_main_repo_root(project_root=None):
     except (subprocess.CalledProcessError, OSError):
         return get_git_root()
     if not os.path.isabs(common_dir):
-        common_dir = os.path.abspath(os.path.join(project_root or os.getcwd(), common_dir))
+        common_dir = os.path.abspath(
+            os.path.join(project_root or os.getcwd(), common_dir)
+        )
     return os.path.dirname(common_dir)
 
 
@@ -146,6 +148,18 @@ def get_tool(config, tool_type):
     return tool
 
 
+# A configured no-op is a skipped check, not a passed one. Refused loudly so a
+# vacuous gate cannot masquerade as green. "noop" stays in the tables as the
+# explicit, named opt-in for repos with genuinely no such tool (and test
+# fixtures, which must not run the real linter).
+def is_noop_tool(tool):
+    if not tool:
+        return False
+    # YAML parses a bare `true` into the boolean, so compare case-insensitively.
+    text = str(tool).strip().lower()
+    return text == "true" or os.path.basename(text) == "true"
+
+
 def get_commands(fix=False):
     return {
         "lint": {
@@ -155,20 +169,20 @@ def get_commands(fix=False):
             "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
             "golangci-lint": ["golangci-lint", "run", "./..."]
             + (["--fix"] if fix else []),
-            "true": ["/bin/true"],
+            "noop": ["/bin/true"],
         },
         "test": {
             "pytest": ["pytest"],
             "go test": ["go", "test", "./..."],
             "cargo test": ["cargo", "test"],
             "npm test": ["npm", "test"],
-            "true": ["/bin/true"],
+            "noop": ["/bin/true"],
         },
         "typecheck": {
             "mypy": ["mypy", "."],
             "pyright": ["npx", "pyright"],
             "typescript": ["npx", "tsc", "--noEmit"],
-            "true": ["/bin/true"],
+            "noop": ["/bin/true"],
         },
         "format": {
             "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
@@ -176,7 +190,7 @@ def get_commands(fix=False):
             if fix
             else ["npx", "prettier", "--check", "."],
             "rustfmt": ["cargo", "fmt"] + (["--check"] if not fix else []),
-            "true": ["/bin/true"],
+            "noop": ["/bin/true"],
         },
     }
 
@@ -304,15 +318,28 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
         tool = config.get("repo", {}).get(config_key.replace("repo.", ""))
     sys.stderr.flush()
 
+    if is_noop_tool(tool):
+        msg = f"❌ NO {tool_type.upper()} TOOL CONFIGURED! ({config_key} IS SET TO THE NO-OP '{tool}', WHICH SKIPS THE CHECK)! RUN 'tasks config detect --save' OR SET MANUALLY: tasks config set {config_key} <tool>! 🔨"
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "tool": tool_type,
+                        "error": msg,
+                        "configured": tool,
+                    }
+                )
+            )
+        else:
+            print(f"Error: {msg}")
+        return 1
+
     commands = get_commands(fix).get(tool_type, {})
     sys.stderr.flush()
 
     tool_basename = os.path.basename(tool) if tool else None
     lookup_key = tool_basename if (tool and tool_basename in commands) else tool
-
-    # Normalize /bin/true to true for lookup
-    if tool and str(tool).startswith("/bin/"):
-        lookup_key = "true"
 
     # Also check if tool itself (the string) is in commands
     if tool and tool in commands:
@@ -391,32 +418,12 @@ def run_check(tool_type, fix=False, as_json=False, dev=False):
     cmd_to_run = cmd.copy()
     env = os.environ.copy()
     if tool == "pytest":
-        # Add explicit path to the project root to ensure pytest finds tests
-        cmd_to_run.append(project_root)
-        # The pipeline suites exercise the move/gate hooks (and the research
-        # gate) for real; they are listed explicitly, never ignored. A suite
-        # that cannot pass here gets its own fix task before check stays green.
-        cmd_to_run.extend(
-            [
-                "tests/test_cli_robustness.py",
-                "tests/test_repo.py",
-                "tests/test_security.py",
-                "tests/test_dev_mode.py",
-                "tests/test_error_reporting.py",
-                "tests/test_git_hook_restrictions.py",
-                "tests/test_init_backup.py",
-                "tests/test_pairing.py",
-                "tests/test_tasks.py",
-                "tests/test_robustness.py",
-                "tests/test_robustness_bugfix.py",
-                "tests/test_all_transitions.py",
-                "tests/test_artifact_healing.py",
-                "tests/test_audit_verify.py",
-                "tests/test_audit_verify_integration.py",
-                "tests/test_cli_endpoints.py",
-                "tests/test_tasks_modular.py",
-            ]
-        )
+        # Same list Validator runs: appending project_root here as well once made
+        # pytest collect the whole tree on top of it and blew the 300s timeout.
+        # Local import keeps check.py standalone-runnable outside a checkout.
+        from tasks_ai.validator import PINNED_PYTEST_ARGS
+
+        cmd_to_run.extend(PINNED_PYTEST_ARGS)
         # Add PYTHONPATH so tests can import tasks_ai modules
         env["PYTHONPATH"] = project_root
 

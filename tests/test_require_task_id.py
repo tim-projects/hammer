@@ -4,6 +4,7 @@ Without one, get_active_task used to return items[0] of an unsorted
 os.listdir of .tasks/progressing and sync_task_content wrote that
 arbitrary task's record with another branch's commits.
 """
+
 import json
 import os
 import shutil
@@ -11,59 +12,66 @@ import subprocess
 import tempfile
 import unittest
 
-STORY = 'Sufficiently long story content here to pass validation'
-TECH = 'Sufficiently long technical description here to pass validation'
-CRITERIA = 'Sufficiently long acceptance criteria here to pass validation'
-PLAN = 'Sufficiently long planning details here to pass validation'
+STORY = "Sufficiently long story content here to pass validation"
+RESEARCH = "Read pipeline_hooks.py exit-hook registration and this suite before driving the task."
+TECH = "Sufficiently long technical description here to pass validation"
+CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
+PLAN = "Sufficiently long planning details here to pass validation"
 
 
 class TestRequireTaskId(unittest.TestCase):
-
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        self.repo_dir = os.path.join(self.test_dir, 'repo')
+        self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
-        subprocess.run(['git', 'init'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "init"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ['git', 'config', 'user.email', 'test@example.com'], cwd=self.repo_dir
+            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
         )
-        subprocess.run(['git', 'config', 'user.name', 'Test User'], cwd=self.repo_dir)  # noqa: PLW1510
-        with open(os.path.join(self.repo_dir, 'README.md'), 'w') as handle:
-            handle.write('# Test Repo')
-        subprocess.run(['git', 'add', 'README.md'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_dir)  # noqa: PLW1510
+        with open(os.path.join(self.repo_dir, "README.md"), "w") as handle:
+            handle.write("# Test Repo")
+        subprocess.run(
+            ["git", "add", "README.md"],
+            cwd=self.repo_dir,
+            capture_output=True,
+            check=False,
+        )
         subprocess.run(  # noqa: PLW1510
-            ['git', 'commit', '-m', 'Initial commit'], cwd=self.repo_dir
+            ["git", "commit", "-m", "Initial commit"], cwd=self.repo_dir
         )
         # The symlinked hammer resolves to the working tree under test, so these
         # tests exercise the branch code, not a clone of main.
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.script_path = os.path.join(self.repo_dir, 'hammer')
-        os.symlink(os.path.join(project_root, 'hammer'), self.script_path)
-        subprocess.run(['git', 'add', 'hammer'], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
+        self.script_path = os.path.join(self.repo_dir, "hammer")
+        os.symlink(os.path.join(project_root, "hammer"), self.script_path)
+        subprocess.run(["git", "add", "hammer"], cwd=self.repo_dir, capture_output=True)  # noqa: PLW1510
         subprocess.run(  # noqa: PLW1510
-            ['git', 'commit', '-m', 'Add hammer'], cwd=self.repo_dir, capture_output=True
+            ["git", "commit", "-m", "Add hammer"],
+            cwd=self.repo_dir,
+            capture_output=True,
         )
-        config_dir = os.path.join(self.repo_dir, '.tasks')
+        config_dir = os.path.join(self.repo_dir, ".tasks")
         os.makedirs(config_dir, exist_ok=True)
         config_data = {
-            'repo': {
-                'lint': '/bin/true',
-                'test': '/bin/true',
-                'type_check': '/bin/true',
-                'format': '/bin/true',
-                'skip_push': True,
+            "repo": {
+                "lint": "noop",
+                "test": "noop",
+                "type_check": "noop",
+                "format": "noop",
+                "skip_push": True,
             }
         }
-        with open(os.path.join(config_dir, 'config.yaml'), 'w') as handle:
+        with open(os.path.join(config_dir, "config.yaml"), "w") as handle:
             json.dump(config_data, handle)
-        self.run_cmd(['init'])
+        self.run_cmd(["init"])
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
     def run_cmd(self, args):
         result = subprocess.run(  # noqa: PLW1510
-            [self.script_path, 'tasks', '-j'] + args,
+            [self.script_path, "tasks", "-j"] + args,
             cwd=self.repo_dir,
             capture_output=True,
             text=True,
@@ -71,72 +79,90 @@ class TestRequireTaskId(unittest.TestCase):
         try:
             return json.loads(result.stdout)
         except json.JSONDecodeError:
-            return {'success': False, 'stdout': result.stdout, 'stderr': result.stderr}
+            return {"success": False, "stdout": result.stdout, "stderr": result.stderr}
 
     def make_processing_task(self, title):
-        res = self.run_cmd([
-            'create', title,
-            '--story', STORY,
-            '--tech', TECH,
-            '--criteria', CRITERIA,
-            '--plan', PLAN,
-        ])
-        self.assertTrue(res['success'], res)
-        task_file = res['data']['file']
-        self.run_cmd(['move', task_file, 'READY'])
-        self.run_cmd(['move', task_file, 'PROGRESSING'])
-        return res['data']['id'], task_file
+        res = self.run_cmd(
+            [
+                "create",
+                title,
+                "--story",
+                STORY,
+                "--tech",
+                TECH,
+                "--criteria",
+                CRITERIA,
+                "--plan",
+                PLAN,
+            ]
+        )
+        self.assertTrue(res["success"], res)
+        task_file = res["data"]["file"]
+        ready = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(ready["success"], ready)
+        # The READY exit gate demands a recorded research pass before PROGRESSING.
+        research = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+        self.assertTrue(research["success"], research)
+        progressing = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertTrue(progressing["success"], progressing)
+        return res["data"]["id"], task_file
 
     def snapshot(self, task_file):
         snap = {}
-        root = os.path.join(self.repo_dir, '.tasks', 'progressing', task_file)
+        root = os.path.join(self.repo_dir, ".tasks", "progressing", task_file)
         for name in sorted(os.listdir(root)):
             with open(os.path.join(root, name)) as handle:
                 snap[name] = handle.read()
         return snap
 
     def test_no_id_is_rejected(self):
-        self.make_processing_task('Alpha task for id requirement testing')
-        self.make_processing_task('Beta task for id requirement testing')
-        for cmd in ('checkpoint', 'current', 'undo'):
+        self.make_processing_task("Alpha task for id requirement testing")
+        self.make_processing_task("Beta task for id requirement testing")
+        for cmd in ("checkpoint", "current", "undo"):
             res = self.run_cmd([cmd])
-            self.assertFalse(res['success'], f'{cmd} without id must fail: {res}')
+            self.assertFalse(res["success"], f"{cmd} without id must fail: {res}")
 
     def test_no_id_writes_nothing(self):
-        _, file_a = self.make_processing_task('Gamma task for id requirement testing')
-        _, file_b = self.make_processing_task('Delta task for id requirement testing')
+        _, file_a = self.make_processing_task("Gamma task for id requirement testing")
+        _, file_b = self.make_processing_task("Delta task for id requirement testing")
         before = (self.snapshot(file_a), self.snapshot(file_b))
-        for cmd in ('checkpoint', 'current', 'undo'):
+        for cmd in ("checkpoint", "current", "undo"):
             self.run_cmd([cmd])
         self.assertEqual(
             (self.snapshot(file_a), self.snapshot(file_b)),
             before,
-            'no-id commands must not touch any task record',
+            "no-id commands must not touch any task record",
         )
 
     def test_explicit_id_hits_only_that_task(self):
-        task_id, _ = self.make_processing_task('Epsilon task for id requirement testing')
-        _, file_b = self.make_processing_task('Zeta task for id requirement testing')
+        task_id, _ = self.make_processing_task(
+            "Epsilon task for id requirement testing"
+        )
+        _, file_b = self.make_processing_task("Zeta task for id requirement testing")
         before_b = self.snapshot(file_b)
-        res = self.run_cmd(['checkpoint', str(task_id)])
-        self.assertTrue(res['success'], res)
-        self.assertEqual(str(res['data']['id']), str(task_id))
-        self.assertEqual(before_b, self.snapshot(file_b), 'checkpoint touched another task record')
+        res = self.run_cmd(["checkpoint", str(task_id)])
+        self.assertTrue(res["success"], res)
+        self.assertEqual(str(res["data"]["id"]), str(task_id))
+        self.assertEqual(
+            before_b, self.snapshot(file_b), "checkpoint touched another task record"
+        )
 
     def test_current_with_id_reports_that_task(self):
-        task_id, file_a = self.make_processing_task('Eta task for id requirement testing')
-        self.make_processing_task('Theta task for id requirement testing')
-        res = self.run_cmd(['current', str(task_id)])
-        self.assertTrue(res['success'], res)
-        self.assertEqual(res['data']['name'], file_a)
+        task_id, file_a = self.make_processing_task(
+            "Eta task for id requirement testing"
+        )
+        self.make_processing_task("Theta task for id requirement testing")
+        res = self.run_cmd(["current", str(task_id)])
+        self.assertTrue(res["success"], res)
+        self.assertEqual(res["data"]["name"], file_a)
 
     def test_unresolvable_id_is_rejected(self):
-        self.make_processing_task('Iota task for id requirement testing')
-        self.make_processing_task('Kappa task for id requirement testing')
-        for cmd in ('checkpoint', 'current', 'undo'):
-            res = self.run_cmd([cmd, '999999'])
-            self.assertFalse(res['success'], f'{cmd} with a bad id must fail: {res}')
+        self.make_processing_task("Iota task for id requirement testing")
+        self.make_processing_task("Kappa task for id requirement testing")
+        for cmd in ("checkpoint", "current", "undo"):
+            res = self.run_cmd([cmd, "999999"])
+            self.assertFalse(res["success"], f"{cmd} with a bad id must fail: {res}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
