@@ -1,0 +1,1 @@
+hammer check all on the 406 branch: lint/test/typecheck/format all exit 0 in 61s (bare pytest before the fix collected the whole tree and hit the 300s timeout). Validator and check.py share one PINNED_PYTEST_ARGS; regression test TestPinnedPytestList passes; tests/test_check_worktree.py 7 passed.

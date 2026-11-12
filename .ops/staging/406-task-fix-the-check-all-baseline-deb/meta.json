@@ -1,0 +1,36 @@
+{
+  "Id": 406,
+  "Ti": "Fix the check all baseline debt",
+  "Ty": "task",
+  "Cr": "261111 06:12",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "406-task-fix-the-check-all-baseline-deb",
+  "Pt": null,
+  "Tp": false,
+  "Rr": true,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794407663.145492,
+  "DoneAt": 1794506430.182713,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/406-task-fix-the-check-all-baseline-deb/patches/check.py.patch"
+    },
+    {
+      "file": "error_report.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/406-task-fix-the-check-all-baseline-deb/patches/error_report.json.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/406-task-fix-the-check-all-baseline-deb/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/test_check_worktree.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/406-task-fix-the-check-all-baseline-deb/patches/tests_test_check_worktree.py.patch"
+    }
+  ]
+}
