@@ -1,0 +1,10 @@
+{
+  "Id": 415,
+  "Ti": "Mount should sync clean worktrees and warn on conflicts",
+  "Ty": "task",
+  "Cr": "261112 04:25",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "415-task-mount-should-sync-clean-worktr",
+  "Pt": null
+}
