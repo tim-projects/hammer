@@ -1,6 +1,0 @@
-- [ ] `tasks mount <id>` on a worktree with no own work syncs it to the default branch and says so
-- [ ] `tasks mount <id>` on a worktree with own work performs no merge (working tree untouched) and lists the conflicting files against the default branch
-- [ ] Mount reports a clean worktree (no conflicts) when the merge would apply cleanly
-- [ ] Auto-sync failure aborts the merge and reports WORKTREE_MERGE_CONFLICT, leaving no in-progress merge
-- [ ] No default branch (scratch repo) means mount still succeeds, only skipping the sync/warning
-- [ ] User test covering the sync case, the warn case, and the no-default-branch case
