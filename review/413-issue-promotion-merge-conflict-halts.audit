@@ -1,0 +1,10 @@
+{
+    "task_id": "413",
+    "patch_hash": "423edb1ff801f3d2b5d1db448dd1bd84",
+    "patch_files": [
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
