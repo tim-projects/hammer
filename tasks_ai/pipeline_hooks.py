@@ -2,6 +2,7 @@ import os
 import shutil
 from datetime import datetime
 
+from .cli_errors import PipelineMergeConflict
 from .constants import CURRENT_TASK_FILENAME, STATE_FOLDERS, load_config
 from .guard_engine import GuardEngine, GuardUnavailable
 from .hooks import PipelineHook
@@ -452,31 +453,22 @@ class WorktreeSyncHook(PipelineHook):
             if not default_branch:
                 cli.console("worktree", "sync", "skipped (no main/master)")
                 return
-            merge_source = f"origin/{default_branch}"
-            fetch_res = cli.git.run(
-                ["fetch", "origin", default_branch],
-                check=False,
-                cwd=cli.context.main_repo_root,
-            )
-            if fetch_res.returncode != 0:
-                local_res = cli.git.run(
-                    ["rev-parse", "--verify", default_branch],
-                    check=False,
-                    cwd=cli.context.main_repo_root,
-                )
-                if local_res.returncode == 0:
-                    merge_source = default_branch
-                else:
-                    cli.console("worktree", "sync", "skipped (no remote/default)")
-                    return
 
-            merge_res = cli.git.run(["merge", merge_source], cwd=worktree_path)
-            if merge_res.returncode != 0:
-                cli.console("worktree", "merge", "conflict")
-                cli.git.run(["merge", "--abort"], cwd=worktree_path)
-                cli.error(
-                    "WORKTREE_MERGE_CONFLICT", branch=branch, default=default_branch
+            try:
+                merged_source = cli.git.sync_worktree(
+                    worktree_path, default_branch, branch
                 )
+            except PipelineMergeConflict as e:
+                cli.console("worktree", "merge", "conflict")
+                cli.error(
+                    "WORKTREE_MERGE_CONFLICT",
+                    branch=e.branch,
+                    default=e.default,
+                )
+
+            if not merged_source:
+                cli.console("worktree", "sync", "skipped (no remote/default)")
+                return
 
             cli.console("worktree", "sync", "complete")
 

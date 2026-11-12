@@ -365,6 +365,85 @@ class GitService:
             == 0
         )
 
+    def resolve_merge_source(self, default_branch: str) -> str | None:
+        """Ref to merge from: origin/<default> when reachable, else local <default>.
+
+        Returns None when neither exists (scratch repo with no main/master).
+        """
+        repo_root = self.context.main_repo_root
+        fetch = self.run(
+            ["fetch", "origin", default_branch], cwd=repo_root, check=False
+        )
+        if fetch.returncode == 0 and self.branch_exists(
+            f"origin/{default_branch}", repo_root
+        ):
+            return f"origin/{default_branch}"
+        if self.branch_exists(default_branch, repo_root):
+            return default_branch
+        return None
+
+    def has_local_work(self, worktree_path: str, merge_source: str) -> bool:
+        """True when the worktree has work that is not on <merge_source>.
+
+        Untracked files count as work: a merge that would overwrite them fails
+        with "untracked working tree file would be overwritten", so they block
+        the auto-sync just like committed work does.
+        """
+        status = self.run(["status", "--porcelain"], cwd=worktree_path, check=False)
+        if status.returncode == 0 and status.stdout.strip():
+            return True
+        ahead = self.run(
+            ["rev-list", "--count", f"{merge_source}..HEAD"],
+            cwd=worktree_path,
+            check=False,
+        )
+        return ahead.returncode != 0 or ahead.stdout.strip() != "0"
+
+    def conflicting_files(
+        self, worktree_path: str, merge_source: str
+    ) -> list[str] | None:
+        """Paths that conflict when <merge_source> merges into the worktree HEAD.
+
+        merge-tree writes nothing to the working tree, so this never touches the
+        user's files. None means the check itself could not run (old git).
+        """
+        res = self.run(
+            ["merge-tree", "--write-tree", "HEAD", merge_source],
+            cwd=worktree_path,
+            check=False,
+        )
+        if res.returncode == 0:
+            return []
+        if res.returncode < 0:
+            return None
+        paths: list[str] = []
+        for line in res.stdout.splitlines()[1:]:
+            if line[:1].isdigit() and "\t" in line:
+                path = line.split("\t", 1)[1]
+                if path not in paths:
+                    paths.append(path)
+        return paths
+
+    def sync_worktree(
+        self, worktree_path: str, default_branch: str, branch: str = "worktree"
+    ) -> str | None:
+        """Merge the default branch into the worktree, aborting on conflict.
+
+        Returns the ref merged from, or None when there is no default ref to
+        merge from. Aborting keeps the worktree clean: no conflict markers and
+        no in-progress merge left for the next command to trip over.
+        """
+        source = self.resolve_merge_source(default_branch)
+        if not source:
+            return None
+        merge = self.run(["merge", source], cwd=worktree_path)
+        if merge.returncode != 0:
+            self.run(["merge", "--abort"], cwd=worktree_path)
+            from .cli_errors import PipelineMergeConflict
+
+            raise PipelineMergeConflict(branch, default_branch)
+        return source
+
     def promote_task(
         self,
         task,
