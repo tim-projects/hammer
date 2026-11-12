@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794513139.89428,
-  "DoneAt": null,
+  "DoneAt": 1794513233.339245,
   "PatchFiles": [
     {
       "file": "tasks_ai/commands/move.py",
