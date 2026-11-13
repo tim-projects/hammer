@@ -1,0 +1,9 @@
+{
+    "task_id": "326",
+    "patch_hash": "a5323cb8513be2cf9ea16b9c5c9e2a9b",
+    "patch_files": [
+        "tasks_ai_validator.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
