@@ -1,10 +1,7 @@
-- [ ] Missing verification proof produces a terminal `NEXT STEP` instruction rather than the confusing `Error: Verification proof missing.` response.
-- [ ] JSON output identifies the result with `status: action_required` and retains a non-zero exit status.
-- [ ] The instruction follows Hammer voice with WHAT, WHY, HOW, and CONSEQUENCE.
-- [ ] The guidance uses the real `.tasks/review/<task-folder>/patches/` path and contains no hardcoded home or state-directory path.
-- [ ] The guidance instructs the agent to display every patch with `cat` and capture `sha256sum` evidence.
-- [ ] The guidance provides the correct `modify --reviewed`, `audit`, `verify --proof`, and `modify --regression-check` sequence.
-- [ ] The missing-proof request still leaves `Rc` unset and promotion blocked.
-- [ ] Audit mismatch, integrity mismatch, and validation failures remain normal blocking errors.
-- [ ] `AGENTS.md` tells agents to follow expected action-required instructions while still stopping for genuine failures.
-- [ ] Focused regression tests cover the action-required schema, dynamic paths, exact review guidance, blocked promotion, and genuine-error behavior.
+- [ ] A test verifies missing proof returns JSON `status: action_required` with a non-zero exit status.
+- [ ] A test verifies terminal output uses a `NEXT STEP` marker and Hammer-voice WHAT/WHY/HOW/CONSEQUENCE guidance.
+- [ ] A test verifies the guidance contains the dynamic patch directory and the audit → cat/checksum → reviewed → verify → regression-check sequence.
+- [ ] A test verifies audit refreshes stale patches before their review evidence is accepted.
+- [ ] A test verifies task 390's receipt invalidation rejects evidence from a superseded patch set.
+- [ ] A test verifies missing proof leaves `Rc` unset and promotion blocked.
+- [ ] A test verifies audit and integrity mismatches remain ordinary blocking errors.
