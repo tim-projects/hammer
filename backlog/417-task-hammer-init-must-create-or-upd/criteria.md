@@ -1,0 +1,5 @@
+- [ ] `hammer tasks init` creates `.tasks/.gitignore` in a fresh task store.
+- [ ] The generated `.tasks/.gitignore` matches the canonical template and includes the Markdown rules `*.md`, `!README.md`, and `!AGENTS.md`.
+- [ ] Running initialization again updates missing or stale template entries without duplicating rules.
+- [ ] Unrelated user-authored `.gitignore` entries are preserved.
+- [ ] Focused regression tests cover fresh and repeated initialization.
