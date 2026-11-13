@@ -2,6 +2,8 @@
 - [ ] The generated `.tasks/.gitignore` matches the canonical template and includes `!*.md`.
 - [ ] The generated template does not contain `*.md`, `!README.md`, or `!AGENTS.md`.
 - [ ] A Markdown file in the task store is not ignored and is tracked by Git.
+- [ ] Runtime-only `.hammer-lock` and `.ops/` files are ignored.
+- [ ] Development caches and local scratch files are ignored without excluding persistent task records, logs, patches, audits, hashes, configuration, counters, or manifests.
 - [ ] Running initialization again updates missing or stale template entries without duplicating rules.
 - [ ] Unrelated user-authored `.gitignore` entries are preserved.
 - [ ] Focused regression tests cover fresh initialization, repeated initialization, and Markdown tracking.
