@@ -1,11 +1,11 @@
-- [ ] `hammer tasks init` creates `.tasks/.gitignore` in a fresh task store.
-- [ ] The generated `.tasks/.gitignore` matches the canonical template and includes `!*.md`.
-- [ ] The generated template does not contain `*.md`, `!README.md`, or `!AGENTS.md`.
-- [ ] A Markdown file in the task store is not ignored and is tracked by Git.
-- [ ] The runtime `.hammer-lock` file is ignored.
-- [ ] Local validation, debug-log, and legacy counter caches are ignored.
-- [ ] Development caches and local scratch files are ignored without excluding persistent task records, task-directory logs, patches, audits, hashes, configuration, the active counter, or the manifest.
-- [ ] `.ops/` remains visible to Git so the pipeline can stage and remove legacy task copies.
-- [ ] Running initialization again updates missing or stale template entries without duplicating rules or resetting task data.
-- [ ] Unrelated user-authored `.gitignore` entries are preserved.
-- [ ] Focused regression tests cover fresh initialization, repeated initialization, and Markdown tracking.
+- [x] `hammer tasks init` creates `.tasks/.gitignore` in a fresh task store.
+- [x] The generated `.tasks/.gitignore` matches the canonical template and includes `!*.md`.
+- [x] The generated template does not contain `*.md`, `!README.md`, or `!AGENTS.md`.
+- [x] A Markdown file in the task store is not ignored and is tracked by Git.
+- [x] The runtime `.hammer-lock` file is ignored.
+- [x] Local validation, debug-log, and legacy counter caches are ignored.
+- [x] Development caches and local scratch files are ignored without excluding persistent task records, task-directory logs, patches, audits, hashes, configuration, the active counter, or the manifest.
+- [x] `.ops/` remains visible to Git so the pipeline can stage and remove legacy task copies.
+- [x] Running initialization again updates missing or stale template entries without duplicating rules or resetting task data.
+- [x] Unrelated user-authored `.gitignore` entries are preserved.
+- [x] Focused regression tests cover fresh initialization, repeated initialization, and Markdown tracking.
