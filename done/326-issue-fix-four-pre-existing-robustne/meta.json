@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794530405.441154,
-  "DoneAt": null,
+  "DoneAt": 1794530861.40685,
   "PatchFiles": [
     {
       "file": "tasks_ai/validator.py",
