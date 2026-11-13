@@ -1,4 +1,5 @@
 - [ ] A test verifies fresh initialization creates `.tasks/.gitignore` with `!*.md` and without `*.md`.
 - [ ] A test verifies a Markdown file in the task store is not ignored and is tracked by Git.
+- [ ] A test verifies runtime-only and development-cache files are ignored while persistent task data remains visible to Git.
 - [ ] A test verifies repeated initialization updates stale managed rules without duplication.
 - [ ] A test verifies unrelated user-authored `.gitignore` entries are preserved.
