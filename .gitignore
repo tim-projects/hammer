@@ -1,17 +1,26 @@
-tasks/
-venv/
+# Runtime locks and transient staging
+/.hammer-lock
+/.ops/
 
-.tasks/
-.tasks.bak/
+# Local validation, logs, and legacy counter caches
+/.last_validation_hash
+/log/
+/.task_counter.backup
+/.task_counter.backup.hash
+/task_counter
 
+# Python environments and caches
+/.venv/
+/venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
 
+# Local scratch and backups
+tmp*
+*.tmp
+*.bak
 *.txt
 
-.hammer tasks/
-
-*.bak
-
-.hammer-lock
+# Task records are persistent data and must be tracked by Git
+!*.md

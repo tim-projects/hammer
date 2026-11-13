@@ -2,6 +2,7 @@
 Task: 417-task-hammer-init-must-create-or-upd
 ---
 
+
 ## Live store assessment
 
 Inspected 2,713 tracked files in `.tasks` plus all untracked and ignored paths.
