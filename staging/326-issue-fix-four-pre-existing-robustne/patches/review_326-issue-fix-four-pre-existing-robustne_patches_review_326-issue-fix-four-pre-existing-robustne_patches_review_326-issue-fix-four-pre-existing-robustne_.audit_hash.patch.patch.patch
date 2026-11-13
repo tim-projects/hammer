@@ -1,0 +1,20 @@
+diff --git a/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch.patch b/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch.patch
+new file mode 100644
+index 0000000..ee7050f
+--- /dev/null
++++ b/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch.patch
+@@ -0,0 +1,14 @@
++diff --git a/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch b/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch
++new file mode 100644
++index 0000000..2c77b45
++--- /dev/null
+++++ b/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch
++@@ -0,0 +1,8 @@
+++diff --git a/review/326-issue-fix-four-pre-existing-robustne/.audit_hash b/review/326-issue-fix-four-pre-existing-robustne/.audit_hash
+++new file mode 100644
+++index 0000000..358fa5d
+++--- /dev/null
++++++ b/review/326-issue-fix-four-pre-existing-robustne/.audit_hash
+++@@ -0,0 +1 @@
++++f3109067bf55ae9557c0fe31b38c8f7d2ec378ec8393d313a37ab99ae35092cf
+++\ No newline at end of file
