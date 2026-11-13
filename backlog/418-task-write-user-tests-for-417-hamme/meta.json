@@ -1,0 +1,10 @@
+{
+  "Id": 418,
+  "Ti": "Write user tests for 417: Hammer init must create or update the .tasks gitignore template",
+  "Ty": "task",
+  "Cr": "261113 03:30",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "418-task-write-user-tests-for-417-hamme",
+  "Pt": 417
+}
