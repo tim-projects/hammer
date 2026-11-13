@@ -31,6 +31,49 @@ def save_config(tasks_path, cfg):
 TASKS_DIR = ".tasks"
 TASKS_BRANCH = "tasks"
 CURRENT_TASK_FILENAME = "current-task.md"
+TASKS_GITIGNORE_TEMPLATE = """# Runtime lock
+/.hammer-lock
+
+# Local validation, logs, and legacy counter caches
+/.last_validation_hash
+/log/
+/.task_counter.backup
+/.task_counter.backup.hash
+/task_counter
+
+# Python environments and caches
+/.venv/
+/venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local scratch and backups
+tmp*
+*.tmp
+*.bak
+*.txt
+
+# Task records are persistent data and must be tracked by Git
+!*.md
+"""
+TASKS_GITIGNORE_MANAGED_LINES = frozenset(
+    {line for line in TASKS_GITIGNORE_TEMPLATE.splitlines() if line}
+    | {
+        "tasks/",
+        "venv/",
+        ".tasks/",
+        ".tasks.bak/",
+        "*.pyc",
+        "*.md",
+        "!README.md",
+        "!AGENTS.md",
+        ".hammer tasks/",
+        ".hammer-lock",
+        "/.ops/",
+        "# User-authored entries",
+    }
+)
 STATE_FOLDERS = {
     "BACKLOG": "backlog",
     "READY": "ready",
