@@ -1,0 +1,10 @@
+{
+    "task_id": "417",
+    "patch_hash": "837f10a894fa69249f4c5a65e0f7041c",
+    "patch_files": [
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_constants.py.patch",
+        "tests_test_tasks_gitignore.py.patch"
+    ],
+    "status": "verified"
+}
