@@ -1,0 +1,1 @@
+Write user-level regression tests for task 417. Initialize a fresh task store, verify the generated `.tasks/.gitignore` includes `!*.md` and excludes `*.md`, then create or add a Markdown file and verify Git does not ignore it and tracks it. Also verify repeated initialization is idempotent and does not duplicate managed rules.
