@@ -1,22 +1,82 @@
 diff --git a/review/326-issue-fix-four-pre-existing-robustne/reviews.json b/review/326-issue-fix-four-pre-existing-robustne/reviews.json
 new file mode 100644
-index 0000000..decd5e0
+index 0000000..c594381
 --- /dev/null
 +++ b/review/326-issue-fix-four-pre-existing-robustne/reviews.json
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,75 @@
 +{
 +  "reviews": [
 +    {
-+      "file": "tasks_ai/validator.py",
-+      "patch": "tasks_ai_validator.py.patch",
-+      "md5": "f8217167eeaacec9ecf6e279862f3d6f"
++      "file": "review/326-issue-fix-four-pre-existing-robustne.audit",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne.audit.patch",
++      "md5": "dac852904c9c27ef954c513fb142151f"
 +    },
 +    {
-+      "file": "tests/test_tasks.py",
-+      "patch": "tests_test_tasks.py.patch",
-+      "md5": "169d7cc95ff0bf1085b4d4d0cf49ffca"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/.audit_hash",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch",
++      "md5": "15d6f8e151e3c7b8f86e61f0f2a4c257"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/meta.json",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_meta.json.patch",
++      "md5": "439e476ec4d5d328726c2f237336e090"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne.audit.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_review_326-issue-fix-four-pre-existing-robustne.audit.patch.patch",
++      "md5": "6394813da09d1d374cb4ab23cd1b39bc"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/tasks_ai_validator.py.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch",
++      "md5": "efb02a15b59ac296f4f0872c1adae73c"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch.patch",
++      "md5": "52f0351968284bf42ee34776c689d6a4"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_meta.json.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_meta.json.patch.patch",
++      "md5": "fa7e327da4fe6b5c2b2c2b345c210ed1"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch.patch",
++      "md5": "05df7433f9707413f72c6c910b21464c"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch.patch",
++      "md5": "bb2af4a4a1322b5f5947ff63077d23d7"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_reviews.json.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_reviews.json.patch.patch",
++      "md5": "e9aea832ab009bbe77cafc4bbaa882de"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch.patch",
++      "md5": "02bf91ac056dc8daef7ea15ad9ffb3a4"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/tests_test_tasks.py.patch",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch",
++      "md5": "4fb18989d57406eb0222d5124b80b1c8"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/reviews.json",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_reviews.json.patch",
++      "md5": "be18f83eb56e75c7cbb7281dbb9386e1"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/verification_proof.log",
++      "patch": "review_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch",
++      "md5": "d7f739b78305d112fffdbc716cadc3a4"
 +    }
 +  ],
-+  "reviewed_at": 1794530510.0680144
++  "reviewed_at": 1794531066.1823835
 +}
 \ No newline at end of file

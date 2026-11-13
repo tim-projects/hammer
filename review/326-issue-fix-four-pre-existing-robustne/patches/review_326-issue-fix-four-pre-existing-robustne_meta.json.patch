@@ -1,9 +1,9 @@
 diff --git a/review/326-issue-fix-four-pre-existing-robustne/meta.json b/review/326-issue-fix-four-pre-existing-robustne/meta.json
 new file mode 100644
-index 0000000..91d611d
+index 0000000..4956a22
 --- /dev/null
 +++ b/review/326-issue-fix-four-pre-existing-robustne/meta.json
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,76 @@
 +{
 +  "Id": 326,
 +  "Ti": "Fix four pre-existing robustness test failures on main",
@@ -16,7 +16,7 @@ index 0000000..91d611d
 +  "Rc": "",
 +  "Vp": true,
 +  "Rr": true,
-+  "Tp": true,
++  "Tp": false,
 +  "Reviewed": true,
 +  "AuditPassed": false,
 +  "PatchGenTime": 1794530928.755401,
@@ -27,28 +27,56 @@ index 0000000..91d611d
 +      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne.audit.patch"
 +    },
 +    {
-+      "file": "testing/326-issue-fix-four-pre-existing-robustne/.audit_hash",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/.audit_hash",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch"
 +    },
 +    {
-+      "file": "testing/326-issue-fix-four-pre-existing-robustne/meta.json",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_meta.json.patch"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/meta.json",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_meta.json.patch"
 +    },
 +    {
-+      "file": "testing/326-issue-fix-four-pre-existing-robustne/patches/tasks_ai_validator.py.patch",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne.audit.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_review_326-issue-fix-four-pre-existing-robustne.audit.patch.patch"
 +    },
 +    {
-+      "file": "testing/326-issue-fix-four-pre-existing-robustne/patches/tests_test_tasks.py.patch",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/tasks_ai_validator.py.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch"
 +    },
 +    {
-+      "file": "testing/326-issue-fix-four-pre-existing-robustne/reviews.json",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_reviews.json.patch"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch.patch"
 +    },
 +    {
-+      "file": "testing/326-issue-fix-four-pre-existing-robustne/verification_proof.log",
-+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch"
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_meta.json.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_meta.json.patch.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_reviews.json.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_reviews.json.patch.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/testing_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/patches/tests_test_tasks.py.patch",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/reviews.json",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_reviews.json.patch"
++    },
++    {
++      "file": "review/326-issue-fix-four-pre-existing-robustne/verification_proof.log",
++      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/326-issue-fix-four-pre-existing-robustne/patches/review_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch"
 +    }
 +  ]
 +}
