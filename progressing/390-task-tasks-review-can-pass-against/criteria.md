@@ -1,6 +1,6 @@
-- [ ] re-entering REVIEW regenerates every patch to the branch HEAD at that moment
-- [ ] patch files no longer in the changed set are pruned, not left stale
-- [ ] a receipt recorded against a superseded patch cannot satisfy the gate (staleness detected)
-- [ ] regeneration is discoverable: a command or hint forces patch refresh without manual deletion
-- [ ] regression tests cover re-entry after branch changes and after sync merges
-- [ ] existing review flow tests still pass
+- [x] re-entering REVIEW regenerates every patch to the branch HEAD at that moment
+- [x] patch files no longer in the changed set are pruned, not left stale
+- [x] a receipt recorded against a superseded patch cannot satisfy the gate (staleness detected)
+- [x] regeneration is discoverable: a command or hint forces patch refresh without manual deletion
+- [x] regression tests cover re-entry after branch changes and after sync merges
+- [x] existing review flow tests still pass
