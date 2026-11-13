@@ -8,10 +8,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-*.md
-!README.md
-!AGENTS.md
-
 *.txt
 
 .hammer tasks/

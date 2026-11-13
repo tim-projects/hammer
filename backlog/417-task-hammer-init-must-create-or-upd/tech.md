@@ -11,9 +11,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-*.md
-!README.md
-!AGENTS.md
+!*.md
 
 *.txt
 
@@ -24,4 +22,6 @@ __pycache__/
 .hammer-lock
 ```
 
-Initialization must be idempotent. Refresh stale or missing managed entries without duplicating rules, and preserve unrelated user-authored entries outside the managed template. Add focused regression coverage for a fresh initialization and repeated initialization.
+The `!*.md` rule exempts all Markdown files from Git ignore processing. Do not include `*.md` or narrow exceptions such as `!README.md` and `!AGENTS.md`; every Markdown file in the task store must remain eligible for Git tracking.
+
+Initialization must be idempotent. Refresh stale or missing managed entries without duplicating rules, and preserve unrelated user-authored entries outside the managed template. Add focused regression coverage for a fresh initialization, repeated initialization, and Git tracking of a Markdown file.

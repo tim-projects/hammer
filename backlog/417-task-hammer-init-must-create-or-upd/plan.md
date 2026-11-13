@@ -1,4 +1,4 @@
-1. Add a reusable `.tasks/.gitignore` template constant with the Markdown rule and exceptions.
+1. Add a reusable `.tasks/.gitignore` template constant with the `!*.md` exemption.
 2. Add a small init helper that creates the file and reconciles managed template entries while preserving unrelated entries.
 3. Call the helper from production initialization.
-4. Add and run focused regression tests for fresh and repeated initialization.
+4. Add and run focused regression tests for fresh initialization, repeated initialization, and Git tracking of Markdown files.
