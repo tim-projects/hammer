@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794551979.034359,
-  "DoneAt": null,
+  "DoneAt": 1794556944.122714,
   "PatchFiles": [
     {
       "file": "tasks_ai/cli.py",
