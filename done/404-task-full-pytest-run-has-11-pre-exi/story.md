@@ -1,0 +1,1 @@
+As a maintainer I need every suite under a full pytest collection to pass, because check all never ran pytest (config pointed at /bin/true) so 11 failures sat invisible on main.

@@ -1,0 +1,1 @@
+- [x] 1. Error message clearly identifies missing flags. 2. Error message includes usage example or hint. 3. Existing tests pass.

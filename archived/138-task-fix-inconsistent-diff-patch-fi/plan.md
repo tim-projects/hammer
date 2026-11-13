@@ -1,0 +1,1 @@
+1. 1. Locate all incorrect path references. 2. Update to correct path. 3. Verify consistency.

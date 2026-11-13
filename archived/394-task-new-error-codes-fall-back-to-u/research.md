@@ -1,0 +1,1 @@
+Read data/errors.json + hints.json (66/65 codes, WHAT/WHY/HOW/CONSEQUENCE hint structure per docs/HAMMER_VOICE.md) and cli.py error dispatch. RESEARCH_REQUIRED, CONTENT_FILE_NOT_FOUND, PARENT_NOT_FOUND unregistered -> fallback text. Inline hint= kwarg in ResearchGateHook reaches format_map only and never renders.

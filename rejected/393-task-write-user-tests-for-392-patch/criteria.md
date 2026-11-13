@@ -1,0 +1,1 @@
+- [ ] every changed file is rewritten on each REVIEW entry even when its base blob did not move;tasks audit regenerates patches when Rc is PASSED but the branch has changed since PatchGenTime;refreshing a stale patch set needs no state round-trip;user test advances main between review entries and asserts the patch set equals the branch tip;check all passes

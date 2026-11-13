@@ -1,0 +1,1 @@
+As a hammer developer, I need the test suite to run green on main apart from the known pre-existing failures, so every concurrency fix can be verified and a regression in the harness or in dev mode is caught immediately.

@@ -1,0 +1,1 @@
+1. cd into any .task-worktrees/<branch> directory and run ./hammer check all

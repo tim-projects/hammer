@@ -1,0 +1,1 @@
+1. 1. Filter paths in commit_task_paths by disk-or-index existence\n2. move_logic passes the staged .ops path and the audit sibling\n3. Test: clean store after a move that follows a legacy .ops commit, plus the audit sibling\n4. ruff + full suite; move through the pipeline

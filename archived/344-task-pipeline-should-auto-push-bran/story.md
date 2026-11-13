@@ -1,0 +1,1 @@
+As a hammer developer promoting a task, I need hammer to push the required branch to origin itself so that the REVIEW gate passes without me having to stop, run git push by hand, and retry.

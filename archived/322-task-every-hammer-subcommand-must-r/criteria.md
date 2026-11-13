@@ -1,0 +1,19 @@
+- [ ] hammer check -h and hammer check --help print check-tool usage (currently prints 'Validator imported' and runs checks)
+- [ ] hammer check lint|test|typecheck|format|all|debug -h and --help print subcommand usage (6 items; wrapper today ignores the flag and always runs 'all')
+- [ ] hammer repo -h and hammer repo --help print repo usage (currently 'ERROR: Unknown: -h')
+- [ ] hammer repo merge -h and --help print usage, and -h is no longer parsed as a branch name
+- [ ] hammer repo promote -h and --help print usage (deprecated command)
+- [ ] hammer repo demote -h and --help print usage (currently unhandled traceback)
+- [ ] hammer repo sync -h and --help print usage
+- [ ] hammer repo commit -h and --help print usage
+- [ ] hammer repo git -h and --help print usage
+- [ ] hammer repo status -h and --help print usage
+- [ ] hammer repo check-merged -h and --help print usage (currently -h is parsed as a branch name)
+- [ ] hammer repo check-merged-testing -h and --help print usage
+- [ ] hammer repo branch -h and --help print usage, incl. branch list/create/delete/exists (currently 'branch: unknown subcommand')
+- [ ] hammer audit|restore|init-hooks|unarchive|verify -h and --help work via auto-detect (add to COMMAND_TO_TOOL in hammer; currently 'Unknown tool or command')
+- [ ] Remove phantom run/help entries from COMMAND_TO_TOOL or add the subcommands (hammer run -h currently argparse invalid-choice)
+- [ ] Bare 'hammer tasks' / 'hammer check' / 'hammer repo' / 'hammer guard' print tool usage instead of 'HAMMER DEMAND: Specify command'
+- [ ] hammer -h, hammer --help and hammer help still print the wrapper help and exit 0 (no regression)
+- [ ] All new/changed help text follows the HELP MESSAGE RULES & FORMAT (R1-R8) in the tech section: tool + subcommand layout, argparse only, shared global flags, agent guidance, persona limits, plain-text help in JSON mode, 80-col wrap, exit codes
+- [ ] Automated help audit exists and passes for every tool and subcommand, both -h and --help, explicit-tool and auto-detect forms

@@ -1,0 +1,1 @@
+5eb3db7a [350] issue: hammer owns worktree paths - guard, doctor and current agree on one rule

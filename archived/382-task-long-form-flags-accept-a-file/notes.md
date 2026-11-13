@@ -1,0 +1,4 @@
+
+- Progress: Implemented on branch 382-task-long-form-flags-accept-a-file (commit b1ffe48c).
+- Findings: parts already persist as one .md file per part in the task dir, so only the create/modify entry points needed the file-path resolution; no storage change. list flags (criteria/plan/repro) need per-line splitting so existing checkbox/numbering normalization still applies.
+- Debt: --progress/--findings/--mitigations are one-line labels regex-merged into notes and deliberately do not accept files; --title stays short by design. READY research-gate discussion (separate feature) is still open and would use this same file mechanism for --research payloads.

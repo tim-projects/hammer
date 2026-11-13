@@ -1,0 +1,1 @@
+1. 1. Identify current error generation code in tasks_ai/cli.py. 2. Create a reproduction test case. 3. Update the error message. 4. Verify with tests.

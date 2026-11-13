@@ -1,0 +1,4 @@
+- [ ] tasks show <id> --all prints that task's metadata and every .md file
+- [ ] tasks show -j <id> --all emits that task's full record as JSON
+- [ ] tasks show --all with no id still lists all tasks
+- [ ] tasks show <id> without --all is unchanged

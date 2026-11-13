@@ -1,0 +1,1 @@
+- [x] new tests lock the helper (long title, unicode/punctuation title, title shorter than the cap) and ./hammer check all passes

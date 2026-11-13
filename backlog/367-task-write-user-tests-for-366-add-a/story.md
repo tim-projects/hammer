@@ -1,0 +1,1 @@
+As a user I want tasks show --all to output all task .md files and metadata, with -j emitting all task metadata as JSON.

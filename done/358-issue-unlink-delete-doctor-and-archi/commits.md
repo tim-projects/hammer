@@ -1,0 +1,1 @@
+34a55cf0 358: scope the six unscoped store commits to their own task's paths

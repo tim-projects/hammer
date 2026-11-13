@@ -1,0 +1,1 @@
+- [ ] every guard code is REJECT with no config, dev, or per-code exemption; guard.enforce and guard.fail_open config keys removed; test fixtures create real branches in dev mode; guard never mutates repo state; existing guard tests updated to assert blocking behavior

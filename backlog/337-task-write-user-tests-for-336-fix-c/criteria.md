@@ -1,0 +1,6 @@
+- [ ] two racing task create calls allocate distinct ids; no duplicate id appears in the store; hash verification still rejects a tampered counter
+- [ ] concurrent mounts of two tasks leave both entries in worktrees.json after both complete; no GUARD_WORKTREE_ORPHAN hit caused by concurrency
+- [ ] a task branch with zero commits beyond main does not fast-track to REVIEW/STAGING/DONE; a genuinely merged branch still does
+- [ ] undo restores only the target task's files, with exact (id-prefixed) path matching; a sibling id (1 vs 11) is never picked up
+- [ ] undo scans only the target task's history, creates no temp files inside .tasks, and completes without a full-store subprocess scan walk
+- [ ] ./hammer check all passes; new tests under tests/

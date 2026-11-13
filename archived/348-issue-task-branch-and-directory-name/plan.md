@@ -1,0 +1,1 @@
+1. 5. Add tests for the helper and the doctor check; run the full suite and ./hammer check all; promote through the pipeline.

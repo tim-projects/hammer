@@ -1,0 +1,1 @@
+Task 322 rewrote check/repo/wrapper/tasks for argparse help and added tests/test_help_coverage.py. The extended version also locks -h before the subcommand, after positionals, and the git passthrough exception. It currently lives uncommitted in main's working tree; committing it through a task branch keeps the pipeline gates (review, audit, regression check) intact.

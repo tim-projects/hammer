@@ -1,0 +1,1 @@
+As a maintainer, I need the codebase to pass ruff cleanly so future tasks are not blocked by pre-existing lint failures during promotion gates.

@@ -1,0 +1,1 @@
+94d1b52a Register new error codes so they render in hammer voice

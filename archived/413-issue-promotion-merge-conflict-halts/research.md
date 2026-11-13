@@ -1,0 +1,1 @@
+Read story/tech/plan/repro: defect is in tasks_ai/git_service.py:353-356 merge_branches raising bare RuntimeError on conflict; worktree sync hook pipeline_hooks.py:432-479 is the healthy reference. No test covers either path (tests/test_tasks.py:617).

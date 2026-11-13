@@ -1,0 +1,1 @@
+As a reviewer I need the REVIEW patch set to always match the branch tip, because the audit, reviewed and regression-check gates bind md5s over the patches on disk and a stale patch set makes the whole chain attest to code that does not exist on the branch.

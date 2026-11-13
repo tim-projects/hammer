@@ -1,0 +1,1 @@
+3c517ea0 check all: budget 900s for the pinned pytest list; move noqa to the call line

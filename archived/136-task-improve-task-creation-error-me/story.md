@@ -1,0 +1,1 @@
+When creating a task with missing required flags, the user is presented with a cryptic error message. Improve this message to explicitly state which flags are missing and provide usage instructions.

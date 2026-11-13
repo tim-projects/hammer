@@ -1,0 +1,10 @@
+- [x] check.py refuses /bin/true and true as a configured tool for lint, test, typecheck and format: exit code 1, message naming the config key and the fix command tasks config detect --save or tasks config set repo.<key> <tool>
+- [x] tasks_ai/validator.py _get_commands applies the same refusal so a pipeline move with a skipped tool fails loudly instead of no-op passing
+- [x] The true entries are removed from both command tables and the /bin/ prefix normalization in check.py:313-315 that maps them to the true key is deleted
+- [x] run_all prints and counts a skipped tool as a failure, so All checks passed cannot appear while any of the four is unconfigured or set to /bin/true
+- [x] tasks_ai/cli.py init seeder calls detect_tools and writes the detected values; when detection finds nothing it writes no key at all so the missing-config error path fires
+- [x] The live repo config is backfilled: .tasks/config.yaml gets real tools, verified by ./hammer tasks config list showing ruff, pytest, pyright and a format tool
+- [x] scripts/test-setup.sh no longer seeds /bin/true into the config
+- [x] The 9 test files that seed /bin/true still pass without slowing the suite; the choice between real tools in fixtures and a documented gate-only no-op is recorded in the task notes
+- [x] A regression test asserts that a repo configured with /bin/true makes ./hammer check all exit 1 and names the offending key
+- [x] ./hammer check all on the real repo reports the true baseline (21 lint errors, plus any failing tests) instead of a clean pass, and a separate task records that pre-existing debt

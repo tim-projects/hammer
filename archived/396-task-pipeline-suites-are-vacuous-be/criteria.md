@@ -1,0 +1,8 @@
+- [x] Test helpers in tests/test_tasks.py record research before moving to PROGRESSING (`enter_progressing` helper; unchecked moves keep tasks in READY and make gate assertions vacuous)
+- [x] tests/test_tasks.py passes in full (10 passed)
+- [x] tests/test_robustness.py passes in full (48 passed): research recorded before PROGRESSING; criteria helper marks THIS task instead of the auto-created "write user tests" pair; store gets its own git repo in setUp so branch checkouts stop reverting task state
+- [x] tests/test_all_transitions.py passes: research recorded before the allowed-transition sweep
+- [x] tests/test_store_writes.py passes in full (18 passed): same research-gate vacuity fixed the same way
+- [x] check.py ignore list reviewed with a decision per file: all nine previously ignored suites pass, so every `--ignore` entry is removed and the files are listed explicitly
+- [x] The exact pytest command check.py builds (explicit suite list) runs green with the newly covered suites
+- [x] Pre-existing failures outside check.py's list filed as task 404 (11 failures, baseline captured), linked to 402; the /bin/true config seeder is task 402 scope and is not touched here

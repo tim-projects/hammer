@@ -1,0 +1,1 @@
+151d1889 [322] Argparse help coverage for check, repo, wrapper and bare tools

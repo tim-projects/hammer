@@ -1,0 +1,1 @@
+1. 6. Run ./hammer check all

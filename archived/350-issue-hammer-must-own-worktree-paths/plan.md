@@ -1,0 +1,1 @@
+1. 5. Tests for each drift case plus the happy path; run the full suite and ./hammer check all; promote through the pipeline.

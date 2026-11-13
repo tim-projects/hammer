@@ -1,0 +1,3 @@
+- [x] All four tests pass on main in isolation and in a full-suite run
+- [x] Root cause of each failure documented in current-task.md
+- [x] `./hammer check all` passes (criterion named a `--force` flag that no longer exists — dropped by task 388; verified component-by-component: lint, format, typecheck green, pinned pytest list 79 passed / 1 skipped, and full tree 278 passed / 1 skipped)

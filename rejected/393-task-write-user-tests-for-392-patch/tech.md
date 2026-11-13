@@ -1,0 +1,1 @@
+generate_file_patches (tasks_ai/audit.py) writes one patch per file from git diff main..branch, but only for files its changed_files list covers; tasks audit short-circuits when Rc==PASSED so a stale set cannot self-heal; the REVIEW entry hook ReviewDiffHook is the only other regeneration point and only fires on the state change.

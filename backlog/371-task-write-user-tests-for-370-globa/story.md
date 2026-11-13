@@ -1,0 +1,1 @@
+As a hammer user, I want -j/--json to be a global output directive so I can put it anywhere in the command line for any hammer command combination and always get JSON output.

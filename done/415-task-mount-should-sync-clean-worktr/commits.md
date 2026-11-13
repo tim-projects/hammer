@@ -1,0 +1,1 @@
+87910f18 [415] Mount syncs a clean worktree and warns about conflicts

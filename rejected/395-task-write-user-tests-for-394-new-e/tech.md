@@ -1,0 +1,1 @@
+cli.error resolves codes against data/errors.json and data/hints.json (cli.py). Codes absent from the registry degrade to 'Unknown error: <code>'; an inline hint= kwarg reaches only format_map and never renders. RESEARCH_REQUIRED (task 386) plus CONTENT_FILE_NOT_FOUND (382) and PARENT_NOT_FOUND are unregistered.

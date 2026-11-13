@@ -1,0 +1,1 @@
+00ac1487 [413] Halt conflicted promotion with MERGE_CONFLICT and abort the merge

@@ -1,0 +1,1 @@
+98e4a1a4 [342] Resolve default branch (main/master) in gate, sync, merge and archive paths

@@ -1,0 +1,1 @@
+d0f97505 [348] issue: one naming helper for task id/branch/worktree, doctor checks the worktree path

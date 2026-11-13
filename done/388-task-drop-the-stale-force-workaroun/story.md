@@ -1,0 +1,1 @@
+As a hammer developer reading the dev write audit, I need the test to init a dev store the way the product now works, so the suite documents the fixed behavior and does not teach a workaround that no longer exists.

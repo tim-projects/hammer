@@ -1,0 +1,1 @@
+1. Align check.py tool resolution with the store config format, then cover it with a worktree-based test.

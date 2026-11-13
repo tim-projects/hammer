@@ -1,0 +1,1 @@
+- [ ] ./hammer check all passes; new test locks the auto-push path with a fake remote

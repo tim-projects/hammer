@@ -1,0 +1,1 @@
+The codebase incorrectly references .tasks/review/<task_id>/diff.patch in error messages and documentation, while the actual patch file is generated at .tasks/review/<task_id>.patch. This creates confusion for users.

@@ -1,0 +1,1 @@
+2ea96386 406: hammer check runs the same pinned pytest list as the gate - bare pytest blew the 300s timeout

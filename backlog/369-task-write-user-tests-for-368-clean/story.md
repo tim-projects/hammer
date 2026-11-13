@@ -1,0 +1,1 @@
+The main branch accumulated dozens of one-off scratch scripts, debug helpers, stale test mirrors, and output artifacts committed next to the real codebase. They add review noise and mislead contributors about what is live code.

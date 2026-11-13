@@ -1,0 +1,5 @@
+- [x] ruff check . exits 0 with zero errors on main (tasks_ai/, tests/, conftest.py, check.py)
+- [x] 243 technical section refreshed with the re-measured count instead of the stale 11
+- [x] npx pyright exits 0 (the only reportUnboundVariable was the same line as the F821)
+- [x] ./hammer check test passes (13 passed, 1 skipped)
+- The original record's 'pytest tests/ passes' criterion belongs to task 404 (its 11 failures) and task 396 (the remaining 28 behind the research gate); it is not re-scoped into this task.

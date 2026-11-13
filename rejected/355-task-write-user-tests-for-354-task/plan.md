@@ -1,0 +1,1 @@
+1. 1. Add the flag to the create subcommand. 2. Gate the branch switch. 3. Test both paths. 4. Patch the installed copy.

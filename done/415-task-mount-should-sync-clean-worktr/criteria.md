@@ -1,0 +1,6 @@
+- [x] `tasks mount <id>` on a worktree with no own work syncs it to the default branch and says so (test_sync_worktree_fast_forwards_clean_worktree, test_clean_worktree_is_synced)
+- [x] `tasks mount <id>` on a worktree with own work performs no merge (working tree untouched) and lists the conflicting files against the default branch (test_conflicting_files_reports_paths_and_touches_nothing, test_local_work_is_never_merged_and_conflicts_are_named)
+- [x] Mount reports a clean worktree (no conflicts) when the merge would apply cleanly (test_conflicting_files_empty_when_merge_would_apply, test_local_work_without_conflicts_reports_up_to_date)
+- [x] Auto-sync failure aborts the merge and reports WORKTREE_MERGE_CONFLICT, leaving no in-progress merge (test_sync_worktree_aborts_on_conflict; mount maps PipelineMergeConflict to the error code)
+- [x] No default branch (scratch repo) means mount still succeeds, only skipping the sync/warning (test_no_default_branch_skips_the_whole_step, test_no_mergeable_ref_skips_the_whole_step)
+- [x] User test covering the sync case, the warn case, and the no-default-branch case (tests/test_mount_sync.py, 12 tests)

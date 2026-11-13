@@ -1,0 +1,3 @@
+- [ ] 1. tests/test_help_coverage.py is committed on a task branch
+- [ ] 2. The audit passes green (8 tests, 270 subtests) from the task worktree
+- [ ] 3. The change reaches main via the pipeline, not a manual merge

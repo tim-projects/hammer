@@ -1,0 +1,1 @@
+As an agent I need the JSON error field to carry the error code, because two tests and every automated caller have to string-match the human message today, which breaks when data/errors.json wording changes.

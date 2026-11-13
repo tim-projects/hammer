@@ -1,0 +1,1 @@
+- [ ] 1. Tasks are correctly stored in /tmp/.tasks. 2. --dev commands can list and transition these tasks.

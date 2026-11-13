@@ -1,0 +1,1 @@
+d03ab9ce [352] Resolve the default branch in git hooks and repo wrapper

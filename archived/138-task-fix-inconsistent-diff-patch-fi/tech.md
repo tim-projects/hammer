@@ -1,0 +1,1 @@
+Updated all occurrences of .tasks/review/<task_id>/diff.patch to the correct .tasks/review/<task_id>.patch path.

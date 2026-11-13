@@ -1,0 +1,1 @@
+1. 1. Locate meta.json write logic in file_manager.py. 2. Update to use temp file + os.replace. 3. Verify changes.

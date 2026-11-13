@@ -1,0 +1,6 @@
+- [ ] ruff check . exits 0 on main with zero errors
+- [ ] pytest as the Validator runs it (bare pytest in the project root) collects without error and exits 0
+- [ ] pyright exits 0 with no errors
+- [ ] ruff format --check exits 0 with no unformatted files
+- [ ] task 243's technical section refreshed with the re-measured count instead of the stale 11
+- [ ] the root scratch files that break collection (test_is_merged.py and friends) are removed or moved under tests/, and that cleanup is recorded against task 368

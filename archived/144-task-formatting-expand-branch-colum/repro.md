@@ -1,0 +1,1 @@
+1. Run 'hammer tasks list'.

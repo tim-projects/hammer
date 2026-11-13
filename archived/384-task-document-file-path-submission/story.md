@@ -1,0 +1,1 @@
+As an agent reading help or usage docs I need to know that --story/--tech/--criteria/--plan/--repro/--notes accept a file path, otherwise I keep hitting shell arg limits and the feature is invisible.

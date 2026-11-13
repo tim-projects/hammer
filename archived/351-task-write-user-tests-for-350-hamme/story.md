@@ -1,0 +1,1 @@
+As a hammer developer (human or agent), I need one authoritative answer to 'where is this task's worktree?' and a hammer that creates it, so a session never has to construct a path, never creates a stray directory, and hits a loud error instead of silence when the worktree is missing or misnamed.

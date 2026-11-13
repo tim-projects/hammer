@@ -1,0 +1,1 @@
+The --dev mode storage fails to persist tasks, making it impossible to test pipeline transitions.

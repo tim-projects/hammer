@@ -1,0 +1,3 @@
+- Progress: 
+- Findings: Pre-existing failure recorded as required by AGENTS.md: tests/test_tasks.py:382 assertIn(CONTENT_FILE_NOT_FOUND, res[error]) and tests/test_tasks.py:407 assertIn(RESEARCH_REQUIRED, res[error]) both fail on main because TasksCLI.error (tasks_ai/cli.py:203-206) resolves the code through messages.get_error and passes only the human message to the emitter, and no key in data/errors.json embeds its own code. The hard blocker link 398->400 was removed because it gated 398 behind a full 400 pipeline run for a defect this task does not touch; task 400 Expose error codes in the JSON error field is filed and must be completed before main is considered green.
+- Mitigations: 

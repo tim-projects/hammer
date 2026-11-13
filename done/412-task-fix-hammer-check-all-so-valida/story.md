@@ -1,0 +1,1 @@
+As a contributor I need ./hammer check all to actually run lint, tests, typecheck and format, because right now it prints All checks passed while running nothing, so 21 ruff errors and 8 failing tests have been sitting on main invisible to the pipeline gate.

@@ -1,0 +1,1 @@
+As the pipeline owner, I want the -h/--help endpoint audit to be committed as a test so endpoint help coverage cannot regress unnoticed.

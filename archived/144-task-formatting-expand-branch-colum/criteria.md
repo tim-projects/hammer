@@ -1,0 +1,1 @@
+- [ ] 1. Branch names are more readable. 2. Less forced word wrapping. 3. Table format remains stable.

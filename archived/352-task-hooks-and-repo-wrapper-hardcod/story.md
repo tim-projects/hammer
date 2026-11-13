@@ -1,0 +1,1 @@
+As a hammer user whose repository's default branch is master (or any non-main name), I need the installed git hooks and the repo wrapper to resolve the actual default branch, so the pre-commit branch-name gate does not block my commits and repo sync/promote lands on the right branch.

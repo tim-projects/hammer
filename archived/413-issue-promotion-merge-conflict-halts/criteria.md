@@ -1,0 +1,6 @@
+- [x] Conflicted promotion merge raises PipelineMergeConflict (or equivalent) caught at tasks_ai/commands/move.py:160
+- [x] A failed merge runs `merge --abort` (or equivalent) so the target branch is left clean
+- [x] User output uses the MERGE_CONFLICT error code and hint (data/errors.json:34, data/hints.json:34)
+- [x] No Python traceback reaches the user for a conflicted promotion
+- [x] `--force` promotion either performs the merge check or prints an explicit warning that merges are skipped
+- [x] Regression test: conflicting promotion renders MERGE_CONFLICT and leaves the repo with no in-progress merge

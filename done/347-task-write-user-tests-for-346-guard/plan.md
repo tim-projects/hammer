@@ -1,0 +1,1 @@
+1. 4. Run the full suite and ./hammer check all; promote through the pipeline.

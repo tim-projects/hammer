@@ -1,0 +1,1 @@
+As an operator running agents on separate worktrees, I need store reads to see one consistent snapshot (the last committed state), so a list, current, or guard scan running while another agent writes never reports torn or in-flight data.

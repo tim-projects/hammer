@@ -1,0 +1,4 @@
+- [ ] tasks show <id> still prints current-task.md
+- [ ] tasks show <id> --all prints all .md files and metadata
+- [ ] tasks show --all -j emits all task metadata as valid JSON
+- [ ] show --help documents --all

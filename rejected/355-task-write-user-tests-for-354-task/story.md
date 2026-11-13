@@ -1,0 +1,1 @@
+As a developer, hammer tasks create should leave me on my current branch so my working context is not disturbed.

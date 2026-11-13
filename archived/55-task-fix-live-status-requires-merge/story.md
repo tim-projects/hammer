@@ -1,0 +1,1 @@
+As a developer, I want to ensure tasks cannot be moved to LIVE status unless their branch has been merged to main, so that the workflow gates are enforced properly.

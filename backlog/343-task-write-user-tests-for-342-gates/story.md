@@ -1,0 +1,1 @@
+As a hammer user whose repository's default branch is master (or any non-main name), I need gates, sync, and is_merged to resolve the actual default branch, so promotions and archive don't fail on repos that git initialized as master.

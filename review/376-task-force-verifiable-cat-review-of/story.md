@@ -1,0 +1,1 @@
+As a maintainer I want the REVIEW->STAGING gate to accept only a deliberate read of every review patch, so a cherry-picked or incidental-touch review cannot pass.

@@ -1,0 +1,1 @@
+Task metadata is prone to corruption due to race conditions. Implement atomic write-rename patterns to ensure meta.json updates are safe.

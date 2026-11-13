@@ -1,0 +1,1 @@
+1. Add research recording to the unchecked helper moves in tests/test_tasks.py;re-run the suite;review each check.py ignore entry and un-ignore what passes;promote through review

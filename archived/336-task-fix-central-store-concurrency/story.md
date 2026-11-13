@@ -1,0 +1,1 @@
+As an operator running multiple agents against the central .tasks store, I need task creation, worktree mounts, promotion gates, and undo to be correct when two agents touch the store at the same time, so parallel work cannot produce duplicate ids, lost manifest entries, work-free promotions, or a restored from the wrong task's history.

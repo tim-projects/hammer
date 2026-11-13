@@ -1,0 +1,1 @@
+1. 1. Investigate tasks.py init logic for --dev. 2. Verify path creation in tasks_ai/file_manager.py. 3. Fix pathing.

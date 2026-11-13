@@ -1,0 +1,1 @@
+As a maintainer I need ./hammer check all to be green on main, because task 402 removed the vacuous /bin/true gate and the four real tools now report pre-existing debt that stayed invisible while the gate passed without running anything.

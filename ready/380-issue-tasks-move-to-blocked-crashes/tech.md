@@ -1,0 +1,1 @@
+Running ./hammer tasks move 376 BLOCKED from PROGRESSING raises KeyError: 'BLOCKED' inside tasks.py move dispatch, although PROGRESSING->BLOCKED is listed in DEFAULT_ALLOWED_TRANSITIONS (constants.py:32) and .tasks/blocked exists. Likely a state-name to folder lookup (STATE_FOLDERS has no BLOCKED key) failing in the move path before validation.

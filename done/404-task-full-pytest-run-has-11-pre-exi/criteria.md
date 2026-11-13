@@ -1,0 +1,6 @@
+- [ ] test_default_branch.py 3 failures triaged and fixed or explained
+- [ ] test_dev_write_audit.py 2 failures triaged and fixed or explained
+- [ ] test_guard.py test_clean_task_passes_gates fixed or explained
+- [ ] test_require_task_id.py 2 failures fixed or explained
+- [ ] test_store_concurrency.py 2 failures fixed or explained
+- [ ] test_worktree_system.py test_worktree_removed_on_archived fixed or explained

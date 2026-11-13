@@ -1,0 +1,1 @@
+As a hammer user I want ARCHIVED and permanent deletion to be owned entirely by automation, so agents can never shortcut the pipeline: users move work forward to DONE or reject it, and records clean themselves up after the grace period.
