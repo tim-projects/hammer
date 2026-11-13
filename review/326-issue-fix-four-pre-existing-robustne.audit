@@ -1,9 +1,21 @@
 {
     "task_id": "326",
-    "patch_hash": "a5323cb8513be2cf9ea16b9c5c9e2a9b",
+    "patch_hash": "c19979b4d2eaf0a7d601a6ecdbcdf381",
     "patch_files": [
-        "tasks_ai_validator.py.patch",
-        "tests_test_tasks.py.patch"
+        "review_326-issue-fix-four-pre-existing-robustne.audit.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_meta.json.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_review_326-issue-fix-four-pre-existing-robustne.audit.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_.audit_hash.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_meta.json.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_patches_tasks_ai_validator.py.patch.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_reviews.json.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_testing_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_patches_tests_test_tasks.py.patch.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_reviews.json.patch",
+        "review_326-issue-fix-four-pre-existing-robustne_verification_proof.log.patch"
     ],
     "status": "verified"
 }

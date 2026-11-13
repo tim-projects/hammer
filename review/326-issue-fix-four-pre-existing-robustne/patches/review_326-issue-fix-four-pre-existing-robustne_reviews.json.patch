@@ -1,8 +1,8 @@
-diff --git a/testing/326-issue-fix-four-pre-existing-robustne/reviews.json b/testing/326-issue-fix-four-pre-existing-robustne/reviews.json
+diff --git a/review/326-issue-fix-four-pre-existing-robustne/reviews.json b/review/326-issue-fix-four-pre-existing-robustne/reviews.json
 new file mode 100644
 index 0000000..decd5e0
 --- /dev/null
-+++ b/testing/326-issue-fix-four-pre-existing-robustne/reviews.json
++++ b/review/326-issue-fix-four-pre-existing-robustne/reviews.json
 @@ -0,0 +1,15 @@
 +{
 +  "reviews": [
