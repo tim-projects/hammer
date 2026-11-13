@@ -1,0 +1,10 @@
+- [ ] Missing verification proof produces a terminal `NEXT STEP` instruction rather than the confusing `Error: Verification proof missing.` response.
+- [ ] JSON output identifies the result with `status: action_required` and retains a non-zero exit status.
+- [ ] The instruction follows Hammer voice with WHAT, WHY, HOW, and CONSEQUENCE.
+- [ ] The guidance uses the real `.tasks/review/<task-folder>/patches/` path and contains no hardcoded home or state-directory path.
+- [ ] The guidance instructs the agent to display every patch with `cat` and capture `sha256sum` evidence.
+- [ ] The guidance provides the correct `modify --reviewed`, `audit`, `verify --proof`, and `modify --regression-check` sequence.
+- [ ] The missing-proof request still leaves `Rc` unset and promotion blocked.
+- [ ] Audit mismatch, integrity mismatch, and validation failures remain normal blocking errors.
+- [ ] `AGENTS.md` tells agents to follow expected action-required instructions while still stopping for genuine failures.
+- [ ] Focused regression tests cover the action-required schema, dynamic paths, exact review guidance, blocked promotion, and genuine-error behavior.
