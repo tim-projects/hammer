@@ -1,6 +1,5 @@
-# Runtime locks and transient staging
+# Runtime lock
 /.hammer-lock
-/.ops/
 
 # Local validation, logs, and legacy counter caches
 /.last_validation_hash
