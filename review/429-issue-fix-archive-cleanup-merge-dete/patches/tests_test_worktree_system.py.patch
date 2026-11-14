@@ -1,0 +1,26 @@
+diff --git a/tests/test_worktree_system.py b/tests/test_worktree_system.py
+index 7a749e08..6d583897 100644
+--- a/tests/test_worktree_system.py
++++ b/tests/test_worktree_system.py
+@@ -254,14 +254,19 @@ class TestWorktreeSystem(unittest.TestCase):
+             res = self.run_cmd(["move", task_file, state])
+             self.assertTrue(res["success"], f"move {state} failed: {res}")
+ 
+-        res = self.run_cmd(["move", task_file, "ARCHIVED", "-y"])
++        res = self.run_cmd(["move", task_file, "ARCHIVED", "-y"], cwd=worktree_path)
+         self.assertTrue(res["success"], f"move ARCHIVED failed: {res}")
+ 
+-        # Worktree, its git registration and its manifest entry are all gone
++        # Worktree, its git registration, merged branch and manifest entry are all gone
+         self.assertFalse(
+             os.path.exists(worktree_path), f"worktree still on disk: {worktree_path}"
+         )
+         self.assertNotIn(worktree_path, git(["worktree", "list"], self.repo_dir).stdout)
++        self.assertNotEqual(
++            0,
++            git(["rev-parse", "--verify", data["branch"]], self.repo_dir).returncode,
++            "merged task branch still exists",
++        )
+         self.assertNotIn(task_id, self.manifest())
+ 
+ 
