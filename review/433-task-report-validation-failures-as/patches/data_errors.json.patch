@@ -1,0 +1,13 @@
+diff --git a/data/errors.json b/data/errors.json
+index 618b20ec..037dfa7b 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -39,7 +39,7 @@
+   "STATE_REQUIRED": "Task {task_id} must be in {required_state} state.",
+   "MISSING_PARTS": "Missing: {missing_parts}.",
+   "INTEGRITY_VIOLATION": "Task location mismatch detected.",
+-  "PIPELINE_VALIDATION_FAILED": "Pipeline validation failed.",
++  "PIPELINE_VALIDATION_FAILED": "Promotion blocked by failed validation.",
+   "TEST_FAILURE": "Test failure detected.",
+   "TASK_METADATA_CORRUPTED": "Task {detail}",
+   "AUDIT_FAILURE": "Audit failed: {audit_code}.",

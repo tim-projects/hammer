@@ -1,0 +1,49 @@
+diff --git a/tasks_ai/validation.py b/tasks_ai/validation.py
+index da420945..0ad2da36 100644
+--- a/tasks_ai/validation.py
++++ b/tasks_ai/validation.py
+@@ -5,6 +5,8 @@ import sys
+ from pathlib import Path
+ from typing import TYPE_CHECKING
+ 
++from .validator import format_ruff_blockers
++
+ if TYPE_CHECKING:
+     from .cli_engine import TasksCLI
+ 
+@@ -155,16 +157,29 @@ class Validation:
+                 if result.returncode == 0:
+                     return data
+                 else:
+-                    # Try to extract a meaningful error
+-                    error_msg = "Tool execution failed"
+-                    for line in lines:
+-                        if not line.get("success", True):
+-                            error_msg = line.get("error", error_msg)
+-                            break
++                    failed_line = next(
++                        (line for line in lines if not line.get("success", True)),
++                        {},
++                    )
++                    tool = str(failed_line.get("tool") or "validation")
++                    details = (
++                        failed_line.get("error")
++                        or failed_line.get("stdout")
++                        or failed_line.get("stderr")
++                    )
++                    if details:
++                        details = str(details).strip()
++                        if tool == "lint":
++                            details = format_ruff_blockers(details)
++                        error_msg = f"{tool}: {details}"
++                    else:
++                        exit_code = failed_line.get("exit_code", "unknown")
++                        error_msg = f"{tool}: check failed with exit code {exit_code}"
+                     self.cli.error(
+                         "PIPELINE_VALIDATION_FAILED",
+                         hint_code="PIPELINE_VALIDATION_FAILED",
+                         msg=error_msg,
++                        tool=tool,
+                     )
+             except json.JSONDecodeError:
+                 self.cli.error(

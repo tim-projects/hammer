@@ -1,0 +1,105 @@
+diff --git a/tests/test_validation_blockers.py b/tests/test_validation_blockers.py
+new file mode 100644
+index 00000000..3e29ea41
+--- /dev/null
++++ b/tests/test_validation_blockers.py
+@@ -0,0 +1,99 @@
++import json
++import subprocess
++import unittest
++from unittest.mock import patch
++
++from tasks_ai.messages import MessageRegistry
++from tasks_ai.validation import Validation
++
++
++class FakeCLI:
++    as_json = True
++    dev = False
++
++    def __init__(self, root):
++        self.context = type(
++            "Context",
++            (),
++            {"repo_root": root, "main_repo_root": root},
++        )()
++        self.errors = []
++
++    def error(self, code, **kwargs):
++        self.errors.append((code, kwargs))
++        raise RuntimeError(code)
++
++
++class TestValidationBlockers(unittest.TestCase):
++    def run_validation(self, payload, returncode=1):
++        cli = FakeCLI("/tmp/repo")
++        result = subprocess.CompletedProcess(
++            args=["check.py", "all", "--json"],
++            returncode=returncode,
++            stdout=json.dumps(payload) + "\n",
++            stderr="",
++        )
++        with (
++            patch("tasks_ai.validation.subprocess.run", return_value=result),
++            self.assertRaises(RuntimeError),
++        ):
++            Validation(cli).run_tool("all")
++        return cli.errors[0]
++
++    def test_failed_lint_output_is_preserved_as_the_blocker(self):
++        code, details = self.run_validation(
++            {
++                "success": False,
++                "tool": "lint",
++                "stdout": json.dumps(
++                    [
++                        {
++                            "code": "F401",
++                            "filename": "tasks_ai/example.py",
++                            "location": {"row": 1, "column": 8},
++                            "message": "`os` imported but unused",
++                            "severity": "error",
++                        }
++                    ]
++                ),
++                "stderr": "",
++                "exit_code": 1,
++            }
++        )
++
++        self.assertEqual(code, "PIPELINE_VALIDATION_FAILED")
++        self.assertEqual(details["tool"], "lint")
++        self.assertIn("BLOCKER F401", details["msg"])
++        self.assertIn("Found 1 lint blocker", details["msg"])
++        self.assertNotIn('"severity": "error"', details["msg"])
++
++    def test_failed_tool_without_output_keeps_tool_and_exit_code(self):
++        code, details = self.run_validation(
++            {
++                "success": False,
++                "tool": "typecheck",
++                "stdout": "",
++                "stderr": "",
++                "exit_code": 2,
++            }
++        )
++
++        self.assertEqual(code, "PIPELINE_VALIDATION_FAILED")
++        self.assertIn("typecheck", details["msg"])
++        self.assertIn("2", details["msg"])
++        self.assertNotIn("Tool execution failed", details["msg"])
++
++    def test_validation_message_describes_a_promotion_blocker(self):
++        messages = MessageRegistry()
++        error = messages.get_error("PIPELINE_VALIDATION_FAILED")
++        hint = messages.get_hint("PIPELINE_VALIDATION_FAILED", msg="lint failed")
++
++        self.assertIn("blocked", error.lower())
++        self.assertIn("blocker", hint.lower())
++        self.assertIn("remains in its current state", hint)
++        self.assertIn("hammer check all", hint)
++        self.assertNotIn("Governance rules broken", hint)
++
++
++if __name__ == "__main__":
++    unittest.main()
