@@ -1,0 +1,1 @@
+Update the BlockerCheckHook in tasks_ai/pipeline_hooks.py so a linked blocker satisfies the dependency when its state is DONE. ARCHIVED must remain acceptable for existing workflows. Update task guidance and tests that describe the blocker state requirement, and keep transition, Git, and validation gates unchanged.
