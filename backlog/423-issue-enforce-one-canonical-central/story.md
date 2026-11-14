@@ -1,0 +1,1 @@
+As a maintainer I need exactly one production task store, the central .tasks Git worktree at the main repository root, so task records cannot diverge into task-worktree-local stores or contaminate the code repository.
