@@ -10,5 +10,6 @@
   "Pr": 1,
   "Br": "419-task-guide-agents-through-patch-rev",
   "Pt": null,
-  "Tp": false
+  "Tp": false,
+  "Rr": true
 }
