@@ -1,0 +1,3 @@
+- Progress: Implemented a narrow ValidationHook destination-state exception for REJECTED. Added tests for PROGRESSING to REJECTED, TESTING to REJECTED, and unchanged PROGRESSING to TESTING validation.
+- Findings: Only ValidationHook blocked rejection; pipeline gates already enable nothing for REJECTED and rejected branches are not merged.
+- Mitigations: 

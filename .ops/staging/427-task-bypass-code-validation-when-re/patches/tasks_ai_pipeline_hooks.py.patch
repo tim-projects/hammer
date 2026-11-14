@@ -1,0 +1,15 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index b140fa78..d6d384a5 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -134,6 +134,10 @@ class ValidationHook(PipelineHook):
+     """Runs all validation checks when exiting PROGRESSING or TESTING."""
+ 
+     def execute(self, cli, task, current_state, new_status, filepath):
++        # Rejection discards the implementation instead of promoting it, so
++        # code-quality gates must not block the only safe disposition.
++        if new_status == "REJECTED":
++            return
+         if current_state not in ["PROGRESSING", "TESTING"]:
+             return
+ 
