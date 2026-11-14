@@ -1,0 +1,9 @@
+diff --git a/.gitignore b/.gitignore
+index bce6f6a8..8c3ed66b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -28,3 +28,4 @@ cli-versions/
+ /.tasks.backup/
+ 
+ .task-worktrees/
++/error_report.json

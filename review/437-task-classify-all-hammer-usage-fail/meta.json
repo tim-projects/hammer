@@ -13,9 +13,13 @@
   "Tp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794672792.699561,
   "DoneAt": null,
   "PatchFiles": [
+    {
+      "file": ".gitignore",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/.gitignore.patch"
+    },
     {
       "file": "error_report.json",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/error_report.json.patch"
@@ -46,7 +50,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "6b1c862fff1f1a918a29a5a3de77ed096d325c43",
+    "head": "dea231132516ba86b72f95f113fe84e34c090e73",
     "base": "04783f462c859bd8c9ac0d37efe9cb4b9ef9a3a1"
   }
 }
