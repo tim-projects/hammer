@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794660869.308743,
-  "DoneAt": null,
+  "DoneAt": 1794660971.843285,
   "PatchFiles": [
     {
       "file": "tasks_ai/commands/doctor.py",
