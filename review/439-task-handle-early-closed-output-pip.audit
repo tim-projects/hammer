@@ -1,0 +1,8 @@
+{
+    "task_id": "439",
+    "patch_hash": "cc6967fd3fd6a5f99a751896d2d7d2e5",
+    "patch_files": [
+        "tests_test_sigpipe.py.patch"
+    ],
+    "status": "verified"
+}
