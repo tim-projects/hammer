@@ -1,0 +1,100 @@
+diff --git a/tasks_ai/audit.py b/tasks_ai/audit.py
+index 51950cb4..3ae57679 100644
+--- a/tasks_ai/audit.py
++++ b/tasks_ai/audit.py
+@@ -2,21 +2,49 @@ import hashlib
+ import json
+ import os
+ 
++from .utils import store_is_git
++
++
++def _patch_base_ref(cli, branch):
++    """Return the stable comparison base for a task branch.
++
++    Repositories without a main or master branch still need review patches.
++    Their task branch root commit is the only stable base that does not move
++    when pipeline branches advance.
++    """
++    main_branch = cli.git.get_default_branch()
++    if main_branch:
++        return main_branch
++    root = (
++        cli.git.run(
++            ["rev-list", "--max-parents=0", branch],
++            cwd=cli.context.main_repo_root,
++        )
++        .stdout.strip()
++        .splitlines()
++    )
++    return root[0] if root else "HEAD"
++
+ 
+ def get_changed_files(cli, task_path, branch):
+     """Get list of files changed in the task branch compared to main."""
+-    main_branch = cli.git.get_default_branch()
++    base_ref = _patch_base_ref(cli, branch)
+     res = cli.git.run(
+-        ["diff", "--name-only", f"{main_branch}...{branch}"], cwd=cli.root
++        ["diff", "--name-only", f"{base_ref}...{branch}"],
++        cwd=cli.context.main_repo_root,
+     )
+     return [f for f in res.stdout.splitlines() if f]
+ 
+ 
+ def get_patch_snapshot(cli, branch):
+     """Return the branch and base commits used to produce a patch set."""
+-    main_branch = cli.git.get_default_branch()
+-    head = cli.git.run(["rev-parse", branch], cwd=cli.root).stdout.strip()
+-    base = cli.git.run(["rev-parse", main_branch], cwd=cli.root).stdout.strip()
++    base_ref = _patch_base_ref(cli, branch)
++    head = cli.git.run(
++        ["rev-parse", branch], cwd=cli.context.main_repo_root
++    ).stdout.strip()
++    base = cli.git.run(
++        ["rev-parse", base_ref], cwd=cli.context.main_repo_root
++    ).stdout.strip()
+     return {"head": head, "base": base}
+ 
+ 
+@@ -42,7 +70,7 @@ def patches_are_fresh(cli, branch, patches_dir, patch_files, snapshot=None) -> b
+     if disk_names != expected_names:
+         return False
+ 
+-    main_branch = cli.git.get_default_branch()
++    base_ref = _patch_base_ref(cli, branch)
+     changed_files = set(get_changed_files(cli, None, branch))
+     for info in patch_files:
+         file_path = info["file"] if isinstance(info, dict) else info
+@@ -52,7 +80,8 @@ def patches_are_fresh(cli, branch, patches_dir, patch_files, snapshot=None) -> b
+         if snapshot is not None and file_path not in changed_files:
+             continue
+         res = cli.git.run(
+-            ["diff", f"{main_branch}..{branch}", "--", file_path], cwd=cli.root
++            ["diff", f"{base_ref}..{branch}", "--", file_path],
++            cwd=cli.context.main_repo_root,
+         )
+         with open(patch_path, encoding="utf-8") as fh:
+             if fh.read() != res.stdout:
+@@ -77,7 +106,7 @@ def generate_file_patches(cli, task_id, task_path, branch, patches_dir=None):
+     # If no changes found in main repo, check tasks sub-repo (dev mode)
+     diff_cwd = cli.root
+     diff_base = None
+-    if not changed_files:
++    if not changed_files and store_is_git(cli):
+         tasks_git_dir = os.path.join(cli.tasks_path, ".git")
+         cli.log(
+             f"DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}"
+@@ -182,9 +211,10 @@ def generate_file_patches(cli, task_id, task_path, branch, patches_dir=None):
+                 ["diff", f"{diff_base}..HEAD", "--", file_path], cwd=diff_cwd
+             )
+         else:
+-            main_branch = cli.git.get_default_branch()
++            base_ref = _patch_base_ref(cli, branch)
+             res = cli.git.run(
+-                ["diff", f"{main_branch}..{branch}", "--", file_path], cwd=cli.root
++                ["diff", f"{base_ref}..{branch}", "--", file_path],
++                cwd=cli.context.main_repo_root,
+             )
+         with open(patch_path, "w") as f:
+             f.write(res.stdout)

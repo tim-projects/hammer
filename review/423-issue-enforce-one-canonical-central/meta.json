@@ -1,0 +1,72 @@
+{
+  "Id": 423,
+  "Ti": "Enforce one canonical central task store",
+  "Ty": "issue",
+  "Cr": "261114 05:22",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "423-issue-enforce-one-canonical-central",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794639728.515427,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/data_hints.json.patch"
+    },
+    {
+      "file": "error_report.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/error_report.json.patch"
+    },
+    {
+      "file": "tasks_ai/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tasks_ai/counter.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_counter.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/worktree_manager.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tasks_ai_worktree_manager.py.patch"
+    },
+    {
+      "file": "tests/test_central_store.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/tests_test_central_store.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "04bb7a2c539fe41b5f8e38888ad404f913bfea48",
+    "base": "f35696382e92f0da518bf7e0dc69c38cafe1c306"
+  }
+}

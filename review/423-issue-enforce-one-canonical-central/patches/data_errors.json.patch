@@ -1,0 +1,20 @@
+diff --git a/data/errors.json b/data/errors.json
+index e7244ebe..618b20ec 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -59,6 +59,7 @@
+   "GUARD_WORKTREE_PATH_DRIFT": "GUARD REJECT: worktree path drift for task {task_id}. {detail}",
+   "GUARD_WORKTREE_MISSING_WORKTREE": "GUARD REJECT: manifest worktree path is not a git worktree. {detail}",
+   "GUARD_WORKTREE_UNREGISTERED": "GUARD REJECT: unregistered directory under .task-worktrees/. {detail}",
++  "GUARD_WORKTREE_LOCAL_STORE": "GUARD REJECT: task worktree contains a local .tasks store. {detail}",
+   "GUARD_WORKTREE_ORPHAN": "GUARD REJECT: orphaned worktree for task {task_id}. {detail}",
+   "GUARD_WORKTREE_MISSING": "GUARD REJECT: task {task_id} has no worktree, required for {to_state}. {detail}",
+   "GUARD_UNAVAILABLE": "GUARD REJECT: cannot verify task {task_id}. {detail}",
+@@ -68,5 +69,6 @@
+   "RESEARCH_REQUIRED": "Research pass not recorded.",
+   "CONTENT_FILE_NOT_FOUND": "Content file not found: {path}",
+   "PARENT_NOT_FOUND": "Parent task not found: {parent}",
+-  "STORE_NOT_CENTRAL": "Store is not central: '{store_path}' resolves inside a task worktree. .tasks is the central store at the main repo root; a copy inside a worktree is invisible to it and is destroyed by the next branch checkout."
++  "STORE_BRANCH_TRACKS_TASKS": "Task branch '{branch}' tracks .tasks and would materialize a local store at '{store_path}'.",
++  "STORE_NOT_CENTRAL": "Store is not central: '{store_path}'. Production uses only <main_repo_root>/.tasks; other locations diverge or contaminate the code repository."
+ }

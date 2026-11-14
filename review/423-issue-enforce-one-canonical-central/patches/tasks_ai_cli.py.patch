@@ -1,0 +1,113 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index ec11ed2c..10911ecb 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -49,7 +49,7 @@ from .pipeline_hooks import (
+     WorktreeSyncOnExitTestingHook,
+ )
+ from .task_service import TaskService
+-from .utils import commit_task_paths, store_lock
++from .utils import commit_task_paths, store_is_git, store_lock
+ from .validation import Validation
+ 
+ 
+@@ -146,6 +146,15 @@ class TasksCLI:
+         self.repo_script = str(install_dir / "repo.py")
+ 
+         self.tasks_dir = TASKS_DIR
++        canonical_store = os.path.realpath(
++            os.path.join(self.context.main_repo_root, TASKS_DIR)
++        )
++
++        def resolve_store_path(value):
++            if os.path.isabs(value):
++                return os.path.realpath(value)
++            return os.path.realpath(os.path.join(self.context.main_repo_root, value))
++
+         if not dev:
+             pyproject_path = self.context.resolve_path("pyproject.toml")
+             if os.path.exists(pyproject_path):
+@@ -154,23 +163,25 @@ class TasksCLI:
+ 
+                     with open(pyproject_path, "r") as f:
+                         pyproject_data = toml.load(f)
+-                        self.tasks_dir = (
++                        configured = (
+                             pyproject_data.get("tool", {})
+                             .get("tasks_ai", {})
+                             .get("tasks_dir", self.tasks_dir)
+                         )
++                    resolved = resolve_store_path(str(configured))
++                    if resolved != canonical_store:
++                        self.error("STORE_NOT_CENTRAL", store_path=resolved)
++                    self.tasks_dir = str(configured)
+                 except Exception:  # noqa: BLE001, S110
+                     pass
+ 
+-        self.context.tasks_path = self.context.resolve_path(self.tasks_dir)
++        self.context.tasks_path = canonical_store
+         if dev or os.environ.get("HAMMER_DEV_TASKS_DIR"):
+             self.context.tasks_path = os.environ.get(
+                 "HAMMER_DEV_TASKS_DIR", "/tmp/.tasks"
+             )
+             if not os.path.exists(self.context.tasks_path):
+                 os.makedirs(self.context.tasks_path, exist_ok=True)
+-        elif os.path.isabs(self.tasks_dir):
+-            self.context.tasks_path = self.tasks_dir
+ 
+         self.tasks_path = self.context.tasks_path
+ 
+@@ -179,18 +190,24 @@ class TasksCLI:
+             # one wherever the command happens to run.
+             self.error("STORE_NOT_CENTRAL")
+ 
+-        # Load config to override tasks_dir (works in dev and prod)
++        # Production has exactly one store. Read its config from the canonical
++        # path, then reject any override that resolves elsewhere.
+         cfg = self._get_config()
+         self.log(f"DEBUG: Loading config from {self.tasks_path}")
+-        if cfg and isinstance(cfg, dict) and "tasks_dir" in cfg:
+-            td = cfg["tasks_dir"]
+-            if td:
+-                self.tasks_dir = str(td)
+-                if os.path.isabs(self.tasks_dir):
+-                    self.tasks_path = self.tasks_dir
+-                else:
+-                    self.tasks_path = self.context.resolve_path(self.tasks_dir)
+-                self.context.tasks_path = self.tasks_path
++        if (
++            not dev
++            and not os.environ.get("HAMMER_DEV_TASKS_DIR")
++            and cfg
++            and isinstance(cfg, dict)
++            and cfg.get("tasks_dir")
++        ):
++            td = str(cfg["tasks_dir"])
++            resolved = resolve_store_path(td)
++            if resolved != canonical_store:
++                self.error("STORE_NOT_CENTRAL", store_path=resolved)
++            self.tasks_dir = td
++            self.tasks_path = canonical_store
++            self.context.tasks_path = canonical_store
+ 
+         # A store resolved inside a worktree is invisible to the central store
+         # and is destroyed by the next branch checkout: refuse, do not write.
+@@ -304,7 +321,8 @@ class TasksCLI:
+             rel_log = os.path.join(
+                 os.path.relpath(path, self.tasks_path), f"{section}.md"
+             )
+-            self._run_git(["add", rel_log], cwd=self.tasks_path)
++            if store_is_git(self):
++                self._run_git(["add", rel_log], cwd=self.tasks_path)
+ 
+     def _run_git(self, cmd, cwd=None, check=False):
+         return self.git.run(cmd, cwd=cwd, check=check)
+@@ -439,7 +457,7 @@ class TasksCLI:
+                         updated = True
+                 except Exception as e:  # noqa: BLE001
+                     self.log(f"Warning: Failed to load task at {path}: {e}")
+-        if updated:
++        if updated and store_is_git(self):
+             # Whole-store sweep by nature (a mark can sit in any state folder), so
+             # it cannot be scoped per task; the store lock at least keeps another
+             # agent's commit from landing inside this commit.

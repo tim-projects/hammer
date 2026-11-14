@@ -1,0 +1,37 @@
+diff --git a/tasks_ai/counter.py b/tasks_ai/counter.py
+index deca6e32..f87ad8b7 100644
+--- a/tasks_ai/counter.py
++++ b/tasks_ai/counter.py
+@@ -1,6 +1,6 @@
+ import os
+ 
+-from tasks_ai.utils import store_lock
++from tasks_ai.utils import store_is_git, store_lock
+ 
+ 
+ class TaskCounterProtector:
+@@ -48,11 +48,17 @@ class TaskCounterProtector:
+             cli._atomic_write(self.counter_file, str(current))
+             cli._write_counter_hash(self.counter_file, self.hash_file)
+ 
+-            cli._run_git(
+-                ["add", ".task_counter", ".task_counter.hash"], cwd=self.tasks_path
+-            )
+-            cli._run_git(
+-                ["commit", "--allow-empty", "-m", f"Bump task counter to {current}"],
+-                cwd=self.tasks_path,
+-            )
++            if store_is_git(cli):
++                cli._run_git(
++                    ["add", ".task_counter", ".task_counter.hash"], cwd=self.tasks_path
++                )
++                cli._run_git(
++                    [
++                        "commit",
++                        "--allow-empty",
++                        "-m",
++                        f"Bump task counter to {current}",
++                    ],
++                    cwd=self.tasks_path,
++                )
+             return current

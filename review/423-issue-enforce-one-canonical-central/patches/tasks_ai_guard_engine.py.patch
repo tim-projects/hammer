@@ -1,0 +1,12 @@
+diff --git a/tasks_ai/guard_engine.py b/tasks_ai/guard_engine.py
+index 8ffdb538..a45ff147 100644
+--- a/tasks_ai/guard_engine.py
++++ b/tasks_ai/guard_engine.py
+@@ -20,6 +20,7 @@ Invariants (see plan-guard.md):
+   GUARD_WORKTREE_PATH_DRIFT  worktree not at <worktrees_base>/<branch>   REJECT
+   GUARD_WORKTREE_MISSING_WORKTREE manifest path is not a git worktree    REJECT
+   GUARD_WORKTREE_UNREGISTERED directory under .task-worktrees/ unowned   REJECT
++  GUARD_WORKTREE_LOCAL_STORE registered worktree contains .tasks         REJECT
+   GUARD_REMOTE_DIVERGENCE    local task lost its branch                  REJECT
+   GUARD_UNAVAILABLE          guard cannot verify (fail closed)           REJECT
+ """
