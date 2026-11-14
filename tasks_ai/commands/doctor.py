@@ -314,10 +314,21 @@ def run(cli, fix=False):
                 "actual": detail,
             }
         )
-        if fix and code == "GUARD_WORKTREE_UNREGISTERED":
-            stray = detail.split(": ", 1)[-1]
-            if cli.git.worktrees.remove_unregistered_dir(stray):
-                cli.log(f"Removed unregistered worktree directory: {stray}")
+        stray = detail.split(": ", 1)[-1]
+        if (
+            fix
+            and code == "GUARD_WORKTREE_UNREGISTERED"
+            and fix_id is None
+            and cli.git.worktrees.remove_unregistered_dir(stray)
+        ):
+            cli.log(f"Removed unregistered worktree directory: {stray}")
+        elif (
+            fix
+            and code == "GUARD_WORKTREE_MISSING_WORKTREE"
+            and (fix_id is None or str(task_id) == str(fix_id))
+            and cli.git.worktrees.remove_task_worktree(task_id, force=False)
+        ):
+            cli.log(f"Removed stale worktree registration for task {task_id}")
 
     if bugs:
         cli.log(f"Found {len(bugs)} issues:")
