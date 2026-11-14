@@ -1,0 +1,9 @@
+{
+    "task_id": "431",
+    "patch_hash": "b81787014ab714a77e45e38de3566576",
+    "patch_files": [
+        "tasks_ai_commands_doctor.py.patch",
+        "tests_test_worktree_ownership_user.py.patch"
+    ],
+    "status": "verified"
+}
