@@ -1,0 +1,1 @@
+1. From a registered task worktree, move a merged task to ARCHIVED. The archive hook removes the worktree, then remove_task_worktree calls is_merged with the deleted worktree as its default Git working directory. Git raises FileNotFoundError for the removed .task-worktrees/<branch> path and archival stops before the manifest and branch cleanup finish.
