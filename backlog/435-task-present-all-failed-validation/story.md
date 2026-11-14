@@ -1,0 +1,1 @@
+As a maintainer I need every failed validation check to be presented consistently as a promotion blocker, with readable per-check output, so lint, test, typecheck, and format failures are actionable and never hidden by generic or truncated output.
