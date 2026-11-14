@@ -1,0 +1,18 @@
+{
+    "task_id": "423",
+    "patch_hash": "6cdf10bcfabda69b2793929e793a58fc",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_audit.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_create.py.patch",
+        "tasks_ai_commands_doctor.py.patch",
+        "tasks_ai_counter.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tasks_ai_worktree_manager.py.patch",
+        "tests_test_central_store.py.patch"
+    ],
+    "status": "verified"
+}
