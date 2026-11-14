@@ -1,0 +1,64 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index 73ce5352..b140fa78 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -309,16 +309,42 @@ class ReviewDiffHook(PipelineHook):
+                 f"ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
+             )
+             cli.log("")
+-            from .audit import generate_file_patches
++            from .audit import generate_file_patches, get_patch_snapshot
+ 
+-            _, branch = parse_filename(os.path.basename(filepath))
++            branch = task.metadata.get("Br", "")
++            if not branch:
++                _, branch = parse_filename(os.path.basename(filepath))
+             task_id = task.metadata.get("Id")
+ 
+             cli.log(f" for task {task_id}")
+-            # Idempotent patch generation
+-            patches = generate_file_patches(cli, str(task_id), filepath, branch)
++            task.metadata["Reviewed"] = False
++            task.metadata["Rc"] = ""
++            task.metadata["PatchGenTime"] = datetime.now().timestamp()  # noqa: DTZ005
++            reviews_path = os.path.join(filepath, "reviews.json")
++            if os.path.exists(reviews_path):
++                os.remove(reviews_path)
++
++            patches = generate_file_patches(
++                cli,
++                str(task_id),
++                filepath,
++                branch,
++                patches_dir=os.path.join(filepath, "patches"),
++            )
+             cli.log(f"Got {len(patches)} patches")
+-            task.metadata["PatchFiles"] = patches
++            final_patches_dir = os.path.join(
++                cli.tasks_path, "review", os.path.basename(filepath), "patches"
++            )
++            task.metadata["PatchFiles"] = [
++                {
++                    "file": patch["file"],
++                    "patch_path": os.path.join(
++                        final_patches_dir, os.path.basename(patch["patch_path"])
++                    ),
++                }
++                for patch in patches
++            ]
++            task.metadata["PatchSnapshot"] = get_patch_snapshot(cli, branch)
+             cli._atomic_write(filepath, task)
+             cli.log("ReviewDiffHook: patches verified and generated.")
+ 
+@@ -596,6 +622,11 @@ class CleanupReviewArtifactsHook(PipelineHook):
+                 cli.log(f"DEBUG: Cleaning up verification proof: {proof_path}")
+                 os.remove(proof_path)
+ 
++            reviews_path = os.path.join(filepath, "reviews.json")
++            if os.path.exists(reviews_path):
++                cli.log(f"DEBUG: Clearing review receipts: {reviews_path}")
++                os.remove(reviews_path)
++
+             hash_path = os.path.join(filepath, ".audit_hash")
+             if os.path.exists(hash_path):
+                 cli.log(f"DEBUG: Cleaning up audit hash: {hash_path}")

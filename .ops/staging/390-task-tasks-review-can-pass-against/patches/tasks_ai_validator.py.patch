@@ -1,0 +1,20 @@
+diff --git a/tasks_ai/validator.py b/tasks_ai/validator.py
+index de99da58..f13d3ca3 100644
+--- a/tasks_ai/validator.py
++++ b/tasks_ai/validator.py
+@@ -134,7 +134,14 @@ class Validator:
+                 "noop": ["/bin/true"],
+             },
+             "format": {
+-                "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
++                "ruff": [
++                    "ruff",
++                    "format",
++                    "--extend-exclude",
++                    "*.md",
++                    ".",
++                ]
++                + (["--check"] if not fix else []),
+                 "prettier": ["npx", "prettier", "--write", "."]
+                 if fix
+                 else ["npx", "prettier", "--check", "."],
