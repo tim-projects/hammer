@@ -1,0 +1,13 @@
+{
+    "task_id": "439",
+    "patch_hash": "994a3b955933932a5ab08631ecffe971",
+    "patch_files": [
+        "guard.py.patch",
+        "repo.py.patch",
+        "tasks.py.patch",
+        "tasks_ai_check_wrapper.py.patch",
+        "tasks_ai_cli_io.py.patch",
+        "tests_test_sigpipe.py.patch"
+    ],
+    "status": "verified"
+}
