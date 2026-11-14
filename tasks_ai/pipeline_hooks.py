@@ -134,6 +134,10 @@ class ValidationHook(PipelineHook):
     """Runs all validation checks when exiting PROGRESSING or TESTING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
+        # Rejection discards the implementation instead of promoting it, so
+        # code-quality gates must not block the only safe disposition.
+        if new_status == "REJECTED":
+            return
         if current_state not in ["PROGRESSING", "TESTING"]:
             return
 
