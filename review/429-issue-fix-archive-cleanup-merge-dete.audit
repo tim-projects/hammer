@@ -1,0 +1,9 @@
+{
+    "task_id": "429",
+    "patch_hash": "2e622995d3070b2e75745c913c7b1d5b",
+    "patch_files": [
+        "tasks_ai_worktree_manager.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}
