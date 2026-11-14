@@ -1,0 +1,15 @@
+{
+  "reviews": [
+    {
+      "file": "tasks_ai/worktree_manager.py",
+      "patch": "tasks_ai_worktree_manager.py.patch",
+      "md5": "f281b28bd61970286e3161b5b93eb3a5"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch": "tests_test_worktree_system.py.patch",
+      "md5": "7c843c648f74ebf875d3a80d41095ada"
+    }
+  ],
+  "reviewed_at": 1794649887.7173398
+}

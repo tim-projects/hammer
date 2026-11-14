@@ -1,0 +1,1 @@
+Reviewed cleanup order and worktree-context regression; only the intended implementation and test files are patched.
