@@ -1,0 +1,1 @@
+Research: tasks_ai/audit.py:get_patch_snapshot calls cli.git.get_default_branch(), which returns None when neither main nor master exists, then passes None to git rev-parse. The no-default-branch lifecycle fixture reproduces a TypeError at the TESTING to REVIEW transition. Fix belongs at the snapshot boundary and must preserve the later actionable NO_DEFAULT_BRANCH failure.

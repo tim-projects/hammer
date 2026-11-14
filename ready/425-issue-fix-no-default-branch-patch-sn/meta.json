@@ -8,5 +8,7 @@
   "Br": "425-issue-fix-no-default-branch-patch-sn",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
