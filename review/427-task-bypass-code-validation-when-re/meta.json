@@ -1,0 +1,32 @@
+{
+  "Id": 427,
+  "Ti": "Bypass code validation when rejecting tasks",
+  "Ty": "task",
+  "Cr": "261114 08:14",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "427-task-bypass-code-validation-when-re",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794644624.376875,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/427-task-bypass-code-validation-when-re/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/test_reject_validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/427-task-bypass-code-validation-when-re/patches/tests_test_reject_validation.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "80b64ae24da73dcfe7116769d92169a63e44b5a3",
+    "base": "f200045f11e55de356c9c1e0d965233c8a1ac575"
+  }
+}

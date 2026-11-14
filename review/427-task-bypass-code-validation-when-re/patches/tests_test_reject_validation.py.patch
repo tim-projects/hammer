@@ -1,0 +1,78 @@
+diff --git a/tests/test_reject_validation.py b/tests/test_reject_validation.py
+new file mode 100644
+index 00000000..92dbda12
+--- /dev/null
++++ b/tests/test_reject_validation.py
+@@ -0,0 +1,72 @@
++import os
++import tempfile
++import unittest
++from types import SimpleNamespace
++
++from tasks_ai.pipeline_hooks import ValidationHook
++
++
++class FakeCli:
++    def __init__(self):
++        self.validations = []
++
++    def console(self, *args):
++        pass
++
++    def log(self, message):
++        pass
++
++    def run_tool(self, tool_name=None, fix=False):
++        self.validations.append(tool_name)
++
++    def _atomic_write(self, path, task):
++        pass
++
++
++class TestRejectValidation(unittest.TestCase):
++    def setUp(self):
++        self.cli = FakeCli()
++        self.task = SimpleNamespace(metadata={}, parts={})
++        self.tmp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.tmp.cleanup)
++
++    def test_progression_to_rejected_skips_code_validation(self):
++        ValidationHook().execute(
++            self.cli,
++            self.task,
++            "PROGRESSING",
++            "REJECTED",
++            self.tmp.name,
++        )
++
++        self.assertEqual(self.cli.validations, [])
++
++    def test_testing_to_rejected_skips_code_validation(self):
++        ValidationHook().execute(
++            self.cli,
++            self.task,
++            "TESTING",
++            "REJECTED",
++            self.tmp.name,
++        )
++
++        self.assertEqual(self.cli.validations, [])
++
++    def test_normal_promotion_still_runs_code_validation(self):
++        for filename in ("criteria.md", "progress.md"):
++            with open(os.path.join(self.tmp.name, filename), "w") as handle:
++                handle.write("ok\n")
++
++        ValidationHook().execute(
++            self.cli,
++            self.task,
++            "PROGRESSING",
++            "TESTING",
++            self.tmp.name,
++        )
++
++        self.assertEqual(self.cli.validations, ["all"])
++
++
++if __name__ == "__main__":
++    unittest.main()
