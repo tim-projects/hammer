@@ -1,8 +1,8 @@
-- [ ] Every argparse usage failure exposed by the `tasks`, `check`, `repo`, and `guard` Hammer tools is reported with blocker status rather than error status
-- [ ] Existing tool-specific usage text and parser details remain present and unchanged
-- [ ] Missing arguments, invalid choices, unknown options, invalid option values, and nested-subcommand failures all receive blocker status
-- [ ] Successful `--help` paths remain successful and existing `--version` behavior is unchanged
-- [ ] Usage failures retain their existing non-zero exit behavior
-- [ ] Usage failure output exposes the blocker status token without misreporting success
-- [ ] Regression tests cover the usage-failure status contract across all Hammer tool entry points
-- [ ] Full validation passes without changing validation or pipeline gate behavior
+- [x] Every argparse usage failure exposed by the `tasks`, `check`, `repo`, and `guard` Hammer tools is reported with blocker status rather than error status
+- [x] Existing tool-specific usage text and parser details remain present and unchanged
+- [x] Missing arguments, invalid choices, unknown options, invalid option values, and nested-subcommand failures all receive blocker status
+- [x] Successful `--help` paths remain successful and existing `--version` behavior is unchanged
+- [x] Usage failures retain their existing non-zero exit behavior
+- [x] Usage failure output exposes the blocker status token without misreporting success
+- [x] Regression tests cover the usage-failure status contract across all Hammer tool entry points
+- [x] Full validation passes without changing validation or pipeline gate behavior
