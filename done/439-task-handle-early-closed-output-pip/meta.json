@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794676992.758934,
-  "DoneAt": null,
+  "DoneAt": 1794677048.443073,
   "PatchFiles": [
     {
       "file": "tests/test_sigpipe.py",
