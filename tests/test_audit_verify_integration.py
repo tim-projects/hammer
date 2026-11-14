@@ -429,8 +429,12 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         )
         with open(patch_path) as f:
             self.assertEqual(f.read(), expected)
-        self.assertFalse(self.get_meta(task_file).get("Reviewed"))
-        self.assertFalse(self.get_meta(task_file).get("Rc"))
+        meta = self.get_meta(task_file)
+        self.assertFalse(meta.get("Reviewed"))
+        self.assertFalse(meta.get("Rc"))
+        for patch_info in meta.get("PatchFiles", []):
+            self.assertTrue(os.path.exists(patch_info["patch_path"]))
+            self.assertNotIn(".ops/staging", patch_info["patch_path"])
         self.assertFalse(
             os.path.exists(
                 os.path.join(self.dev_tasks_dir, "review", task_file, "reviews.json")

@@ -332,7 +332,18 @@ class ReviewDiffHook(PipelineHook):
                 patches_dir=os.path.join(filepath, "patches"),
             )
             cli.log(f"Got {len(patches)} patches")
-            task.metadata["PatchFiles"] = patches
+            final_patches_dir = os.path.join(
+                cli.tasks_path, "review", os.path.basename(filepath), "patches"
+            )
+            task.metadata["PatchFiles"] = [
+                {
+                    "file": patch["file"],
+                    "patch_path": os.path.join(
+                        final_patches_dir, os.path.basename(patch["patch_path"])
+                    ),
+                }
+                for patch in patches
+            ]
             task.metadata["PatchSnapshot"] = get_patch_snapshot(cli, branch)
             cli._atomic_write(filepath, task)
             cli.log("ReviewDiffHook: patches verified and generated.")
