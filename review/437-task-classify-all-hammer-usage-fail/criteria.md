@@ -5,4 +5,5 @@
 - [x] Usage failures retain their existing non-zero exit behavior
 - [x] Usage failure output exposes the blocker status token without misreporting success
 - [x] Regression tests cover the usage-failure status contract across all Hammer tool entry points
+- [x] Generated `error_report.json` artifacts are ignored and no longer tracked
 - [x] Full validation passes without changing validation or pipeline gate behavior

@@ -1,3 +1,5 @@
 Argparse usage failures currently print tool-specific usage text followed by an `error:` line and exit before the shared CLI output path can classify the result. Audit every Hammer usage-failure entry point, including `tasks.py`, `tasks_ai/check_wrapper.py`, `repo.py`, `guard.py`, and the `hammer` wrapper.
 
 Implement the smallest shared normalization that gives every usage failure a blocker status while preserving the existing usage text, useful parser details, and non-zero exit behavior. Cover missing arguments, invalid choices, unknown options, invalid option values, and bare-tool or nested-subcommand usage where applicable. Successful `--help` output must remain successful. The root `check.py` is an internal standalone script that must remain dependency-free; `./hammer check` uses `tasks_ai/check_wrapper.py`. Do not replace the current usage messages with new prose and do not weaken validation or pipeline gates.
+
+Add the generated `error_report.json` to `.gitignore` and remove it from version control while retaining the local file, so validation artifacts cannot enter task patches.
