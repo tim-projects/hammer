@@ -1,1 +1,0 @@
-Reviewed all eight current branch patches; full check all passed and stale-artifact regressions cover re-entry, pruning, sync merges, audit refresh, receipt coverage, and canonical metadata paths.
