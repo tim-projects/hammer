@@ -1,0 +1,1 @@
+1. Move a task from PROGRESSING to REJECTED while the configured validation command fails. The current implementation blocks the rejection with PIPELINE_VALIDATION_FAILED even though no rejected code should be promoted.
