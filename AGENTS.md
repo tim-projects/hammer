@@ -1,9 +1,11 @@
 ## ⚠️ Error Handling
 
-When using ./hammer and it errors or fails:
+When using ./hammer and it returns a genuine error or failure:
 1. **STOP immediately** - Do not continue with further commands
 2. **Report the error** - Tell the user what happened and the error message
 3. **Wait for instruction** - Do not try to fix or work around the error without asking
+
+Expected workflow prerequisites are not genuine errors. When terminal output starts with `NEXT STEP`, or JSON output has `status: action_required`, follow the supplied action and continue the workflow. These responses still exit non-zero and keep their pipeline gate blocked until the required action is complete.
 
 ```bash
 # Use this repo's version (recommended)

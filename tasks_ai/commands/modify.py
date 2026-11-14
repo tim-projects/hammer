@@ -267,6 +267,8 @@ def run(
                 try:
                     cli.pipeline.check_audit_integrity(cli, task_id, filepath)
                 except PipelineError as e:
+                    if e.code == "PROOF_MISSING":
+                        cli.action_required(e.code, **e.kwargs)
                     cli.error(e.code, **e.kwargs)
             else:
                 # No actual changes to review: auto-pass (do not require Reviewed).

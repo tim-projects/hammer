@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import cast
 
-from .cli_io import error, finish, log
+from .cli_io import action_required, error, finish, log
 from .constants import (
     CURRENT_TASK_FILENAME,
     STATE_FOLDERS,
@@ -248,6 +248,11 @@ class TasksCLI:
         hint = self.messages.get_hint(hint_code or code, **kwargs)
         error(self, message, hint=hint if hint else None)
 
+    def action_required(self, code, hint_code=None, **kwargs):
+        message = self.messages.get_error(code, **kwargs)
+        hint = self.messages.get_hint(hint_code or code, **kwargs)
+        action_required(self, message, hint=hint if hint else None)
+
     def finish(self, data=None):
         finish(self, data=data)
 
@@ -351,6 +356,8 @@ class TasksCLI:
             return self.pipeline.validate_gate(self, task, target_state, task_path)
         except Exception as e:  # noqa: BLE001
             if hasattr(e, "code"):
+                if e.code == "PROOF_MISSING":
+                    self.action_required(e.code, **e.kwargs)
                 self.error(e.code, **e.kwargs)
             else:
                 self.error(str(e))

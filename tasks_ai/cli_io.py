@@ -49,6 +49,27 @@ def error(cli, message, hint=None):
         sys.exit(1)
 
 
+def action_required(cli, message, hint=None):
+    """Render an expected workflow prerequisite without weakening the gate."""
+    if cli.quiet:
+        sys.exit(1)
+    if cli.as_json:
+        response = {
+            "success": False,
+            "status": "action_required",
+            "error": message,
+            "messages": cli.output_messages,
+        }
+        if hint:
+            response["hint"] = hint
+        print(json.dumps(response))
+        sys.exit(1)
+    print(f"NEXT STEP: {message}")
+    if hint:
+        print(hint)
+    sys.exit(1)
+
+
 def finish(cli, data=None):
     if cli.quiet:
         pass
