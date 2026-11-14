@@ -1,0 +1,28 @@
+{
+  "Id": 439,
+  "Ti": "Handle early-closed output pipes without tracebacks",
+  "Ty": "task",
+  "Cr": "261114 16:37",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "439-task-handle-early-closed-output-pip",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794676992.758934,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tests/test_sigpipe.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/tests_test_sigpipe.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "aacf77b07a666ec3674ea7be5b8cf6cc99e01328",
+    "base": "20a7cb3f889d9a382939c1795e6845ccfd52c260"
+  }
+}
