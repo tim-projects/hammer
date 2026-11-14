@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794644624.376875,
-  "DoneAt": null,
+  "DoneAt": 1794644670.995543,
   "PatchFiles": [
     {
       "file": "tasks_ai/pipeline_hooks.py",
