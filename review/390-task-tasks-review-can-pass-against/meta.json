@@ -13,13 +13,9 @@
   "Rr": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1794624749.252513,
+  "PatchGenTime": 1794624815.54276,
   "DoneAt": null,
   "PatchFiles": [
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/.ops/staging/390-task-tasks-review-can-pass-against/patches/error_report.json.patch"
-    },
     {
       "file": "tasks_ai/audit.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/.ops/staging/390-task-tasks-review-can-pass-against/patches/tasks_ai_audit.py.patch"
@@ -50,7 +46,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "d87418144fe3ac8d5b6e2d0416ba126377691db6",
+    "head": "be74f79537ddc59be166929292a4547a13f1ac19",
     "base": "cc580c07b1c0d96b38eece349e7913da4e25659a"
   }
 }
