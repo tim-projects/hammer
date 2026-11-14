@@ -1,0 +1,1 @@
+In tasks_ai/audit.py get_patch_snapshot passes the result of GitService.get_default_branch directly to git rev-parse. When no main or master branch exists the value is None and subprocess raises TypeError. Handle the absent default branch before snapshot generation and preserve the existing actionable pipeline failure.

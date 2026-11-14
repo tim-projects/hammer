@@ -1,0 +1,1 @@
+1. Run pytest -q tests/test_default_branch.py::TestNoDefaultBranch::test_promotion_fails_with_actionable_error on main. The TESTING to REVIEW move crashes in get_patch_snapshot because git rev-parse receives None as cwd or argument, producing a TypeError instead of the expected actionable NO_DEFAULT_BRANCH failure.

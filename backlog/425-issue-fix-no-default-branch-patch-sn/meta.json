@@ -1,0 +1,10 @@
+{
+  "Id": 425,
+  "Ti": "Fix no-default-branch patch snapshot crash",
+  "Ty": "issue",
+  "Cr": "261114 06:41",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "425-issue-fix-no-default-branch-patch-sn",
+  "Pt": null
+}
