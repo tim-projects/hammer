@@ -309,16 +309,31 @@ class ReviewDiffHook(PipelineHook):
                 f"ReviewDiffHook triggered for task {task.metadata.get('Id')}. Ensuring patches exist."
             )
             cli.log("")
-            from .audit import generate_file_patches
+            from .audit import generate_file_patches, get_patch_snapshot
 
-            _, branch = parse_filename(os.path.basename(filepath))
+            branch = task.metadata.get("Br", "")
+            if not branch:
+                _, branch = parse_filename(os.path.basename(filepath))
             task_id = task.metadata.get("Id")
 
             cli.log(f" for task {task_id}")
-            # Idempotent patch generation
-            patches = generate_file_patches(cli, str(task_id), filepath, branch)
+            task.metadata["Reviewed"] = False
+            task.metadata["Rc"] = ""
+            task.metadata["PatchGenTime"] = datetime.now().timestamp()  # noqa: DTZ005
+            reviews_path = os.path.join(filepath, "reviews.json")
+            if os.path.exists(reviews_path):
+                os.remove(reviews_path)
+
+            patches = generate_file_patches(
+                cli,
+                str(task_id),
+                filepath,
+                branch,
+                patches_dir=os.path.join(filepath, "patches"),
+            )
             cli.log(f"Got {len(patches)} patches")
             task.metadata["PatchFiles"] = patches
+            task.metadata["PatchSnapshot"] = get_patch_snapshot(cli, branch)
             cli._atomic_write(filepath, task)
             cli.log("ReviewDiffHook: patches verified and generated.")
 
@@ -595,6 +610,11 @@ class CleanupReviewArtifactsHook(PipelineHook):
             if os.path.exists(proof_path):
                 cli.log(f"DEBUG: Cleaning up verification proof: {proof_path}")
                 os.remove(proof_path)
+
+            reviews_path = os.path.join(filepath, "reviews.json")
+            if os.path.exists(reviews_path):
+                cli.log(f"DEBUG: Clearing review receipts: {reviews_path}")
+                os.remove(reviews_path)
 
             hash_path = os.path.join(filepath, ".audit_hash")
             if os.path.exists(hash_path):

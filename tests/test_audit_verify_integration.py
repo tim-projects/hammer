@@ -202,9 +202,13 @@ class ReviewGateIntegrationTest(unittest.TestCase):
             else self.repo_dir
         )
         subprocess.run(["git", "checkout", branch], cwd=work_dir, capture_output=True)  # noqa: PLW1510
-        with open(os.path.join(work_dir, work_file), "w") as f:
-            f.write("def func():\n    pass\n")
-        subprocess.run(["git", "add", work_file], cwd=work_dir, capture_output=True)  # noqa: PLW1510
+        work_files = [work_file] if isinstance(work_file, str) else work_file
+        for filename in work_files:
+            with open(os.path.join(work_dir, filename), "w") as f:
+                f.write("def func():\n    pass\n")
+            subprocess.run(  # noqa: PLW1510
+                ["git", "add", filename], cwd=work_dir, capture_output=True
+            )
         subprocess.run(  # noqa: PLW1510
             ["git", "commit", "-m", "Work"], cwd=work_dir, capture_output=True
         )
@@ -258,6 +262,21 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         meta_path = os.path.join(review_dir, "meta.json")
         with open(meta_path) as f:
             return json.load(f)
+
+    def get_worktree(self, task_file):
+        manifest_path = os.path.join(self.dev_tasks_dir, "worktrees.json")
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+        task_id = task_file.split("-", 1)[0]
+        return manifest["worktrees"][task_id]["path"]
+
+    def reenter_review(self, task_file):
+        self.complete_current_criteria(task_file)
+        res = self.run_cmd(["move", task_file, "TESTING"])
+        self.assertTrue(res["success"], f"move to TESTING failed: {res}")
+        self.complete_current_criteria(task_file)
+        res = self.run_cmd(["move", task_file, "REVIEW"])
+        self.assertTrue(res["success"], f"move to REVIEW failed: {res}")
 
     # --- tests ---
     def test_staging_blocked_without_regression_check(self):
@@ -377,6 +396,164 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.assertTrue(res["success"], res)
         with open(os.path.join(patches_dir, target)) as f:
             self.assertNotIn("stale content", f.read())
+
+    def test_review_reentry_refreshes_branch_changes_and_invalidates_receipts(self):
+        task_file = self.create_and_reach_review(
+            "Review Reentry Refresh Task", "code.py"
+        )
+        self.complete_review_gate(task_file)
+        worktree = self.get_worktree(task_file)
+        with open(os.path.join(worktree, "code.py"), "w") as f:
+            f.write("def func():\n    return 2\n")
+        subprocess.run(  # noqa: PLW1510
+            ["git", "add", "code.py"], cwd=worktree, capture_output=True
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Change reviewed code"],
+            cwd=worktree,
+            capture_output=True,
+        )
+
+        self.reenter_review(task_file)
+
+        dev_repo = ensure_dev_repo(self.dev_tasks_dir)
+        expected = subprocess.run(
+            ["git", "diff", f"main..{task_file}", "--", "code.py"],
+            cwd=dev_repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+        patch_path = os.path.join(
+            self.dev_tasks_dir, "review", task_file, "patches", "code.py.patch"
+        )
+        with open(patch_path) as f:
+            self.assertEqual(f.read(), expected)
+        self.assertFalse(self.get_meta(task_file).get("Reviewed"))
+        self.assertFalse(self.get_meta(task_file).get("Rc"))
+        self.assertFalse(
+            os.path.exists(
+                os.path.join(self.dev_tasks_dir, "review", task_file, "reviews.json")
+            )
+        )
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertFalse(res["success"], res)
+
+    def test_review_reentry_prunes_patches_outside_changed_set(self):
+        task_file = self.create_and_reach_review(
+            "Review Prune Task", ["keep.py", "remove.py"]
+        )
+        worktree = self.get_worktree(task_file)
+        os.remove(os.path.join(worktree, "remove.py"))
+        subprocess.run(  # noqa: PLW1510
+            ["git", "add", "-A"], cwd=worktree, capture_output=True
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Remove reviewed file"],
+            cwd=worktree,
+            capture_output=True,
+        )
+
+        self.reenter_review(task_file)
+
+        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
+        patch_names = {
+            name for name in os.listdir(patches_dir) if name.endswith(".patch")
+        }
+        self.assertIn("keep.py.patch", patch_names)
+        self.assertNotIn("remove.py.patch", patch_names)
+
+    def test_review_reentry_refreshes_after_main_sync_merge(self):
+        task_file = self.create_and_reach_review("Review Sync Merge Task", "code.py")
+        self.complete_review_gate(task_file)
+        dev_repo = ensure_dev_repo(self.dev_tasks_dir)
+        subprocess.run(  # noqa: PLW1510
+            ["git", "checkout", "main"], cwd=dev_repo, capture_output=True
+        )
+        with open(os.path.join(dev_repo, "sync.txt"), "w") as f:
+            f.write("main moved\n")
+        subprocess.run(  # noqa: PLW1510
+            ["git", "add", "sync.txt"], cwd=dev_repo, capture_output=True
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Advance main"],
+            cwd=dev_repo,
+            capture_output=True,
+        )
+
+        self.reenter_review(task_file)
+
+        merged = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", "main", task_file],
+            cwd=dev_repo,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(merged.returncode, 0, "task branch did not sync main")
+        expected = subprocess.run(
+            ["git", "diff", f"main..{task_file}", "--", "code.py"],
+            cwd=dev_repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+        patch_path = os.path.join(
+            self.dev_tasks_dir, "review", task_file, "patches", "code.py.patch"
+        )
+        with open(patch_path) as f:
+            self.assertEqual(f.read(), expected)
+        self.assertFalse(self.get_meta(task_file).get("Reviewed"))
+
+    def test_audit_refreshes_new_branch_file_without_manual_deletion(self):
+        task_file = self.create_and_reach_review(
+            "Audit Refresh New File Task", "code.py"
+        )
+        self.complete_review_gate(task_file)
+        worktree = self.get_worktree(task_file)
+        with open(os.path.join(worktree, "new.py"), "w") as f:
+            f.write("value = 1\n")
+        subprocess.run(  # noqa: PLW1510
+            ["git", "add", "new.py"], cwd=worktree, capture_output=True
+        )
+        subprocess.run(  # noqa: PLW1510
+            ["git", "commit", "-m", "Add new file"],
+            cwd=worktree,
+            capture_output=True,
+        )
+
+        res = self.run_cmd(["audit", task_file])
+        self.assertTrue(res["success"], res)
+        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
+        self.assertTrue(
+            os.path.exists(os.path.join(patches_dir, "new.py.patch")),
+            "audit did not add the new branch file",
+        )
+        self.assertFalse(self.get_meta(task_file).get("Reviewed"))
+        self.assertFalse(self.get_meta(task_file).get("Rc"))
+        self.assertFalse(
+            os.path.exists(
+                os.path.join(self.dev_tasks_dir, "review", task_file, "reviews.json")
+            )
+        )
+
+    def test_regression_check_requires_receipt_for_every_current_patch(self):
+        task_file = self.create_and_reach_review("Receipt Coverage Task", "code.py")
+        self.complete_review_gate(task_file)
+        reviews_path = os.path.join(
+            self.dev_tasks_dir, "review", task_file, "reviews.json"
+        )
+        with open(reviews_path) as f:
+            reviews = json.load(f)
+        reviews["reviews"] = []
+        with open(reviews_path, "w") as f:
+            json.dump(reviews, f)
+
+        res = self.run_cmd(["modify", task_file, "--regression-check"])
+        self.assertFalse(res["success"], res)
+        self.assertIn(
+            "mismatch",
+            res.get("error", "").lower() + " " + res.get("hint", "").lower(),
+        )
 
     def test_empty_diff_auto_passes_regression_check(self):
         task_file = self.create_and_reach_review(
