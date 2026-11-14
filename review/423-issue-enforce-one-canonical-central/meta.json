@@ -13,7 +13,7 @@
   "Tp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794639797.51046,
   "DoneAt": null,
   "PatchFiles": [
     {
@@ -23,10 +23,6 @@
     {
       "file": "data/hints.json",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/data_hints.json.patch"
-    },
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/423-issue-enforce-one-canonical-central/patches/error_report.json.patch"
     },
     {
       "file": "tasks_ai/audit.py",
@@ -66,7 +62,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "04bb7a2c539fe41b5f8e38888ad404f913bfea48",
+    "head": "24025ccdc8416b218c127fb2eb7ebc357edadbb0",
     "base": "f35696382e92f0da518bf7e0dc69c38cafe1c306"
   }
 }
