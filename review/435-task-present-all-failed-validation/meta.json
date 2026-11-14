@@ -13,16 +13,12 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794664339.981133,
   "DoneAt": null,
   "PatchFiles": [
     {
       "file": "check.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/check.py.patch"
-    },
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/error_report.json.patch"
     },
     {
       "file": "tasks_ai/check_wrapper.py",
@@ -46,7 +42,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "3c3e3e5de31b5311a495ae742dd7bb8b9b172059",
+    "head": "85adaa0c691a943f6f555857aa420ec64d857796",
     "base": "33b37d9a8969bf30844491af6bce75f75c08dcf5"
   }
 }
