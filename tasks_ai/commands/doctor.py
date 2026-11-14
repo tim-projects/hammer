@@ -8,6 +8,7 @@ from ..utils import (
     commit_task_paths,
     derive_task_id,
     parse_filename,
+    store_is_git,
     worktree_path_matches,
 )
 
@@ -333,16 +334,17 @@ def run(cli, fix=False):
                 try:
                     with open(counter_path, "w") as f:
                         f.write(str(max_task_id + 1))
-                    cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
-                    cli._run_git(
-                        [
-                            "commit",
-                            "--allow-empty",
-                            "-m",
-                            "Doctor: fixed stale task counter",
-                        ],
-                        cwd=cli.tasks_path,
-                    )
+                    if store_is_git(cli):
+                        cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
+                        cli._run_git(
+                            [
+                                "commit",
+                                "--allow-empty",
+                                "-m",
+                                "Doctor: fixed stale task counter",
+                            ],
+                            cwd=cli.tasks_path,
+                        )
                 except Exception as e:  # noqa: BLE001
                     cli.log(f"Warning: Could not fix stale counter: {e}")
             cli.log("Issues have been fixed.")

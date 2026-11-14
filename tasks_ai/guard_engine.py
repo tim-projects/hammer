@@ -20,6 +20,7 @@ Invariants (see plan-guard.md):
   GUARD_WORKTREE_PATH_DRIFT  worktree not at <worktrees_base>/<branch>   REJECT
   GUARD_WORKTREE_MISSING_WORKTREE manifest path is not a git worktree    REJECT
   GUARD_WORKTREE_UNREGISTERED directory under .task-worktrees/ unowned   REJECT
+  GUARD_WORKTREE_LOCAL_STORE registered worktree contains .tasks         REJECT
   GUARD_REMOTE_DIVERGENCE    local task lost its branch                  REJECT
   GUARD_UNAVAILABLE          guard cannot verify (fail closed)           REJECT
 """
