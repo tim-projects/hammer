@@ -1,0 +1,1 @@
+1. 1. Reproduce the no-default-branch crash\n2. Guard patch snapshot generation when the default branch is absent\n3. Run the focused and full default-branch tests

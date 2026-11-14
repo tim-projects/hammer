@@ -1,0 +1,1 @@
+As a maintainer I need promotion without a main or master branch to fail with the actionable no-default-branch error instead of crashing while creating a patch snapshot.

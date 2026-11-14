@@ -1,0 +1,1 @@
+- [ ] - A repository with neither main nor master reaches the expected NO_DEFAULT_BRANCH failure instead of crashing\n- The existing default-branch test passes\n- No unrelated lifecycle behavior changes
