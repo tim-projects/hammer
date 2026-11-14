@@ -1,0 +1,1 @@
+As a Hammer user, I need invalid command and option usage across every Hammer tool to be classified as a blocker rather than an error status, so agents receive one consistent, actionable status without losing the existing usage details.
