@@ -13,13 +13,9 @@
   "Rr": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794649819.190744,
   "DoneAt": null,
   "PatchFiles": [
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/429-issue-fix-archive-cleanup-merge-dete/patches/error_report.json.patch"
-    },
     {
       "file": "tasks_ai/worktree_manager.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/429-issue-fix-archive-cleanup-merge-dete/patches/tasks_ai_worktree_manager.py.patch"
@@ -30,7 +26,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "6d771e5d2c6f81fb28205dfe22ee42c08b324a6d",
+    "head": "a635453285206bcb6657ecb363c96642358c2ea6",
     "base": "64da62de8579ec7ade8ca091eb9c77eae117ee18"
   }
 }
