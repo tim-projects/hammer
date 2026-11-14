@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794649819.190744,
-  "DoneAt": null,
+  "DoneAt": 1794649919.719968,
   "PatchFiles": [
     {
       "file": "tasks_ai/worktree_manager.py",
