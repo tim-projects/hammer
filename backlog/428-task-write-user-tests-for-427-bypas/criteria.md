@@ -1,0 +1,4 @@
+- [ ] - A transition from PROGRESSING or TESTING to REJECTED does not run lint, test, typecheck, or format validation
+- [ ] - Transitions to TESTING and other promotion states continue to run the unchanged validation gate
+- [ ] - Rejecting a task still performs the state move and retains administrative integrity checks
+- [ ] - Regression tests cover rejected and non-rejected ValidationHook paths
