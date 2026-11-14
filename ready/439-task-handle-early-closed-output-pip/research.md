@@ -1,0 +1,9 @@
+Research findings:
+
+1. CPython starts with `SIGPIPE` ignored (`signal.getsignal(signal.SIGPIPE) == signal.SIG_IGN`). When a downstream consumer closes stdout, the next write raises `BrokenPipeError` instead of terminating through the normal Unix signal path.
+2. The confirmed failure path is `tasks.py` → `tasks_ai/cli.py` → `tasks_ai/commands/show.py`: `head -n 12` closes the pipe while `tasks show` prints the Technical section at `tasks_ai/commands/show.py:143`. The exception is uncaught and exits 1 with a traceback.
+3. A controlled `set -o pipefail` reproduction confirmed producer exit 1 and `BrokenPipeError`. A minimal process using `signal.signal(signal.SIGPIPE, signal.SIG_DFL)` exits through SIGPIPE with status 141 and no traceback.
+4. There is no existing SIGPIPE, EPIPE, or BrokenPipeError handling in the codebase or git history. The behavior is pre-existing and affects any command that continues writing after an early-closing consumer.
+5. `tasks.py`, `tasks_ai/check_wrapper.py`, `repo.py`, and `guard.py` already import the shared `tasks_ai.cli_io` module. Add one platform-safe helper there and call it only from process entry points, so importing modules in tests does not alter pytest's signal handling.
+6. The root `check.py` is an internal standalone script copied without the `tasks_ai` package. `./hammer check` uses `tasks_ai/check_wrapper.py`, so the shared helper belongs in the four Hammer entry points and must not add a package dependency to standalone `check.py`.
+7. A deterministic integration regression can create a dev task with technical content larger than the pipe buffer, start `tasks show` with stdout/stderr pipes, read one line, close stdout, and assert there is no traceback or BrokenPipeError. The producer should terminate through SIGPIPE rather than exit 1 from an uncaught exception.
