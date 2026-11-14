@@ -1,5 +1,6 @@
-- [ ] A failed validation response identifies the failed tool and includes its actual stdout or stderr
-- [ ] Validation failures are described as promotion blockers rather than generic pipeline errors
-- [ ] The blocker message states that the task remains in its current state and gives a retry command
-- [ ] Successful validation behavior and the existing JSON response schema remain unchanged
-- [ ] Regression tests cover failed lint output and generic failed-tool fallback
+- [x] A failed validation response identifies the failed tool and includes its actual stdout or stderr
+- [x] Ruff violations are presented with blocker status instead of Ruff's native error severity
+- [x] Validation failures are described as promotion blockers rather than generic pipeline errors
+- [x] The blocker message states that the task remains in its current state and gives a retry command
+- [x] Successful validation behavior and the existing JSON response schema remain unchanged
+- [x] Regression tests cover Ruff blocker output, generic failed-tool fallback, and message framing
