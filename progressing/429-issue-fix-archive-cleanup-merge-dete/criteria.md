@@ -1,4 +1,4 @@
-- [ ] Archive cleanup never runs Git commands from a deleted worktree path
-- [ ] Merge detection uses the main repository root or completes before worktree removal
-- [ ] A merged task worktree and its branch are still removed successfully
-- [ ] Regression tests cover cleanup from a task-worktree command context
+- [x] Archive cleanup never runs Git commands from a deleted worktree path
+- [x] Merge detection uses the main repository root or completes before worktree removal
+- [x] A merged task worktree and its branch are still removed successfully
+- [x] Regression tests cover cleanup from a task-worktree command context
