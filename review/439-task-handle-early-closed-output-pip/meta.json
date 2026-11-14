@@ -1,0 +1,48 @@
+{
+  "Id": 439,
+  "Ti": "Handle early-closed output pipes without tracebacks",
+  "Ty": "task",
+  "Cr": "261114 16:37",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "439-task-handle-early-closed-output-pip",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794675824.544968,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/guard.py.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/tasks_ai_cli_io.py.patch"
+    },
+    {
+      "file": "tests/test_sigpipe.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/439-task-handle-early-closed-output-pip/patches/tests_test_sigpipe.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "072d0d2f8da3a4f954d03b55b73cb99cea71d909",
+    "base": "2a0ed832fc9b651d03d1cbae43932e7a205795b3"
+  }
+}

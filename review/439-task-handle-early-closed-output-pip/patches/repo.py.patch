@@ -1,0 +1,21 @@
+diff --git a/repo.py b/repo.py
+index ef65f313..9d8509d7 100755
+--- a/repo.py
++++ b/repo.py
+@@ -39,7 +39,7 @@ import sys
+ from pathlib import Path
+ 
+ sys.path.append(os.getcwd())
+-from tasks_ai.cli_io import BlockerArgumentParser
++from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
+ 
+ try:
+     from tasks_ai.cli import TasksCLI
+@@ -570,6 +570,7 @@ def build_parser():
+ 
+ 
+ def main():
++    configure_sigpipe()
+     global FLAGS  # noqa: PLW0602
+     parser = build_parser()
+     args = parser.parse_args()
