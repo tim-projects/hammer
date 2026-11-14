@@ -4,10 +4,11 @@ import argparse
 import sys
 
 from tasks_ai.cli import TasksCLI
+from tasks_ai.cli_io import BlockerArgumentParser
 from tasks_ai.help_text import get_help_text
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+    parser = BlockerArgumentParser(
         prog="tasks",
         description="Tasks AI: Agent-optimized, Git-backed task lifecycle manager.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

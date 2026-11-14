@@ -1,6 +1,15 @@
+import argparse
 import json
 import os
 import sys
+
+
+class BlockerArgumentParser(argparse.ArgumentParser):
+    """Report invalid usage as a blocker while preserving argparse's details."""
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(2, f"{self.prog}: blocker: {message}\n")
 
 
 def get_terminal_width():
