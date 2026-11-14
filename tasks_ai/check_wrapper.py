@@ -24,8 +24,9 @@ import subprocess
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
 from tasks_ai.help_text import agent_epilog
-from tasks_ai.validator import Validator
+from tasks_ai.validator import ValidationError, Validator, format_check_results
 
 COMMAND_HELP = {
     "lint": "Run linter (exit 0 = pass, 1 = fail)",
@@ -48,7 +49,7 @@ def project_root():
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(
+    parser = BlockerArgumentParser(
         prog="check",
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -73,6 +74,7 @@ def build_parser():
 
 
 def main():
+    configure_sigpipe()
     parser = build_parser()
     args = parser.parse_args()
 
@@ -88,11 +90,27 @@ def main():
             results = [validator.run_debug()]
         else:
             results = [validator.run_check(args.command, args.fix)]
+    except ValidationError as e:
+        print(
+            format_check_results(
+                [
+                    {
+                        "success": False,
+                        "status": "blocker",
+                        "tool": "validation",
+                        "stdout": str(e),
+                        "stderr": "",
+                        "exit_code": 1,
+                    }
+                ]
+            )
+        )
+        sys.exit(1)
     except Exception as e:  # noqa: BLE001
         print(f"Error: {e}")
         sys.exit(1)
 
-    print(f"Results: {results}")
+    print(format_check_results(results))
     sys.exit(0 if all(r["success"] for r in results) else 1)
 
 

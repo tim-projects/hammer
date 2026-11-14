@@ -39,6 +39,8 @@ import sys
 from pathlib import Path
 
 sys.path.append(os.getcwd())
+from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
+
 try:
     from tasks_ai.cli import TasksCLI
     from tasks_ai.constants import STATE_FOLDERS
@@ -477,7 +479,7 @@ def global_flags():
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(
+    parser = BlockerArgumentParser(
         prog="repo",
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -568,6 +570,7 @@ def build_parser():
 
 
 def main():
+    configure_sigpipe()
     global FLAGS  # noqa: PLW0602
     parser = build_parser()
     args = parser.parse_args()

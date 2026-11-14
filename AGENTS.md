@@ -13,7 +13,7 @@ Expected workflow prerequisites are not genuine errors. When terminal output sta
 ```
 
 ### 🏗️ Pipeline Structure
-The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED).
+The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED). `DONE` is the agent completion point. `ARCHIVED` is a cleanup-only terminal state used by the automated archival process after its grace period, unless an operator explicitly requests immediate archival.
 
 * **Automation Engine:** The mechanism that executes the Pipeline.
 * **Automation Rule:** The Automation Engine will chain all Jobs within a Stage automatically.
@@ -57,19 +57,18 @@ Run `./hammer tasks --help` to discover the interface, JSON schemas, and operati
    - **Review the diff for regressions**. If regressions found, move task back to `PROGRESSING` or `TESTING` to fix before proceeding.
    - Once the diff is clean, run `tasks modify <id> --regression-check` to confirm.
    - Note: Tasks can move from `REVIEW`, `ARCHIVED`, or `REJECTED` back to `PROGRESSING` if further work is required.
-7. **Archiving**: When ready to archive from STAGING:
-   - Worktree branch must be merged to main first
-   - Run `./hammer tasks move <id> ARCHIVED` - if merged, it will prompt for `-y` confirmation
-   - Use `./hammer tasks move <id> ARCHIVED -y` to auto-push branch to remote and delete local copy
-   - Alternatively, move to `REJECTED` if code was not merged
-   - On ARCHIVED transition, the task worktree is automatically removed (after confirming the branch is merged to main)
+7. **Completion and archival**:
+   - Stop the agent workflow when the task reaches `DONE`; do not manually move a normally completed task to `ARCHIVED`.
+   - `ARCHIVED` is reserved for automated cleanup after the grace period, or for an explicit operator request to archive immediately.
+   - Automated archival confirms the worktree branch is merged to main before removing the worktree and local branch.
+   - If the code was intentionally not merged, move the task to `REJECTED` instead.
 
 ## 🌿 Worktree Workflow
 
 Each task operates in a dedicated git worktree for isolation. Worktrees are created automatically when a task moves to `PROGRESSING` or via `tasks create`/`tasks mount`.
 
 - **Mounting a worktree**: `./hammer tasks mount <id>` — creates or opens the task's worktree
-- **Persistent through pipeline**: The worktree persists through DONE; it is only removed on ARCHIVED
+- **Persistent through pipeline**: The worktree persists through DONE; automated archival removes it when the task moves to ARCHIVED
 - **Demotion support**: Tasks can be demoted from DONE back to earlier states (worktree remains active)
 - **Worktree location**: `.task-worktrees/<branch>` relative to the main repo root
 - **Worktree manifest**: `.tasks/worktrees.json` tracks all active task worktrees
@@ -107,7 +106,7 @@ Each task operates in a dedicated git worktree for isolation. Worktrees are crea
 | `./hammer tasks --dev init` | Initialize isolated dev environment (store in /tmp/.tasks, git in /tmp/.tasks-repo) |
 | `./hammer tasks --dev <cmd>` | Run any task command in isolated /tmp/.tasks; no ref in the real repo changes |
 | `./hammer tasks move <id> <state>` | Move task to new state (use comma-separated for multi-step) |
-| `./hammer tasks move <id> ARCHIVED -y` | Archive and auto-push/delete branch (requires branch merged to main) |
+| `./hammer tasks move <id> ARCHIVED -y` | Operator-only immediate archive and cleanup (normally automated after the grace period) |
 | `./hammer tasks modify <id> --plan "1. Step"` | Update task fields |
 | `./hammer tasks modify <id> --criteria /tmp/c.md` | Long-form flags (`--story --tech --criteria --plan --repro --notes`, also on `create`) accept a file path; its contents are used |
 | `./hammer tasks modify <id> --research "<findings>"` | Record the READY research pass (required gate: READY -> PROGRESSING) |

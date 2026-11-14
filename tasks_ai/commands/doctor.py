@@ -8,6 +8,7 @@ from ..utils import (
     commit_task_paths,
     derive_task_id,
     parse_filename,
+    store_is_git,
     worktree_path_matches,
 )
 
@@ -313,10 +314,21 @@ def run(cli, fix=False):
                 "actual": detail,
             }
         )
-        if fix and code == "GUARD_WORKTREE_UNREGISTERED":
-            stray = detail.split(": ", 1)[-1]
-            if cli.git.worktrees.remove_unregistered_dir(stray):
-                cli.log(f"Removed unregistered worktree directory: {stray}")
+        stray = detail.split(": ", 1)[-1]
+        if (
+            fix
+            and code == "GUARD_WORKTREE_UNREGISTERED"
+            and fix_id is None
+            and cli.git.worktrees.remove_unregistered_dir(stray)
+        ):
+            cli.log(f"Removed unregistered worktree directory: {stray}")
+        elif (
+            fix
+            and code == "GUARD_WORKTREE_MISSING_WORKTREE"
+            and (fix_id is None or str(task_id) == str(fix_id))
+            and cli.git.worktrees.remove_task_worktree(task_id, force=False)
+        ):
+            cli.log(f"Removed stale worktree registration for task {task_id}")
 
     if bugs:
         cli.log(f"Found {len(bugs)} issues:")
@@ -333,16 +345,17 @@ def run(cli, fix=False):
                 try:
                     with open(counter_path, "w") as f:
                         f.write(str(max_task_id + 1))
-                    cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
-                    cli._run_git(
-                        [
-                            "commit",
-                            "--allow-empty",
-                            "-m",
-                            "Doctor: fixed stale task counter",
-                        ],
-                        cwd=cli.tasks_path,
-                    )
+                    if store_is_git(cli):
+                        cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
+                        cli._run_git(
+                            [
+                                "commit",
+                                "--allow-empty",
+                                "-m",
+                                "Doctor: fixed stale task counter",
+                            ],
+                            cwd=cli.tasks_path,
+                        )
                 except Exception as e:  # noqa: BLE001
                     cli.log(f"Warning: Could not fix stale counter: {e}")
             cli.log("Issues have been fixed.")

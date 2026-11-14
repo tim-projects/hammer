@@ -94,6 +94,26 @@ class WorktreeManager:
     def create_task_worktree(self, task_id, branch=None) -> str | None:
         if branch is None:
             branch = str(task_id)
+        # A task branch must never materialize the central store in its
+        # worktree. Check the branch tree before git checks it out.
+        ref = branch
+        verify = self.git.run(
+            ["rev-parse", "--verify", ref], cwd=self.context.main_repo_root
+        )
+        if verify.returncode != 0:
+            ref = "HEAD"
+        tracked = self.git.run(
+            ["ls-tree", "-r", "--name-only", ref, "--", ".tasks"],
+            cwd=self.context.main_repo_root,
+        )
+        if tracked.returncode == 0 and tracked.stdout.strip():
+            if self.logger:
+                self.logger.error(
+                    "STORE_BRANCH_TRACKS_TASKS",
+                    branch=branch,
+                    store_path=os.path.join(self.worktrees_base, branch, ".tasks"),
+                )
+            return None
         # Check-and-register must be one transaction: two agents mounting at
         # once both pass has_worktree and then rewrite the manifest from a
         # stale copy, dropping each other's entry.
@@ -193,6 +213,15 @@ class WorktreeManager:
                 return False
             path = entry.get("path")
             branch = entry.get("branch")
+            branch_exists = False
+            merged = False
+            if branch:
+                verify = self.git.run(
+                    ["rev-parse", "--verify", branch], cwd=self.context.main_repo_root
+                )
+                branch_exists = verify.returncode == 0
+                if branch_exists:
+                    merged = self.git.is_merged(branch, cwd=self.context.main_repo_root)
             if path and os.path.exists(path):
                 cmd = ["worktree", "remove"]
                 if force:
@@ -203,19 +232,15 @@ class WorktreeManager:
                     self.log(
                         f"Warning: Failed to remove worktree at '{path}': {result.stderr}"
                     )
-            if branch:
-                verify = self.git.run(
-                    ["rev-parse", "--verify", branch], cwd=self.context.main_repo_root
-                )
-                if verify.returncode == 0:
-                    if self.git.is_merged(branch):
-                        self.git.run(
-                            ["branch", "-d", branch], cwd=self.context.main_repo_root
-                        )
-                    elif force:
-                        self.git.run(
-                            ["branch", "-D", branch], cwd=self.context.main_repo_root
-                        )
+            if branch_exists:
+                if merged:
+                    self.git.run(
+                        ["branch", "-d", branch], cwd=self.context.main_repo_root
+                    )
+                elif force:
+                    self.git.run(
+                        ["branch", "-D", branch], cwd=self.context.main_repo_root
+                    )
             del manifest["worktrees"][str(task_id)]
             self._save_manifest(manifest)
         self.log(f"Git: Removed worktree for task {task_id}")

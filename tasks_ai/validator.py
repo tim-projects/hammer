@@ -1,7 +1,50 @@
+import json
 import os
 import shutil
 import subprocess
 from pathlib import Path
+
+
+def format_check_results(results: list[dict]) -> str:
+    """Render validation results as readable per-check sections."""
+    lines = []
+    for result in results:
+        success = bool(result.get("success"))
+        status = result.get("status") or ("pass" if success else "blocker")
+        tool = result.get("tool", "validation")
+        lines.append(f"CHECK {tool}: {status.upper()}")
+        if success:
+            continue
+        lines.append(f"  exit_code: {result.get('exit_code', 'unknown')}")
+        for label in ("stdout", "stderr"):
+            output = str(result.get(label) or "").strip()
+            if output:
+                lines.append(f"  {label}:")
+                lines.extend(f"    {line}" for line in output.splitlines())
+    return "\n".join(lines)
+
+
+def format_ruff_blockers(output: str) -> str:
+    """Present Ruff violations as promotion blockers, not tool errors."""
+    try:
+        findings = json.loads(output)
+    except (json.JSONDecodeError, TypeError):
+        return output
+    if not isinstance(findings, list):
+        return output
+
+    lines = []
+    for finding in findings:
+        location = finding.get("location") or {}
+        row = location.get("row", 0)
+        column = location.get("column", 0)
+        filename = finding.get("filename", "")
+        code = finding.get("code", "")
+        message = finding.get("message", "")
+        lines.append(f"BLOCKER {code} {filename}:{row}:{column}: {message}")
+    count = len(lines)
+    lines.append(f"Found {count} lint blocker{'s' if count != 1 else ''}.")
+    return "\n".join(lines)
 
 
 class ValidationError(Exception):
@@ -112,7 +155,13 @@ class Validator:
         """Returns the full set of supported commands."""
         return {
             "lint": {
-                "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
+                "ruff": [
+                    "ruff",
+                    "check",
+                    ".",
+                    "--output-format=json",
+                ]
+                + (["--fix"] if fix else []),
                 "pylint": ["pylint", "."],
                 "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
                 "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
@@ -216,10 +265,15 @@ class Validator:
         except subprocess.TimeoutExpired:
             raise ValidationError(f"Tool '{tool}' timed out after {timeout} seconds.")
 
+        stdout = result.stdout
+        if tool_type == "lint" and tool == "ruff":
+            stdout = format_ruff_blockers(stdout)
+        success = result.returncode == 0
         return {
-            "success": result.returncode == 0,
+            "success": success,
+            "status": "pass" if success else "blocker",
             "tool": tool_type,
-            "stdout": result.stdout,
+            "stdout": stdout,
             "stderr": result.stderr,
             "exit_code": result.returncode,
         }
@@ -246,8 +300,10 @@ class Validator:
         result = subprocess.run(  # noqa: PLW1510
             [str(script_path)], cwd=self.project_root, capture_output=True, text=True
         )
+        success = result.returncode == 0
         return {
-            "success": result.returncode == 0,
+            "success": success,
+            "status": "pass" if success else "blocker",
             "tool": "debug",
             "stdout": result.stdout,
             "stderr": result.stderr,

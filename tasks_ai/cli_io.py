@@ -1,6 +1,22 @@
+import argparse
 import json
 import os
+import signal
 import sys
+
+
+def configure_sigpipe():
+    """Restore Unix's normal behavior when a downstream pipe closes early."""
+    if hasattr(signal, "SIGPIPE"):
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+
+class BlockerArgumentParser(argparse.ArgumentParser):
+    """Report invalid usage as a blocker while preserving argparse's details."""
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(2, f"{self.prog}: blocker: {message}\n")
 
 
 def get_terminal_width():
