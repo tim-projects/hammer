@@ -1,6 +1,6 @@
-- [ ] Doctor reports a missing registered worktree and `doctor --fix <id>` repairs its stale manifest entry
-- [ ] Doctor repair preserves both merged and unmerged local branches for later archive cleanup
-- [ ] Targeted repair with `--fix <id>` does not modify other tasks' worktree manifest entries
-- [ ] Repair does not recreate a missing worktree for a completed task
-- [ ] Archive cleanup deletes the preserved merged branch after the archive guard passes
-- [ ] Regression tests cover targeted repair, branch preservation, and archive cleanup ordering
+- [x] Doctor reports a missing registered worktree and `doctor --fix <id>` repairs its stale manifest entry
+- [x] Doctor repair preserves both merged and unmerged local branches for later archive cleanup
+- [x] Targeted repair with `--fix <id>` does not modify other tasks' worktree manifest entries
+- [x] Repair does not recreate a missing worktree for a completed task
+- [x] Archive cleanup deletes the preserved merged branch after the archive guard passes
+- [x] Regression tests cover targeted repair, branch preservation, and archive cleanup ordering
