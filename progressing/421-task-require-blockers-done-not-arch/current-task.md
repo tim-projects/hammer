@@ -2,4 +2,6 @@
 Task: 421-task-require-blockers-done-not-arch
 ---
 
-- Progress: 
+- Progress: Implemented BlockerCheckHook acceptance for DONE and ARCHIVED blockers, added registry-backed BLOCKER_INCOMPLETE guidance, updated active agent guidance, and added regression tests for DONE, ARCHIVED, and incomplete states. Also updated check all to auto-fix Ruff in both production check entry points. Focused tests pass; full ./hammer check all passes.
+- Findings: BlockerCheckHook previously accepted only ARCHIVED. The active CLI guidance comes from tasks_ai/help_text.py; tasks_ai/constants.py contains a second guidance constant. Both now state DONE or ARCHIVED.
+- Mitigations: No transition, Git, audit, or validation gates were weakened. Incomplete blockers still stop PROGRESSING with actionable next steps.

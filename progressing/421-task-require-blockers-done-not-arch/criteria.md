@@ -1,6 +1,6 @@
-- [ ] A blocked task can enter PROGRESSING when every linked blocker is DONE.
-- [ ] A blocked task can still enter PROGRESSING when every linked blocker is ARCHIVED.
-- [ ] A blocker in any other state still blocks PROGRESSING with actionable guidance.
-- [ ] Guidance and task criteria describe DONE as sufficient rather than requiring ARCHIVED.
-- [ ] Regression tests cover DONE, ARCHIVED, and incomplete blocker states.
-- [ ] The full project validation suite passes.
+- [x] A blocked task can enter PROGRESSING when every linked blocker is DONE.
+- [x] A blocked task can still enter PROGRESSING when every linked blocker is ARCHIVED.
+- [x] A blocker in any other state still blocks PROGRESSING with actionable guidance.
+- [x] Guidance and task criteria describe DONE as sufficient rather than requiring ARCHIVED.
+- [x] Regression tests cover DONE, ARCHIVED, and incomplete blocker states.
+- [x] The full project validation suite passes.
