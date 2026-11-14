@@ -1,6 +1,6 @@
-- [ ] Every failed lint, test, typecheck, or format check is reported with blocker status
-- [ ] Missing tool configuration and validation timeouts are also reported as blockers
-- [ ] `hammer check all` prints concise per-check summaries instead of one long result line
-- [ ] Failed check details remain readable and preserve the tool's raw stdout, stderr, and exit code
-- [ ] Passing checks and all validation exit codes retain their current behavior
-- [ ] Regression tests cover blocker normalization and readable check-all output
+- [x] Every failed lint, test, typecheck, or format check is reported with blocker status
+- [x] Missing tool configuration and validation timeouts are also reported as blockers
+- [x] `hammer check all` prints concise per-check summaries instead of one long result line
+- [x] Failed check details remain readable and preserve the tool's raw stdout, stderr, and exit code
+- [x] Passing checks and all validation exit codes retain their current behavior
+- [x] Regression tests cover blocker normalization and readable check-all output
