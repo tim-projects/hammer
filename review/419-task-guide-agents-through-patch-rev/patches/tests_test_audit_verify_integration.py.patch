@@ -1,0 +1,49 @@
+diff --git a/tests/test_audit_verify_integration.py b/tests/test_audit_verify_integration.py
+index a583138a..c5639ca7 100644
+--- a/tests/test_audit_verify_integration.py
++++ b/tests/test_audit_verify_integration.py
+@@ -131,6 +131,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+                 print(f"CMD FAILED: tasks {' '.join(args)}", file=sys.stderr)
+                 print(f"STDOUT: {result.stdout}", file=sys.stderr)
+                 print(f"STDERR: {result.stderr}", file=sys.stderr)
++            data["_returncode"] = result.returncode
+             return data
+         except json.JSONDecodeError:
+             print(f"JSON ERROR: tasks {' '.join(args)}", file=sys.stderr)
+@@ -291,6 +292,36 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+             res.get("error", "").lower() + " " + res.get("hint", "").lower(),
+         )
+ 
++    def test_missing_proof_returns_action_required_with_md5_guidance(self):
++        task_file = self.create_and_reach_review(
++            "Missing Proof Action Required Test", "code.py"
++        )
++        self.run_cmd(["audit", task_file])
++        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
++        for patch_name in os.listdir(patches_dir):
++            if patch_name.endswith(".patch"):
++                subprocess.run(
++                    ["cat", os.path.join(patches_dir, patch_name)],
++                    capture_output=True,
++                    check=False,
++                )
++        self.run_cmd(["modify", task_file, "--reviewed"])
++
++        res = self.run_cmd(["modify", task_file, "--regression-check"])
++        self.assertEqual(res.get("status"), "action_required", res)
++        self.assertNotEqual(res.get("_returncode"), 0, res)
++        self.assertNotEqual(self.get_meta(task_file).get("Rc"), "PASSED")
++        hint = res.get("hint", "")
++        task_id = str(self.get_meta(task_file).get("Id"))
++        self.assertIn("md5sum", hint)
++        self.assertNotIn("sha256sum", hint)
++        self.assertIn("cat", hint)
++        self.assertIn(patches_dir, hint)
++        self.assertIn(f"./hammer tasks audit {task_id}", hint)
++        self.assertIn(f"./hammer tasks modify {task_id} --reviewed", hint)
++        self.assertIn(f"./hammer tasks verify {task_id} --proof", hint)
++        self.assertIn(f"./hammer tasks modify {task_id} --regression-check", hint)
++
+     def test_regression_check_requires_reviewed(self):
+         task_file = self.create_and_reach_review(
+             "Regression Check Requires Reviewed Test", "code.py"

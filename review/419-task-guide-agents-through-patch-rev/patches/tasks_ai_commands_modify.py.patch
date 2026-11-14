@@ -1,0 +1,13 @@
+diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
+index b41ed0eb..f8d3ee05 100644
+--- a/tasks_ai/commands/modify.py
++++ b/tasks_ai/commands/modify.py
+@@ -267,6 +267,8 @@ def run(
+                 try:
+                     cli.pipeline.check_audit_integrity(cli, task_id, filepath)
+                 except PipelineError as e:
++                    if e.code == "PROOF_MISSING":
++                        cli.action_required(e.code, **e.kwargs)
+                     cli.error(e.code, **e.kwargs)
+             else:
+                 # No actual changes to review: auto-pass (do not require Reviewed).

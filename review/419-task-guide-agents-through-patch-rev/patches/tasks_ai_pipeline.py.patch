@@ -1,0 +1,36 @@
+diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
+index 15b3b4a5..c7b76ead 100644
+--- a/tasks_ai/pipeline.py
++++ b/tasks_ai/pipeline.py
+@@ -281,6 +281,7 @@ class PipelineService:
+         from .file_manager import FM
+ 
+         task = FM.load(task_path)
++        task_id = str(task.metadata.get("Id", task_id))
+         if task.metadata.get("Rc") == "PASSED":
+             self.log(
+                 f"DEBUG: Skipping audit integrity check for auto-passed task {task_id}"
+@@ -321,7 +322,22 @@ class PipelineService:
+         if not os.path.exists(audit_path):
+             raise PipelineError("AUDIT_MISSING", audit_path=audit_path, task_id=task_id)
+         if not os.path.exists(proof_path):
+-            raise PipelineError("PROOF_MISSING", task_id=task_id, proof_path=proof_path)
++            patches_display = patches_dir
++            repo_root = os.path.realpath(cli.context.repo_root)
++            try:
++                if (
++                    os.path.commonpath([os.path.realpath(patches_dir), repo_root])
++                    == repo_root
++                ):
++                    patches_display = os.path.relpath(patches_dir, repo_root)
++            except ValueError:
++                pass
++            raise PipelineError(
++                "PROOF_MISSING",
++                task_id=task_id,
++                proof_path=proof_path,
++                patches_dir=patches_display,
++            )
+ 
+         if not os.path.exists(hash_path):
+             raise PipelineError("HASH_MISSING", task_id=task_id, hash_path=hash_path)
