@@ -1,8 +1,8 @@
 diff --git a/tasks_ai/validator.py b/tasks_ai/validator.py
-index bb52eebe..63afd2d7 100644
+index bb52eebe..b9bd49df 100644
 --- a/tasks_ai/validator.py
 +++ b/tasks_ai/validator.py
-@@ -5,6 +5,24 @@ import subprocess
+@@ -5,6 +5,25 @@ import subprocess
  from pathlib import Path
  
  
@@ -14,8 +14,9 @@ index bb52eebe..63afd2d7 100644
 +        status = result.get("status") or ("pass" if success else "blocker")
 +        tool = result.get("tool", "validation")
 +        lines.append(f"CHECK {tool}: {status.upper()}")
-+        if not success:
-+            lines.append(f"  exit_code: {result.get('exit_code', 'unknown')}")
++        if success:
++            continue
++        lines.append(f"  exit_code: {result.get('exit_code', 'unknown')}")
 +        for label in ("stdout", "stderr"):
 +            output = str(result.get(label) or "").strip()
 +            if output:
@@ -27,7 +28,7 @@ index bb52eebe..63afd2d7 100644
  def format_ruff_blockers(output: str) -> str:
      """Present Ruff violations as promotion blockers, not tool errors."""
      try:
-@@ -249,8 +267,10 @@ class Validator:
+@@ -249,8 +268,10 @@ class Validator:
          stdout = result.stdout
          if tool_type == "lint" and tool == "ruff":
              stdout = format_ruff_blockers(stdout)
@@ -39,7 +40,7 @@ index bb52eebe..63afd2d7 100644
              "tool": tool_type,
              "stdout": stdout,
              "stderr": result.stderr,
-@@ -279,8 +299,10 @@ class Validator:
+@@ -279,8 +300,10 @@ class Validator:
          result = subprocess.run(  # noqa: PLW1510
              [str(script_path)], cwd=self.project_root, capture_output=True, text=True
          )

@@ -1,5 +1,5 @@
 diff --git a/tests/test_check_worktree.py b/tests/test_check_worktree.py
-index cf4911f3..f520bf92 100644
+index cf4911f3..9c56fe28 100644
 --- a/tests/test_check_worktree.py
 +++ b/tests/test_check_worktree.py
 @@ -12,7 +12,6 @@ Locked down here:
@@ -40,7 +40,7 @@ index cf4911f3..f520bf92 100644
          lint = next(r for r in results if r["tool"] == "lint")
          self.assertTrue(lint["success"], lint)
 -        self.assertIn("RUFF-PATH-RAN", lint["stdout"])
-+        self.assertIn("RUFF-PATH-RAN", out)
++        self.assertIn("CHECK lint: PASS", out)
  
      def test_check_all_is_not_silently_skipped_when_unchanged(self):
          head = self.git("rev-parse", "HEAD").stdout.strip()
