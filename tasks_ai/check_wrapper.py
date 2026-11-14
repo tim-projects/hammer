@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tasks_ai.cli_io import BlockerArgumentParser
+from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
 from tasks_ai.help_text import agent_epilog
 from tasks_ai.validator import ValidationError, Validator, format_check_results
 
@@ -74,6 +74,7 @@ def build_parser():
 
 
 def main():
+    configure_sigpipe()
     parser = build_parser()
     args = parser.parse_args()
 
