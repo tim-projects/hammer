@@ -1,0 +1,52 @@
+{
+  "Id": 435,
+  "Ti": "Present all failed validation checks as readable blockers",
+  "Ty": "task",
+  "Cr": "261114 13:03",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "435-task-present-all-failed-validation",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794664306.754779,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/check.py.patch"
+    },
+    {
+      "file": "error_report.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/error_report.json.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/tasks_ai_validation.py.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/test_check_worktree.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/tests_test_check_worktree.py.patch"
+    },
+    {
+      "file": "tests/test_validation_blockers.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/435-task-present-all-failed-validation/patches/tests_test_validation_blockers.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "3c3e3e5de31b5311a495ae742dd7bb8b9b172059",
+    "base": "33b37d9a8969bf30844491af6bce75f75c08dcf5"
+  }
+}

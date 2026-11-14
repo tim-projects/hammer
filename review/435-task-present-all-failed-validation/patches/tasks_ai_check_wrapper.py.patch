@@ -1,0 +1,42 @@
+diff --git a/tasks_ai/check_wrapper.py b/tasks_ai/check_wrapper.py
+index 030b86c6..ee470f23 100755
+--- a/tasks_ai/check_wrapper.py
++++ b/tasks_ai/check_wrapper.py
+@@ -25,7 +25,7 @@ import sys
+ 
+ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ from tasks_ai.help_text import agent_epilog
+-from tasks_ai.validator import Validator
++from tasks_ai.validator import ValidationError, Validator, format_check_results
+ 
+ COMMAND_HELP = {
+     "lint": "Run linter (exit 0 = pass, 1 = fail)",
+@@ -88,11 +88,27 @@ def main():
+             results = [validator.run_debug()]
+         else:
+             results = [validator.run_check(args.command, args.fix)]
++    except ValidationError as e:
++        print(
++            format_check_results(
++                [
++                    {
++                        "success": False,
++                        "status": "blocker",
++                        "tool": "validation",
++                        "stdout": str(e),
++                        "stderr": "",
++                        "exit_code": 1,
++                    }
++                ]
++            )
++        )
++        sys.exit(1)
+     except Exception as e:  # noqa: BLE001
+         print(f"Error: {e}")
+         sys.exit(1)
+ 
+-    print(f"Results: {results}")
++    print(format_check_results(results))
+     sys.exit(0 if all(r["success"] for r in results) else 1)
+ 
+ 

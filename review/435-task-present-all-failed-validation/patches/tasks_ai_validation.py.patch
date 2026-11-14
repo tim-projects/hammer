@@ -1,0 +1,36 @@
+diff --git a/tasks_ai/validation.py b/tasks_ai/validation.py
+index 0ad2da36..b97d0b28 100644
+--- a/tasks_ai/validation.py
++++ b/tasks_ai/validation.py
+@@ -171,10 +171,12 @@ class Validation:
+                         details = str(details).strip()
+                         if tool == "lint":
+                             details = format_ruff_blockers(details)
+-                        error_msg = f"{tool}: {details}"
++                        error_msg = f"BLOCKER {tool}: {details}"
+                     else:
+                         exit_code = failed_line.get("exit_code", "unknown")
+-                        error_msg = f"{tool}: check failed with exit code {exit_code}"
++                        error_msg = (
++                            f"BLOCKER {tool}: check failed with exit code {exit_code}"
++                        )
+                     self.cli.error(
+                         "PIPELINE_VALIDATION_FAILED",
+                         hint_code="PIPELINE_VALIDATION_FAILED",
+@@ -185,7 +187,7 @@ class Validation:
+                 self.cli.error(
+                     "PIPELINE_VALIDATION_FAILED",
+                     hint_code="PIPELINE_VALIDATION_FAILED",
+-                    msg=f"Failed to parse tool output: {result.stdout}",
++                    msg=f"BLOCKER validation: Failed to parse tool output: {result.stdout}",
+                 )
+         else:
+             if result.stdout:
+@@ -197,6 +199,6 @@ class Validation:
+                 self.cli.error(
+                     "PIPELINE_VALIDATION_FAILED",
+                     hint_code="PIPELINE_VALIDATION_FAILED",
+-                    msg=result.stderr or result.stdout,
++                    msg=f"BLOCKER validation: {result.stderr or result.stdout}",
+                 )
+         return result
