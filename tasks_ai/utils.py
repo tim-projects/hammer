@@ -89,6 +89,15 @@ def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
             continue
         abs_path = os.path.abspath(path)
         registered.add(abs_path)
+        local_store = os.path.join(abs_path, ".tasks")
+        if os.path.isdir(local_store):
+            findings.append(
+                (
+                    "GUARD_WORKTREE_LOCAL_STORE",
+                    task_id,
+                    f"worktree for task {task_id} contains a local store: {local_store}",
+                )
+            )
         expected = os.path.join(worktrees_base, branch)
         if abs_path != expected:
             findings.append(
@@ -235,14 +244,17 @@ def atomic_write(path: str, task_or_content: Any, fm=None):
 
 
 def store_is_git(cli):
-    """True when the store lives inside a git work tree.
+    """True when the store is the top level of its own Git repository.
 
-    'tasks init' clones the store's own repo, but a store can also be a plain
-    directory that was never initialised; those have no history to write to, so
-    store writes are skipped there instead of failing the command.
+    A plain directory below a code repository is not an independent store.
+    Treating it as one would make store writes commit the code repository and
+    move its default branch, invalidating review patch snapshots.
     """
-    res = cli._run_git(["rev-parse", "--is-inside-work-tree"], cwd=cli.tasks_path)
-    return res.returncode == 0 and res.stdout.strip() == "true"
+    res = cli._run_git(["rev-parse", "--show-toplevel"], cwd=cli.tasks_path)
+    if res.returncode != 0:
+        return False
+    top_level = os.path.realpath(res.stdout.strip())
+    return top_level == os.path.realpath(cli.tasks_path)
 
 
 def _stageable(cli, path):

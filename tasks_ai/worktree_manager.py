@@ -94,6 +94,26 @@ class WorktreeManager:
     def create_task_worktree(self, task_id, branch=None) -> str | None:
         if branch is None:
             branch = str(task_id)
+        # A task branch must never materialize the central store in its
+        # worktree. Check the branch tree before git checks it out.
+        ref = branch
+        verify = self.git.run(
+            ["rev-parse", "--verify", ref], cwd=self.context.main_repo_root
+        )
+        if verify.returncode != 0:
+            ref = "HEAD"
+        tracked = self.git.run(
+            ["ls-tree", "-r", "--name-only", ref, "--", ".tasks"],
+            cwd=self.context.main_repo_root,
+        )
+        if tracked.returncode == 0 and tracked.stdout.strip():
+            if self.logger:
+                self.logger.error(
+                    "STORE_BRANCH_TRACKS_TASKS",
+                    branch=branch,
+                    store_path=os.path.join(self.worktrees_base, branch, ".tasks"),
+                )
+            return None
         # Check-and-register must be one transaction: two agents mounting at
         # once both pass has_worktree and then rewrite the manifest from a
         # stale copy, dropping each other's entry.

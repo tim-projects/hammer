@@ -1,0 +1,149 @@
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+from tasks_ai.git_service import GitService
+from tasks_ai.utils import audit_worktree_manifest, commit_task_paths, store_is_git
+from tasks_ai.worktree_manager import WorktreeManager
+
+
+class Context:
+    def __init__(self, root, tasks_path):
+        self.repo_root = root
+        self.main_repo_root = root
+        self.tasks_path = tasks_path
+        self.dev = False
+
+
+class StoreCli:
+    def __init__(self, root, tasks_path):
+        self.context = Context(root, tasks_path)
+        self.tasks_path = tasks_path
+        self.git = GitService(self.context)
+
+    def _run_git(self, args, cwd=None, check=False):
+        return self.git.run(args, cwd=cwd, check=check)
+
+
+def git(*args, cwd, check=False):
+    return subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=check,
+    )
+
+
+class TestCentralStore(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="hammer_central_store_")
+        self.repo = os.path.join(self.tmp, "repo")
+        self.store = os.path.join(self.repo, ".tasks")
+        os.makedirs(self.store)
+        git("init", "-b", "main", cwd=self.repo)
+        git("config", "user.email", "test@example.com", cwd=self.repo)
+        git("config", "user.name", "Test User", cwd=self.repo)
+        with open(os.path.join(self.repo, "README.md"), "w") as handle:
+            handle.write("# test\n")
+        git("add", "README.md", cwd=self.repo)
+        git("commit", "-m", "initial", cwd=self.repo, check=True)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_hammer(self, args):
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        script = os.path.join(self.repo, "hammer")
+        os.symlink(os.path.join(project_root, "hammer"), script)
+        result = subprocess.run(
+            [script, "tasks", "-j", *args],
+            cwd=self.repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return result, json.loads(result.stdout)
+
+    def test_production_tasks_dir_override_must_resolve_to_canonical_store(self):
+        other = os.path.join(self.tmp, "other-store")
+        with open(os.path.join(self.store, "config.yaml"), "w") as handle:
+            handle.write(f"tasks_dir: {other}\n")
+
+        result, payload = self.run_hammer(["list"])
+
+        self.assertEqual(result.returncode, 1, payload)
+        self.assertFalse(payload["success"], payload)
+        self.assertIn("central", payload["error"].lower(), payload)
+        self.assertFalse(os.path.exists(other), payload)
+
+    def test_plain_store_is_not_an_independent_git_store(self):
+        cli = StoreCli(self.repo, self.store)
+        self.assertFalse(store_is_git(cli))
+
+        git("init", "-b", "tasks", cwd=self.store)
+        self.assertTrue(store_is_git(cli))
+
+    def test_plain_store_write_does_not_advance_code_default_branch(self):
+        before = git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        task_file = os.path.join(self.store, "backlog", "1-task-test", "meta.json")
+        os.makedirs(os.path.dirname(task_file))
+        with open(task_file, "w") as handle:
+            handle.write("{}")
+
+        commit_task_paths(StoreCli(self.repo, self.store), task_file, "task write")
+
+        after = git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        self.assertEqual(before, after)
+
+    def test_registered_worktree_local_store_is_reported_without_migration(self):
+        branch = "1-task-local-store"
+        worktree = os.path.join(self.repo, ".task-worktrees", branch)
+        local_store = os.path.join(worktree, ".tasks")
+        os.makedirs(local_store)
+        marker = os.path.join(local_store, "keep.txt")
+        with open(marker, "w") as handle:
+            handle.write("keep")
+
+        findings = audit_worktree_manifest(
+            {"1": {"branch": branch, "path": worktree}},
+            os.path.join(self.repo, ".task-worktrees"),
+            [worktree],
+        )
+
+        self.assertIn(
+            "GUARD_WORKTREE_LOCAL_STORE", [finding[0] for finding in findings], findings
+        )
+        self.assertTrue(os.path.exists(marker))
+
+    def test_worktree_creation_refuses_branch_that_tracks_tasks(self):
+        local_store = os.path.join(self.repo, ".tasks")
+        with open(os.path.join(local_store, "tracked.txt"), "w") as handle:
+            handle.write("tracked")
+        git("add", "-f", ".tasks/tracked.txt", cwd=self.repo)
+        git("commit", "-m", "track store", cwd=self.repo, check=True)
+        git("branch", "1-task-tracked-store", cwd=self.repo, check=True)
+
+        errors = []
+
+        class Logger:
+            def log(self, message):
+                pass
+
+            def error(self, code, **kwargs):
+                errors.append((code, kwargs))
+
+        context = Context(self.repo, local_store)
+        manager = WorktreeManager(context, GitService(context), logger=Logger())
+        path = manager.create_task_worktree("1", "1-task-tracked-store")
+
+        self.assertIsNone(path)
+        self.assertEqual(errors[0][0], "STORE_BRANCH_TRACKS_TASKS")
+        self.assertFalse(
+            os.path.exists(
+                os.path.join(self.repo, ".task-worktrees", "1-task-tracked-store")
+            )
+        )

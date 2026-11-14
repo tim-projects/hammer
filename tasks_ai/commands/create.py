@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..models import Task
-from ..utils import derive_task_id, resolve_content
+from ..utils import derive_task_id, resolve_content, store_is_git
 
 
 def run(
@@ -171,19 +171,21 @@ def run(
         cli._atomic_write(task_dir, task)
         cli._append_log(task_dir, "Cr")
         # Force add in case .gitignore ignores .md files
-        try:
+        if store_is_git(cli):
+            try:
+                cli._run_git(
+                    ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)],
+                    cwd=cli.tasks_path,
+                )
+            except Exception:  # noqa: BLE001
+                cli._run_git(
+                    ["add", os.path.relpath(task_dir, cli.tasks_path)],
+                    cwd=cli.tasks_path,
+                )
             cli._run_git(
-                ["add", "-f", os.path.relpath(task_dir, cli.tasks_path)],
+                ["commit", "--allow-empty", "-m", f"Add {task_type}: {title}"],
                 cwd=cli.tasks_path,
             )
-        except Exception:  # noqa: BLE001
-            cli._run_git(
-                ["add", os.path.relpath(task_dir, cli.tasks_path)], cwd=cli.tasks_path
-            )
-        cli._run_git(
-            ["commit", "--allow-empty", "-m", f"Add {task_type}: {title}"],
-            cwd=cli.tasks_path,
-        )
 
         cli.git.worktrees.create_task_worktree(str(numeric_id), task_id)
 
@@ -259,13 +261,15 @@ def run(
 
         cli._atomic_write(pair_task_dir, pair_task)
         cli._append_log(pair_task_dir, "Cr")
-        cli._run_git(
-            ["add", os.path.relpath(pair_task_dir, cli.tasks_path)], cwd=cli.tasks_path
-        )
-        cli._run_git(
-            ["commit", "--allow-empty", "-m", f"Add task: {pair_title}"],
-            cwd=cli.tasks_path,
-        )
+        if store_is_git(cli):
+            cli._run_git(
+                ["add", os.path.relpath(pair_task_dir, cli.tasks_path)],
+                cwd=cli.tasks_path,
+            )
+            cli._run_git(
+                ["commit", "--allow-empty", "-m", f"Add task: {pair_title}"],
+                cwd=cli.tasks_path,
+            )
 
         cli.git.worktrees.create_task_worktree(str(pair_numeric_id), pair_task_id)
 
