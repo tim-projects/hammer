@@ -1,0 +1,1 @@
+All six reviewed patches restore default SIGPIPE behavior and the oversized early-close regression terminates by SIGPIPE without a traceback; focused and full validation passed
