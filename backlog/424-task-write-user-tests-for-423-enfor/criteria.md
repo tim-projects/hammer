@@ -1,0 +1,8 @@
+- [ ] Production mode resolves the store only to <main_repo_root>/.tasks
+- [ ] A production tasks_dir override resolving anywhere else is rejected with STORE_NOT_CENTRAL
+- [ ] The central .tasks directory is validated as its own Git top-level and store commits never advance the code default branch
+- [ ] Every registered task worktree is checked for a local .tasks directory
+- [ ] Task-worktree creation refuses a branch that tracks .tasks
+- [ ] Detection reports local stores without deleting or migrating their contents without explicit confirmation
+- [ ] Real-store audit, review, verify, and regression-check flows keep PatchSnapshot valid
+- [ ] Regression tests cover canonical resolution, worktree-local stores, repository ownership, and snapshot stability
