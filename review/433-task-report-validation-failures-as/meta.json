@@ -13,7 +13,7 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794660006.911225,
   "DoneAt": null,
   "PatchFiles": [
     {
@@ -29,10 +29,6 @@
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/433-task-report-validation-failures-as/patches/data_hints.json.patch"
     },
     {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/433-task-report-validation-failures-as/patches/error_report.json.patch"
-    },
-    {
       "file": "tasks_ai/validation.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/433-task-report-validation-failures-as/patches/tasks_ai_validation.py.patch"
     },
@@ -46,7 +42,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "cc5c8dbb57161fb9c0cf694b7a0385df15288de6",
+    "head": "e975a4fbcda7f42d10b81be398897b41b187c3d4",
     "base": "699ab8ec58acf1f6aae81058465248a5bb7ccf2e"
   }
 }
