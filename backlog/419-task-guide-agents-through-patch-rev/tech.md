@@ -18,11 +18,11 @@ For `PROOF_MISSING`, pass the real task context from `tasks_ai/pipeline.py` inst
 
 After 390 and 392, the `PROOF_MISSING` guidance must require this sequence:
 1. Refresh the patch set to the current branch tip with `./hammer tasks audit <id>`. This reuses task 392's audit self-healing and task 390's fresh-patch guarantees.
-2. Display every refreshed patch with `cat` and capture `sha256sum` evidence.
+2. Display every refreshed patch with `cat` and capture `md5sum` evidence.
 3. Record the review with `./hammer tasks modify <id> --reviewed` when not already recorded. Task 390 must invalidate this receipt if the patch set changes again.
 4. Bind the proof with `./hammer tasks verify <id> --proof "<review evidence including patch filenames and checksums>"`.
 5. Pass the gate with `./hammer tasks modify <id> --regression-check`.
 
 Render the instruction in Hammer voice using WHAT, WHY, HOW, and CONSEQUENCE. Update `AGENTS.md` to distinguish expected `NEXT STEP` / JSON `status: action_required` output from actual errors while retaining the stop rule for genuine failures.
 
-Add focused tests for the action-required JSON schema, terminal wording, dynamic patch path, the audit-refresh-first sequence, `cat` and `sha256sum` instructions, unchanged non-zero status, unchanged blocked promotion, and unchanged treatment of genuine integrity failures. Integration coverage must verify that the guidance remains correct when task 392's audit refresh repairs stale patches and when task 390 invalidates a receipt after patch regeneration.
+Add focused tests for the action-required JSON schema, terminal wording, dynamic patch path, the audit-refresh-first sequence, `cat` and `md5sum` instructions, unchanged non-zero status, unchanged blocked promotion, and unchanged treatment of genuine integrity failures. Integration coverage must verify that the guidance remains correct when task 392's audit refresh repairs stale patches and when task 390 invalidates a receipt after patch regeneration.
