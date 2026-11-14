@@ -1,0 +1,10 @@
+{
+  "Id": 440,
+  "Ti": "Write user tests for 439: Handle early-closed output pipes without tracebacks",
+  "Ty": "task",
+  "Cr": "261114 16:37",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "440-task-write-user-tests-for-439-handl",
+  "Pt": 439
+}
