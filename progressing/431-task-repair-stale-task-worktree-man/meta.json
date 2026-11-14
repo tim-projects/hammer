@@ -8,12 +8,12 @@
   "Br": "431-task-repair-stale-task-worktree-man",
   "Pt": null,
   "Rc": "",
-  "Vp": true,
+  "Vp": false,
   "Rr": true,
   "Tp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1794660852.173333,
+  "PatchGenTime": null,
   "DoneAt": null,
   "PatchFiles": [
     {
