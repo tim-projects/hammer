@@ -1266,15 +1266,12 @@ class TestTasksAI(unittest.TestCase):
 
         # Verify diff updated
         patch_files = [f for f in os.listdir(patches_dir) if f.endswith(".patch")]
-        self.assertTrue(
-            len(patch_files) > 0, "Diff should exist after re-entering REVIEW"
-        )
-        diff_path = os.path.join(patches_dir, patch_files[0])
-        with open(diff_path) as f:
-            diff2 = f.read()
-        self.assertIn(
-            "initial", diff2.lower(), "Diff should still contain initial commit"
-        )
+        self.assertIn("initial.txt.patch", patch_files)
+        self.assertIn("fix.txt.patch", patch_files)
+        with open(os.path.join(patches_dir, "initial.txt.patch")) as f:
+            self.assertIn("initial", f.read().lower())
+        with open(os.path.join(patches_dir, "fix.txt.patch")) as f:
+            self.assertIn("fixed", f.read().lower())
 
         # Verify Rc is reset
         review_task_path = os.path.join(self.dev_tasks_dir, "review", task_file)

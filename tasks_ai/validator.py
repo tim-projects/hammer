@@ -134,7 +134,14 @@ class Validator:
                 "noop": ["/bin/true"],
             },
             "format": {
-                "ruff": ["ruff", "format", "."] + (["--check"] if not fix else []),
+                "ruff": [
+                    "ruff",
+                    "format",
+                    "--extend-exclude",
+                    "*.md",
+                    ".",
+                ]
+                + (["--check"] if not fix else []),
                 "prettier": ["npx", "prettier", "--write", "."]
                 if fix
                 else ["npx", "prettier", "--check", "."],
