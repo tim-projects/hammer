@@ -1,0 +1,5 @@
+- [ ] Doctor reports a missing registered worktree and `doctor --fix <id>` repairs its stale manifest entry
+- [ ] A merged task branch is deleted during the repair, while an unmerged branch is preserved
+- [ ] Targeted repair with `--fix <id>` does not modify other tasks' worktree manifest entries
+- [ ] Repair does not recreate a missing worktree for a completed task
+- [ ] Regression tests cover targeted repair, merged branch cleanup, and unmerged branch preservation
