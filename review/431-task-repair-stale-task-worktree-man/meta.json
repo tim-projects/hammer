@@ -13,13 +13,9 @@
   "Tp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794660869.308743,
   "DoneAt": null,
   "PatchFiles": [
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/431-task-repair-stale-task-worktree-man/patches/error_report.json.patch"
-    },
     {
       "file": "tasks_ai/commands/doctor.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/431-task-repair-stale-task-worktree-man/patches/tasks_ai_commands_doctor.py.patch"
@@ -30,7 +26,7 @@
     }
   ],
   "PatchSnapshot": {
-    "head": "4461566270fd7f7ed1102a302fd98fd3676f92e0",
+    "head": "a292db55a3654541a9c18805c48471904943fd5e",
     "base": "d1f905ffa53d7cd8d7c32ae49b2a2e82d0b3ee34"
   }
 }
