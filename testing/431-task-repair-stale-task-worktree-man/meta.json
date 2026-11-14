@@ -8,7 +8,7 @@
   "Br": "431-task-repair-stale-task-worktree-man",
   "Pt": null,
   "Rc": "",
-  "Vp": false,
+  "Vp": true,
   "Rr": true,
   "Tp": true,
   "Reviewed": false,
