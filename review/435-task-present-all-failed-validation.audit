@@ -1,0 +1,13 @@
+{
+    "task_id": "435",
+    "patch_hash": "ebeb7948728a9826b44904fcf64e198a",
+    "patch_files": [
+        "check.py.patch",
+        "tasks_ai_check_wrapper.py.patch",
+        "tasks_ai_validation.py.patch",
+        "tasks_ai_validator.py.patch",
+        "tests_test_check_worktree.py.patch",
+        "tests_test_validation_blockers.py.patch"
+    ],
+    "status": "verified"
+}
