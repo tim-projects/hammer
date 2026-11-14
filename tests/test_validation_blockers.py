@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from tasks_ai.messages import MessageRegistry
 from tasks_ai.validation import Validation
+from tasks_ai.validator import Validator, format_check_results
 
 
 class FakeCLI:
@@ -79,9 +80,50 @@ class TestValidationBlockers(unittest.TestCase):
         )
 
         self.assertEqual(code, "PIPELINE_VALIDATION_FAILED")
-        self.assertIn("typecheck", details["msg"])
+        self.assertTrue(details["msg"].startswith("BLOCKER typecheck:"))
         self.assertIn("2", details["msg"])
         self.assertNotIn("Tool execution failed", details["msg"])
+
+    def test_check_results_render_each_failure_as_a_readable_blocker(self):
+        output = format_check_results(
+            [
+                {
+                    "success": False,
+                    "status": "blocker",
+                    "tool": "test",
+                    "stdout": "1 failed, 99 passed",
+                    "stderr": "test details",
+                    "exit_code": 1,
+                }
+            ]
+        )
+
+        self.assertIn("CHECK test: BLOCKER", output)
+        self.assertIn("exit_code: 1", output)
+        self.assertIn("1 failed, 99 passed", output)
+        self.assertIn("test details", output)
+        self.assertNotIn("Results: [", output)
+
+    def test_validator_marks_every_failed_check_as_a_blocker(self):
+        validator = Validator.__new__(Validator)
+        validator.project_root = "/tmp/repo"
+        validator.dev = False
+        validator.config = {"repo": {"lint": "ruff"}}
+        result = subprocess.CompletedProcess(
+            args=["ruff"],
+            returncode=1,
+            stdout="[]",
+            stderr="",
+        )
+
+        with (
+            patch("tasks_ai.validator.shutil.which", return_value="/usr/bin/ruff"),
+            patch("tasks_ai.validator.subprocess.run", return_value=result),
+        ):
+            check = validator.run_check("lint")
+
+        self.assertFalse(check["success"])
+        self.assertEqual(check["status"], "blocker")
 
     def test_validation_message_describes_a_promotion_blocker(self):
         messages = MessageRegistry()
