@@ -12,6 +12,6 @@
   "['link', '1', '1']": {
     "has_hint": true,
     "stdout": "DEBUG: Loading config from /tmp/.tasks",
-    "stderr": "Error: One or both task not found. | HINT: WHAT: Link target missing.\nWHY: HAMMER cannot link to nothing.\nHOW: Verify both tasks exist with 'hammer tasks list'.\nCONSEQUENCE: Link chain broken. FIX ID."
+    "stderr": "Error: Cannot link task to itself. | HINT: WHAT: Link to self forbidden.\nWHY: SELF-REFERENCE IS WEAK. Loops break logic.\nHOW: Link to a different task.\nCONSEQUENCE: Logic corruption. AVOID IT."
   }
 }
