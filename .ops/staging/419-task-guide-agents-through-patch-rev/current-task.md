@@ -1,7 +1,0 @@
----
-Task: 419-task-guide-agents-through-patch-rev
----
-
-- Progress: Implemented actionable missing-proof guidance with MD5 review evidence and dynamic patch paths; focused and full validation pass.
-- Findings: PROOF_MISSING now carries numeric task ID, proof path, and the live review patch directory. Terminal output uses NEXT STEP; JSON uses status action_required; both retain exit status 1 and leave Rc unset. Genuine audit, integrity, and validation failures remain errors.
-- Mitigations: Full check all passes: lint, 102 tests passed with 1 skipped, typecheck, and format. Task 390 and 392 blocker contracts remain covered by integration tests.
