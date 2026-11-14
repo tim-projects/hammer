@@ -1,5 +1,5 @@
 diff --git a/tests/test_audit_verify_integration.py b/tests/test_audit_verify_integration.py
-index aff8edb5..0f4267b2 100644
+index aff8edb5..a583138a 100644
 --- a/tests/test_audit_verify_integration.py
 +++ b/tests/test_audit_verify_integration.py
 @@ -202,9 +202,13 @@ class ReviewGateIntegrationTest(unittest.TestCase):
@@ -41,7 +41,7 @@ index aff8edb5..0f4267b2 100644
      # --- tests ---
      def test_staging_blocked_without_regression_check(self):
          task_file = self.create_and_reach_review(
-@@ -378,6 +397,164 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+@@ -378,6 +397,168 @@ class ReviewGateIntegrationTest(unittest.TestCase):
          with open(os.path.join(patches_dir, target)) as f:
              self.assertNotIn("stale content", f.read())
  
@@ -77,8 +77,12 @@ index aff8edb5..0f4267b2 100644
 +        )
 +        with open(patch_path) as f:
 +            self.assertEqual(f.read(), expected)
-+        self.assertFalse(self.get_meta(task_file).get("Reviewed"))
-+        self.assertFalse(self.get_meta(task_file).get("Rc"))
++        meta = self.get_meta(task_file)
++        self.assertFalse(meta.get("Reviewed"))
++        self.assertFalse(meta.get("Rc"))
++        for patch_info in meta.get("PatchFiles", []):
++            self.assertTrue(os.path.exists(patch_info["patch_path"]))
++            self.assertNotIn(".ops/staging", patch_info["patch_path"])
 +        self.assertFalse(
 +            os.path.exists(
 +                os.path.join(self.dev_tasks_dir, "review", task_file, "reviews.json")
