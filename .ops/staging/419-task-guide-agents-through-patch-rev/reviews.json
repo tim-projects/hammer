@@ -1,0 +1,50 @@
+{
+  "reviews": [
+    {
+      "file": "AGENTS.md",
+      "patch": "AGENTS.md.patch",
+      "md5": "c32ebfbf6f318460cc6c7ad46a6e70e0"
+    },
+    {
+      "file": "data/errors.json",
+      "patch": "data_errors.json.patch",
+      "md5": "a1242b32968f59fa690ff2aa04825f0a"
+    },
+    {
+      "file": "data/hints.json",
+      "patch": "data_hints.json.patch",
+      "md5": "b7af3bc9f76b1b0f8a5e5142b741babe"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch": "tasks_ai_cli.py.patch",
+      "md5": "06837db51263bbe0b0a26d70cb173f12"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch": "tasks_ai_cli_io.py.patch",
+      "md5": "e3d4bb4004e03972d559c6e6a3215bd5"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch": "tasks_ai_commands_modify.py.patch",
+      "md5": "4aacbf6f1f598e72116656bcd9fcb2fd"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch": "tasks_ai_pipeline.py.patch",
+      "md5": "f2f8ba3548d08e165e499ad4745381e0"
+    },
+    {
+      "file": "tests/test_action_required.py",
+      "patch": "tests_test_action_required.py.patch",
+      "md5": "7eeee7469c259380980a5e1c7ded2703"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch": "tests_test_audit_verify_integration.py.patch",
+      "md5": "34c5163bfe90df209437c4b00c58e6a9"
+    }
+  ],
+  "reviewed_at": 1794689915.2110062
+}

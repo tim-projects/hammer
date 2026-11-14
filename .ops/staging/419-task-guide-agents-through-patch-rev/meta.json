@@ -1,0 +1,63 @@
+{
+  "Id": 419,
+  "Ti": "Guide agents through patch review with actionable next-step instructions",
+  "Ty": "task",
+  "Cr": "261113 08:28",
+  "Bl": [
+    "390-task-tasks-review-can-pass-against",
+    "392-task-patch-generation-goes-stale-ag"
+  ],
+  "Pr": 1,
+  "Br": "419-task-guide-agents-through-patch-rev",
+  "Pt": null,
+  "Tp": false,
+  "Rr": true,
+  "Rc": "PASSED",
+  "Vp": true,
+  "Reviewed": true,
+  "AuditPassed": false,
+  "PatchGenTime": 1794689878.0443,
+  "DoneAt": 1794690407.267404,
+  "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/AGENTS.md.patch"
+    },
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tasks_ai_cli_io.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tasks_ai_commands_modify.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tasks_ai_pipeline.py.patch"
+    },
+    {
+      "file": "tests/test_action_required.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tests_test_action_required.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tests_test_audit_verify_integration.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "f47211ceb8c1779a1c71c22c3c47c1f6f3581c81",
+    "base": "cec02bf0e0fca6585215fb90f9027e21f6371c8e"
+  }
+}
