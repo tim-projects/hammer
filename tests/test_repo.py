@@ -12,7 +12,7 @@ class TestRepo(HammerTestBase):
         super().setUp()
         # The harness checks out main; install the branch's code as a whole so
         # the fixture never mixes main's commands with the branch's utils.
-        for rel in ("hammer", "tasks.py", "repo.py"):
+        for rel in ("hammer", "tasks.py"):
             shutil.copy2(
                 os.path.join(os.getcwd(), rel), os.path.join(self.repo_path, rel)
             )
