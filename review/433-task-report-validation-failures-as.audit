@@ -1,0 +1,13 @@
+{
+    "task_id": "433",
+    "patch_hash": "34b3babf5b83abf3504f93754f01adab",
+    "patch_files": [
+        "check.py.patch",
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_validation.py.patch",
+        "tasks_ai_validator.py.patch",
+        "tests_test_validation_blockers.py.patch"
+    ],
+    "status": "verified"
+}
