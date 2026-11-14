@@ -26,7 +26,7 @@
   "BRANCH_NOT_MERGED": "Task branch '{branch}' not merged to main.",
   "AUDIT_PATCH_MISSING": "Regression patches missing from {patches_dir}.",
   "AUDIT_MISSING": "Cryptographic audit missing.",
-  "PROOF_MISSING": "Verification proof missing.",
+  "PROOF_MISSING": "Complete verification proof for task {task_id}.",
   "HASH_MISSING": "Audit integrity hash missing.",
   "AUDIT_MISMATCH": "Audit mismatch: The code has changed since the last audit.",
   "INTEGRITY_MISMATCH": "Integrity mismatch: Criteria, proof, or audit has changed.",
