@@ -1,0 +1,1 @@
+Reviewed the ValidationHook REJECTED exception and all three regression tests covering rejected and normal promotion paths.
