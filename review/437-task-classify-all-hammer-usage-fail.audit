@@ -1,0 +1,15 @@
+{
+    "task_id": "437",
+    "patch_hash": "dbe936fccd4bdb682720b7f802a1cc6b",
+    "patch_files": [
+        ".gitignore.patch",
+        "error_report.json.patch",
+        "guard.py.patch",
+        "repo.py.patch",
+        "tasks.py.patch",
+        "tasks_ai_check_wrapper.py.patch",
+        "tasks_ai_cli_io.py.patch",
+        "tests_test_usage_blockers.py.patch"
+    ],
+    "status": "verified"
+}
