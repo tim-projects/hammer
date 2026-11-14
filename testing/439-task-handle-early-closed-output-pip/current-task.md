@@ -2,6 +2,7 @@
 Task: 439-task-handle-early-closed-output-pip
 ---
 
+
 ## Implementation
 
 - Added a platform-safe `configure_sigpipe()` helper in `tasks_ai/cli_io.py` that restores `SIG_DFL` only when `SIGPIPE` exists.
