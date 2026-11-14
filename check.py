@@ -163,7 +163,13 @@ def is_noop_tool(tool):
 def get_commands(fix=False):
     return {
         "lint": {
-            "ruff": ["ruff", "check", "."] + (["--fix"] if fix else []),
+            "ruff": [
+                "ruff",
+                "check",
+                ".",
+                "--output-format=json",
+            ]
+            + (["--fix"] if fix else []),
             "pylint": ["pylint", "."],
             "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
             "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
