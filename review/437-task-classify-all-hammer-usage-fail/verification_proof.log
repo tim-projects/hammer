@@ -1,0 +1,1 @@
+All eight reviewed patches implement blocker status without changing usage details or exit codes; focused and full validation passed
