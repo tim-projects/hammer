@@ -1,3 +1,3 @@
-- Progress: Implemented staged-directory patch regeneration, stale receipt invalidation, exact receipt coverage, audit refresh, and regression coverage. Full check all passes.
-- Findings: 
-- Mitigations: 
+- Progress: Implemented and verified stale-review protection across REVIEW re-entry, patch pruning, receipt invalidation, audit refresh, sync merges, canonical patch metadata, and Ruff Markdown exclusion.
+- Findings: Root cause: REVIEW enter hooks run before the physical move; fresh patches written to the final review path were overwritten by staged old patches. Patch generation now targets the staged directory while metadata records final canonical paths. Branch/base snapshots and exact receipt coverage detect superseded artifacts.
+- Mitigations: Full check all passes: lint, 99 tests passed with 1 skipped, typecheck, and format. Store-only fallback patches rely on snapshot plus receipt and audit hashes; generated error_report.json is retained as the validation snapshot.
