@@ -21,7 +21,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 # The package lives next to this script; cwd may be a task worktree without it.
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from tasks_ai.cli_io import BlockerArgumentParser
+from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
 from tasks_ai.constants import STATE_FOLDERS, load_config
 from tasks_ai.guard_engine import (
     GuardEngine,
@@ -322,6 +322,7 @@ def build_parser():
 
 
 def main():
+    configure_sigpipe()
     parser = build_parser()
     args = parser.parse_args()
     if not getattr(args, "command", None):

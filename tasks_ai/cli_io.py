@@ -1,7 +1,14 @@
 import argparse
 import json
 import os
+import signal
 import sys
+
+
+def configure_sigpipe():
+    """Restore Unix's normal behavior when a downstream pipe closes early."""
+    if hasattr(signal, "SIGPIPE"):
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 class BlockerArgumentParser(argparse.ArgumentParser):
