@@ -28,3 +28,4 @@ cli-versions/
 /.tasks.backup/
 
 .task-worktrees/
+/error_report.json
