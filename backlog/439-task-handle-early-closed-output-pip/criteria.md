@@ -1,0 +1,7 @@
+- [ ] The `tasks`, `check`, `repo`, and `guard` Hammer entry points restore default `SIGPIPE` behavior before producing output
+- [ ] Closing the output pipe early produces no `BrokenPipeError` and no Python traceback
+- [ ] The producer terminates through normal `SIGPIPE` behavior rather than an uncaught exception
+- [ ] Full-output and JSON-output behavior remains unchanged
+- [ ] A regression uses output larger than the pipe buffer and closes the consumer early
+- [ ] Existing Hammer usage, validation, and pipeline gate behavior is unchanged
+- [ ] Full validation passes

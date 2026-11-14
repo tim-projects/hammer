@@ -1,0 +1,5 @@
+Python ignores `SIGPIPE` by default, so a closed stdout pipe becomes an uncaught `BrokenPipeError` when a Hammer command continues printing. The confirmed failure path is `tasks.py` → `tasks_ai/cli.py` → `tasks_ai/commands/show.py`, where the next `print()` raises after `head` exits.
+
+Add one shared entry-point helper that restores the platform default `SIGPIPE` behavior where available, and call it before output from the `tasks`, `check`, `repo`, and `guard` Hammer entry points. The root `check.py` is an internal standalone script copied without the `tasks_ai` package; `./hammer check` uses `tasks_ai/check_wrapper.py`, so keep that standalone script dependency-free.
+
+Add an integration regression that runs a command with output larger than the pipe buffer, closes the consumer early, and verifies there is no `BrokenPipeError` traceback and no producer exit caused by an uncaught broken-pipe exception. Preserve normal full-output behavior, JSON output, and existing command exit semantics.
