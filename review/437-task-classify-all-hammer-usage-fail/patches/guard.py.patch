@@ -1,0 +1,29 @@
+diff --git a/guard.py b/guard.py
+index 58fd6cef..754e6ba6 100755
+--- a/guard.py
++++ b/guard.py
+@@ -11,7 +11,6 @@ Commands:
+   hooks             Install/emit git-hook wrappers into the common hooks dir
+ """
+ 
+-import argparse
+ import json
+ import os
+ import subprocess
+@@ -22,6 +21,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
+ # The package lives next to this script; cwd may be a task worktree without it.
+ sys.path.insert(0, str(SCRIPT_DIR))
+ 
++from tasks_ai.cli_io import BlockerArgumentParser
+ from tasks_ai.constants import STATE_FOLDERS, load_config
+ from tasks_ai.guard_engine import (
+     GuardEngine,
+@@ -279,7 +279,7 @@ def cmd_hooks(args):
+ 
+ 
+ def build_parser():
+-    parser = argparse.ArgumentParser(
++    parser = BlockerArgumentParser(
+         prog="guard",
+         description=__doc__,
+         epilog=agent_epilog("guard"),

@@ -1,0 +1,21 @@
+diff --git a/tasks_ai/check_wrapper.py b/tasks_ai/check_wrapper.py
+index ee470f23..3a1c1a24 100755
+--- a/tasks_ai/check_wrapper.py
++++ b/tasks_ai/check_wrapper.py
+@@ -24,6 +24,7 @@ import subprocess
+ import sys
+ 
+ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++from tasks_ai.cli_io import BlockerArgumentParser
+ from tasks_ai.help_text import agent_epilog
+ from tasks_ai.validator import ValidationError, Validator, format_check_results
+ 
+@@ -48,7 +49,7 @@ def project_root():
+ 
+ 
+ def build_parser():
+-    parser = argparse.ArgumentParser(
++    parser = BlockerArgumentParser(
+         prog="check",
+         description=__doc__,
+         formatter_class=argparse.RawDescriptionHelpFormatter,

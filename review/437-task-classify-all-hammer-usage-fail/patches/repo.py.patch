@@ -1,0 +1,22 @@
+diff --git a/repo.py b/repo.py
+index b36db4fd..ef65f313 100755
+--- a/repo.py
++++ b/repo.py
+@@ -39,6 +39,8 @@ import sys
+ from pathlib import Path
+ 
+ sys.path.append(os.getcwd())
++from tasks_ai.cli_io import BlockerArgumentParser
++
+ try:
+     from tasks_ai.cli import TasksCLI
+     from tasks_ai.constants import STATE_FOLDERS
+@@ -477,7 +479,7 @@ def global_flags():
+ 
+ 
+ def build_parser():
+-    parser = argparse.ArgumentParser(
++    parser = BlockerArgumentParser(
+         prog="repo",
+         description=__doc__,
+         formatter_class=argparse.RawDescriptionHelpFormatter,

@@ -1,0 +1,52 @@
+{
+  "Id": 437,
+  "Ti": "Classify all Hammer usage failures as blockers",
+  "Ty": "task",
+  "Cr": "261114 15:02",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "437-task-classify-all-hammer-usage-fail",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794671976.869586,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "error_report.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/error_report.json.patch"
+    },
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/guard.py.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/tasks_ai_cli_io.py.patch"
+    },
+    {
+      "file": "tests/test_usage_blockers.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/437-task-classify-all-hammer-usage-fail/patches/tests_test_usage_blockers.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "6b1c862fff1f1a918a29a5a3de77ed096d325c43",
+    "base": "04783f462c859bd8c9ac0d37efe9cb4b9ef9a3a1"
+  }
+}

@@ -1,0 +1,22 @@
+diff --git a/tasks_ai/cli_io.py b/tasks_ai/cli_io.py
+index 6a1f3a09..16816828 100644
+--- a/tasks_ai/cli_io.py
++++ b/tasks_ai/cli_io.py
+@@ -1,8 +1,17 @@
++import argparse
+ import json
+ import os
+ import sys
+ 
+ 
++class BlockerArgumentParser(argparse.ArgumentParser):
++    """Report invalid usage as a blocker while preserving argparse's details."""
++
++    def error(self, message):
++        self.print_usage(sys.stderr)
++        self.exit(2, f"{self.prog}: blocker: {message}\n")
++
++
+ def get_terminal_width():
+     try:
+         return os.get_terminal_size().columns
