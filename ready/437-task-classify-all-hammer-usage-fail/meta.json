@@ -8,5 +8,7 @@
   "Br": "437-task-classify-all-hammer-usage-fail",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
