@@ -8,5 +8,7 @@
   "Br": "421-task-require-blockers-done-not-arch",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
