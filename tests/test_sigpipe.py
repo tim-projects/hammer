@@ -16,6 +16,9 @@ PLAN = "Sufficiently long planning details here to pass validation"
 
 class TestSigpipe(HammerTestBase):
     def test_early_closed_output_has_no_traceback(self):
+        if not hasattr(signal, "SIGPIPE"):
+            self.skipTest("SIGPIPE is unavailable on this platform")
+
         tech_file = os.path.join(self.test_root, "large-tech.txt")
         with open(tech_file, "w") as handle:
             handle.write("x" * (256 * 1024))
