@@ -16,7 +16,7 @@
   "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
+  "PatchGenTime": 1794689878.0443,
   "DoneAt": null,
   "PatchFiles": [
     {
@@ -30,10 +30,6 @@
     {
       "file": "data/hints.json",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/data_hints.json.patch"
-    },
-    {
-      "file": "error_report.json",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/error_report.json.patch"
     },
     {
       "file": "tasks_ai/cli.py",
@@ -58,14 +54,10 @@
     {
       "file": "tests/test_audit_verify_integration.py",
       "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tests_test_audit_verify_integration.py.patch"
-    },
-    {
-      "file": "tests/test_repo.py",
-      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/419-task-guide-agents-through-patch-rev/patches/tests_test_repo.py.patch"
     }
   ],
   "PatchSnapshot": {
-    "head": "3490ccb7afe1cb888da3b8a202259fa38ed31736",
+    "head": "f47211ceb8c1779a1c71c22c3c47c1f6f3581c81",
     "base": "cec02bf0e0fca6585215fb90f9027e21f6371c8e"
   }
 }
