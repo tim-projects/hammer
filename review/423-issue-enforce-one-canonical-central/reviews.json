@@ -1,0 +1,60 @@
+{
+  "reviews": [
+    {
+      "file": "data/errors.json",
+      "patch": "data_errors.json.patch",
+      "md5": "3438a5d552fef485fdd22f11cc69a00a"
+    },
+    {
+      "file": "data/hints.json",
+      "patch": "data_hints.json.patch",
+      "md5": "f89e558a90561d9cff081dbd5aca5db7"
+    },
+    {
+      "file": "tasks_ai/audit.py",
+      "patch": "tasks_ai_audit.py.patch",
+      "md5": "705f4004a2fd4bd2e43aaf221196af44"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch": "tasks_ai_cli.py.patch",
+      "md5": "18ddb6ae78aaaaeeeca504fd3ab811b1"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch": "tasks_ai_commands_create.py.patch",
+      "md5": "882b30904c4459c95220ee766341943a"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch": "tasks_ai_commands_doctor.py.patch",
+      "md5": "e559e7a5f432f058294d33c56c836242"
+    },
+    {
+      "file": "tasks_ai/counter.py",
+      "patch": "tasks_ai_counter.py.patch",
+      "md5": "3f77e6cf9f1b98eb988fc32851574360"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch": "tasks_ai_guard_engine.py.patch",
+      "md5": "15b76607a5bc47806613bf9c7dc4118b"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch": "tasks_ai_utils.py.patch",
+      "md5": "0fd9aac4b2e5a91b64f89e16c46e05cd"
+    },
+    {
+      "file": "tasks_ai/worktree_manager.py",
+      "patch": "tasks_ai_worktree_manager.py.patch",
+      "md5": "5da05f5bf63b36ab6b5ca172b9214960"
+    },
+    {
+      "file": "tests/test_central_store.py",
+      "patch": "tests_test_central_store.py.patch",
+      "md5": "5ce61f0bc182f6294d60f5cdee17bb40"
+    }
+  ],
+  "reviewed_at": 1794639923.2225475
+}
