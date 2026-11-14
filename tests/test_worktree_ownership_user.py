@@ -53,8 +53,9 @@ class OwnershipTestBase(HammerTestBase):
         ) as handle:
             handle.write(digest)
 
-    def create_task(self, counter=BASE_ID):
-        self.seed_counter(counter - 1)
+    def create_task(self, counter=BASE_ID, seed=True):
+        if seed:
+            self.seed_counter(counter - 1)
         result = self.run_tasks(
             [
                 "create",
@@ -81,13 +82,29 @@ class OwnershipTestBase(HammerTestBase):
             check=False,
         )
 
-    def doctor(self, fix=False):
+    def doctor(self, fix=False, task_id=None):
         args = [os.path.join(self.repo_path, "hammer"), "tasks", "--dev", "doctor"]
         if fix:
             args.append("--fix")
+            if task_id is not None:
+                args.append(str(task_id))
         return subprocess.run(
             args, cwd=self.repo_path, capture_output=True, text=True, check=False
         )
+
+    def manifest(self):
+        with open(os.path.join(self.dev_tasks_dir, "worktrees.json")) as handle:
+            return json.load(handle)["worktrees"]
+
+    def remove_worktree(self, path):
+        subprocess.run(
+            ["git", "worktree", "remove", "--force", path],
+            cwd=self.dev_repo_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertFalse(os.path.exists(path))
 
 
 class TestGuardSeesUnownedDirectories(OwnershipTestBase):
@@ -109,6 +126,53 @@ class TestGuardSeesUnownedDirectories(OwnershipTestBase):
         self.assertFalse(os.path.exists(stray), "stray directory survived --fix")
         self.assertTrue(os.path.exists(real), "the registered worktree was damaged")
         self.assertNotIn("GUARD_WORKTREE_UNREGISTERED", self.guard_scan().stdout)
+
+
+class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
+    def test_targeted_fix_removes_merged_branch_and_stale_manifest_entry(self):
+        payload = self.create_task()
+        self.remove_worktree(payload["worktree"])
+
+        report = self.doctor()
+        self.assertIn("GUARD_WORKTREE_MISSING_WORKTREE", report.stdout + report.stderr)
+
+        result = self.doctor(fix=True, task_id=payload["id"])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn(str(payload["id"]), self.manifest())
+        self.assertFalse(os.path.exists(payload["worktree"]))
+        branch = self.git(
+            ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
+        )
+        self.assertNotEqual(0, branch.returncode)
+
+    def test_targeted_fix_preserves_an_unmerged_branch(self):
+        payload = self.create_task()
+        with open(os.path.join(payload["worktree"], "feature.py"), "w") as handle:
+            handle.write("value = 1\n")
+        self.git(["add", "feature.py"], cwd=payload["worktree"])
+        self.git(["commit", "-m", "Add feature"], cwd=payload["worktree"])
+        self.remove_worktree(payload["worktree"])
+
+        result = self.doctor(fix=True, task_id=payload["id"])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn(str(payload["id"]), self.manifest())
+        branch = self.git(
+            ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
+        )
+        self.assertEqual(0, branch.returncode)
+
+    def test_targeted_fix_does_not_repair_another_task(self):
+        first = self.create_task(counter=9200)
+        self.seed_counter(9202)
+        second = self.create_task(counter=9203, seed=False)
+        self.remove_worktree(first["worktree"])
+        self.remove_worktree(second["worktree"])
+
+        result = self.doctor(fix=True, task_id=first["id"])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        manifest = self.manifest()
+        self.assertNotIn(str(first["id"]), manifest)
+        self.assertIn(str(second["id"]), manifest)
 
 
 class TestDriftedPathDoesNotBlockTheHealthyTask(OwnershipTestBase):
