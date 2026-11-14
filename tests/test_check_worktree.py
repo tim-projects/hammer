@@ -154,7 +154,7 @@ class TestCheckFromWorktree(unittest.TestCase):
 
         lint = next(r for r in results if r["tool"] == "lint")
         self.assertTrue(lint["success"], lint)
-        self.assertIn("RUFF-PATH-RAN", out)
+        self.assertIn("CHECK lint: PASS", out)
 
     def test_check_all_is_not_silently_skipped_when_unchanged(self):
         head = self.git("rev-parse", "HEAD").stdout.strip()

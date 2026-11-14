@@ -13,8 +13,9 @@ def format_check_results(results: list[dict]) -> str:
         status = result.get("status") or ("pass" if success else "blocker")
         tool = result.get("tool", "validation")
         lines.append(f"CHECK {tool}: {status.upper()}")
-        if not success:
-            lines.append(f"  exit_code: {result.get('exit_code', 'unknown')}")
+        if success:
+            continue
+        lines.append(f"  exit_code: {result.get('exit_code', 'unknown')}")
         for label in ("stdout", "stderr"):
             output = str(result.get(label) or "").strip()
             if output:
