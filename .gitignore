@@ -22,4 +22,5 @@ cli-versions/
 /.tasks.backup/
 
 .task-worktrees/
+/.tasks-repo/
 /error_report.json
