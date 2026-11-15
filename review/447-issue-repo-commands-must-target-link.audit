@@ -1,0 +1,10 @@
+{
+    "task_id": "447",
+    "patch_hash": "4b8ff4db3957a1c11407cccea6b2b4f3",
+    "patch_files": [
+        ".gitignore.patch",
+        "repo.py.patch",
+        "tests_test_repo_worktree_root.py.patch"
+    ],
+    "status": "verified"
+}
