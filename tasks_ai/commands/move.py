@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime
 
-from ..cli_errors import PipelineMergeConflict
+from ..cli_errors import PipelineBranchMissing, PipelineMergeConflict, PipelinePushError
 from ..constants import STATE_FOLDERS
 from ..file_manager import FM
 from ..pipeline import PipelineError
@@ -162,6 +162,16 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
             cli.error(
                 "MERGE_CONFLICT", branch=e.branch, default=e.default, task_id=task_id
             )
+            return False
+        except PipelineBranchMissing as e:
+            cli.error(
+                "PIPELINE_BRANCH_MISSING",
+                branch=e.branch,
+                hint=f"Recreate '{e.branch}' from its upstream pipeline branch, then retry.",
+            )
+            return False
+        except PipelinePushError as e:
+            cli.error("PIPELINE_PUSH_FAILED", branch=e.branch, stderr=e.stderr)
             return False
     elif sync:
         cli.log("Warning: --force skips the pipeline merge; no conflict check ran.")
