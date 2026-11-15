@@ -1,8 +1,8 @@
-- [ ] A DONE promotion for a task branch already contained in the main branch, with recorded commits and an already-contained resolved merge source, emits exactly `WORK ALREADY ON MAIN. NO MERGE NEEDED. CHECKS SKIPPED. TASK COMPLETE. HAMMER POUND ON.`
-- [ ] That scenario does not emit misleading lines claiming a merge, a direct fallback merge, or `Git: Merged` when no merge commit was created
-- [ ] The approved line does not appear for an ordinary promotion that creates a merge commit
-- [ ] The approved line does not appear for an empty task branch without recorded commits, even when that branch is already contained in the main branch
-- [ ] The approved line does not appear when the resolved DONE merge source contains additional work that must be merged into the main branch
-- [ ] Text and JSON output contain the approved message when the scenario applies
-- [ ] Focused regression tests cover the no-op promotion and each negative scenario
-- [ ] Existing promotion, merge, and pipeline test suites pass
+- [x] A DONE promotion for a task branch already contained in the main branch, with recorded commits and an already-contained resolved merge source, emits exactly `WORK ALREADY ON MAIN. NO MERGE NEEDED. CHECKS SKIPPED. TASK COMPLETE. HAMMER POUND ON.`
+- [x] That scenario does not emit misleading lines claiming a merge, a direct fallback merge, or `Git: Merged` when no merge commit was created
+- [x] The approved line does not appear for an ordinary promotion that creates a merge commit
+- [x] The approved line does not appear for an empty task branch without recorded commits, even when that branch is already contained in the main branch
+- [x] The approved line does not appear when the resolved DONE merge source contains additional work that must be merged into the main branch
+- [x] Text and JSON output contain the approved message when the scenario applies
+- [x] Focused regression tests cover the no-op promotion and each negative scenario
+- [x] Existing promotion, merge, and pipeline test suites pass
