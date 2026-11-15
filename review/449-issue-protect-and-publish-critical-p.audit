@@ -1,0 +1,16 @@
+{
+    "task_id": "449",
+    "patch_hash": "df541618b6e6a29aca2a47e83a775c8b",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "repo.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_cli_errors.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tests_test_critical_branches.py.patch",
+        "tests_test_tasks.py.patch"
+    ],
+    "status": "verified"
+}
