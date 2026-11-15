@@ -20,5 +20,8 @@
       "ts": 1794774665.7751408,
       "prev_hash": "49e9de872016dae06e8141889ede4696a181617d4f0f84c16558a6ae47219421"
     }
-  ]
+  ],
+  "summary": "Reviewed both patches: REJECTED now bypasses progress-file requirements; unit and CLI regressions preserve enforcement for normal promotions.",
+  "summary_at": 1794774697.7025247,
+  "reviewed_at": 1794774697.7025251
 }
