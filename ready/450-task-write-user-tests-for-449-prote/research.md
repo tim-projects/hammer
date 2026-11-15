@@ -1,0 +1,1 @@
+Task 449 implementation already added tests/test_critical_branches.py covering local/raw deletion, wrapper deletion rejection, remote deletion, TESTING/STAGING/DONE publication, and missing branch recreation; full validation passed. This paired task's scope is incorporated in task 449.
