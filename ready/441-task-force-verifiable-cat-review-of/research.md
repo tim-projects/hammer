@@ -1,0 +1,1 @@
+Reviewed current main review flow in tasks_ai/commands/modify.py, tasks_ai/audit.py, tasks_ai/pipeline.py, tasks_ai/pipeline_hooks.py, tasks_ai/cli.py, and tests/test_audit_verify_integration.py. Main still uses patch atime plus md5 records, so the replacement needs an explicit review command, receipt coverage, receipt-chain validation, and review-artifact cleanup/invalidation.
