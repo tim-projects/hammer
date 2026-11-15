@@ -30,5 +30,8 @@
       "ts": 1794776587.006135,
       "prev_hash": "743519ad7583ff98ab8d708f92ee08dcc685e1cc1f84a3e58281ba2e18a0f247"
     }
-  ]
+  ],
+  "summary": "Reviewed all three patches: linked worktrees resolve their own Git root, .tasks-repo is ignored without deletion, and regressions prove main is untouched and the directory is unstaged.",
+  "summary_at": 1794776594.3020012,
+  "reviewed_at": 1794776594.302002
 }
