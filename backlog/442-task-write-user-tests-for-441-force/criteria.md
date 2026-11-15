@@ -1,0 +1,6 @@
+- [ ] tasks review (or equivalent) prints the patch and appends a receipt per file read
+- [ ] --reviewed refuses unless receipts cover every PatchFiles entry with current md5
+- [ ] an incidental open (grep/md5sum/audit) no longer satisfies the gate
+- [ ] receipt chain is covered by .audit_hash so verify_audit fails on tampering
+- [ ] regenerated patches invalidate prior receipts
+- [ ] help/docs updated for the new review step
