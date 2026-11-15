@@ -9,6 +9,16 @@
       "bytes": 662,
       "ts": 1794774566.411631,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "tests/test_reject_validation.py",
+      "patch": "tests_test_reject_validation.py.patch",
+      "md5": "e7c7f8a2a5ee6a8d4c68500e3aa4e93d",
+      "sha256": "6d8b4e62af07346bef44bc0266ae1b6481d13ce170236c9550a0e79757df46a4",
+      "bytes": 4077,
+      "ts": 1794774665.7751408,
+      "prev_hash": "49e9de872016dae06e8141889ede4696a181617d4f0f84c16558a6ae47219421"
     }
   ]
 }
