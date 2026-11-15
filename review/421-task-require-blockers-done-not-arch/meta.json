@@ -1,0 +1,60 @@
+{
+  "Id": 421,
+  "Ti": "Require blockers DONE not ARCHIVED",
+  "Ty": "task",
+  "Cr": "261114 04:46",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "421-task-require-blockers-done-not-arch",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794719949.640303,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/check.py.patch"
+    },
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/tasks_ai_help_text.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/test_blocker_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/tests_test_blocker_states.py.patch"
+    },
+    {
+      "file": "tests/test_check_auto_fix.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/421-task-require-blockers-done-not-arch/patches/tests_test_check_auto_fix.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "22b7b2a14f25e2948d5707f051c6362f37de2df4",
+    "base": "e2155c78b8eac78212b93936e4bfc996663990db"
+  }
+}

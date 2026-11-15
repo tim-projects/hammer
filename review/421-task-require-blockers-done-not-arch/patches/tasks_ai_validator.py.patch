@@ -1,0 +1,56 @@
+diff --git a/tasks_ai/validator.py b/tasks_ai/validator.py
+index b9bd49df..9dfb4b7d 100644
+--- a/tasks_ai/validator.py
++++ b/tasks_ai/validator.py
+@@ -151,7 +151,7 @@ class Validator:
+         text = str(tool).strip().lower()
+         return text == "true" or os.path.basename(text) == "true"
+ 
+-    def _get_commands(self, fix: bool) -> dict:
++    def _get_commands(self, fix: bool, auto_fix_ruff: bool = False) -> dict:
+         """Returns the full set of supported commands."""
+         return {
+             "lint": {
+@@ -161,7 +161,7 @@ class Validator:
+                     ".",
+                     "--output-format=json",
+                 ]
+-                + (["--fix"] if fix else []),
++                + (["--fix"] if fix or auto_fix_ruff else []),
+                 "pylint": ["pylint", "."],
+                 "eslint": ["npx", "eslint", "."] + (["--fix"] if fix else []),
+                 "oxlint": ["npx", "oxlint", "."] + (["--fix"] if fix else []),
+@@ -199,9 +199,15 @@ class Validator:
+             },
+         }
+ 
+-    def run_check(self, tool_type: str, fix: bool = False, timeout: int = 300) -> dict:
++    def run_check(
++        self,
++        tool_type: str,
++        fix: bool = False,
++        timeout: int = 300,
++        auto_fix_ruff: bool = False,
++    ) -> dict:
+         """Run a specific validation tool."""
+-        commands = self._get_commands(fix)
++        commands = self._get_commands(fix, auto_fix_ruff=auto_fix_ruff)
+         tool_config_key = {
+             "lint": "repo.lint",
+             "test": "repo.test",
+@@ -285,7 +291,14 @@ class Validator:
+             # The pinned pytest list includes the slow pipeline suites
+             # (test_robustness, test_store_writes); they run in ~8 min, so the
+             # 300s default makes `check all` time out before it can report.
+-            results.append(self.run_check(tool, fix, timeout=900))
++            results.append(
++                self.run_check(
++                    tool,
++                    fix,
++                    timeout=900,
++                    auto_fix_ruff=tool == "lint",
++                )
++            )
+ 
+         return results
+ 

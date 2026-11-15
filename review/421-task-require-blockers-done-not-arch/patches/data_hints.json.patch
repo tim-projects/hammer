@@ -1,0 +1,12 @@
+diff --git a/data/hints.json b/data/hints.json
+index 1927b469..ceacf23c 100644
+--- a/data/hints.json
++++ b/data/hints.json
+@@ -15,6 +15,7 @@
+   "INVALID_CONFIG_KEY": "WHAT: Invalid config key '{key}'.\nWHY: UNKNOWN CONFIGURATION. HAMMER ignore unknown.\nHOW: Allowed: {allowed_keys}. Run 'hammer tasks config list'.\nCONSEQUENCE: Configuration error. FIX KEY.",
+   "AUTO_PROMOTE_FAIL": "WHAT: Auto-promotion fail.\nWHY: Repository integration break.\nHOW: Check git status/merge conflict.\nCONSEQUENCE: Promotion halted. FIX NOW.",
+   "FORBIDDEN_TRANSITION": "WHAT: Transition {from_state} -> {to_state} forbidden.\nWHY: Pipeline governance violation.\nHOW: {task_id} is on {from_state}. Use 'hammer tasks move {task_id} {next_valid_state}' to proceed.\nCONSEQUENCE: Pipeline flow halted.",
++  "BLOCKER_INCOMPLETE": "WHAT: Blocker {blocker} is not complete.\nWHY: A blocked task can enter PROGRESSING only when every linked blocker is DONE or ARCHIVED.\nHOW: Finish blocker {blocker}, or run 'hammer tasks unlink <blocked-task-id> {blocker}' if the dependency is no longer needed.\nCONSEQUENCE: PROGRESSING stays blocked.",
+   "LINK_TASK_NOT_FOUND": "WHAT: Link target missing.\nWHY: HAMMER cannot link to nothing.\nHOW: Verify both tasks exist with 'hammer tasks list'.\nCONSEQUENCE: Link chain broken. FIX ID.",
+   "LINK_SELF": "WHAT: Link to self forbidden.\nWHY: SELF-REFERENCE IS WEAK. Loops break logic.\nHOW: Link to a different task.\nCONSEQUENCE: Logic corruption. AVOID IT.",
+   "CIRCULAR_DEPENDENCY": "WHAT: Cycle detected: {filename} -> {blocked_by}.\nWHY: CIRCULAR DEPENDENCY DETECTED. HAMMER forbid loop.\nHOW: Break cycle by linking to non-dependent task.\nCONSEQUENCE: Pipeline deadlock. FIX LOGIC.",
