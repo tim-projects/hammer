@@ -1,0 +1,9 @@
+Emit this exact line in the already-merged promotion scenario: `WORK ALREADY ON MAIN. NO MERGE NEEDED. CHECKS SKIPPED. TASK COMPLETE. HAMMER POUND ON.`
+
+Research findings:
+- `tasks_ai/pipeline.py:76-93` fast-tracks REVIEW/STAGING/DONE promotions when the task branch is an ancestor of the default branch and the task record contains commits. It currently logs a DEBUG fast-tracking message but only skips validation gates; it does not itself skip or perform the merge.
+- `tasks_ai/git_service.py:489-527` selects `staging` as the DONE merge source. If local `staging` is absent, it falls back to the task branch and announces a direct merge.
+- `tasks_ai/git_service.py:325-365` logs `Merging ...` before invoking Git. `tasks_ai/git_service.py:57-87` logs every successful `git merge` as `Git: Merged ...`, even when Git reports `Already up to date` and creates no merge commit. This is the misleading output seen for task 398.
+- The approved line must require all of these facts: the target is DONE; the task branch is already contained in the default branch; the task record contains commits, so an empty branch cannot trigger the fast path; the resolved merge source is already contained in the target; and the merge attempt creates no target commit. If the resolved source contains additional work, perform and report the real merge instead.
+
+Implementation should centralize the no-op result in the merge path so it can distinguish a created merge commit from an already-up-to-date target. Suppress the scenario's misleading fast-track, fallback-merge, and `Git: Merged` lines, then emit the approved one-line result. Preserve existing behavior for ordinary merges, non-DONE transitions, empty task branches, and real DONE merges that create a commit. The same logger feeds text and JSON message output, so verify both modes.
