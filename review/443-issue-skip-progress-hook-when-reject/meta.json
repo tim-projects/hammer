@@ -1,0 +1,32 @@
+{
+  "Id": 443,
+  "Ti": "Skip progress hook when rejecting task",
+  "Ty": "issue",
+  "Cr": "261115 07:55",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "443-issue-skip-progress-hook-when-reject",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794774553.985323,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/443-issue-skip-progress-hook-when-reject/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/test_reject_validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/443-issue-skip-progress-hook-when-reject/patches/tests_test_reject_validation.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "efc1b2994f68e7e17f7335ada87172836881e33a",
+    "base": "508b467801ec6751273cf38f392b227c16765408"
+  }
+}
