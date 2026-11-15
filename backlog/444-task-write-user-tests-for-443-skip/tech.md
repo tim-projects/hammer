@@ -1,0 +1,1 @@
+ProgressUpdateHook currently requires progress.md or current-task.md for every transition out of PROGRESSING, including REJECTED. Rejecting discards implementation work, so progress markdown is irrelevant to that disposition. The hook should skip progress-file validation and progress-update comparison when the target state is REJECTED.
