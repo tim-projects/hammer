@@ -35,6 +35,7 @@ class GitService:
         cwd: str | None = None,
         capture: bool = True,
         check: bool = False,
+        log_success: bool = True,
     ) -> subprocess.CompletedProcess:
         """Run a git command."""
         cwd = cwd or self.context.repo_root
@@ -54,7 +55,7 @@ class GitService:
                 stderr=result.stderr,
             )
 
-        if result.returncode == 0:
+        if result.returncode == 0 and log_success:
             self._handle_command_logging(args)
 
         return result
@@ -151,6 +152,15 @@ class GitService:
             cwd=cwd,
         )
         return res.returncode == 0
+
+    def is_already_merged_completion(self, branch: str, target: str, task) -> bool:
+        """True when a DONE task's work and resolved source are already on target."""
+        if not (task.parts.get("commits") or "").strip():
+            return False
+        if not self.is_merged(branch, target):
+            return False
+        source = "staging" if self.branch_exists("staging") else branch
+        return self.is_merged(source, target)
 
     def check_main_divergence(self):
         """Check if the default branch is out of sync with its remote."""
@@ -331,8 +341,6 @@ class GitService:
         (main, staging, testing) live there. Task worktree branches are
         backed by branches in the same object database.
         """
-        self.log(f"Merging {src} -> {target}...")
-
         repo_root = self.context.main_repo_root
 
         # 1. Ensure src and target exist
@@ -340,7 +348,7 @@ class GitService:
             target, repo_root
         ):
             self.log(f"Skipping merge: {src} or {target} does not exist.")
-            return
+            return {"created_commit": False, "skipped": True}
 
         # 2. Checkout target
         self.run(["checkout", target], cwd=repo_root)
@@ -348,9 +356,14 @@ class GitService:
         # 3. Pull latest
         self.run(["pull", "origin", target], cwd=repo_root, check=False)
 
+        before = self.run(["rev-parse", target], cwd=repo_root).stdout.strip()
+
         # 4. Merge
         msg = message or f"merge: {src} into {target}"
-        merge_res = self.run(["merge", "--no-ff", src, "-m", msg], cwd=repo_root)
+        self.log(f"Merging {src} -> {target}...")
+        merge_res = self.run(
+            ["merge", "--no-ff", src, "-m", msg], cwd=repo_root, log_success=False
+        )
 
         if merge_res.returncode != 0:
             # Abort leaves no conflict markers and no in-progress merge for the
@@ -360,9 +373,18 @@ class GitService:
 
             raise PipelineMergeConflict(src, target)
 
+        after = self.run(["rev-parse", target], cwd=repo_root).stdout.strip()
+        created_commit = before != after
+        if created_commit:
+            self.log(f"Git: Merged '{src}' into '{target}'")
+        else:
+            self.log(f"Git: Already up to date: '{src}' is in '{target}'")
+
         # 5. Push if confirmed (never in dev: the dev repo's origin is the real repo)
         if yes and not self.context.dev:
             self.run(["push", "origin", target], cwd=repo_root)
+
+        return {"created_commit": created_commit, "skipped": False}
 
     def branch_exists(self, name: str, cwd: str | None = None) -> bool:
         return (
@@ -505,30 +527,43 @@ class GitService:
         elif target_state == "DONE":
             src_branch = "staging"
 
+        already_merged = target_state == "DONE" and self.is_already_merged_completion(
+            branch, target_git_branch, task
+        )
+
         # Check if src_branch exists locally
         if not self.branch_exists(src_branch, repo_root):
             if src_branch in ["testing", "staging"]:
-                self.log(
-                    f"Pipeline branch {src_branch} does not exist locally. Merging {branch} directly into {target_git_branch}."
-                )
+                if not already_merged:
+                    self.log(
+                        f"Pipeline branch {src_branch} does not exist locally. Merging {branch} directly into {target_git_branch}."
+                    )
                 src_branch = branch
             else:
                 self.log(f"Branch {src_branch} does not exist locally. Skipping merge.")
                 return
 
-        self.log(f"Performing pipeline promotion: {src_branch} -> {target_git_branch}")
+        if already_merged:
+            self.log(
+                "WORK ALREADY ON MAIN. NO MERGE NEEDED. CHECKS SKIPPED. "
+                "TASK COMPLETE. HAMMER POUND ON."
+            )
+        else:
+            self.log(
+                f"Performing pipeline promotion: {src_branch} -> {target_git_branch}"
+            )
 
-        # Use unified merge logic
-        self.merge_branches(
-            src_branch,
-            target_git_branch,
-            message=f"[{task_id}] merge: {src_branch} into {target_git_branch}",
-            yes=yes or target_state == "DONE",
-        )
+            # Use unified merge logic
+            self.merge_branches(
+                src_branch,
+                target_git_branch,
+                message=f"[{task_id}] merge: {src_branch} into {target_git_branch}",
+                yes=yes or target_state == "DONE",
+            )
 
-        # Auto-save .tasks after successful merge to main
+        # Auto-save .tasks after successful DONE promotion
         if target_state == "DONE":
-            self.log("Auto-saving .tasks to remote tasks branch after main merge...")
+            self.log("Auto-saving .tasks to remote tasks branch...")
             save_result = self.push_tasks_branch(branch="tasks", fatal=False)
             if save_result and save_result.get("remote"):
                 self.log("✅ .tasks auto-saved to origin/tasks")
