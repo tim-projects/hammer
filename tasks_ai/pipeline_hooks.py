@@ -219,8 +219,8 @@ class BlockerCheckHook(PipelineHook):
             bl = task.metadata.get("Bl", [])
             for b in bl:
                 _, bs = cli.find_task(str(b))
-                if bs != "ARCHIVED":
-                    cli.error(f"Blocked by {b}. Blocker must be ARCHIVED first.")
+                if bs not in ("DONE", "ARCHIVED"):
+                    cli.error("BLOCKER_INCOMPLETE", blocker=b)
 
 
 class TestingToReviewGateHook(PipelineHook):
