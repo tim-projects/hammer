@@ -90,5 +90,8 @@
       "ts": 1794786827.974708,
       "prev_hash": "2ee92d4238b460dd96d81c6e94700e6b2b57b5d8de7d6e416f8e6c3308bd322c"
     }
-  ]
+  ],
+  "summary": "Reviewed all 9 patches: local/remote deletion guards, explicit wrapper guard, pipeline recreation, gate pushes, error handling, and regressions. No regressions found.",
+  "summary_at": 1794786851.7702568,
+  "reviewed_at": 1794786851.7702572
 }
