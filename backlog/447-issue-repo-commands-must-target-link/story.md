@@ -1,0 +1,1 @@
+As a task developer, I want hammer repo commands run from a task worktree to affect that worktree and branch, so validation and commits cannot accidentally modify main or include unrelated repository artifacts.
