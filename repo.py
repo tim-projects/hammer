@@ -123,9 +123,21 @@ def info(msg):
 def find_project_root(start_path=None):
     if start_path is None:
         start_path = os.getcwd()
+    try:
+        result = subprocess.run(
+            ["git", "-C", start_path, "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except OSError:
+        pass
+
     current = os.path.abspath(start_path)
     while True:
-        if os.path.isdir(os.path.join(current, ".git")):
+        if os.path.exists(os.path.join(current, ".git")):
             return current
         if os.path.isdir(os.path.join(current, ".tasks")):
             return current
