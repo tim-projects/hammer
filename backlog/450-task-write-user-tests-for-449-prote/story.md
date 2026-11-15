@@ -1,0 +1,1 @@
+As a repository maintainer, I want main, testing, and staging protected as critical pipeline branches, so automation and manual commands cannot delete them or skip remote publication at pipeline gates.
