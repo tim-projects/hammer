@@ -1,0 +1,14 @@
+{
+  "reviews": [
+    {
+      "seq": 1,
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch": "tasks_ai_pipeline_hooks.py.patch",
+      "md5": "a695d6adce165aa42414162a7427961d",
+      "sha256": "acfa1c3e9628270fd08ad8d5cecfbdda7adc8813891999369ca08346bd9104d1",
+      "bytes": 662,
+      "ts": 1794774566.411631,
+      "prev_hash": null
+    }
+  ]
+}
