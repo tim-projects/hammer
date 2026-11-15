@@ -1,6 +1,6 @@
-- [ ] Running hammer repo status, branch, or commit from a linked task worktree resolves that worktree as the Git root
-- [ ] hammer repo commit from a linked task worktree validates and commits only that worktree branch, never main
-- [ ] A pre-existing untracked .tasks-repo directory is not staged or committed by repo commit or pipeline gate transitions
-- [ ] The root .tasks-repo directory is ignored without being deleted
-- [ ] Regression tests cover linked-worktree root resolution, commit target branch, and .tasks-repo exclusion
-- [ ] Existing repo, worktree, and pipeline tests pass
+- [x] Running hammer repo status, branch, or commit from a linked task worktree resolves that worktree as the Git root
+- [x] hammer repo commit from a linked task worktree validates and commits only that worktree branch, never main
+- [x] A pre-existing untracked .tasks-repo directory is not staged or committed by repo commit or pipeline gate transitions
+- [x] The root .tasks-repo directory is ignored without being deleted
+- [x] Regression tests cover linked-worktree root resolution, commit target branch, and .tasks-repo exclusion
+- [x] Existing repo, worktree, and pipeline tests pass

@@ -1,0 +1,3 @@
+- Progress: Implemented linked-worktree Git root resolution using git rev-parse, ignored the root throwaway .tasks-repo directory, and added three focused regressions. Focused tests, lint, and format checks pass.
+- Findings: 
+- Mitigations: 
