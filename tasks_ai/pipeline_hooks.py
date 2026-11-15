@@ -538,6 +538,8 @@ class ProgressUpdateHook(PipelineHook):
     """Enforces that progress notes have been updated before exiting PROGRESSING."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
+        if new_status == "REJECTED":
+            return
         if current_state == "PROGRESSING" and new_status != "PROGRESSING":
             progress_path = os.path.join(filepath, "progress.md")
             current_path = os.path.join(filepath, CURRENT_TASK_FILENAME)
