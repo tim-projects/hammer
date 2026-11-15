@@ -170,5 +170,8 @@
       "ts": 1794726424.7255986,
       "prev_hash": "c5aab04e93ea5553bebdcee7f53e35515670792f88cb5551d3f1470dfc87ba6c"
     }
-  ]
+  ],
+  "summary": "Read all 17 current patches: the receipt chain, coverage checks, invalidation behavior, hash binding, CLI wiring, documentation, and affected lifecycle tests are scoped and consistent.",
+  "summary_at": 1794726460.4214625,
+  "reviewed_at": 1794726460.421464
 }
