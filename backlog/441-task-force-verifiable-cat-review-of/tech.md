@@ -1,0 +1,1 @@
+Today modify.py gates --reviewed on os.path.getatime(patch) >= PatchGenTime. /home is relatime, so a single non-deliberate open (audit's own md5 pass, grep, sha256sum) permanently satisfies it, and atime records no who/when/which receipt. Replace the atime heuristic with an explicit receipt per patch, bound into the audit hash chain.
