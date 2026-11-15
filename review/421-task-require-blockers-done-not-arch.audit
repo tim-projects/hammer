@@ -1,0 +1,16 @@
+{
+    "task_id": "421",
+    "patch_hash": "eceb26f72ce64224d9acbc058cbae21d",
+    "patch_files": [
+        "check.py.patch",
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_constants.py.patch",
+        "tasks_ai_help_text.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tasks_ai_validator.py.patch",
+        "tests_test_blocker_states.py.patch",
+        "tests_test_check_auto_fix.py.patch"
+    ],
+    "status": "verified"
+}
