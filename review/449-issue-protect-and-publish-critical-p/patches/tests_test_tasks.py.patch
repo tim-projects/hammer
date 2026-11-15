@@ -1,0 +1,63 @@
+diff --git a/tests/test_tasks.py b/tests/test_tasks.py
+index 5e08bfaf..ce35e196 100755
+--- a/tests/test_tasks.py
++++ b/tests/test_tasks.py
+@@ -948,20 +948,15 @@ class TestTasksAI(unittest.TestCase):
+         res = self.run_cmd(["move", task_file, "TESTING"])
+         self.assertTrue(res["success"], f"Move to TESTING failed: {res}")
+ 
+-        # Prepare testing branch: go to main, create testing, merge task, back to task branch
+-        self.git_checkout_main()
+-        subprocess.run(  # noqa: PLW1510
+-            ["git", "checkout", "-b", "testing"],
+-            cwd=self.dev_repo_dir,
+-            capture_output=True,
+-        )
+-        subprocess.run(
+-            ["git", "merge", branch],
+-            cwd=self.dev_repo_dir,
+-            capture_output=True,
+-            check=False,
++        # The TESTING gate creates testing and merges the task branch into it.
++        self.assertEqual(
++            subprocess.run(  # noqa: PLW1510
++                ["git", "merge-base", "--is-ancestor", branch, "testing"],
++                cwd=self.dev_repo_dir,
++                capture_output=True,
++            ).returncode,
++            0,
+         )
+-        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+ 
+         # Mark tests as passed (required for REVIEW)
+         res = self.run_cmd(["modify", task_file, "--tests-passed"])
+@@ -1208,21 +1203,15 @@ class TestTasksAI(unittest.TestCase):
+         self.complete_current_criteria(task_file)
+         self.run_cmd(["move", task_file, "TESTING"])
+ 
+-        # Setup testing branch (merge initial commit)
+-        self.git_checkout_main()
+-        subprocess.run(
+-            ["git", "checkout", "-b", "testing"],
+-            cwd=self.dev_repo_dir,
+-            capture_output=True,
+-            check=False,
+-        )
+-        subprocess.run(
+-            ["git", "merge", branch],
+-            cwd=self.dev_repo_dir,
+-            capture_output=True,
+-            check=False,
++        # The TESTING gate creates testing and merges the initial commit into it.
++        self.assertEqual(
++            subprocess.run(  # noqa: PLW1510
++                ["git", "merge-base", "--is-ancestor", branch, "testing"],
++                cwd=self.dev_repo_dir,
++                capture_output=True,
++            ).returncode,
++            0,
+         )
+-        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+ 
+         # Set tests passed and move to REVIEW
+         self.run_cmd(["modify", task_file, "--tests-passed"])

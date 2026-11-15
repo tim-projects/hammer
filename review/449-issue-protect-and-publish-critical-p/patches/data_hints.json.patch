@@ -1,0 +1,13 @@
+diff --git a/data/hints.json b/data/hints.json
+index 85ec053f..4772ba37 100644
+--- a/data/hints.json
++++ b/data/hints.json
+@@ -77,5 +77,7 @@
+   "PATCH_NOT_IN_TASK": "WHAT: Patch '{patch}' is not part of task {task_id}.\nWHY: Only the task's own patches can be reviewed.\nHOW: Available: {expected}\nCONSEQUENCE: Wrong file. PICK FROM LIST.",
+   "REVIEW_INCOMPLETE": "WHAT: Not every patch has been read: {missing}.\nWHY: Each patch must be read via 'tasks review' before the review can be finalized.\nHOW: {hint}\nCONSEQUENCE: Cherry-picked review blocked. READ ALL.",
+   "REVIEW_SUMMARY_REQUIRED": "WHAT: The review cannot be finalized without a written summary.\nWHY: A summary proves the reviewer processed what they read.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. WRITE SUMMARY.",
+-  "REVIEW_SUMMARY_TOO_SHORT": "WHAT: The review summary is too short.\nWHY: A one-liner is not a review summary.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. ADD DETAIL."
++  "REVIEW_SUMMARY_TOO_SHORT": "WHAT: The review summary is too short.\nWHY: A one-liner is not a review summary.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. ADD DETAIL.",
++  "PIPELINE_BRANCH_MISSING": "WHAT: Required pipeline branch '{branch}' is missing.\nWHY: Promotion cannot skip an intermediate branch.\nHOW: Recreate '{branch}' from its upstream pipeline branch, then retry.\nCONSEQUENCE: Promotion halted.",
++  "PIPELINE_PUSH_FAILED": "WHAT: Failed to push pipeline branch '{branch}'.\nWHY: The gate merge must be published before the task advances.\nHOW: Check the remote and push '{branch}' to origin, then retry.\nCONSEQUENCE: Promotion halted."
+ }

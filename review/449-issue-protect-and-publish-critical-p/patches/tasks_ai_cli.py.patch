@@ -1,0 +1,29 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index ea325008..053880cf 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -637,7 +637,8 @@ class TasksCLI:
+         # 'main': same resolution as GitService.get_default_branch (origin/HEAD,
+         # then the first existing of main/master, with main as final fallback).
+         default_branch_snippet = (
+-            "default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)\n"
++            "default_branch=$(git symbolic-ref --quiet refs/remotes/origin/HEAD 2>/dev/null)\n"
++            "default_branch=${default_branch#refs/remotes/origin/}\n"
+             'if [ -z "$default_branch" ]; then\n'
+             "    if git rev-parse --verify --quiet main >/dev/null; then default_branch=main\n"
+             "    elif git rev-parse --verify --quiet master >/dev/null; then default_branch=master\n"
+@@ -675,6 +676,14 @@ class TasksCLI:
+             )
+         os.chmod(os.path.join(hook_dir, "pre-receive"), 0o755)
+ 
++        # reference-transaction is Git's supported local ref guard. It runs in
++        # the common hooks directory, so linked task worktrees share it.
++        with open(os.path.join(hook_dir, "reference-transaction"), "w") as f:
++            f.write(
++                f'#!/bin/bash\n\n{default_branch_snippet}\n\nwhile read oldrev newrev refname; do\n    if [[ "$newrev" == "0000000000000000000000000000000000000000" && "$refname" == refs/heads/* ]]; then\n        branch=${{refname#refs/heads/}}\n        if [[ "$branch" == "$default_branch" || "$branch" == "staging" || "$branch" == "testing" ]]; then\n            echo "❌ Cannot delete critical pipeline branch: $branch"\n            exit 1\n        fi\n    fi\ndone'
++            )
++        os.chmod(os.path.join(hook_dir, "reference-transaction"), 0o755)
++
+     def _backup_tasks_directory(self, tasks_path):
+         from datetime import datetime, timezone
+ 

@@ -1,0 +1,60 @@
+{
+  "Id": 449,
+  "Ti": "Protect and publish critical pipeline branches",
+  "Ty": "issue",
+  "Cr": "261115 21:39",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "449-issue-protect-and-publish-critical-p",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794786809.818929,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/data_hints.json.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_errors.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/tasks_ai_cli_errors.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tests/test_critical_branches.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/tests_test_critical_branches.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/449-issue-protect-and-publish-critical-p/patches/tests_test_tasks.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "15243b0b849d5d10141481e001b15d012430e7df",
+    "base": "5aec229ff33ced3ceb5ef4c87e6e10cb4ef974cc"
+  }
+}
