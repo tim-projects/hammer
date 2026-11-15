@@ -1,11 +1,11 @@
-import hashlib
 import json
 import os
 import re
+import time
 
 from ..constants import CURRENT_TASK_FILENAME
 from ..file_manager import FM
-from ..utils import commit_task_paths, parse_filename, resolve_content
+from ..utils import _patch_name, commit_task_paths, parse_filename, resolve_content
 
 
 def _review_paths(cli, filepath, state_folder):
@@ -18,11 +18,6 @@ def _review_paths(cli, filepath, state_folder):
     task_folder_name = os.path.basename(filepath)
     patches_dir = os.path.join(review_dir, task_folder_name, "patches")
     return review_dir, task_folder_name, patches_dir
-
-
-def _patch_md5(patch_path):
-    with open(patch_path, "rb") as fh:
-        return hashlib.md5(fh.read()).hexdigest()
 
 
 def _has_real_patches(task, patches_dir):
@@ -133,56 +128,65 @@ def run(
         task.metadata["Tp"] = bool(tests_passed)
         updated = True
     if reviewed is not None:
-        task.metadata["Reviewed"] = bool(reviewed)
-        if reviewed:
-            review_dir, task_folder_name, patches_dir = _review_paths(
-                cli, filepath, "REVIEW"
-            )
-            gen_time = task.metadata.get("PatchGenTime")
-            patch_files = task.metadata.get("PatchFiles", [])
-            if (
-                gen_time
-                and patch_files
-                and os.path.isdir(patches_dir)
-                and os.listdir(patches_dir)
-            ):
-                # Real changes to review: the user must have opened each patch file
-                # (at least once after generation) and we record a verifiable md5.
-                import time
-
-                records = []
-                for patch_info in patch_files:
-                    patch_filename = f"{patch_info['file'].replace(os.sep, '_')}.patch"
-                    patch_path = os.path.join(patches_dir, patch_filename)
-                    if not os.path.exists(patch_path):
-                        cli.error(
-                            f"Patch file '{patch_filename}' missing.",
-                            hint=f"Run 'tasks audit {task.metadata.get('Id')}' to regenerate patches.",
-                        )
-                    if gen_time and os.path.getatime(patch_path) < gen_time:
-                        cli.error(
-                            f"Patch '{patch_filename}' has not been reviewed since generation.",
-                            hint=f"Open the file to confirm review, e.g. 'cat {patch_path}'",
-                        )
-                    records.append(
-                        {
-                            "file": patch_info["file"],
-                            "patch": patch_filename,
-                            "md5": _patch_md5(patch_path),
-                        }
-                    )
-                reviews_path = os.path.join(
-                    review_dir, task_folder_name, "reviews.json"
+        review_dir, task_folder_name, patches_dir = _review_paths(
+            cli, filepath, "REVIEW"
+        )
+        has_changes = _has_real_patches(task, patches_dir)
+        if not has_changes:
+            task.metadata["Reviewed"] = bool(reviewed)
+            cli.log(f"No patch changes to review for [{task_id}]; review auto-passed.")
+        else:
+            summary = reviewed if isinstance(reviewed, str) else None
+            if summary is None:
+                cli.error(
+                    "REVIEW_SUMMARY_REQUIRED",
+                    task_id=task_id,
+                    hint=f'Finalize with a summary: tasks modify {task_id} --reviewed "<what you read in each patch>".',
                 )
-                with open(reviews_path, "w") as fh:
-                    json.dump(
-                        {"reviews": records, "reviewed_at": time.time()}, fh, indent=2
-                    )
+            if len(summary.strip()) < 40:
+                cli.error(
+                    "REVIEW_SUMMARY_TOO_SHORT",
+                    task_id=task_id,
+                    hint="Summarize what you read in each patch (at least 40 characters).",
+                )
+
+            from .review import covered_patches, load_reviews, write_reviews
+
+            reviews = load_reviews(cli, filepath)
+            expected = [
+                _patch_name(info["file"])
+                for info in task.metadata.get("PatchFiles", [])
+            ]
+            missing = [
+                name
+                for name in expected
+                if name not in covered_patches(reviews, patches_dir, expected)
+            ]
+            if missing:
+                cli.error(
+                    "REVIEW_INCOMPLETE",
+                    task_id=task_id,
+                    missing=", ".join(missing),
+                    hint=f"Run 'tasks review {task_id}' until every patch is reviewed.",
+                )
+
+            reviews["summary"] = summary.strip()
+            reviews["summary_at"] = time.time()
+            reviews["reviewed_at"] = reviews.get("reviewed_at", time.time())
+            write_reviews(cli, filepath, reviews)
+            reviews_path = os.path.join(review_dir, task_folder_name, "reviews.json")
+            commit_task_paths(
+                cli,
+                os.path.join(review_dir, task_folder_name),
+                f"Review summary {task_id}",
+                reviews_path,
+            )
+            task.metadata["Reviewed"] = True
             cli.log(
-                f"💡 HINT: Manual review confirmed for [{task.metadata.get('Id')}].\n"
-                f"Now run:\n1. './hammer tasks audit {task.metadata.get('Id')}' to generate a formal audit record.\n"
-                f"2. './hammer tasks verify {task.metadata.get('Id')} --proof \"<evidence>\"' to bind proof to the audit hash.\n"
-                f"3. './hammer tasks modify {task.metadata.get('Id')} --regression-check' to pass the gate."
+                f"💡 Review finalized for [{task_id}] ({len(expected)} patch(es), summary recorded).\n"
+                f"Now run:\n1. './hammer tasks audit {task_id}' to generate a formal audit record.\n"
+                f"2. './hammer tasks verify {task_id} --proof \"<evidence>\"' to bind proof to the audit hash.\n"
+                f"3. './hammer tasks modify {task_id} --regression-check' to pass the gate."
             )
         updated = True
     if priority is not None:
@@ -195,12 +199,11 @@ def run(
             )
             has_changes = _has_real_patches(task, patches_dir)
             if has_changes:
-                # Reviews are verifiable and mandatory when there are real changes.
                 if not task.metadata.get("Reviewed"):
                     cli.error(
                         "REGRESSION_CHECK_NOT_PASSED",
                         task_id=task_id,
-                        hint=f"Run 'tasks modify {task_id} --reviewed' after manually reading the patches.",
+                        hint=f"Run 'tasks review {task_id}' and then 'tasks modify {task_id} --reviewed \"<summary>\"'.",
                     )
                 reviews_path = os.path.join(
                     review_dir, task_folder_name, "reviews.json"
@@ -209,23 +212,28 @@ def run(
                     cli.error(
                         "REGRESSION_CHECK_NOT_PASSED",
                         task_id=task_id,
-                        hint=f"Run 'tasks modify {task_id} --reviewed' to record verifiable per-patch md5 reviews.",
+                        hint=f"Run 'tasks review {task_id}' to record receipts for every patch.",
                     )
                 with open(reviews_path) as fh:
-                    review_records = json.load(fh).get("reviews", [])
+                    review_records = json.load(fh)
+                if not review_records.get("summary"):
+                    cli.error(
+                        "REVIEW_SUMMARY_REQUIRED",
+                        task_id=task_id,
+                        hint=f'Finalize the review: tasks modify {task_id} --reviewed "<summary>".',
+                    )
+
+                from .review import covered_patches
 
                 patch_files = task.metadata.get("PatchFiles", [])
-                expected_patches = {
-                    f"{info['file'].replace(os.sep, '_')}.patch" for info in patch_files
-                }
-                reviewed_patches = {rec.get("patch") for rec in review_records}
-                if reviewed_patches != expected_patches or len(review_records) != len(
-                    expected_patches
-                ):
+                expected_patches = {_patch_name(info["file"]) for info in patch_files}
+                covered = covered_patches(review_records, patches_dir, expected_patches)
+                if covered != expected_patches:
+                    missing = sorted(expected_patches - covered)
                     cli.error(
                         "AUDIT_MISMATCH",
                         task_id=task_id,
-                        hint=f"Review receipts do not cover the current patch set. Re-run 'tasks modify {task_id} --reviewed' after re-reading every patch.",
+                        hint=f"Review receipts do not cover the current patch set ({', '.join(missing)}). Re-run 'tasks review {task_id}'.",
                     )
 
                 from ..audit import patches_are_fresh
@@ -244,17 +252,6 @@ def run(
                         hint=f"Patch set is stale against the branch. Run 'tasks audit {task_id}' to refresh it, then review every refreshed patch.",
                     )
 
-                for rec in review_records:
-                    patch_path = os.path.join(patches_dir, rec["patch"])
-                    if not os.path.exists(patch_path) or _patch_md5(
-                        patch_path
-                    ) != rec.get("md5"):
-                        cli.error(
-                            "AUDIT_MISMATCH",
-                            task_id=task_id,
-                            hint=f"Patch content changed since review of '{rec.get('patch')}'. Re-run 'tasks modify {task_id} --reviewed' after re-reading.",
-                        )
-                # The audit record binds an MD5 of all patch file contents.
                 audit_path = os.path.join(review_dir, f"{task_id}.audit")
                 if not os.path.exists(audit_path):
                     cli.error("AUDIT_MISSING", audit_path=audit_path)
@@ -263,7 +260,6 @@ def run(
 
                 if not verify_audit(filepath, patches_dir, audit_path):
                     cli.error("AUDIT_MISMATCH", task_id=task_id)
-                # sha256 integrity over criteria.md + verification_proof.log + audit (.audit_hash)
                 try:
                     cli.pipeline.check_audit_integrity(cli, task_id, filepath)
                 except PipelineError as e:
@@ -271,7 +267,6 @@ def run(
                         cli.action_required(e.code, **e.kwargs)
                     cli.error(e.code, **e.kwargs)
             else:
-                # No actual changes to review: auto-pass (do not require Reviewed).
                 cli.log(
                     f"No patch changes to verify for [{task_id}]; auto-passing regression check."
                 )

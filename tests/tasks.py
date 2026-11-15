@@ -107,9 +107,10 @@ if __name__ == "__main__":
     )
     mod_p.add_argument(
         "--reviewed",
-        action="store_true",
+        nargs="?",
+        const=True,
         default=None,
-        help="Mark patch review as complete.",
+        help="Finalize the review with a short summary of what you read.",
     )
     mod_p.add_argument(
         "--regression-check",
