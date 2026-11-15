@@ -1,0 +1,23 @@
+diff --git a/tasks_ai/pipeline.py b/tasks_ai/pipeline.py
+index f7fee510..0dbec094 100644
+--- a/tasks_ai/pipeline.py
++++ b/tasks_ai/pipeline.py
+@@ -87,9 +87,15 @@ class PipelineService:
+                 and self.git.is_merged(branch, default_branch)
+                 and (task.parts.get("commits") or "").strip()
+             ):
+-                self.log(
+-                    f"DEBUG: Task {task_id} worktree branch {branch} is already merged. Fast-tracking promotion to {target_state}."
+-                )
++                if not (
++                    target_state == "DONE"
++                    and self.git.is_already_merged_completion(
++                        branch, default_branch, task
++                    )
++                ):
++                    self.log(
++                        f"DEBUG: Task {task_id} worktree branch {branch} is already merged. Fast-tracking promotion to {target_state}."
++                    )
+                 return True
+ 
+         enabled_gates = self.get_enabled_gates(target_state)

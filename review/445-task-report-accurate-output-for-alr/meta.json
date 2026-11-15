@@ -1,0 +1,36 @@
+{
+  "Id": 445,
+  "Ti": "Report accurate output for already-merged task completion",
+  "Ty": "task",
+  "Cr": "261115 08:33",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "445-task-report-accurate-output-for-alr",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794761823.272143,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/445-task-report-accurate-output-for-alr/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/445-task-report-accurate-output-for-alr/patches/tasks_ai_pipeline.py.patch"
+    },
+    {
+      "file": "tests/test_already_merged_output.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/445-task-report-accurate-output-for-alr/patches/tests_test_already_merged_output.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "ae2fea56e0d0afba42814e63516d536de01a0deb",
+    "base": "81fc9315a895f51d38f86e8fb363bcebfb9e1f39"
+  }
+}
