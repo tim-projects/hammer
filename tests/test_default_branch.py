@@ -174,10 +174,21 @@ class MasterRepoTestBase(unittest.TestCase):
             "move REVIEW failed",
         )
 
+        res = self.run_cmd(["audit", task_file])
+        self.assertTrue(res["success"], f"audit failed: {res}")
+        while True:
+            res = self.run_cmd(["review", task_file])
+            self.assertTrue(res["success"], f"review failed: {res}")
+            if not res["data"]["remaining"]:
+                break
         for args in (
-            ["audit", task_file],
+            [
+                "modify",
+                task_file,
+                "--reviewed",
+                "Read every patch and confirmed the changes are scoped.",
+            ],
             ["verify", task_file, "--proof", "Reviewed patches and criteria."],
-            ["modify", task_file, "--reviewed"],
             ["modify", task_file, "--regression-check"],
         ):
             res = self.run_cmd(args)
@@ -276,10 +287,21 @@ class TestNoDefaultBranch(MasterRepoTestBase):
             self.run_cmd(["move", task_file, "REVIEW"])["success"],
             "move REVIEW failed",
         )
+        res = self.run_cmd(["audit", task_file])
+        self.assertTrue(res["success"], f"audit failed: {res}")
+        while True:
+            res = self.run_cmd(["review", task_file])
+            self.assertTrue(res["success"], f"review failed: {res}")
+            if not res["data"]["remaining"]:
+                break
         for args in (
-            ["audit", task_file],
+            [
+                "modify",
+                task_file,
+                "--reviewed",
+                "Read every patch and confirmed the changes are scoped.",
+            ],
             ["verify", task_file, "--proof", "Reviewed patches and criteria."],
-            ["modify", task_file, "--reviewed"],
             ["modify", task_file, "--regression-check"],
         ):
             res = self.run_cmd(args)

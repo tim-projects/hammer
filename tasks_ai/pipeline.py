@@ -252,6 +252,19 @@ class PipelineService:
             hasher.update(f.read())
         with open(proof_path, "rb") as f:
             hasher.update(f.read())
+        reviews_path = os.path.join(
+            os.path.dirname(task_path), os.path.basename(task_path), "reviews.json"
+        )
+        if not os.path.exists(reviews_path):
+            reviews_path = os.path.join(
+                os.path.dirname(task_path),
+                "review",
+                os.path.basename(task_path),
+                "reviews.json",
+            )
+        if os.path.exists(reviews_path):
+            with open(reviews_path, "rb") as f:
+                hasher.update(f.read())
         with open(audit_path, "rb") as f:
             hasher.update(f.read())
 
@@ -282,10 +295,10 @@ class PipelineService:
 
         task = FM.load(task_path)
         task_id = str(task.metadata.get("Id", task_id))
-        if task.metadata.get("Rc") == "PASSED":
-            self.log(
-                f"DEBUG: Skipping audit integrity check for auto-passed task {task_id}"
-            )
+        if task.metadata.get("Rc") == "PASSED" and self.has_no_patch_changes(
+            cli, task, task_path
+        ):
+            self.log(f"DEBUG: Skipping audit integrity check for empty task {task_id}")
             return True
 
         audit_path = os.path.join(
@@ -352,6 +365,12 @@ class PipelineService:
                 hasher.update(f.read())
             with open(proof_path, "rb") as f:
                 hasher.update(f.read())
+            reviews_path = os.path.join(
+                cli.tasks_path, "review", os.path.basename(task_path), "reviews.json"
+            )
+            if os.path.exists(reviews_path):
+                with open(reviews_path, "rb") as f:
+                    hasher.update(f.read())
             with open(audit_path, "rb") as f:
                 hasher.update(f.read())
         except FileNotFoundError as e:
