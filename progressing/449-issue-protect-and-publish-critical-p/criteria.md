@@ -1,9 +1,9 @@
-- [ ] Local deletion of the resolved default branch, testing, and staging is rejected with an actionable error
-- [ ] hammer repo branch delete refuses to delete the resolved default branch, testing, and staging before invoking Git
-- [ ] Remote deletion of the resolved default branch, testing, and staging remains rejected
-- [ ] A transition into TESTING merges the task branch into testing and pushes testing to the remote
-- [ ] A transition into STAGING merges through testing and pushes staging to the remote
-- [ ] A transition into DONE merges through staging and pushes the resolved default branch to the remote
-- [ ] Missing local testing or staging branches are recreated from the correct pipeline base or block promotion with an actionable error; promotion never silently skips an intermediate branch
-- [ ] Tests cover critical local and remote deletion, hammer repo branch delete rejection, and remote pushes at TESTING, STAGING, and DONE gates
-- [ ] Existing hook, repository, pipeline, and default-branch tests pass
+- [x] Local deletion of the resolved default branch, testing, and staging is rejected with an actionable error
+- [x] hammer repo branch delete refuses to delete the resolved default branch, testing, and staging before invoking Git
+- [x] Remote deletion of the resolved default branch, testing, and staging remains rejected
+- [x] A transition into TESTING merges the task branch into testing and pushes testing to the remote
+- [x] A transition into STAGING merges through testing and pushes staging to the remote
+- [x] A transition into DONE merges through staging and pushes the resolved default branch to the remote
+- [x] Missing local testing or staging branches are recreated from the correct pipeline base or block promotion with an actionable error; promotion never silently skips an intermediate branch
+- [x] Tests cover critical local and remote deletion, hammer repo branch delete rejection, and remote pushes at TESTING, STAGING, and DONE gates
+- [x] Existing hook, repository, pipeline, and default-branch tests pass

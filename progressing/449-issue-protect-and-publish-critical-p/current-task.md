@@ -2,4 +2,6 @@
 Task: 449-issue-protect-and-publish-critical-p
 ---
 
-- Progress: 
+- Progress: Implemented critical branch protection and gate publication. Added reference-transaction local deletion guard, explicit repo branch delete guard, pipeline branch recreation, and automatic pushes at TESTING/STAGING/DONE. Added focused regressions and updated affected pipeline fixtures. ./hammer check all passes.
+- Findings: 
+- Mitigations: 
