@@ -1,0 +1,211 @@
+import importlib.util
+import os
+import shutil
+import subprocess
+import tempfile
+import types
+import unittest
+
+
+def git(args, cwd, check=False):
+    return subprocess.run(
+        ["git"] + args, cwd=cwd, capture_output=True, text=True, check=check
+    )
+
+
+class CriticalBranchTestCase(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp(prefix="critical_branches_", dir="/var/tmp")
+        self.repo_dir = os.path.join(self.test_dir, "repo")
+        self.remote_dir = os.path.join(self.test_dir, "remote.git")
+        os.makedirs(self.repo_dir)
+        git(["init", "-b", "main"], self.repo_dir)
+        git(["config", "user.email", "test@example.com"], self.repo_dir)
+        git(["config", "user.name", "Test User"], self.repo_dir)
+        git(["config", "commit.gpgsign", "false"], self.repo_dir)
+        with open(os.path.join(self.repo_dir, "README.md"), "w") as f:
+            f.write("# Critical branch test\n")
+        git(["add", "README.md"], self.repo_dir)
+        git(["commit", "-m", "Initial commit"], self.repo_dir)
+        git(["branch", "testing"], self.repo_dir)
+        git(["branch", "staging"], self.repo_dir)
+        git(["init", "--bare", self.remote_dir], self.repo_dir)
+        git(["remote", "add", "origin", self.remote_dir], self.repo_dir)
+        git(["push", "-u", "origin", "main", "testing", "staging"], self.repo_dir)
+        git(["checkout", "-b", "449-task-critical-branches"], self.repo_dir)
+        with open(os.path.join(self.repo_dir, "feature.txt"), "w") as f:
+            f.write("feature\n")
+        git(["add", "feature.txt"], self.repo_dir)
+        git(["commit", "-m", "Add feature"], self.repo_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def install_hooks(self):
+        from tasks_ai.cli import TasksCLI
+
+        old_cwd = os.getcwd()
+        os.chdir(self.repo_dir)
+        try:
+            TasksCLI(quiet=True).install_hooks()
+        finally:
+            os.chdir(old_cwd)
+
+    def load_repo_module(self):
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        spec = importlib.util.spec_from_file_location(
+            "repo_under_test", os.path.join(project_root, "repo.py")
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_local_deletion_of_critical_branches_is_rejected(self):
+        self.install_hooks()
+        git(["checkout", "449-task-critical-branches"], self.repo_dir)
+        for branch in ("main", "testing", "staging"):
+            result = git(["branch", "-D", branch], self.repo_dir)
+            self.assertNotEqual(result.returncode, 0, f"{branch} deletion was allowed")
+            self.assertIn("Cannot delete critical pipeline branch", result.stderr)
+
+    def test_repo_branch_delete_rejects_critical_branches(self):
+        old_cwd = os.getcwd()
+        os.chdir(self.repo_dir)
+        try:
+            repo = self.load_repo_module()
+            for branch in ("main", "testing", "staging"):
+                with self.assertRaises(SystemExit) as raised:
+                    repo.delete_branch(branch)
+                self.assertEqual(raised.exception.code, 1)
+                self.assertTrue(
+                    git(
+                        ["show-ref", "--verify", "--quiet", f"refs/heads/{branch}"],
+                        self.repo_dir,
+                    ).returncode
+                    == 0
+                )
+        finally:
+            os.chdir(old_cwd)
+
+    def test_repo_branch_delete_still_deletes_feature_branch(self):
+        old_cwd = os.getcwd()
+        os.chdir(self.repo_dir)
+        try:
+            repo = self.load_repo_module()
+            git(["checkout", "main"], self.repo_dir)
+            git(["merge", "--no-ff", "449-task-critical-branches"], self.repo_dir)
+            repo.delete_branch("449-task-critical-branches")
+            self.assertNotEqual(
+                git(
+                    [
+                        "show-ref",
+                        "--verify",
+                        "--quiet",
+                        "refs/heads/449-task-critical-branches",
+                    ],
+                    self.repo_dir,
+                ).returncode,
+                0,
+            )
+        finally:
+            os.chdir(old_cwd)
+
+    def test_remote_deletion_of_critical_branches_is_rejected(self):
+        old_cwd = os.getcwd()
+        os.chdir(self.remote_dir)
+        try:
+            from tasks_ai.cli import TasksCLI
+
+            TasksCLI(quiet=True).install_hooks()
+        finally:
+            os.chdir(old_cwd)
+        git(["symbolic-ref", "HEAD", "refs/heads/release"], self.remote_dir)
+        for branch in ("main", "testing", "staging"):
+            result = git(["push", "origin", f":{branch}"], self.repo_dir)
+            self.assertNotEqual(result.returncode, 0, f"{branch} deletion was allowed")
+            self.assertIn("Cannot delete critical pipeline branch", result.stderr)
+
+    def test_promotion_pushes_each_gate_branch(self):
+        from tasks_ai.git_service import GitService
+
+        class Worktrees:
+            def get_worktree_path(self, task_id):
+                return None
+
+        context = types.SimpleNamespace(
+            repo_root=self.repo_dir,
+            main_repo_root=self.repo_dir,
+            tasks_path=self.repo_dir,
+            dev=False,
+        )
+        service = GitService(context)
+        service._worktree_manager = Worktrees()
+        task = types.SimpleNamespace(
+            metadata={"Br": "449-task-critical-branches", "Id": "449"}
+        )
+
+        service.promote_task(task, "TESTING")
+        self.assert_remote_contains("testing", "449-task-critical-branches")
+
+        service.promote_task(task, "STAGING")
+        self.assert_remote_contains("staging", "449-task-critical-branches")
+
+        service.promote_task(task, "DONE")
+        self.assert_remote_contains("main", "449-task-critical-branches")
+
+    def assert_remote_contains(self, branch, source_branch):
+        source = git(["rev-parse", source_branch], self.repo_dir).stdout.strip()
+        remote = git(
+            ["ls-remote", "origin", f"refs/heads/{branch}"], self.repo_dir
+        ).stdout.split()
+        self.assertTrue(remote, f"origin/{branch} was not published")
+        self.assertEqual(
+            0,
+            git(
+                ["merge-base", "--is-ancestor", source, remote[0]],
+                self.repo_dir,
+            ).returncode,
+            f"origin/{branch} does not contain {source_branch}",
+        )
+
+    def test_missing_local_pipeline_branches_are_recreated(self):
+        from tasks_ai.git_service import GitService
+
+        class Worktrees:
+            def get_worktree_path(self, task_id):
+                return None
+
+        git(["branch", "-D", "testing"], self.repo_dir)
+        git(["branch", "-D", "staging"], self.repo_dir)
+        context = types.SimpleNamespace(
+            repo_root=self.repo_dir,
+            main_repo_root=self.repo_dir,
+            tasks_path=self.repo_dir,
+            dev=False,
+        )
+        service = GitService(context)
+        service._worktree_manager = Worktrees()
+        task = types.SimpleNamespace(
+            metadata={"Br": "449-task-critical-branches", "Id": "449"}
+        )
+
+        service.promote_task(task, "STAGING")
+        for branch in ("testing", "staging"):
+            self.assertEqual(
+                git(
+                    [
+                        "merge-base",
+                        "--is-ancestor",
+                        "449-task-critical-branches",
+                        branch,
+                    ],
+                    self.repo_dir,
+                ).returncode,
+                0,
+                f"{branch} skipped the task branch",
+            )
+        self.assert_remote_contains("staging", "449-task-critical-branches")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -33,6 +33,8 @@
   "INTEGRITY_MISMATCH": "Integrity mismatch: Criteria, proof, or audit has changed.",
   "BRANCH_CHECKOUT_FAIL": "Failed to checkout branch '{branch}'.",
   "MERGE_CONFLICT": "[{task_id}] Merge conflict while syncing '{branch}' with '{default}'.",
+  "PIPELINE_BRANCH_MISSING": "Required pipeline branch '{branch}' is missing and could not be recreated.",
+  "PIPELINE_PUSH_FAILED": "Failed to push pipeline branch '{branch}': {stderr}",
   "MAIN_BRANCH_PROTECTION": "Forbidden operation on '{default_branch}' branch.",
   "NO_PROGRESS_UPDATE": "No progress updates detected!",
   "INIT_EXPLANATION": "Initialize workspace storage.",
