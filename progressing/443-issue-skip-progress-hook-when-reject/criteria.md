@@ -1,4 +1,4 @@
-- [ ] ProgressUpdateHook does not require progress.md or current-task.md when moving a PROGRESSING task to REJECTED
-- [ ] Moving a PROGRESSING task without either progress file to REJECTED succeeds
-- [ ] Existing progress update enforcement remains active for non-REJECTED transitions
-- [ ] A regression test covers the rejected transition and relevant test suite passes
+- [x] ProgressUpdateHook does not require progress.md or current-task.md when moving a PROGRESSING task to REJECTED
+- [x] Moving a PROGRESSING task without either progress file to REJECTED succeeds
+- [x] Existing progress update enforcement remains active for non-REJECTED transitions
+- [x] A regression test covers the rejected transition and relevant test suite passes
