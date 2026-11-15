@@ -159,6 +159,16 @@
       "bytes": 1657,
       "ts": 1794726423.3224325,
       "prev_hash": "06d12da88a63c6b944d93385d69f13b8b902b02a8d231860151e8c3af98ee634"
+    },
+    {
+      "seq": 17,
+      "file": "tests/test_worktree_system.py",
+      "patch": "tests_test_worktree_system.py.patch",
+      "md5": "72b9e9dedd879eec062dc0da7d48b17e",
+      "sha256": "20418db915b2c06b28d8d7123b215bce23ddef8e510d022dfd00b1be237bfbfc",
+      "bytes": 1371,
+      "ts": 1794726424.7255986,
+      "prev_hash": "c5aab04e93ea5553bebdcee7f53e35515670792f88cb5551d3f1470dfc87ba6c"
     }
   ]
 }
