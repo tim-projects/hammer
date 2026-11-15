@@ -1,0 +1,17 @@
+diff --git a/data/errors.json b/data/errors.json
+index 2f9edd33..d1087a93 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -71,5 +71,11 @@
+   "CONTENT_FILE_NOT_FOUND": "Content file not found: {path}",
+   "PARENT_NOT_FOUND": "Parent task not found: {parent}",
+   "STORE_BRANCH_TRACKS_TASKS": "Task branch '{branch}' tracks .tasks and would materialize a local store at '{store_path}'.",
+-  "STORE_NOT_CENTRAL": "Store is not central: '{store_path}'. Production uses only <main_repo_root>/.tasks; other locations diverge or contaminate the code repository."
++  "STORE_NOT_CENTRAL": "Store is not central: '{store_path}'. Production uses only <main_repo_root>/.tasks; other locations diverge or contaminate the code repository.",
++  "REVIEW_STATE_REQUIRED": "Task {task_id} is not in REVIEW.",
++  "NO_PATCHES": "No review patches exist for task {task_id}.",
++  "PATCH_NOT_IN_TASK": "Patch '{patch}' is not part of task {task_id}.",
++  "REVIEW_INCOMPLETE": "Review incomplete: {missing} not yet read.",
++  "REVIEW_SUMMARY_REQUIRED": "A review summary is required to finalize the review.",
++  "REVIEW_SUMMARY_TOO_SHORT": "Review summary too short."
+ }
