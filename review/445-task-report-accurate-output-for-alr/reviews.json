@@ -30,5 +30,8 @@
       "ts": 1794761838.0060627,
       "prev_hash": "6e0631142dc49eb54c85b0faa0cff632f522289f696098703b53b79a3fd418dd"
     }
-  ]
+  ],
+  "summary": "Reviewed all three patches: no-op DONE detection is narrowly bounded, merge outcomes now distinguish created commits from already-contained sources, and focused positive/negative text and JSON tests cover the behavior.",
+  "summary_at": 1794761896.2889135,
+  "reviewed_at": 1794761896.2889144
 }
