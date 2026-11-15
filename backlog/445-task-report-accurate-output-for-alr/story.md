@@ -1,0 +1,1 @@
+As a task user, when I promote a completed task whose work is already on the main branch, I need one clear message saying that checks were skipped, no merge was needed, and the task is complete, so I am not misled by output claiming that a merge occurred.
