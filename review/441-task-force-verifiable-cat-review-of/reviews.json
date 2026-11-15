@@ -29,6 +29,16 @@
       "bytes": 832,
       "ts": 1794726407.4058738,
       "prev_hash": "caeb0b7f79a5515d383967c5c0b3323cadcea49e68fc3a6997a0bea99dcd2a8f"
+    },
+    {
+      "seq": 4,
+      "file": "hammer",
+      "patch": "hammer.patch",
+      "md5": "8aa5ebc12863bd87ef2c4c8c11127752",
+      "sha256": "ecda617ce97b911bc25a7bcf71871d205e45550f8d3e93bd6e10b0363538b10c",
+      "bytes": 294,
+      "ts": 1794726408.601136,
+      "prev_hash": "dd20a7107f3ed7897285e390f76e27d712f2849033f0ebeadc703afe17eb350b"
     }
   ]
 }
