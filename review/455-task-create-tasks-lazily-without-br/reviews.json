@@ -120,5 +120,8 @@
       "ts": 1794826826.5996885,
       "prev_hash": "0beffa9a61a74fc3fc5966e4608fde44b6f762582156c414a2754dfd97cb7402"
     }
-  ]
+  ],
+  "summary": "Read all 12 patches: lazy creation removes eager branches/worktrees, guard preserves duplicate detection, main-checkout auto-commit is prevented, and affected tests mount explicitly.",
+  "summary_at": 1794826827.5288947,
+  "reviewed_at": 1794826827.528897
 }
