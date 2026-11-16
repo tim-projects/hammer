@@ -1,0 +1,14 @@
+diff --git a/data/hints.json b/data/hints.json
+index 4772ba37..e5f87c6e 100644
+--- a/data/hints.json
++++ b/data/hints.json
+@@ -79,5 +79,8 @@
+   "REVIEW_SUMMARY_REQUIRED": "WHAT: The review cannot be finalized without a written summary.\nWHY: A summary proves the reviewer processed what they read.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. WRITE SUMMARY.",
+   "REVIEW_SUMMARY_TOO_SHORT": "WHAT: The review summary is too short.\nWHY: A one-liner is not a review summary.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. ADD DETAIL.",
+   "PIPELINE_BRANCH_MISSING": "WHAT: Required pipeline branch '{branch}' is missing.\nWHY: Promotion cannot skip an intermediate branch.\nHOW: Recreate '{branch}' from its upstream pipeline branch, then retry.\nCONSEQUENCE: Promotion halted.",
+-  "PIPELINE_PUSH_FAILED": "WHAT: Failed to push pipeline branch '{branch}'.\nWHY: The gate merge must be published before the task advances.\nHOW: Check the remote and push '{branch}' to origin, then retry.\nCONSEQUENCE: Promotion halted."
++  "PIPELINE_PUSH_FAILED": "WHAT: Failed to push pipeline branch '{branch}'.\nWHY: The gate merge must be published before the task advances.\nHOW: Check the remote and push '{branch}' to origin, then retry.\nCONSEQUENCE: Promotion halted.",
++  "WORKTREE_MAIN_DIVERGED": "WHAT: Local main and origin/main differ for task {task_id} branch '{branch}'.\nWHY: Synchronizing from a diverged main would hide one side of the history.\nHOW:\n   1. Inspect: git log --left-right main...origin/main\n   2. Reconcile local {default} with origin/{default}.\n   3. Retry: ./hammer tasks mount {task_id}\nCONSEQUENCE: Worktree synchronization blocked. RECONCILE MAIN.",
++  "WORKTREE_SYNC_CONFLICT": "WHAT: Task {task_id} branch '{branch}' conflicts with local {default} at {local_commit}.\nWHY: Conflicting paths: {paths}.\nHOW:\n   1. Navigate: cd {worktree_path}\n   2. Inspect: git status\n   3. Resolve every conflicting path manually.\n   4. Stage and commit the resolution: git add <paths> && git commit -m 'Resolve {default} sync conflict'\n   5. Retry: ./hammer tasks mount {task_id}\nCONSEQUENCE: Worktree synchronization blocked. RESOLVE CONFLICTS.",
++  "WORKTREE_LOCAL_WORK": "WHAT: Task {task_id} branch '{branch}' has uncommitted local work.\nWHY: Synchronizing could overwrite local files. Local {default}: {local_commit}. Paths: {paths}.\nHOW:\n   1. Navigate: cd {worktree_path}\n   2. Inspect: git status\n   3. Commit or stash the local work.\n   4. Retry: ./hammer tasks mount {task_id}\nCONSEQUENCE: Worktree synchronization blocked. PRESERVE LOCAL WORK."
+ }

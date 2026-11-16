@@ -1,0 +1,404 @@
+diff --git a/tests/test_mount_sync.py b/tests/test_mount_sync.py
+index 291d2862..f0cb13ab 100644
+--- a/tests/test_mount_sync.py
++++ b/tests/test_mount_sync.py
+@@ -1,12 +1,4 @@
+-"""User tests for task 415: mount syncs a clean worktree, warns about conflicts.
+-
+-Two layers:
+-1. tasks_ai.git_service helpers against a real git repo (fast-forward sync,
+-   conflict listing, local-work detection).
+-2. tasks_ai.commands.mount._sync_or_warn with a fake CLI, asserting a worktree
+-   with local work is never merged (no conflict markers in the user's files) and
+-   that the conflicting paths are reported.
+-"""
++"""Tests for canonical worktree synchronization shared by mount and pipeline entry."""
+ 
+ import os
+ import subprocess
+@@ -15,6 +7,7 @@ import unittest
+ 
+ from tasks_ai.commands import mount as mount_cmd
+ from tasks_ai.git_service import GitService
++from tasks_ai.pipeline_hooks import WorktreeSyncHook
+ 
+ 
+ def git(args, cwd, check=True):
+@@ -35,10 +28,10 @@ def write(path, content):
+ 
+ 
+ class GitServiceSyncTest(unittest.TestCase):
+-    """Real repo: clean worktree fast-forwards, conflicts are only reported."""
++    """The git helpers prefer local main and detect conflicts without writes."""
+ 
+     def setUp(self):
+-        self.root = tempfile.mkdtemp(prefix="mount_sync_")
++        self.root = tempfile.mkdtemp(prefix="worktree_sync_")
+         self.remote = os.path.join(self.root, "remote")
+         os.makedirs(self.remote)
+         git(["init", "--bare", "-b", "main", self.remote], self.remote)
+@@ -53,7 +46,7 @@ class GitServiceSyncTest(unittest.TestCase):
+         git(["push", "origin", "main"], self.main)
+         self.git = GitService(FakeContext(self.main))
+ 
+-        self.branch = "415-task-mount-sync-probe"
++        self.branch = "459-task-worktree-sync-probe"
+         git(["branch", self.branch], self.main)
+         self.wt = os.path.join(self.root, "wt")
+         git(["worktree", "add", self.wt, self.branch], self.main)
+@@ -62,130 +55,97 @@ class GitServiceSyncTest(unittest.TestCase):
+         git(["worktree", "remove", "--force", self.wt], self.main, check=False)
+         subprocess.run(["rm", "-rf", self.root], check=False)
+ 
+-    def test_sync_worktree_fast_forwards_clean_worktree(self):
++    def test_sync_worktree_uses_local_main_before_origin_main(self):
+         write(os.path.join(self.main, "new.txt"), "from main\n")
+         git(["add", "."], self.main)
+-        git(["commit", "-m", "main moves on"], self.main)
+-        git(["push", "origin", "main"], self.main)
++        git(["commit", "-m", "local main moves on"], self.main)
+ 
+         source = self.git.sync_worktree(self.wt, "main", self.branch)
+ 
+-        self.assertEqual("origin/main", source)
++        self.assertEqual("main", source)
+         self.assertTrue(os.path.exists(os.path.join(self.wt, "new.txt")))
+-        self.assertEqual(
+-            git(["rev-parse", "main"], self.main).stdout.strip(),
+-            git(["rev-parse", "HEAD"], self.wt).stdout.strip(),
+-        )
+-
+-    def test_has_local_work_is_false_for_untouched_worktree(self):
+-        self.assertFalse(self.git.has_local_work(self.wt, "origin/main"))
+-
+-    def test_has_local_work_is_true_for_untracked_file(self):
+-        write(os.path.join(self.wt, "scratch.txt"), "wip\n")
+-        self.assertTrue(self.git.has_local_work(self.wt, "origin/main"))
+-
+-    def test_has_local_work_is_true_for_commits_ahead(self):
+-        write(os.path.join(self.wt, "own.txt"), "mine\n")
+-        git(["add", "."], self.wt)
+-        git(["commit", "-m", "own work"], self.wt)
+-        self.assertTrue(self.git.has_local_work(self.wt, "origin/main"))
+ 
+     def test_conflicting_files_reports_paths_and_touches_nothing(self):
+         write(os.path.join(self.wt, "shared.txt"), "branch side\n")
+         git(["add", "."], self.wt)
+         git(["commit", "-m", "branch edit"], self.wt)
+-        git(["push", "origin", self.branch], self.wt)
+         write(os.path.join(self.main, "shared.txt"), "main side\n")
+         git(["add", "."], self.main)
+         git(["commit", "-m", "main edit"], self.main)
+-        git(["push", "origin", "main"], self.main)
+         before = git(["status", "--porcelain"], self.wt).stdout
+         with open(os.path.join(self.wt, "shared.txt")) as handle:
+             content_before = handle.read()
+ 
+-        conflicts = self.git.conflicting_files(self.wt, "origin/main")
++        conflicts = self.git.conflicting_files(self.wt, "main")
+ 
+         self.assertEqual(["shared.txt"], conflicts)
+-        # merge-tree must not write conflict markers or stage anything
+         self.assertEqual(before, git(["status", "--porcelain"], self.wt).stdout)
+         with open(os.path.join(self.wt, "shared.txt")) as handle:
+             self.assertEqual(content_before, handle.read())
+ 
+-    def test_conflicting_files_empty_when_merge_would_apply(self):
+-        write(os.path.join(self.main, "new.txt"), "from main\n")
+-        git(["add", "."], self.main)
+-        git(["commit", "-m", "main moves on"], self.main)
+-        git(["push", "origin", "main"], self.main)
+ 
+-        self.assertEqual([], self.git.conflicting_files(self.wt, "origin/main"))
++class FakeResult:
++    def __init__(self, stdout=""):
++        self.returncode = 0
++        self.stdout = stdout
++        self.stderr = ""
+ 
+-    def test_sync_worktree_aborts_on_conflict(self):
+-        write(os.path.join(self.wt, "shared.txt"), "branch side\n")
+-        git(["add", "."], self.wt)
+-        git(["commit", "-m", "branch edit"], self.wt)
+-        write(os.path.join(self.main, "shared.txt"), "main side\n")
+-        git(["add", "."], self.main)
+-        git(["commit", "-m", "main edit"], self.main)
+-        git(["push", "origin", "main"], self.main)
+ 
+-        try:
+-            self.git.sync_worktree(self.wt, "main", self.branch)
+-        except Exception as exc:  # noqa: BLE001
+-            # Other test files import tasks_ai twice in one pytest process, so
+-            # the exception class identity is not reliable: match the message.
+-            self.assertIn("Merge conflict", str(exc))
+-        else:
+-            self.fail("expected a merge-conflict error from a conflicted sync")
+-
+-        status = git(["status", "--porcelain"], self.wt, check=False).stdout
+-        self.assertEqual("", status)
+-        with open(os.path.join(self.wt, "shared.txt")) as handle:
+-            self.assertNotIn("conflict", handle.read())
++class FakeWorktrees:
++    def __init__(self, path="/wt", exists=True):
++        self.path = path
++        self.exists = exists
++        self.created = []
++
++    def has_worktree(self, task_id):
++        return self.exists
++
++    def get_worktree_path(self, task_id):
++        return self.path
++
++    def create_task_worktree(self, task_id, branch=None, base_ref=None):
++        self.created.append((task_id, branch, base_ref))
++        self.exists = True
++        return self.path
+ 
+ 
+ class FakeGit:
+-    def __init__(self, local_work, conflicts, default_branch="main"):
+-        self.local_work = local_work
+-        self.conflicts = conflicts
+-        self.default_branch = default_branch
++    def __init__(self, conflicts=None, local_paths=None, diverged=False):
++        self.worktrees = FakeWorktrees()
++        self.conflicts = conflicts or []
++        self.local_paths = local_paths or []
++        self.diverged = diverged
+         self.merged = []
+-        self.checks = []
+ 
+     def get_default_branch(self):
+-        return self.default_branch
++        return "main"
+ 
+     def resolve_merge_source(self, default_branch):
+-        return f"origin/{default_branch}"
++        return default_branch
+ 
+-    def has_local_work(self, wt_path, merge_source):
+-        self.checks.append((wt_path, merge_source))
+-        return self.local_work
++    def main_branch_divergence(self, default_branch):
++        return ("local-sha", "remote-sha", self.diverged)
+ 
+-    def conflicting_files(self, wt_path, merge_source):
+-        self.checks.append((wt_path, merge_source))
++    def conflicting_files(self, worktree_path, merge_source):
+         return self.conflicts
+ 
+-    def sync_worktree(self, wt_path, default_branch, branch):
+-        self.merged.append((wt_path, default_branch, branch))
+-        return f"origin/{default_branch}"
+-
++    def uncommitted_files(self, worktree_path):
++        return self.local_paths
+ 
+-class FakeMessages:
+-    """Stands in for the real registry: records what mount asked it to say."""
++    def run(self, args, cwd=None, check=False):
++        return FakeResult("local-sha\n")
+ 
+-    def get_error(self, code, **kwargs):
+-        return f"ERROR[{code}]:{kwargs.get('branch', '')}"
+-
+-    def get_hint(self, code, **kwargs):
+-        return f"HINT[{code}]"
++    def sync_worktree(self, worktree_path, default_branch, branch, merge_source=None):
++        self.merged.append((worktree_path, default_branch, branch, merge_source))
++        return merge_source
+ 
+ 
+ class FakeCLI:
+     def __init__(self, git):
+         self.git = git
+-        self.messages = FakeMessages()
++        self.context = FakeContext("/repo")
+         self.lines = []
+-        self.errors = []
++        self.action_required_calls = []
+ 
+     def console(self, type_tag, action, result):
+         self.lines.append((type_tag, action, result))
+@@ -194,107 +154,100 @@ class FakeCLI:
+         self.lines.append(("log", "", message))
+ 
+     def error(self, code, **kwargs):
+-        self.errors.append(code)
++        raise AssertionError(f"unexpected error: {code}")
++
++    def action_required(self, code, **kwargs):
++        self.action_required_calls.append((code, kwargs))
+         raise SystemExit(1)
+ 
+     def finish(self, data=None):
+-        pass
++        self.finished = data
++
+ 
++class WorktreeSyncHookTest(unittest.TestCase):
++    def test_clean_worktree_syncs_from_local_main(self):
++        git = FakeGit()
++        cli = FakeCLI(git)
++
++        WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+-class MountWarnTest(unittest.TestCase):
+-    """mount decides between syncing and warning; it never merges local work."""
++        self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
++        self.assertEqual([], cli.action_required_calls)
+ 
+-    def _mount(self, local_work, conflicts, default_branch="main"):
+-        git = FakeGit(local_work, conflicts, default_branch)
++    def test_conflict_blocker_contains_actionable_details(self):
++        git = FakeGit(conflicts=["shared.txt", "app.py"])
+         cli = FakeCLI(git)
+-        mount_cmd._sync_or_warn(cli, "/wt", "415-branch", 415)
+-        return cli, git
+ 
+-    def test_clean_worktree_is_synced(self):
+-        cli, git = self._mount(local_work=False, conflicts=[])
+-        self.assertEqual([("/wt", "main", "415-branch")], git.merged)
+-        self.assertEqual([], cli.errors)
+-        self.assertIn(("worktree", "sync", "origin/main -> complete"), cli.lines)
++        with self.assertRaises(SystemExit):
++            WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+-    def test_local_work_is_never_merged_and_conflicts_are_named(self):
+-        cli, git = self._mount(local_work=True, conflicts=["shared.txt", "app.py"])
++        code, details = cli.action_required_calls[0]
++        self.assertEqual("WORKTREE_SYNC_CONFLICT", code)
++        self.assertEqual("459", details["task_id"])
++        self.assertEqual("459-task-sync", details["branch"])
++        self.assertEqual("local-sha", details["local_commit"])
++        self.assertEqual("shared.txt, app.py", details["paths"])
++        self.assertEqual("/wt", details["worktree_path"])
+         self.assertEqual([], git.merged)
+-        self.assertIn(
+-            (
+-                "log",
+-                "",
+-                "Warning: ERROR[CONFLICT_DETECTED]:415-branch | HINT: HINT[CONFLICT_DETECTED]",
+-            ),
+-            cli.lines,
+-        )
+-        self.assertIn(("conflict", "block", "shared.txt"), cli.lines)
+-        self.assertIn(("conflict", "block", "app.py"), cli.lines)
+-        self.assertIn(
+-            ("log", "", "CONSEQUENCE: merge origin/main BLOCK. FIX conflict first."),
+-            cli.lines,
+-        )
+-
+-    def test_local_work_without_conflicts_reports_up_to_date(self):
+-        cli, git = self._mount(local_work=True, conflicts=[])
++
++    def test_uncommitted_work_is_blocked_without_merging(self):
++        git = FakeGit(local_paths=["scratch.txt"])
++        cli = FakeCLI(git)
++
++        with self.assertRaises(SystemExit):
++            WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
++
++        code, details = cli.action_required_calls[0]
++        self.assertEqual("WORKTREE_LOCAL_WORK", code)
++        self.assertEqual("scratch.txt", details["paths"])
+         self.assertEqual([], git.merged)
+-        self.assertIn(("worktree", "sync", "up to date with origin/main"), cli.lines)
+ 
+-    def test_no_default_branch_skips_the_whole_step(self):
+-        cli, git = self._mount(local_work=False, conflicts=[], default_branch=None)
++    def test_main_divergence_is_an_actionable_blocker(self):
++        git = FakeGit(diverged=True)
++        cli = FakeCLI(git)
++
++        with self.assertRaises(SystemExit):
++            WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
++
++        code, details = cli.action_required_calls[0]
++        self.assertEqual("WORKTREE_MAIN_DIVERGED", code)
++        self.assertEqual("459", details["task_id"])
++        self.assertEqual("459-task-sync", details["branch"])
+         self.assertEqual([], git.merged)
+-        self.assertEqual([], git.checks)
+-        self.assertIn(("worktree", "sync", "skipped (no default branch)"), cli.lines)
+ 
+-    def test_mount_prints_the_path_before_the_warning(self):
+-        """A conflicted mount must still hand the user the worktree path."""
+-        order = []
+-        git = FakeGit(local_work=True, conflicts=["shared.txt"])
++    def test_pipeline_entry_uses_the_canonical_hook(self):
++        git = FakeGit()
+         cli = FakeCLI(git)
+-        cli.log = lambda message: order.append(message)
+-        cli.find_task = lambda task_id: ("/fake/415-task", "PROGRESSING")
+-
+-        class FakeFM:
+-            @staticmethod
+-            def load(path):
+-                task = type("Task", (), {"metadata": {"Id": 415, "Br": "415-branch"}})()
+-                return task
+-
+-        git.worktrees = type(
+-            "W", (), {"create_task_worktree": staticmethod(lambda tid, br: "/wt")}
+-        )()
+-        original_fm, mount_cmd.FM = mount_cmd.FM, FakeFM
+-        try:
+-            mount_cmd.run(cli, 415)
+-        finally:
+-            mount_cmd.FM = original_fm
++        task = type("Task", (), {"metadata": {"Id": 459, "Br": "459-task-sync"}})()
++
++        WorktreeSyncHook().execute(cli, task, "READY", "PROGRESSING", "/task")
+ 
+-        self.assertIn("Run: cd /wt", order)
+-        warning = "Warning: ERROR[CONFLICT_DETECTED]:415-branch | HINT: HINT[CONFLICT_DETECTED]"
+-        self.assertIn(warning, order)
+-        self.assertLess(order.index("Run: cd /wt"), order.index(warning))
++        self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
+ 
+-    def test_no_mergeable_ref_skips_the_whole_step(self):
+-        git = FakeGit(local_work=False, conflicts=[])
+-        git.resolve_merge_source = lambda db: None
++    def test_missing_branch_and_worktree_are_created_from_local_main(self):
++        git = FakeGit()
++        git.worktrees.exists = False
+         cli = FakeCLI(git)
+-        mount_cmd._sync_or_warn(cli, "/wt", "415-branch", 415)
+-        self.assertEqual([], git.merged)
+-        self.assertIn(("worktree", "sync", "skipped (no main/master ref)"), cli.lines)
+ 
++        WorktreeSyncHook().ensure_worktree(cli, "459", "459-task-sync")
+ 
+-class VoiceRegistryTest(unittest.TestCase):
+-    """The warning mount emits must speak the documented hammer voice."""
++        self.assertEqual([("459", "459-task-sync", "main")], git.worktrees.created)
+ 
+-    def setUp(self):
+-        from tasks_ai.messages import MessageRegistry
++    def test_mount_delegates_to_the_canonical_hook(self):
++        git = FakeGit()
++        cli = FakeCLI(git)
++        cli.find_task = lambda task_id: ("/fake/459-task", "PROGRESSING")
++        task = type("Task", (), {"metadata": {"Id": 459, "Br": "459-task-sync"}})()
++        original_fm = mount_cmd.FM
++        mount_cmd.FM = type("FM", (), {"load": staticmethod(lambda path: task)})
++        try:
++            mount_cmd.run(cli, 459)
++        finally:
++            mount_cmd.FM = original_fm
+ 
+-        self.registry = MessageRegistry("data")
++        self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
++        self.assertEqual("/wt", cli.finished["worktree_path"])
+ 
+-    def test_conflict_detected_carries_the_four_sections(self):
+-        hint = self.registry.get_hint("CONFLICT_DETECTED", branch="b", task_id="1")
+-        for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
+-            self.assertIn(section, hint)
+ 
+-    def test_conflict_detected_commands_the_fix(self):
+-        message = self.registry.get_error("CONFLICT_DETECTED", branch="b")
+-        self.assertIn("Resolve", message)
++if __name__ == "__main__":
++    unittest.main()
