@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794826756.927676,
-  "DoneAt": null,
+  "DoneAt": 1794826886.16373,
   "PatchFiles": [
     {
       "file": "tasks_ai/commands/create.py",
