@@ -196,7 +196,6 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         self.assertTrue(res["success"], res)
         task_file = res["data"]["file"]
         branch = task_file  # branch name equals task filename
-        worktree_path = res["data"].get("worktree", "")
 
         self.run_cmd(["move", task_file, "READY"])
         # READY -> PROGRESSING now requires a recorded research pass (task 386).
@@ -210,14 +209,12 @@ class ReviewGateIntegrationTest(unittest.TestCase):
                 "Read pipeline_hooks.py and audit.py to trace the review gate.",
             ]
         )
-        self.run_cmd(["move", task_file, "PROGRESSING"])
+        progressing = self.run_cmd(["move", task_file, "PROGRESSING"])
+        self.assertTrue(progressing["success"], progressing)
+        worktree_path = self.get_worktree(task_file)
 
         # Commit real work in the worktree (not main repo) so the branch gets the commit
-        work_dir = (
-            worktree_path
-            if worktree_path and os.path.exists(worktree_path)
-            else self.repo_dir
-        )
+        work_dir = worktree_path
         subprocess.run(["git", "checkout", branch], cwd=work_dir, capture_output=True)  # noqa: PLW1510
         work_files = [work_file] if isinstance(work_file, str) else work_file
         for filename in work_files:
