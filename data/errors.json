@@ -79,5 +79,8 @@
   "PATCH_NOT_IN_TASK": "Patch '{patch}' is not part of task {task_id}.",
   "REVIEW_INCOMPLETE": "Review incomplete: {missing} not yet read.",
   "REVIEW_SUMMARY_REQUIRED": "A review summary is required to finalize the review.",
-  "REVIEW_SUMMARY_TOO_SHORT": "Review summary too short."
+  "REVIEW_SUMMARY_TOO_SHORT": "Review summary too short.",
+  "WORKTREE_MAIN_DIVERGED": "Task {task_id} branch '{branch}' cannot synchronize: local {default} ({local}) differs from origin/{default} ({remote}).",
+  "WORKTREE_SYNC_CONFLICT": "Task {task_id} branch '{branch}' conflicts with local {default} at {local_commit}. Conflicting paths: {paths}.",
+  "WORKTREE_LOCAL_WORK": "Task {task_id} branch '{branch}' has local work that cannot be synchronized safely. Local {default}: {local_commit}. Paths: {paths}."
 }

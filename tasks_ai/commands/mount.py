@@ -1,50 +1,7 @@
 import os
 
-from ..cli_errors import PipelineMergeConflict
 from ..file_manager import FM
-
-
-def _sync_or_warn(cli, wt_path, branch, task_id):
-    """Bring the mounted worktree up to date with the default branch.
-
-    A worktree with no work of its own is merged (a fast-forward, so it cannot
-    conflict). A worktree with local work is never merged here -- that would
-    write conflict markers into the user's files -- so the conflicts that a
-    later promotion would hit are reported instead, in the voice the message
-    registry already owns (CONFLICT_DETECTED).
-    """
-    default_branch = cli.git.get_default_branch()
-    if not default_branch:
-        cli.console("worktree", "sync", "skipped (no default branch)")
-        return
-
-    merge_source = cli.git.resolve_merge_source(default_branch)
-    if not merge_source:
-        cli.console("worktree", "sync", "skipped (no main/master ref)")
-        return
-
-    if not cli.git.has_local_work(wt_path, merge_source):
-        try:
-            cli.git.sync_worktree(wt_path, default_branch, branch)
-        except PipelineMergeConflict:
-            cli.error("WORKTREE_MERGE_CONFLICT", branch=branch, default=default_branch)
-        cli.console("worktree", "sync", f"{merge_source} -> complete")
-        return
-
-    conflicts = cli.git.conflicting_files(wt_path, merge_source)
-    if conflicts is None:
-        cli.console("worktree", "conflicts", "CHECK FAILED (old git)")
-    elif conflicts:
-        message = cli.messages.get_error("CONFLICT_DETECTED", branch=branch)
-        hint = cli.messages.get_hint(
-            "CONFLICT_DETECTED", branch=branch, task_id=str(task_id)
-        )
-        cli.log(f"Warning: {message} | HINT: {hint}")
-        for path in conflicts:
-            cli.console("conflict", "block", path)
-        cli.log(f"CONSEQUENCE: merge {merge_source} BLOCK. FIX conflict first.")
-    else:
-        cli.console("worktree", "sync", f"up to date with {merge_source}")
+from ..pipeline_hooks import WorktreeSyncHook
 
 
 def run(cli, task_id):
@@ -54,21 +11,19 @@ def run(cli, task_id):
         cli.error("TASK_NOT_FOUND", filename=str(task_id))
 
     task = FM.load(str(filepath))
-    branch = task.metadata.get("Br", "")
-    if not branch:
-        branch = str(task_id)
+    branch = task.metadata.get("Br", "") or str(task_id)
+    task_id = str(task.metadata.get("Id", task_id))
 
-    wt_path = cli.git.worktrees.create_task_worktree(
-        str(task.metadata.get("Id", task_id)), branch
-    )
+    hook = WorktreeSyncHook()
+    wt_path = hook.ensure_worktree(cli, task_id, branch)
     if not wt_path:
-        cli.error("Failed to create worktree for task.")
+        cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
 
-    # Path first: the sync/warning below must never bury where to go.
+    # Path first: a synchronization blocker must never bury where to go.
     cli.log(f"Worktree mounted at: {wt_path}")
     cli.log(f"Run: cd {wt_path}")
 
-    _sync_or_warn(cli, wt_path, branch, task_id)
+    hook.synchronize(cli, task_id, branch, wt_path)
 
     cli.finish(
         {
