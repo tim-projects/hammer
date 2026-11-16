@@ -289,16 +289,6 @@ class WorktreeCheckHook(PipelineHook):
 
         has_origin = cli._run_git(["remote", "get-url", "origin"]).returncode == 0
 
-        if new_status == "PROGRESSING":  # noqa: SIM102
-            if not cli.git.worktrees.has_worktree(task_id):  # noqa: SIM102
-                if branch and has_origin:
-                    remote_check = cli._run_git(
-                        ["ls-remote", "--heads", "origin", branch]
-                    )
-                    if remote_check.stdout.strip():
-                        cli.git.worktrees.create_task_worktree(task_id, branch)
-                        cli.console("worktree", "restore", f"{branch} from origin")
-
         if new_status in ("REVIEW", "STAGING", "DONE", "ARCHIVED"):  # noqa: SIM102
             if has_origin:  # noqa: SIM102
                 if not _remote_has_branch(cli, branch):
@@ -462,46 +452,100 @@ class CleanWorkspaceHook(PipelineHook):
 
 
 class WorktreeSyncHook(PipelineHook):
-    """Ensures the task worktree is mounted and synced with main on PROGRESSING."""
+    """Canonical task branch/worktree synchronization for mount and pipeline entry."""
 
     def execute(self, cli, task, current_state, new_status, filepath):
-        if new_status == "PROGRESSING":
-            task_id = str(task.metadata.get("Id", ""))
-            branch = task.metadata.get("Br", "")
-            if not branch:
-                branch = task_id
+        if new_status != "PROGRESSING":
+            return
+        task_id = str(task.metadata.get("Id", ""))
+        branch = task.metadata.get("Br", "") or task_id
+        worktree_path = self.ensure_worktree(cli, task_id, branch)
+        self.synchronize(cli, task_id, branch, worktree_path)
 
-            cli.console("worktree", "sync", f"{branch}")
-
-            if not cli.git.worktrees.has_worktree(task_id):
-                cli.git.worktrees.create_task_worktree(task_id, branch)
-
-            worktree_path = cli.git.worktrees.get_worktree_path(task_id)
+    def ensure_worktree(self, cli, task_id, branch):
+        """Create the task branch and worktree when either one is missing."""
+        default_branch = cli.git.get_default_branch()
+        if not cli.git.worktrees.has_worktree(task_id):
+            base_ref = default_branch if default_branch else None
+            worktree_path = cli.git.worktrees.create_task_worktree(
+                task_id, branch, base_ref=base_ref
+            )
             if not worktree_path:
                 cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
+        return cli.git.worktrees.get_worktree_path(task_id)
 
-            default_branch = cli.git.get_default_branch()
-            if not default_branch:
-                cli.console("worktree", "sync", "skipped (no main/master)")
-                return
+    def synchronize(self, cli, task_id, branch, worktree_path):
+        """Synchronize a worktree from local main without touching local work."""
+        cli.console("worktree", "sync", branch)
+        default_branch = cli.git.get_default_branch()
+        if not default_branch:
+            cli.console("worktree", "sync", "skipped (no main/master)")
+            return
 
-            try:
-                merged_source = cli.git.sync_worktree(
-                    worktree_path, default_branch, branch
-                )
-            except PipelineMergeConflict as e:
-                cli.console("worktree", "merge", "conflict")
-                cli.error(
-                    "WORKTREE_MERGE_CONFLICT",
-                    branch=e.branch,
-                    default=e.default,
-                )
+        merge_source = cli.git.resolve_merge_source(default_branch)
+        if not merge_source:
+            cli.console("worktree", "sync", "skipped (no main/master ref)")
+            return
 
-            if not merged_source:
-                cli.console("worktree", "sync", "skipped (no remote/default)")
-                return
+        local_commit = cli.git.run(
+            ["rev-parse", default_branch], cwd=cli.context.main_repo_root
+        ).stdout.strip()
+        local, remote, diverged = cli.git.main_branch_divergence(default_branch)
+        if diverged:
+            cli.action_required(
+                "WORKTREE_MAIN_DIVERGED",
+                task_id=task_id,
+                branch=branch,
+                default=default_branch,
+                local=local,
+                remote=remote,
+            )
 
-            cli.console("worktree", "sync", "complete")
+        conflicts = cli.git.conflicting_files(worktree_path, merge_source)
+        local_paths = cli.git.uncommitted_files(worktree_path)
+        if conflicts:
+            cli.action_required(
+                "WORKTREE_SYNC_CONFLICT",
+                task_id=task_id,
+                branch=branch,
+                default=default_branch,
+                local_commit=local_commit,
+                paths=", ".join(conflicts),
+                worktree_path=worktree_path,
+            )
+        if local_paths:
+            cli.action_required(
+                "WORKTREE_LOCAL_WORK",
+                task_id=task_id,
+                branch=branch,
+                default=default_branch,
+                local_commit=local_commit,
+                paths=", ".join(local_paths),
+                worktree_path=worktree_path,
+            )
+
+        try:
+            merged_source = cli.git.sync_worktree(
+                worktree_path,
+                default_branch,
+                branch,
+                merge_source=merge_source,
+            )
+        except PipelineMergeConflict as e:
+            cli.action_required(
+                "WORKTREE_SYNC_CONFLICT",
+                task_id=task_id,
+                branch=e.branch,
+                default=e.default,
+                local_commit=local_commit,
+                paths="unknown",
+                worktree_path=worktree_path,
+            )
+
+        if not merged_source:
+            cli.console("worktree", "sync", "skipped (no main/master ref)")
+            return
+        cli.console("worktree", "sync", "complete")
 
 
 class MainBranchProtectionHook(PipelineHook):
