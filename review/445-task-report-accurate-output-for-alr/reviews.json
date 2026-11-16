@@ -19,6 +19,16 @@
       "bytes": 1022,
       "ts": 1794789640.2115734,
       "prev_hash": "17d058f6fcf80033adbc2817c9d131dec4484a6eaec4102a0cd92e0be8a2ffde"
+    },
+    {
+      "seq": 3,
+      "file": "tests/test_already_merged_output.py",
+      "patch": "tests_test_already_merged_output.py.patch",
+      "md5": "04edfea7e7210998721d34e39c6e2b80",
+      "sha256": "ec93c58bb7400636985334bd78dbd6faf119dbbd894f30720d56aff0a0d7445a",
+      "bytes": 7650,
+      "ts": 1794789641.2074635,
+      "prev_hash": "435f46e72f262c9576c52acd29a02d013936a97ccc87e905e1fe7654027f1a82"
     }
   ]
 }
