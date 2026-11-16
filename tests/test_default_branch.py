@@ -272,7 +272,7 @@ class TestNoDefaultBranch(MasterRepoTestBase):
             "move PROGRESSING failed",
         )
 
-        worktree_path = data["worktree"]
+        worktree_path = os.path.join(self.repo_dir, ".task-worktrees", task_file)
         with open(os.path.join(worktree_path, "feature.py"), "w") as f:
             f.write("def feature():\n    return True\n")
         git(["add", "feature.py"], worktree_path)

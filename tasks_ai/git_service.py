@@ -538,23 +538,25 @@ class GitService:
         task_id = task.metadata.get("Id", "unknown")
         repo_root = self.context.main_repo_root
 
-        # 0. Auto-commit any uncommitted changes in the worktree before transition
+        # 0. Auto-commit task changes before transition. A lazy task has no
+        # worktree until PROGRESSING, so committing from the main checkout would
+        # sweep unrelated files (including the central store) into the task branch.
         wt_path = self.worktrees.get_worktree_path(str(task_id))
-        commit_cwd = wt_path if wt_path and os.path.exists(wt_path) else repo_root
-        status_res = self.run(["status", "--porcelain"], cwd=commit_cwd)
-        if status_res.stdout.strip():
-            self.log(
-                f"Git: Detected uncommitted changes. Auto-committing before {target_state}..."
-            )
-            self.run(["add", "."], cwd=commit_cwd)
-            self.run(
-                [
-                    "commit",
-                    "-m",
-                    f"[{task_id}] Auto-commit before {target_state} transition",
-                ],
-                cwd=commit_cwd,
-            )
+        if wt_path and os.path.exists(wt_path):
+            status_res = self.run(["status", "--porcelain"], cwd=wt_path)
+            if status_res.stdout.strip():
+                self.log(
+                    f"Git: Detected uncommitted changes. Auto-committing before {target_state}..."
+                )
+                self.run(["add", "."], cwd=wt_path)
+                self.run(
+                    [
+                        "commit",
+                        "-m",
+                        f"[{task_id}] Auto-commit before {target_state} transition",
+                    ],
+                    cwd=wt_path,
+                )
 
         # PROMOTION: Merge worktree branch through pipeline branches
         default_branch = self.get_default_branch()

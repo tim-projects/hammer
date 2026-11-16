@@ -114,7 +114,9 @@ class TestDevLeavesTheInvokedRepoAlone(DevIsolationTestBase):
         )
 
     def test_dev_task_lives_in_the_throwaway_repo(self):
-        _, task_file = self.create_dev_task(counter_value=BASE_ID - 1)
+        task_id, task_file = self.create_dev_task(counter_value=BASE_ID - 1)
+        mounted = self.run_tasks(["mount", str(task_id)])
+        self.assertEqual(mounted.returncode, 0, mounted.stdout)
         self.assertTrue(
             os.path.isdir(
                 os.path.join(self.dev_repo_dir, ".task-worktrees", task_file)
