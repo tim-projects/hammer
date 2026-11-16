@@ -1,0 +1,1 @@
+As a maintainer, I want task worktrees to be created only when development begins and synchronized through one code path, so backlog and ready tasks do not accumulate stale worktrees and every active task starts from the intended local main code.

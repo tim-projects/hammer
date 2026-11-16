@@ -1,0 +1,9 @@
+- [ ] Creating a task creates no local branch, worktree, or worktree manifest entry
+- [ ] BACKLOG and READY transitions succeed without a local branch or worktree
+- [ ] READY to PROGRESSING creates the missing branch and worktree when needed
+- [ ] tasks mount creates a missing worktree and reuses the same synchronization logic as the pipeline
+- [ ] One canonical WorktreeSyncHook implementation owns branch/worktree creation, local-main synchronization, and conflict reporting
+- [ ] Local main is the synchronization source and remote main divergence produces an actionable blocker
+- [ ] Merge conflicts preserve local work, list conflicting paths, and require manual resolution
+- [ ] Validation detects and synchronizes a stale task branch or blocks before running checks
+- [ ] Regression tests cover the complete lazy-worktree lifecycle and unified synchronization behavior
