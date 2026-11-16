@@ -16,6 +16,15 @@ class BlockerArgumentParser(argparse.ArgumentParser):
 
     def error(self, message):
         self.print_usage(sys.stderr)
+        if getattr(self, "hammer_voice", False):
+            self.exit(
+                2,
+                f"{self.prog}: blocker: ✗ HAMMER SAY NO! FIX! 🔨\n"
+                f"WHAT: {message}.\n"
+                "WHY: Command syntax invalid. HAMMER demand precision.\n"
+                f"HOW: Run './hammer {self.prog} --help' to see correct usage.\n"
+                "CONSEQUENCE: Command halted. FIX COMMAND.\n",
+            )
         self.exit(2, f"{self.prog}: blocker: {message}\n")
 
 
