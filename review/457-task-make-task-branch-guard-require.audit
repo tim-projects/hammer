@@ -1,0 +1,12 @@
+{
+    "task_id": "457",
+    "patch_hash": "cde44999721cf1be0860998fe018f3ce",
+    "patch_files": [
+        "tasks.py.patch",
+        "tasks_ai_cli_io.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_usage_blockers.py.patch"
+    ],
+    "status": "verified"
+}
