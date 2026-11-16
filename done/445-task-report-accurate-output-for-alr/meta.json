@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794761823.272143,
-  "DoneAt": null,
+  "DoneAt": 1794787442.956063,
   "PatchFiles": [
     {
       "file": "tasks_ai/git_service.py",
