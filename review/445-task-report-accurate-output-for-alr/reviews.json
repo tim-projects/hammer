@@ -30,5 +30,8 @@
       "ts": 1794789641.2074635,
       "prev_hash": "435f46e72f262c9576c52acd29a02d013936a97ccc87e905e1fe7654027f1a82"
     }
-  ]
+  ],
+  "summary": "Reviewed all three patches: the branch now includes the critical pipeline branch fix, preserves the exact no-op completion message, and tests the task-to-testing-to-staging-to-main promotion contract.",
+  "summary_at": 1794789642.0152426,
+  "reviewed_at": 1794789642.0152435
 }
