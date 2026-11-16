@@ -9,12 +9,12 @@
   "Pt": null,
   "Rr": true,
   "Tp": false,
-  "Rc": "PASSED",
-  "Vp": true,
-  "Reviewed": true,
+  "Rc": "",
+  "Vp": false,
+  "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1794761823.272143,
-  "DoneAt": 1794787442.956063,
+  "PatchGenTime": null,
+  "DoneAt": null,
   "PatchFiles": [
     {
       "file": "tasks_ai/git_service.py",
