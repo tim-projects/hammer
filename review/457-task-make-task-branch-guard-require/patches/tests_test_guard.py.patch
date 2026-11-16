@@ -1,0 +1,94 @@
+diff --git a/tests/test_guard.py b/tests/test_guard.py
+index 730dc325..fb244048 100755
+--- a/tests/test_guard.py
++++ b/tests/test_guard.py
+@@ -282,6 +282,89 @@ class TestGuardGate(GuardTestBase):
+             )
+         self.assertTrue(os.path.isdir(self.task_path(BASE_ID, "progressing", folder)))
+ 
++    def test_branchless_backlog_and_ready_have_no_remote_divergence(self):
++        """Early task states do not require Git state that is not created yet."""
++        self.create_task(counter_value=BASE_ID - 1)
++
++        self.assertNotIn(
++            ("GUARD_REMOTE_DIVERGENCE", BASE_ID),
++            self.codes_for(BASE_ID),
++        )
++        result = self.run_tasks(["move", str(BASE_ID), "READY"])
++        self.assertEqual(
++            result.returncode,
++            0,
++            f"branchless task blocked at READY: {result.stdout} {result.stderr}",
++        )
++        self.assertNotIn(
++            ("GUARD_REMOTE_DIVERGENCE", BASE_ID),
++            self.codes_for(BASE_ID),
++        )
++
++    def test_branchless_ready_creates_branch_when_progressing(self):
++        """The PROGRESSING sync hook supplies branch state after the READY gate."""
++        self.create_task(counter_value=BASE_ID - 1)
++        branch = self._find_folder(BASE_ID, "backlog")
++        ready = self.run_tasks(["move", str(BASE_ID), "READY"])
++        self.assertEqual(ready.returncode, 0, ready.stdout)
++        research = self.run_tasks(["modify", str(BASE_ID), "--research", RESEARCH])
++        self.assertEqual(research.returncode, 0, research.stdout)
++
++        result = self.run_tasks(["move", str(BASE_ID), "PROGRESSING"])
++        self.assertEqual(
++            result.returncode,
++            0,
++            f"branchless task blocked at PROGRESSING: {result.stdout} {result.stderr}",
++        )
++        self.assertEqual(
++            self.git(["rev-parse", "--verify", branch]).returncode,
++            0,
++            "PROGRESSING transition did not create the task branch",
++        )
++
++    def test_genuine_remote_branch_without_local_branch_is_divergence(self):
++        """A live remote task branch is the evidence the finding requires."""
++        self.create_task(counter_value=BASE_ID - 1)
++        head = self.git(["rev-parse", "HEAD"]).stdout.strip()
++        self.git(
++            [
++                "update-ref",
++                f"refs/remotes/origin/{BASE_ID}-task-remote",
++                head,
++            ]
++        )
++
++        engine = load_guard_engine().GuardEngine(
++            repo_root=self.dev_repo_dir,
++            tasks_path=self.dev_tasks_dir,
++            dev=True,
++            cwd=self.dev_repo_dir,
++        )
++        findings = engine.scan()
++        self.assertIn(
++            "GUARD_REMOTE_DIVERGENCE",
++            {finding["code"] for finding in findings},
++        )
++
++    def test_promoted_state_still_requires_local_branch(self):
++        """Remote divergence is not a substitute for the promoted-state gate."""
++        self.create_task(counter_value=BASE_ID - 1)
++        branch = self._find_folder(BASE_ID, "backlog")
++        engine = load_guard_engine().GuardEngine(
++            repo_root=self.dev_repo_dir,
++            tasks_path=self.dev_tasks_dir,
++            dev=True,
++            cwd=self.dev_repo_dir,
++        )
++        findings = engine.verdict(
++            BASE_ID,
++            "PROGRESSING",
++            "TESTING",
++            branch,
++        )
++        codes = {finding["code"] for finding in findings}
++        self.assertIn("GUARD_BRANCH_MISSING", codes)
++
+     def test_remote_duplicate_blocks(self):
+         """A remote duplicate is an integrity violation, not a note."""
+         self.create_task(counter_value=BASE_ID - 1)

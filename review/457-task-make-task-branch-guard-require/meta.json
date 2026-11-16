@@ -1,0 +1,44 @@
+{
+  "Id": 457,
+  "Ti": "Make task branch guard requirements state-aware",
+  "Ty": "task",
+  "Cr": "261116 08:29",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "457-task-make-task-branch-guard-require",
+  "Pt": 453,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794842115.750982,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/457-task-make-task-branch-guard-require/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/457-task-make-task-branch-guard-require/patches/tasks_ai_cli_io.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/457-task-make-task-branch-guard-require/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/457-task-make-task-branch-guard-require/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_usage_blockers.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/457-task-make-task-branch-guard-require/patches/tests_test_usage_blockers.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "45d83d272cc176721d5f055645358d9c095f52d0",
+    "base": "88312d18a0ce3736c7a98eb66a3802d54a5f7fa0"
+  }
+}
