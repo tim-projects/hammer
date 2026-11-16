@@ -1,0 +1,72 @@
+{
+  "Id": 455,
+  "Ti": "Create tasks lazily without branches or worktrees",
+  "Ty": "task",
+  "Cr": "261116 08:29",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "455-task-create-tasks-lazily-without-br",
+  "Pt": 453,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794826756.927676,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_dev_isolation.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_lazy_task_creation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_lazy_task_creation.py.patch"
+    },
+    {
+      "file": "tests/test_task_naming_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_task_naming_user.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_ownership_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_worktree_ownership_user.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/455-task-create-tasks-lazily-without-br/patches/tests_test_worktree_system.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "4889e52d6d89773ac27b0c28b7011d4416f486bb",
+    "base": "5fb692b6de5bc65e88f623cbcbc0fc8b29a282b6"
+  }
+}

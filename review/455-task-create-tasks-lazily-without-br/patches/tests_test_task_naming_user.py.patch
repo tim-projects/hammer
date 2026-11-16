@@ -1,0 +1,117 @@
+diff --git a/tests/test_task_naming_user.py b/tests/test_task_naming_user.py
+index 7fdf18d7..f1596f91 100644
+--- a/tests/test_task_naming_user.py
++++ b/tests/test_task_naming_user.py
+@@ -75,9 +75,15 @@ class NamingTestBase(HammerTestBase):
+ class TestDerivedNamesMatchEverywhere(NamingTestBase):
+     """Branch, task folder, worktree directory and printed path are one name."""
+ 
++    def mount_task(self, payload):
++        result = self.run_tasks(["mount", str(payload["id"])])
++        self.assertEqual(result.returncode, 0, result.stdout)
++        return json.loads(result.stdout)["data"]["worktree_path"]
++
+     def test_branch_folder_and_worktree_share_one_name(self):
+         payload = self.create_task()["data"]
+         name = payload["file"]
++        worktree = self.mount_task(payload)
+ 
+         # the folder hammer created in the store
+         self.assertTrue(
+@@ -94,7 +100,7 @@ class TestDerivedNamesMatchEverywhere(NamingTestBase):
+             self.git(["worktree", "list"], cwd=self.dev_repo_dir).stdout,
+         )
+         self.assertEqual(payload["branch"], name)
+-        self.assertEqual(payload["worktree"], expected_wt)
++        self.assertEqual(worktree, expected_wt)
+ 
+     def test_a_long_title_is_cut_the_same_way_everywhere(self):
+         payload = self.create_task()["data"]
+@@ -103,9 +109,9 @@ class TestDerivedNamesMatchEverywhere(NamingTestBase):
+         # so no consumer ever sees two spellings.
+         self.assertTrue(name.startswith(f"{BASE_ID}-task-"))
+         self.assertLessEqual(len(name.split("-", 2)[2]), 30)
+-        self.assertEqual(name, os.path.basename(payload["worktree"]).rstrip("/"), name)
++        self.assertEqual(name, payload["branch"])
+ 
+-    def test_create_prints_the_worktree_path(self):
++    def test_create_prints_the_planned_branch(self):
+         text_out = subprocess.run(
+             [
+                 os.path.join(self.repo_path, "hammer"),
+@@ -129,39 +135,29 @@ class TestDerivedNamesMatchEverywhere(NamingTestBase):
+         )
+         self.assertEqual(text_out.returncode, 0, text_out.stderr)
+         text = text_out.stdout + text_out.stderr
+-        printed = [
+-            line.split("Worktree path:", 1)[1].strip()
+-            for line in text.splitlines()
+-            if "Worktree path:" in line
+-        ]
+-        self.assertEqual(len(printed), 1)
+-        expected_base = os.path.join(self.dev_repo_dir, ".task-worktrees")
+-        self.assertTrue(
+-            printed[0].startswith(expected_base + os.sep),
+-            f"printed path {printed[0]} is not under {expected_base}",
+-        )
+-        # and it is the same name as the branch hammer printed on the next line
+-        branch_lines = [
+-            line.split("Worktree branch:", 1)[1].split("|", 1)[0].strip()
++        planned = [
++            line.split("Planned branch:", 1)[1].strip()
+             for line in text.splitlines()
+-            if "Worktree branch:" in line
++            if "Planned branch:" in line
+         ]
+-        self.assertTrue(branch_lines)
+-        self.assertEqual(os.path.basename(printed[0]), branch_lines[0])
+-        self.assertTrue(
+-            os.path.isdir(printed[0]), f"printed path does not exist: {printed[0]}"
+-        )
++        self.assertGreaterEqual(len(planned), 1)
++        self.assertNotIn("Worktree path:", text)
++        self.assertNotIn("Worktree branch:", text)
++        self.assertIn("will be created", text)
+ 
+ 
+ class TestCurrentReportsTheWorktree(NamingTestBase):
+     def test_current_shows_the_worktree_path_in_json_and_text(self):
+         payload = self.create_task()["data"]
+         task_id = payload["id"]
++        mount = self.run_tasks(["mount", str(task_id)])
++        self.assertEqual(mount.returncode, 0, mount.stdout)
++        worktree = json.loads(mount.stdout)["data"]["worktree_path"]
+ 
+         json_out = self.run_tasks(["current", str(task_id)])
+         self.assertEqual(json_out.returncode, 0, json_out.stdout)
+         data = json.loads(json_out.stdout)["data"]
+-        self.assertEqual(data["worktree_path"], payload["worktree"])
++        self.assertEqual(data["worktree_path"], worktree)
+ 
+         text_out = subprocess.run(
+             [
+@@ -176,7 +172,7 @@ class TestCurrentReportsTheWorktree(NamingTestBase):
+             text=True,
+             check=False,
+         )
+-        self.assertIn(payload["worktree"], text_out.stdout + text_out.stderr)
++        self.assertIn(worktree, text_out.stdout + text_out.stderr)
+ 
+ 
+ class TestDoctorFlagsWorktreePathDrift(NamingTestBase):
+@@ -186,11 +182,14 @@ class TestDoctorFlagsWorktreePathDrift(NamingTestBase):
+         payload = self.create_task()["data"]
+         name = payload["file"]
+         task_id = payload["id"]
++        mount = self.run_tasks(["mount", str(task_id)])
++        self.assertEqual(mount.returncode, 0, mount.stdout)
++        worktree = json.loads(mount.stdout)["data"]["worktree_path"]
+ 
+         # Move the registered worktree to a path that is not the branch name,
+         # the exact drift that used to go unnoticed.
+         drifted = os.path.join(self.dev_repo_dir, ".task-worktrees", name + "-drifted")
+-        os.rename(payload["worktree"], drifted)
++        os.rename(worktree, drifted)
+         manifest = os.path.join(self.dev_tasks_dir, "worktrees.json")
+         with open(manifest) as handle:
+             data = json.load(handle)

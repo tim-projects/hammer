@@ -1,0 +1,164 @@
+diff --git a/tests/test_lazy_task_creation.py b/tests/test_lazy_task_creation.py
+new file mode 100644
+index 00000000..c0193227
+--- /dev/null
++++ b/tests/test_lazy_task_creation.py
+@@ -0,0 +1,158 @@
++"""User tests for task 455: task creation is worktree-free."""
++
++import hashlib
++import json
++import os
++import subprocess
++
++from tests.hammer_test_base import HammerTestBase, ensure_dev_repo
++
++STORY = "Sufficiently long story content here to pass validation"
++TECH = "Sufficiently long technical description here to pass validation"
++CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
++PLAN = "Sufficiently long planning details here to pass validation"
++TITLE = "Create tasks lazily without branches or worktrees"
++BASE_ID = 9400
++
++
++class LazyTaskCreationTest(HammerTestBase):
++    def setUp(self):
++        super().setUp()
++        fixture_hammer = os.path.join(self.repo_path, "hammer")
++        if os.path.lexists(fixture_hammer):
++            os.remove(fixture_hammer)
++        os.symlink(os.path.join(os.getcwd(), "hammer"), fixture_hammer)
++
++    @property
++    def dev_repo_dir(self):
++        return ensure_dev_repo(self.dev_tasks_dir)
++
++    def git(self, args, cwd=None):
++        return subprocess.run(
++            ["git"] + args,
++            cwd=cwd or self.dev_repo_dir,
++            capture_output=True,
++            text=True,
++            check=False,
++        )
++
++    def seed_counter(self, value):
++        with open(os.path.join(self.dev_tasks_dir, ".task_counter"), "w") as handle:
++            handle.write(str(value))
++        digest = hashlib.md5(str(value).encode()).hexdigest()
++        with open(
++            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
++        ) as handle:
++            handle.write(digest)
++
++    def create_task(self, counter=BASE_ID, priority=None, parent=None):
++        self.seed_counter(counter - 1)
++        args = [
++            "create",
++            TITLE,
++            "--story",
++            STORY,
++            "--tech",
++            TECH,
++            "--criteria",
++            CRITERIA,
++            "--plan",
++            PLAN,
++        ]
++        if priority is not None:
++            args.extend(["--priority", str(priority)])
++        if parent is not None:
++            args.extend(["--parent", str(parent)])
++        result = self.run_tasks(args)
++        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
++        return result
++
++    def backlog_tasks(self):
++        backlog = os.path.join(self.dev_tasks_dir, "backlog")
++        return [
++            name
++            for name in os.listdir(backlog)
++            if os.path.isdir(os.path.join(backlog, name)) and name[0].isdigit()
++        ]
++
++    def manifest_entries(self):
++        manifest = os.path.join(self.dev_tasks_dir, "worktrees.json")
++        if not os.path.exists(manifest):
++            return {}
++        with open(manifest) as handle:
++            return json.load(handle).get("worktrees", {})
++
++    def test_create_and_paired_task_have_no_git_state(self):
++        result = self.create_task()
++        payload = json.loads(result.stdout)["data"]
++        primary = payload["file"]
++        pair = next(name for name in self.backlog_tasks() if name != primary)
++        branches = self.git(["branch", "--list"]).stdout
++        worktrees = self.git(["worktree", "list"]).stdout
++
++        self.assertNotIn(primary, branches)
++        self.assertNotIn(pair, branches)
++        self.assertNotIn(primary, worktrees)
++        self.assertNotIn(pair, worktrees)
++        self.assertFalse(
++            os.path.exists(os.path.join(self.dev_repo_dir, ".task-worktrees", primary))
++        )
++        self.assertFalse(
++            os.path.exists(os.path.join(self.dev_repo_dir, ".task-worktrees", pair))
++        )
++        self.assertNotIn(str(payload["id"]), self.manifest_entries())
++        self.assertNotIn(str(payload["id"] + 1), self.manifest_entries())
++        self.assertIsNone(payload["worktree"])
++
++    def test_create_output_reports_a_planned_branch_only(self):
++        result = self.create_task()
++        text = result.stdout + result.stderr
++        payload = json.loads(result.stdout)["data"]
++
++        self.assertIn(f"Planned branch: {payload['branch']}", text)
++        self.assertNotIn("Worktree path:", text)
++        self.assertNotIn("Worktree branch:", text)
++        self.assertIn("will be created", text)
++
++    def test_metadata_counters_priority_and_parent_are_preserved(self):
++        parent_result = self.create_task(counter=BASE_ID, priority=3)
++        parent = json.loads(parent_result.stdout)["data"]
++        child_result = self.create_task(
++            counter=BASE_ID + 2, priority=4, parent=parent["id"]
++        )
++        child = json.loads(child_result.stdout)["data"]
++
++        self.assertEqual(parent["id"], BASE_ID)
++        self.assertEqual(child["id"], BASE_ID + 2)
++        self.assertEqual(child["branch"], child["file"])
++        created_names = {
++            name
++            for name in self.backlog_tasks()
++            if name.startswith(
++                (
++                    f"{BASE_ID}-",
++                    f"{BASE_ID + 1}-",
++                    f"{BASE_ID + 2}-",
++                    f"{BASE_ID + 3}-",
++                )
++            )
++        }
++        self.assertEqual(len(created_names), 4)
++
++        with open(
++            os.path.join(self.dev_tasks_dir, "backlog", child["file"], "meta.json")
++        ) as handle:
++            child_meta = json.load(handle)
++        self.assertEqual(child_meta["Pr"], 4)
++        self.assertEqual(child_meta["Pt"], parent["id"])
++
++    def test_backlog_and_ready_tasks_need_no_branch_or_worktree(self):
++        payload = json.loads(self.create_task().stdout)["data"]
++        move = self.run_tasks(["move", str(payload["id"]), "READY"])
++        self.assertEqual(move.returncode, 0, move.stdout + move.stderr)
++
++        branches = self.git(["branch", "--list"]).stdout
++        worktrees = self.git(["worktree", "list"]).stdout
++        self.assertNotIn(payload["branch"], branches)
++        self.assertNotIn(payload["branch"], worktrees)
++        self.assertNotIn(str(payload["id"]), self.manifest_entries())

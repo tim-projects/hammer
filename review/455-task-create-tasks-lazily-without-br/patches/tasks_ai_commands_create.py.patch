@@ -1,0 +1,52 @@
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 2c824244..81f19cdf 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -187,17 +187,15 @@ def run(
+                 cwd=cli.tasks_path,
+             )
+ 
+-        cli.git.worktrees.create_task_worktree(str(numeric_id), task_id)
+-
+         current_branch = cli._run_git(
+             ["rev-parse", "--abbrev-ref", "HEAD"]
+         ).stdout.strip()
+         cli.log(f"Created: [{numeric_id}] {task_type} | {title}")
+-        cli.log(f"Worktree branch: {task_id} | Now on: {current_branch}")
++        cli.log(f"Planned branch: {task_id}")
+         cli.log(
+-            f"Worktree path: {os.path.join(cli.git.worktrees.worktrees_base, task_id)}"
++            "The worktree will be created when the task enters PROGRESSING "
++            "or when 'tasks mount' is requested."
+         )
+-        cli.log(f"Run 'tasks mount {numeric_id}' to open the task worktree.")
+ 
+         pair_numeric_id = cli._get_next_id()
+         pair_title = f"Write user tests for {numeric_id}: {title}"
+@@ -271,12 +269,12 @@ def run(
+                 cwd=cli.tasks_path,
+             )
+ 
+-        cli.git.worktrees.create_task_worktree(str(pair_numeric_id), pair_task_id)
+-
+-        pair_branch = pair_task_id
+         cli.log(f"Created: [{pair_numeric_id}] task | {pair_title}")
+-        cli.log(f"Worktree branch: {pair_task_id} | Now on: {pair_branch}")
+-        cli.log(f"Run 'tasks mount {pair_numeric_id}' to open the task worktree.")
++        cli.log(f"Planned branch: {pair_task_id}")
++        cli.log(
++            "The worktree will be created when the task enters PROGRESSING "
++            "or when 'tasks mount' is requested."
++        )
+ 
+         cli.log(
+             f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'"
+@@ -292,7 +290,7 @@ def run(
+                 # repo-relative path would point nowhere: absolute there.
+                 "path": task_dir if cli.dev else os.path.relpath(task_dir, cli.root),
+                 "branch": task_id,
+-                "worktree": cli.git.worktrees.get_worktree_path(str(numeric_id)),
++                "worktree": None,
+                 "current_branch": current_branch,
+             }
+         )

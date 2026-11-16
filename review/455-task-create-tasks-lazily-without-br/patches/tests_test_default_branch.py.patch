@@ -1,0 +1,13 @@
+diff --git a/tests/test_default_branch.py b/tests/test_default_branch.py
+index 07d4e367..8ca50c03 100644
+--- a/tests/test_default_branch.py
++++ b/tests/test_default_branch.py
+@@ -272,7 +272,7 @@ class TestNoDefaultBranch(MasterRepoTestBase):
+             "move PROGRESSING failed",
+         )
+ 
+-        worktree_path = data["worktree"]
++        worktree_path = os.path.join(self.repo_dir, ".task-worktrees", task_file)
+         with open(os.path.join(worktree_path, "feature.py"), "w") as f:
+             f.write("def feature():\n    return True\n")
+         git(["add", "feature.py"], worktree_path)

@@ -1,0 +1,35 @@
+diff --git a/tests/test_tasks.py b/tests/test_tasks.py
+index ce35e196..4b147ad6 100755
+--- a/tests/test_tasks.py
++++ b/tests/test_tasks.py
+@@ -80,7 +80,7 @@ class TestTasksAI(unittest.TestCase):
+         os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
+ 
+     def get_worktree_path(self, task_numeric_id):
+-        """Get the worktree path for a task from the manifest."""
++        """Get or create the task worktree path, then read the manifest."""
+         manifest_path = os.path.join(self.dev_tasks_dir, "worktrees.json")
+         if os.path.exists(manifest_path):
+             with open(manifest_path) as f:
+@@ -88,7 +88,12 @@ class TestTasksAI(unittest.TestCase):
+             entry = manifest.get("worktrees", {}).get(str(task_numeric_id))
+             if entry:
+                 return entry.get("path")
+-        return None
++        mounted = self.run_cmd(["mount", str(task_numeric_id)])
++        self.assertTrue(mounted["success"], f"mount failed: {mounted}")
++        with open(manifest_path) as f:
++            manifest = json.load(f)
++        entry = manifest.get("worktrees", {}).get(str(task_numeric_id))
++        return entry.get("path") if entry else None
+ 
+     @property
+     def dev_repo_dir(self):
+@@ -134,6 +139,7 @@ class TestTasksAI(unittest.TestCase):
+         self.assertTrue(res["success"], f"research record failed for {file}: {res}")
+         res = self.run_cmd(["move", file, "PROGRESSING"])
+         self.assertTrue(res["success"], f"move to PROGRESSING failed for {file}: {res}")
++        return self.get_worktree_path(file.split("-", 1)[0])
+ 
+     def complete_criteria(self, file, stage):
+         """Helper to mark all criteria as done."""

@@ -1,0 +1,59 @@
+diff --git a/tests/test_worktree_system.py b/tests/test_worktree_system.py
+index c1aa3a76..80f4e3b3 100644
+--- a/tests/test_worktree_system.py
++++ b/tests/test_worktree_system.py
+@@ -113,6 +113,11 @@ class TestWorktreeSystem(unittest.TestCase):
+         self.assertTrue(res["success"], f"create failed: {res}")
+         return res["data"]
+ 
++    def mount_task(self, data):
++        res = self.run_cmd(["mount", str(data["id"])])
++        self.assertTrue(res["success"], f"mount failed: {res}")
++        return res["data"]["worktree_path"]
++
+     def complete_criteria(self, task_file):
+         """Mark criteria done in whatever state folder currently holds the task."""
+         for state in (
+@@ -138,12 +143,11 @@ class TestWorktreeSystem(unittest.TestCase):
+         with open(os.path.join(self.repo_dir, ".tasks", "worktrees.json")) as f:
+             return json.load(f)["worktrees"]
+ 
+-    def test_worktree_created_with_manifest_entry(self):
+-        """Creating a task creates a worktree and records it in the manifest."""
++    def test_mount_creates_worktree_with_manifest_entry(self):
++        """Mounting a task creates a worktree and records it in the manifest."""
+         data = self.create_task()
+         task_id = str(data["id"])
+-        worktree_path = data.get("worktree")
+-        self.assertTrue(worktree_path, f"no worktree returned: {data}")
++        worktree_path = self.mount_task(data)
+         self.assertTrue(
+             os.path.isdir(worktree_path), f"worktree dir missing: {worktree_path}"
+         )
+@@ -171,7 +175,7 @@ class TestWorktreeSystem(unittest.TestCase):
+         resolves a task failed with "Path outside repository".
+         """
+         data = self.create_task()
+-        worktree_path = data["worktree"]
++        worktree_path = self.mount_task(data)
+ 
+         for args in (["show", str(data["id"])], ["list"]):
+             res = self.run_cmd(args, cwd=worktree_path)
+@@ -197,7 +201,7 @@ class TestWorktreeSystem(unittest.TestCase):
+     def test_mount_recreates_removed_worktree(self):
+         """tasks mount recreates a worktree that was removed."""
+         data = self.create_task()
+-        worktree_path = data["worktree"]
++        worktree_path = self.mount_task(data)
+         git(["worktree", "remove", worktree_path], self.repo_dir)
+         self.assertFalse(os.path.exists(worktree_path))
+ 
+@@ -211,7 +215,7 @@ class TestWorktreeSystem(unittest.TestCase):
+         data = self.create_task()
+         task_id = str(data["id"])
+         task_file = data["file"]
+-        worktree_path = data["worktree"]
++        worktree_path = self.mount_task(data)
+         self.assertTrue(os.path.isdir(worktree_path))
+ 
+         self.assertTrue(self.run_cmd(["move", task_file, "READY"])["success"])
