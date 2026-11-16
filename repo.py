@@ -62,12 +62,12 @@ def get_default_branch():
     """The repo's actual default branch: origin/HEAD, then the first existing
     of main/master - never assume 'main' exists."""
     result = run(
-        ["git", "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"],
+        ["git", "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"],
         check=False,
         capture=True,
     )
     if result.returncode == 0 and result.stdout.strip():
-        return result.stdout.strip()
+        return result.stdout.strip().removeprefix("refs/remotes/origin/")
     for branch in ("main", "master"):
         if branch_exists(branch):
             return branch
@@ -123,9 +123,21 @@ def info(msg):
 def find_project_root(start_path=None):
     if start_path is None:
         start_path = os.getcwd()
+    try:
+        result = subprocess.run(
+            ["git", "-C", start_path, "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except OSError:
+        pass
+
     current = os.path.abspath(start_path)
     while True:
-        if os.path.isdir(os.path.join(current, ".git")):
+        if os.path.exists(os.path.join(current, ".git")):
             return current
         if os.path.isdir(os.path.join(current, ".tasks")):
             return current
@@ -429,6 +441,21 @@ def resolve_branch(name):
     error(f"COULD NOT RESOLVE BRANCH: {name}!")
 
 
+def critical_branches():
+    """Names that automation must never delete."""
+    return {get_default_branch(), "testing", "staging"}
+
+
+def delete_branch(name):
+    """Delete a non-critical branch."""
+    if name in critical_branches():
+        error(
+            f"Cannot delete critical pipeline branch: {name}",
+            hint="Use the pipeline instead of deleting testing, staging, or the default branch.",
+        )
+    run(["git", "branch", "-d", name])
+
+
 def ensure_pipeline_branch(name):
     if branch_exists(name):
         return
@@ -610,7 +637,7 @@ def main():
         elif args.action == "create":
             run(["git", "checkout", "-b", args.name])
         elif args.action == "delete":
-            run(["git", "branch", "-d", args.name])
+            delete_branch(args.name)
         else:
             sys.exit(0 if branch_exists(args.name) else 1)
 

@@ -332,6 +332,47 @@ class GitService:
         self.merge_branches("testing", "staging", yes=yes)
         self.merge_branches("staging", target, yes=yes)
 
+    def ensure_pipeline_branch(
+        self, name: str, cwd: str | None = None, fallback_base: str | None = None
+    ) -> bool:
+        """Create a missing local pipeline branch from its correct base."""
+        cwd = cwd or self.context.main_repo_root
+        if self.branch_exists(name, cwd):
+            return True
+
+        base = None
+        remote_base = f"origin/{name}"
+        if self.branch_exists(remote_base, cwd):
+            base = remote_base
+        elif fallback_base and self.branch_exists(fallback_base, cwd):
+            base = fallback_base
+        elif name == "testing":
+            default_branch = self.get_default_branch()
+            if default_branch and self.branch_exists(default_branch, cwd):
+                base = default_branch
+            else:
+                current = self.run(
+                    ["rev-parse", "--abbrev-ref", "HEAD"], cwd=cwd, check=False
+                )
+                if current.returncode == 0:
+                    base = current.stdout.strip()
+        elif name == "staging":
+            if self.branch_exists("testing", cwd):
+                base = "testing"
+            else:
+                default_branch = self.get_default_branch()
+                if default_branch and self.branch_exists(default_branch, cwd):
+                    base = default_branch
+
+        if base is None:
+            return False
+
+        result = self.run(["branch", name, base], cwd=cwd)
+        if result.returncode == 0:
+            self.log(f"Recreated missing pipeline branch '{name}' from '{base}'.")
+            return True
+        return False
+
     def merge_branches(
         self, src: str, target: str, message: str | None = None, yes=False
     ):
@@ -382,7 +423,13 @@ class GitService:
 
         # 5. Push if confirmed (never in dev: the dev repo's origin is the real repo)
         if yes and not self.context.dev:
-            self.run(["push", "origin", target], cwd=repo_root)
+            remote = self.run(["remote"], cwd=repo_root)
+            if "origin" in remote.stdout.split():
+                push = self.run(["push", "origin", target], cwd=repo_root)
+                if push.returncode != 0:
+                    from .cli_errors import PipelinePushError
+
+                    raise PipelinePushError(target, push.stderr)
 
         return {"created_commit": created_commit, "skipped": False}
 
@@ -509,57 +556,58 @@ class GitService:
             )
 
         # PROMOTION: Merge worktree branch through pipeline branches
-        pipeline_map = {
+        default_branch = self.get_default_branch()
+        target_git_branch = {
             "TESTING": "testing",
             "STAGING": "staging",
-            "DONE": self.get_default_branch(),
-        }
-        target_git_branch = pipeline_map.get(target_state)
+            "DONE": default_branch,
+        }.get(target_state)
         if not target_git_branch:
             if target_state == "DONE":
                 self.log("Skipping merge: no default branch (main/master) exists.")
             return
 
-        # Special case source branches
-        src_branch = branch
-        if target_state == "STAGING":
-            src_branch = "testing"
-        elif target_state == "DONE":
-            src_branch = "staging"
+        if not self.ensure_pipeline_branch("testing", repo_root, default_branch):
+            from .cli_errors import PipelineBranchMissing
+
+            raise PipelineBranchMissing("testing")
+        if target_state in ("STAGING", "DONE") and not self.ensure_pipeline_branch(
+            "staging", repo_root, "testing"
+        ):
+            from .cli_errors import PipelineBranchMissing
+
+            raise PipelineBranchMissing("staging")
 
         already_merged = target_state == "DONE" and self.is_already_merged_completion(
             branch, target_git_branch, task
         )
-
-        # Check if src_branch exists locally
-        if not self.branch_exists(src_branch, repo_root):
-            if src_branch in ["testing", "staging"]:
-                if not already_merged:
-                    self.log(
-                        f"Pipeline branch {src_branch} does not exist locally. Merging {branch} directly into {target_git_branch}."
-                    )
-                src_branch = branch
-            else:
-                self.log(f"Branch {src_branch} does not exist locally. Skipping merge.")
-                return
-
         if already_merged:
             self.log(
                 "WORK ALREADY ON MAIN. NO MERGE NEEDED. CHECKS SKIPPED. "
                 "TASK COMPLETE. HAMMER POUND ON."
             )
         else:
-            self.log(
-                f"Performing pipeline promotion: {src_branch} -> {target_git_branch}"
-            )
+            merge_steps = [(branch, "testing")]
+            if target_state in ("STAGING", "DONE"):
+                merge_steps.append(("testing", "staging"))
+            if target_state == "DONE":
+                merge_steps.append(("staging", default_branch))
 
-            # Use unified merge logic
-            self.merge_branches(
-                src_branch,
-                target_git_branch,
-                message=f"[{task_id}] merge: {src_branch} into {target_git_branch}",
-                yes=yes or target_state == "DONE",
-            )
+            for src_branch, target_branch in merge_steps:
+                if not self.branch_exists(src_branch, repo_root):
+                    self.log(
+                        f"Branch {src_branch} does not exist locally. Skipping merge."
+                    )
+                    return
+                self.log(
+                    f"Performing pipeline promotion: {src_branch} -> {target_branch}"
+                )
+                self.merge_branches(
+                    src_branch,
+                    target_branch,
+                    message=f"[{task_id}] merge: {src_branch} into {target_branch}",
+                    yes=True,
+                )
 
         # Auto-save .tasks after successful DONE promotion
         if target_state == "DONE":
