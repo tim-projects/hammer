@@ -59,6 +59,16 @@
       "bytes": 1229,
       "ts": 1794851679.4022617,
       "prev_hash": "7084d6dc3a0bd7946cefde650cdab3cbcff010c0a267d60acab1056886a367a4"
+    },
+    {
+      "seq": 7,
+      "file": "tests/test_mount_sync.py",
+      "patch": "tests_test_mount_sync.py.patch",
+      "md5": "45d086bda48a3b54264283348ad191ef",
+      "sha256": "c6419e37c01c781bbb4e0105c2311e6d796d286cc783cb60c47fc739ae9a57f8",
+      "bytes": 17210,
+      "ts": 1794851680.3081198,
+      "prev_hash": "36c6cda31f7a2f9c5447eb78549ebc0f25352ead31dfd5f2121047bc14f33548"
     }
   ]
 }
