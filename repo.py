@@ -278,6 +278,67 @@ def check_merged_to_testing(branch):
     return result.returncode == 0
 
 
+def registered_task_worktree(cli, branch):
+    """Registered worktree for a task branch, when one is available."""
+    if not cli:
+        return None
+    for entry in cli.git.worktrees.list_worktrees():
+        path = entry.get("path")
+        if entry.get("branch") == branch and path and os.path.isdir(path):
+            return path
+    return None
+
+
+def cmd_merge_task_worktree(src, target, worktree):
+    """Merge into a task branch without checking it out in the main worktree."""
+    info(f"Merging {src.upper()} → {target.upper()} in task worktree")
+    current = run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        check=False,
+        capture=True,
+        cwd=worktree,
+    ).stdout.strip()
+    if current != target:
+        error(
+            f"Registered worktree for {target} is on {current or 'no branch'}.",
+            hint="Run 'tasks mount <task-id>' to repair the worktree before merging.",
+        )
+
+    status = run(
+        ["git", "status", "--porcelain"], capture=True, cwd=worktree
+    ).stdout.strip()
+    if status:
+        error(
+            f"Task worktree for {target} has uncommitted changes.",
+            hint="Commit or stash the changes before merging.",
+        )
+
+    if check_remote_exists():
+        run(
+            ["git", "pull", "--ff-only", PRIMARY_REMOTE, target],
+            check=False,
+            cwd=worktree,
+        )
+    else:
+        warn("No remote - skipping pull")
+
+    result = run(
+        ["git", "merge", src, "-m", f"merge: {src} into {target}"],
+        check=False,
+        cwd=worktree,
+    )
+    if result.returncode != 0:
+        run(["git", "merge", "--abort"], check=False, cwd=worktree)
+        error(f"Merge failed: {src} into {target}")
+
+    if check_remote_exists():
+        if FLAGS["yes"] or prompt_yes_no(f"Push {target}?"):
+            run(["git", "push", PRIMARY_REMOTE, target], cwd=worktree)
+    else:
+        warn("No remote - skipping push")
+    log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
+
+
 def cmd_merge(src_input, target_input):
     src = resolve_branch(src_input)
     target = resolve_branch(target_input)
@@ -314,6 +375,11 @@ def cmd_merge(src_input, target_input):
                 log("Merge cancelled.")
                 return
     ensure_pipeline_branch(target)
+    task_worktree = registered_task_worktree(cli, target)
+    if task_worktree:
+        cmd_merge_task_worktree(src, target, task_worktree)
+        return
+
     info(f"Merging {src.upper()} → {target.upper()}")
     current = get_current_branch()
     if current != src:
