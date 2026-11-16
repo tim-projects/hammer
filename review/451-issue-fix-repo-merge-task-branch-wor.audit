@@ -1,0 +1,9 @@
+{
+    "task_id": "451",
+    "patch_hash": "d02778dfdf35a294b6399d2c1c9dccdd",
+    "patch_files": [
+        "repo.py.patch",
+        "tests_test_repo_worktree_root.py.patch"
+    ],
+    "status": "verified"
+}
