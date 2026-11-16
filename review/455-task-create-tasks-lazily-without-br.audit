@@ -1,0 +1,19 @@
+{
+    "task_id": "455",
+    "patch_hash": "a6d754ff55e571e52eedc3603c53a1ae",
+    "patch_files": [
+        "tasks_ai_commands_create.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_default_branch.py.patch",
+        "tests_test_dev_isolation.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_lazy_task_creation.py.patch",
+        "tests_test_task_naming_user.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_worktree_ownership_user.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}
