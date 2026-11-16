@@ -1,0 +1,1 @@
+As a maintainer, I want branch and worktree requirements to reflect pipeline state, so READY validates detailed task information without requiring Git state that is not needed until implementation starts.
