@@ -1,8 +1,8 @@
-- [ ] `hammer repo merge <source> <task-branch>` operates in the task branch's registered worktree instead of checking that branch out in the main worktree
-- [ ] `hammer repo merge main 370-task-global-j-or-json-output-flag-m` succeeds when the task branch is already checked out in its worktree and the task branch contains the merged main commit
-- [ ] The merge path does not switch the main worktree to the task branch
-- [ ] Existing task-branch-to-pipeline merges continue to route through the gated `tasks move` workflow
-- [ ] Non-task branch merges retain their existing behavior
-- [ ] Dirty task worktrees are handled safely without committing unrelated changes or losing work
-- [ ] Regression tests cover a source-to-task-branch merge with the destination already checked out in a worktree
-- [ ] Existing tests pass and validation passes
+- [x] `hammer repo merge <source> <task-branch>` operates in the task branch's registered worktree instead of checking that branch out in the main worktree
+- [x] `hammer repo merge main 370-task-global-j-or-json-output-flag-m` succeeds when the task branch is already checked out in its worktree and the task branch contains the merged main commit
+- [x] The merge path does not switch the main worktree to the task branch
+- [x] Existing task-branch-to-pipeline merges continue to route through the gated `tasks move` workflow
+- [x] Non-task branch merges retain their existing behavior
+- [x] Dirty task worktrees are handled safely without committing unrelated changes or losing work
+- [x] Regression tests cover a source-to-task-branch merge with the destination already checked out in a worktree
+- [x] Existing tests pass and validation passes
