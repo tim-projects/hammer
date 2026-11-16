@@ -70,5 +70,8 @@
       "ts": 1794851680.3081198,
       "prev_hash": "36c6cda31f7a2f9c5447eb78549ebc0f25352ead31dfd5f2121047bc14f33548"
     }
-  ]
+  ],
+  "summary": "Reviewed all seven patches: mount and pipeline now share one local-main-first synchronization hook; conflict and local-work blockers preserve files and include actionable details; parity and safety regressions cover the change.",
+  "summary_at": 1794851687.301514,
+  "reviewed_at": 1794851687.3015149
 }
