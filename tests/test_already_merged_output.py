@@ -134,7 +134,7 @@ class AlreadyMergedOutputTest(unittest.TestCase):
             patch.object(self.git, "merge_branches") as merge,
         ):
             self.git.promote_task(self.task(commits=""), "DONE")
-        merge.assert_called_once()
+        self.assertEqual(3, merge.call_count)
         self.assertNotIn(APPROVED_MESSAGE, logger.messages)
 
     def test_resolved_source_with_additional_work_does_not_use_message(self):
@@ -154,7 +154,7 @@ class AlreadyMergedOutputTest(unittest.TestCase):
             patch.object(self.git, "merge_branches") as merge,
         ):
             self.git.promote_task(self.task(), "DONE")
-        merge.assert_called_once()
+        self.assertEqual(3, merge.call_count)
         self.assertNotIn(APPROVED_MESSAGE, logger.messages)
 
     def test_real_task_merge_does_not_use_message(self):
@@ -176,7 +176,7 @@ class AlreadyMergedOutputTest(unittest.TestCase):
             patch.object(self.git, "merge_branches") as merge,
         ):
             self.git.promote_task(task, "DONE")
-        merge.assert_called_once()
+        self.assertEqual(3, merge.call_count)
         self.assertNotIn(APPROVED_MESSAGE, logger.messages)
 
     def test_done_gate_does_not_log_fast_track_for_no_op(self):

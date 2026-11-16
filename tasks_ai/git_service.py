@@ -155,7 +155,8 @@ class GitService:
 
     def is_already_merged_completion(self, branch: str, target: str, task) -> bool:
         """True when a DONE task's work and resolved source are already on target."""
-        if not (task.parts.get("commits") or "").strip():
+        parts = getattr(task, "parts", {})
+        if not (parts.get("commits") or "").strip():
             return False
         if not self.is_merged(branch, target):
             return False
