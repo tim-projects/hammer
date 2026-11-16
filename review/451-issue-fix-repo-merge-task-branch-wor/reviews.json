@@ -9,6 +9,16 @@
       "bytes": 2827,
       "ts": 1794797002.503396,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "tests/test_repo_worktree_root.py",
+      "patch": "tests_test_repo_worktree_root.py.patch",
+      "md5": "ef7d7bfbe283dd546a0e81c78d1ef268",
+      "sha256": "7a5dd06fcc079e4bbf1dfa62196679959c22fcb45e100d0cd342a88e016aa976",
+      "bytes": 3931,
+      "ts": 1794797091.929733,
+      "prev_hash": "7b7a9c762034da35e75f3b5adcdc20fba360a82183766ef99f703c71090c6e81"
     }
   ]
 }
