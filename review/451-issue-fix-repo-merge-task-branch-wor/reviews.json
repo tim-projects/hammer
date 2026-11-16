@@ -20,5 +20,8 @@
       "ts": 1794797091.929733,
       "prev_hash": "7b7a9c762034da35e75f3b5adcdc20fba360a82183766ef99f703c71090c6e81"
     }
-  ]
+  ],
+  "summary": "Reviewed both patches: task-destination merges stay in the registered worktree, dirty worktrees remain untouched, and regression tests verify main stays on main with main merged into the task branch.",
+  "summary_at": 1794797098.313545,
+  "reviewed_at": 1794797098.3135462
 }
