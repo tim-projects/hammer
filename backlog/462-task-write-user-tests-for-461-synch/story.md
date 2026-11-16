@@ -1,0 +1,1 @@
+As a maintainer, I want stale task branches synchronized or blocked before validation, so validation runs against current local main code and reports stale-branch problems directly instead of through unrelated failures.
