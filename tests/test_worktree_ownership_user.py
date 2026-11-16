@@ -73,6 +73,11 @@ class OwnershipTestBase(HammerTestBase):
         assert result.returncode == 0, result.stdout
         return json.loads(result.stdout)["data"]
 
+    def mount_task(self, payload):
+        result = self.run_tasks(["mount", str(payload["id"])])
+        assert result.returncode == 0, result.stdout
+        return json.loads(result.stdout)["data"]["worktree_path"]
+
     def guard_scan(self):
         return subprocess.run(
             [os.path.join(self.repo_path, "hammer"), "guard", "scan", "--dev"],
@@ -118,7 +123,7 @@ class TestGuardSeesUnownedDirectories(OwnershipTestBase):
 
     def test_doctor_fix_removes_only_the_stray(self):
         payload = self.create_task()
-        real = payload["worktree"]
+        real = self.mount_task(payload)
         stray = os.path.join(self.dev_repo_dir, ".task-worktrees", "999-task-none")
         os.makedirs(stray)
 
@@ -131,7 +136,8 @@ class TestGuardSeesUnownedDirectories(OwnershipTestBase):
 class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
     def test_targeted_fix_removes_merged_branch_and_stale_manifest_entry(self):
         payload = self.create_task()
-        self.remove_worktree(payload["worktree"])
+        worktree = self.mount_task(payload)
+        self.remove_worktree(worktree)
 
         report = self.doctor()
         self.assertIn("GUARD_WORKTREE_MISSING_WORKTREE", report.stdout + report.stderr)
@@ -139,7 +145,7 @@ class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
         result = self.doctor(fix=True, task_id=payload["id"])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertNotIn(str(payload["id"]), self.manifest())
-        self.assertFalse(os.path.exists(payload["worktree"]))
+        self.assertFalse(os.path.exists(worktree))
         branch = self.git(
             ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
         )
@@ -147,11 +153,12 @@ class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
 
     def test_targeted_fix_preserves_an_unmerged_branch(self):
         payload = self.create_task()
-        with open(os.path.join(payload["worktree"], "feature.py"), "w") as handle:
+        worktree = self.mount_task(payload)
+        with open(os.path.join(worktree, "feature.py"), "w") as handle:
             handle.write("value = 1\n")
-        self.git(["add", "feature.py"], cwd=payload["worktree"])
-        self.git(["commit", "-m", "Add feature"], cwd=payload["worktree"])
-        self.remove_worktree(payload["worktree"])
+        self.git(["add", "feature.py"], cwd=worktree)
+        self.git(["commit", "-m", "Add feature"], cwd=worktree)
+        self.remove_worktree(worktree)
 
         result = self.doctor(fix=True, task_id=payload["id"])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -165,8 +172,8 @@ class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
         first = self.create_task(counter=9200)
         self.seed_counter(9202)
         second = self.create_task(counter=9203, seed=False)
-        self.remove_worktree(first["worktree"])
-        self.remove_worktree(second["worktree"])
+        self.remove_worktree(self.mount_task(first))
+        self.remove_worktree(self.mount_task(second))
 
         result = self.doctor(fix=True, task_id=first["id"])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -187,23 +194,25 @@ class TestDriftedPathDoesNotBlockTheHealthyTask(OwnershipTestBase):
 class TestCurrentAnswersWhereTheWorktreeIs(OwnershipTestBase):
     def test_current_reports_the_worktree_hammer_created(self):
         payload = self.create_task()
+        worktree = self.mount_task(payload)
         out = self.run_tasks(["current", str(payload["id"])])
         assert out.returncode == 0, out.stdout
         data = json.loads(out.stdout)["data"]
-        self.assertEqual(data["worktree_path"], payload["worktree"])
+        self.assertEqual(data["worktree_path"], worktree)
         self.assertTrue(os.path.isdir(data["worktree_path"]))
 
     def test_mount_creates_the_worktree_when_it_is_missing(self):
         payload = self.create_task()
+        worktree = self.mount_task(payload)
         # Drop the registered worktree the way a pruned checkout does.
         subprocess.run(
-            ["git", "worktree", "remove", "--force", payload["worktree"]],
+            ["git", "worktree", "remove", "--force", worktree],
             cwd=self.dev_repo_dir,
             capture_output=True,
             text=True,
             check=False,
         )
-        self.assertFalse(os.path.exists(payload["worktree"]))
+        self.assertFalse(os.path.exists(worktree))
 
         out = self.run_tasks(["mount", str(payload["id"])])
         assert out.returncode == 0, out.stdout

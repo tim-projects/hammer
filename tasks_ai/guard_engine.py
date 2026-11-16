@@ -352,12 +352,17 @@ class GuardEngine:
         local = self._local_map()
         worktrees = self._worktree_list()
 
-        branch_by_id = {}
+        actual_branch_by_id = {}
         for name, (obj, kind) in sorted(refs.items()):
             if kind == "branch":
                 tid = task_id_of(name)
                 if tid is not None:
-                    branch_by_id.setdefault(tid, []).append(name)
+                    actual_branch_by_id.setdefault(tid, []).append(name)
+        branch_by_id = {tid: list(names) for tid, names in actual_branch_by_id.items()}
+        for tid, state_folders in local.items():
+            for _, folder in state_folders:
+                if folder not in branch_by_id.setdefault(tid, []):
+                    branch_by_id[tid].append(folder)
 
         conn.execute("DELETE FROM refs")
         conn.executemany(
@@ -405,7 +410,9 @@ class GuardEngine:
                 for w in worktrees
             ],
         )
-        self._compute_anomalies(conn, refs, local, branch_by_id, worktrees)
+        self._compute_anomalies(
+            conn, refs, local, branch_by_id, worktrees, actual_branch_by_id
+        )
         self._set_meta(conn, "prev_ref_count", len(refs))
         self._set_meta(conn, "ref_signature", ref_signature)
         self._set_meta(conn, "tasks_ref_object", tasks_ref_object or "")
@@ -428,7 +435,9 @@ class GuardEngine:
         return None
 
     # --- anomalies ---
-    def _compute_anomalies(self, conn, refs, local, branch_by_id, worktrees):
+    def _compute_anomalies(
+        self, conn, refs, local, branch_by_id, worktrees, actual_branch_by_id
+    ):
         findings = []
 
         def add(code, tid, detail):
@@ -468,7 +477,11 @@ class GuardEngine:
                         tid,
                         f"branch '{branch}' breaks <id>-<type>-<slug>",
                     )
-            if folders and not branches:
+            if (
+                folders
+                and not actual_branch_by_id.get(tid)
+                and any(state not in ("backlog", "ready") for state, _ in folders)
+            ):
                 add(
                     "GUARD_REMOTE_DIVERGENCE",
                     tid,
