@@ -477,15 +477,12 @@ class GuardEngine:
                         tid,
                         f"branch '{branch}' breaks <id>-<type>-<slug>",
                     )
-            if (
-                folders
-                and not actual_branch_by_id.get(tid)
-                and any(state not in ("backlog", "ready") for state, _ in folders)
-            ):
+            if folders and not actual_branch_by_id.get(tid) and remote_names:
                 add(
                     "GUARD_REMOTE_DIVERGENCE",
                     tid,
-                    f"local task {tid} has no local branch (remote snapshot still tracks it)",
+                    f"local task {tid} has no local branch while remote task branch(es) "
+                    f"exist: {', '.join(remote_names)}",
                 )
 
         wt_entries = {}
