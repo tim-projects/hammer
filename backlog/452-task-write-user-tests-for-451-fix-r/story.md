@@ -1,0 +1,1 @@
+As a hammer user, I want `hammer repo merge` to work with task branches managed by git worktrees so that I can synchronize a branch with another ref without the command trying to check out the task branch in the main worktree.
