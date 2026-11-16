@@ -1,3 +1,3 @@
-- Progress: Implemented no-op DONE promotion detection and exact Hammer-voice output. Added focused text/JSON and negative-case tests. Focused suite: 7 passed. Related suites: 35 passed. ./hammer check all: lint, test, typecheck, and format all PASS.
-- Findings: The no-op occurs when the task has recorded commits, its branch is already contained in the default branch, and the resolved staging/task source is also contained in the default branch. Merge outcome is now determined by comparing target commits before and after Git merge.
-- Mitigations: The approved message is restricted to DONE no-op completions. Real merges, empty task branches, and resolved sources with additional work retain normal output and merge behavior.
+- Progress: Aligned task branch with current main containing task 449's critical pipeline branch fix. Reverted stale commit 81fc9315, recreated local testing and staging from main, and updated no-op tests for task->testing->staging->main promotion.
+- Findings: Task 449's fix in main recreates missing testing/staging and promotes through every intermediate branch. Task 445's branch previously lacked this fix, so STAGING silently skipped the task merge.
+- Mitigations: Task 445 now preserves task 449 branch creation/publication while retaining the exact already-merged completion message.
