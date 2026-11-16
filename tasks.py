@@ -100,6 +100,7 @@ if __name__ == "__main__":
         help="Patch file to read (default: the next patch not yet reviewed).",
     )
     cp_p = subparsers.add_parser("checkpoint", help="Sync commits/notes.")
+    cp_p.hammer_voice = True
     cp_p.add_argument("filename", help="Task Id (or filename).")
     lk_p = subparsers.add_parser("link", help="Link tasks (blocker relationship).")
     lk_p.add_argument("filename", help="Task Id (or filename) to block.")
