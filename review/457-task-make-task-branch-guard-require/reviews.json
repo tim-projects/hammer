@@ -50,5 +50,8 @@
       "ts": 1794842289.0963335,
       "prev_hash": "97dd829acb9e73600bdeacbc9997e76b762ba81b1a424800e4817c4d28209b02"
     }
-  ]
+  ],
+  "summary": "Reviewed all five patches: remote divergence now requires an actual remote task branch, promoted-state local branch checks remain intact, branchless state regressions cover BACKLOG/READY/PROGRESSING, and checkpoint usage blockers follow the documented Hammer voice format.",
+  "summary_at": 1794842330.1116536,
+  "reviewed_at": 1794842330.1116548
 }
