@@ -1,6 +1,6 @@
-- [ ] A branchless task can move from BACKLOG to READY
-- [ ] A branchless READY task can move to PROGRESSING when the sync hook creates its development state
-- [ ] GUARD_REMOTE_DIVERGENCE is not emitted for ordinary branchless BACKLOG or READY tasks
-- [ ] GUARD_REMOTE_DIVERGENCE still reports genuine remote/local branch divergence
-- [ ] Promoted states continue to reject missing required local branches
-- [ ] Regression tests cover state-specific guard behavior
+- [x] A branchless task can move from BACKLOG to READY
+- [x] A branchless READY task can move to PROGRESSING when the sync hook creates its development state
+- [x] GUARD_REMOTE_DIVERGENCE is not emitted for ordinary branchless BACKLOG or READY tasks
+- [x] GUARD_REMOTE_DIVERGENCE still reports genuine remote/local branch divergence
+- [x] Promoted states continue to reject missing required local branches
+- [x] Regression tests cover state-specific guard behavior
