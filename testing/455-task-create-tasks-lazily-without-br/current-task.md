@@ -1,3 +1,7 @@
+---
+Task: 455-task-create-tasks-lazily-without-br
+---
+
 - Implemented lazy task creation: primary and paired tasks persist metadata without creating local branches, worktrees, or manifest entries.
 - Changed create output to report a planned branch and return `worktree: null`.
 - Allowed BACKLOG/READY tasks to pass guard checks without local Git state while retaining duplicate-ID detection against planned task branches.
