@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -23,6 +24,21 @@ class TestRepoLinkedWorktreeRoot(unittest.TestCase):
         self.git("commit", "-m", "initial")
         os.makedirs(os.path.dirname(self.worktree), exist_ok=True)
         self.git("worktree", "add", "-b", "123-task-example", self.worktree)
+        os.makedirs(os.path.join(self.main, ".tasks"), exist_ok=True)
+        with open(
+            os.path.join(self.main, ".tasks", "worktrees.json"), "w", encoding="utf-8"
+        ) as handle:
+            json.dump(
+                {
+                    "worktrees": {
+                        "123": {
+                            "branch": "123-task-example",
+                            "path": self.worktree,
+                        }
+                    }
+                },
+                handle,
+            )
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -60,6 +76,72 @@ class TestRepoLinkedWorktreeRoot(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("On branch 123-task-example", result.stdout)
+
+    def test_repo_merge_uses_registered_task_worktree(self):
+        self.write("main.txt", "main change\n")
+        self.git("add", "main.txt")
+        self.git("commit", "-m", "main change")
+        main_before = self.git("rev-parse", "HEAD").stdout.strip()
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_SCRIPT),
+                "merge",
+                "-y",
+                "main",
+                "123-task-example",
+            ],
+            cwd=self.main,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            self.git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), "main"
+        )
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), main_before)
+        self.assertEqual(
+            self.git(
+                "merge-base", "--is-ancestor", "main", "123-task-example"
+            ).returncode,
+            0,
+        )
+
+    def test_repo_merge_refuses_dirty_task_worktree(self):
+        self.write("main.txt", "main change\n")
+        self.git("add", "main.txt")
+        self.git("commit", "-m", "main change")
+        dirty_path = os.path.join(self.worktree, "dirty.txt")
+        with open(dirty_path, "w", encoding="utf-8") as handle:
+            handle.write("uncommitted work\n")
+        task_before = self.git("rev-parse", "123-task-example").stdout.strip()
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_SCRIPT),
+                "merge",
+                "-y",
+                "main",
+                "123-task-example",
+            ],
+            cwd=self.main,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("uncommitted changes", result.stdout + result.stderr)
+        with open(dirty_path, encoding="utf-8") as handle:
+            self.assertEqual(handle.read(), "uncommitted work\n")
+        self.assertEqual(
+            self.git("rev-parse", "123-task-example").stdout.strip(), task_before
+        )
+        self.assertEqual(
+            self.git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), "main"
+        )
 
     def test_repo_commit_uses_the_invoked_branch_and_ignores_tasks_repo(self):
         self.make_check_stub(self.main)
