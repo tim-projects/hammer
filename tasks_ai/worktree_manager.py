@@ -91,7 +91,9 @@ class WorktreeManager:
     def is_in_task_worktree(self, cwd=None) -> bool:
         return self.detect_task_in_cwd(cwd) is not None
 
-    def create_task_worktree(self, task_id, branch=None) -> str | None:
+    def create_task_worktree(
+        self, task_id, branch=None, base_ref: str | None = None
+    ) -> str | None:
         if branch is None:
             branch = str(task_id)
         # A task branch must never materialize the central store in its
@@ -127,8 +129,11 @@ class WorktreeManager:
                 cwd=self.context.main_repo_root,
             )
             if result.returncode != 0:
+                create_branch = ["worktree", "add", "-b", branch, worktree_path]
+                if base_ref:
+                    create_branch.append(base_ref)
                 result = self.git.run(
-                    ["worktree", "add", "-b", branch, worktree_path],
+                    create_branch,
                     cwd=self.context.main_repo_root,
                 )
             if result.returncode != 0:
