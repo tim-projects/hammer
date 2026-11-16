@@ -1,0 +1,32 @@
+{
+  "Id": 451,
+  "Ti": "Fix repo merge task branch worktree handling",
+  "Ty": "issue",
+  "Cr": "261116 02:04",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "451-issue-fix-repo-merge-task-branch-wor",
+  "Pt": null,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794796983.526572,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/451-issue-fix-repo-merge-task-branch-wor/patches/repo.py.patch"
+    },
+    {
+      "file": "tests/test_repo_worktree_root.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/451-issue-fix-repo-merge-task-branch-wor/patches/tests_test_repo_worktree_root.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "2f61efb182d35861f5c74fb6ed534a188294b545",
+    "base": "b75e789d2e88b41d6b38206d52432b9dc11d6b0d"
+  }
+}
