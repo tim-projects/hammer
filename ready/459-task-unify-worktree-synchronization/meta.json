@@ -11,5 +11,7 @@
   "Br": "459-task-unify-worktree-synchronization",
   "Pt": 453,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
