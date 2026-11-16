@@ -311,6 +311,8 @@ class TestGuardCache(GuardTestBase):
 
     def test_corrupt_cache_self_heals(self):
         self.create_task(counter_value=BASE_ID - 1)
+        result = self.run_tasks(["mount", str(BASE_ID)])
+        self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.run_guard(["scan", "--dev"]).returncode, 0)
         self.assertTrue(os.path.exists(self.guard_db))
         with open(self.guard_db, "wb") as handle:
@@ -368,6 +370,8 @@ class TestGuardCache(GuardTestBase):
     def test_cache_survives_in_common_dir_from_worktree(self):
         self.create_task(counter_value=BASE_ID - 1)
         branch = self._find_folder(BASE_ID, "backlog")
+        result = self.run_tasks(["mount", str(BASE_ID)])
+        self.assertEqual(result.returncode, 0, result.stdout)
         worktree_path = os.path.join(self.dev_repo_dir, ".task-worktrees", branch)
         self.assertTrue(os.path.isdir(worktree_path), f"no worktree for {branch}")
         self.git(["branch", f"{BASE_ID}-issue-collision"])
@@ -379,6 +383,8 @@ class TestGuardCache(GuardTestBase):
 
     def test_duplicate_worktree_for_one_task_is_reported(self):
         self.create_task(counter_value=BASE_ID - 1)
+        result = self.run_tasks(["mount", str(BASE_ID)])
+        self.assertEqual(result.returncode, 0, result.stdout)
         second = os.path.join(
             self.dev_repo_dir, ".task-worktrees", f"{BASE_ID}-issue-second"
         )
@@ -411,6 +417,8 @@ class TestGuardIntegration(GuardTestBase):
     def test_hooks_install_into_common_dir_from_worktree(self):
         self.create_task(counter_value=BASE_ID - 1)
         branch = self._find_folder(BASE_ID, "backlog")
+        result = self.run_tasks(["mount", str(BASE_ID)])
+        self.assertEqual(result.returncode, 0, result.stdout)
         worktree_path = os.path.join(self.dev_repo_dir, ".task-worktrees", branch)
         result = subprocess.run(
             [
