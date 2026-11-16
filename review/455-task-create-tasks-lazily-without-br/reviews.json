@@ -19,6 +19,16 @@
       "bytes": 2096,
       "ts": 1794826813.3224058,
       "prev_hash": "5ccbf43e29d3b27be37186c3790548470233ef5c6758385c2e7a98340c65399c"
+    },
+    {
+      "seq": 3,
+      "file": "tasks_ai/guard_engine.py",
+      "patch": "tasks_ai_guard_engine.py.patch",
+      "md5": "070836dcbde3a1f694a4ba25e4c079b0",
+      "sha256": "8094c5ff6e851c097a68bb52813594c16741fe90ab5df62a7a145f4aa0772473",
+      "bytes": 2367,
+      "ts": 1794826814.713214,
+      "prev_hash": "e267317ea19ebbce9284865801dddd6150a25fc78c5a00978000a8720947e330"
     }
   ]
 }
