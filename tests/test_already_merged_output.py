@@ -1,0 +1,206 @@
+"""Tests for accurate completion output when task work is already on main."""
+
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from tasks_ai.cli_io import log as cli_log
+from tasks_ai.git_service import GitService
+from tasks_ai.models import Task
+from tasks_ai.pipeline import PipelineService
+
+APPROVED_MESSAGE = (
+    "WORK ALREADY ON MAIN. NO MERGE NEEDED. CHECKS SKIPPED. "
+    "TASK COMPLETE. HAMMER POUND ON."
+)
+MISLEADING_MESSAGES = (
+    "Performing pipeline promotion",
+    "Merging ",
+    "Git: Merged",
+    "Fast-tracking promotion",
+)
+
+
+def git(*args, cwd, check=True):
+    return subprocess.run(
+        ["git", *args], cwd=cwd, capture_output=True, text=True, check=check
+    )
+
+
+class FakeContext:
+    def __init__(self, root, tasks_path):
+        self.main_repo_root = root
+        self.repo_root = root
+        self.tasks_path = tasks_path
+        self.dev = True
+
+
+class TextLogger:
+    def __init__(self):
+        self.messages = []
+
+    def log(self, message):
+        self.messages.append(message)
+
+
+class JsonLogger:
+    def __init__(self):
+        self.as_json = True
+        self.output_messages = []
+
+    def log(self, message):
+        cli_log(self, message)
+
+
+class AlreadyMergedOutputTest(unittest.TestCase):
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="already_merged_output_")
+        self.repo = os.path.join(self.root, "repo")
+        self.tasks = os.path.join(self.root, "tasks")
+        os.makedirs(self.repo)
+        os.makedirs(self.tasks)
+        git("init", "-b", "main", cwd=self.repo)
+        git("config", "user.email", "test@example.com", cwd=self.repo)
+        git("config", "user.name", "Test User", cwd=self.repo)
+        git("config", "commit.gpgsign", "false", cwd=self.repo)
+        with open(os.path.join(self.repo, "README.md"), "w") as handle:
+            handle.write("base\n")
+        git("add", "README.md", cwd=self.repo)
+        git("commit", "-m", "base", cwd=self.repo)
+
+        self.branch = "445-task-already-on-main"
+        git("checkout", "-b", self.branch, cwd=self.repo)
+        with open(os.path.join(self.repo, "feature.py"), "w") as handle:
+            handle.write("feature = True\n")
+        git("add", "feature.py", cwd=self.repo)
+        git("commit", "-m", "feature", cwd=self.repo)
+        git("checkout", "main", cwd=self.repo)
+        git("merge", "--no-ff", self.branch, "-m", "merge feature", cwd=self.repo)
+
+        self.git = GitService(FakeContext(self.repo, self.tasks))
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def task(self, commits="c98f2480 feature"):
+        return Task(
+            metadata={"Id": 445, "Br": self.branch},
+            parts={"commits": commits},
+        )
+
+    def assert_approved_output(self, logger):
+        self.assertIn(APPROVED_MESSAGE, logger.messages)
+        for misleading in MISLEADING_MESSAGES:
+            self.assertFalse(
+                any(misleading in message for message in logger.messages),
+                logger.messages,
+            )
+
+    def test_text_output_reports_already_merged_completion(self):
+        logger = TextLogger()
+        self.git.logger = logger
+        with patch.object(
+            self.git, "push_tasks_branch", return_value={"remote": "origin"}
+        ):
+            self.git.promote_task(self.task(), "DONE")
+        self.assert_approved_output(logger)
+
+    def test_json_output_reports_already_merged_completion(self):
+        logger = JsonLogger()
+        self.git.logger = logger
+        with patch.object(
+            self.git, "push_tasks_branch", return_value={"remote": "origin"}
+        ):
+            self.git.promote_task(self.task(), "DONE")
+        self.assertIn(APPROVED_MESSAGE, logger.output_messages)
+        for misleading in MISLEADING_MESSAGES:
+            self.assertFalse(
+                any(misleading in message for message in logger.output_messages),
+                logger.output_messages,
+            )
+        json.dumps(logger.output_messages)
+
+    def test_empty_branch_without_recorded_commits_does_not_use_message(self):
+        logger = TextLogger()
+        self.git.logger = logger
+        with (
+            patch.object(
+                self.git, "push_tasks_branch", return_value={"remote": "origin"}
+            ),
+            patch.object(self.git, "merge_branches") as merge,
+        ):
+            self.git.promote_task(self.task(commits=""), "DONE")
+        self.assertEqual(3, merge.call_count)
+        self.assertNotIn(APPROVED_MESSAGE, logger.messages)
+
+    def test_resolved_source_with_additional_work_does_not_use_message(self):
+        git("checkout", "-b", "staging", cwd=self.repo)
+        with open(os.path.join(self.repo, "extra.py"), "w") as handle:
+            handle.write("extra = True\n")
+        git("add", "extra.py", cwd=self.repo)
+        git("commit", "-m", "extra staging work", cwd=self.repo)
+        git("checkout", "main", cwd=self.repo)
+
+        logger = TextLogger()
+        self.git.logger = logger
+        with (
+            patch.object(
+                self.git, "push_tasks_branch", return_value={"remote": "origin"}
+            ),
+            patch.object(self.git, "merge_branches") as merge,
+        ):
+            self.git.promote_task(self.task(), "DONE")
+        self.assertEqual(3, merge.call_count)
+        self.assertNotIn(APPROVED_MESSAGE, logger.messages)
+
+    def test_real_task_merge_does_not_use_message(self):
+        git("checkout", "-b", "unmerged-task", cwd=self.repo)
+        with open(os.path.join(self.repo, "pending.py"), "w") as handle:
+            handle.write("pending = True\n")
+        git("add", "pending.py", cwd=self.repo)
+        git("commit", "-m", "pending work", cwd=self.repo)
+        git("checkout", "main", cwd=self.repo)
+
+        task = self.task()
+        task.metadata["Br"] = "unmerged-task"
+        logger = TextLogger()
+        self.git.logger = logger
+        with (
+            patch.object(
+                self.git, "push_tasks_branch", return_value={"remote": "origin"}
+            ),
+            patch.object(self.git, "merge_branches") as merge,
+        ):
+            self.git.promote_task(task, "DONE")
+        self.assertEqual(3, merge.call_count)
+        self.assertNotIn(APPROVED_MESSAGE, logger.messages)
+
+    def test_done_gate_does_not_log_fast_track_for_no_op(self):
+        logger = TextLogger()
+        self.git.logger = logger
+        pipeline = PipelineService(self.git, logger=logger)
+        task = self.task()
+        task.parts["criteria"] = "- [ ] unfinished"
+        pipeline.validate_gate(None, task, "DONE", "unused")
+        self.assertFalse(
+            any("Fast-tracking promotion" in message for message in logger.messages),
+            logger.messages,
+        )
+
+    def test_merge_branches_does_not_claim_a_no_op_was_merged(self):
+        logger = TextLogger()
+        self.git.logger = logger
+        result = self.git.merge_branches(self.branch, "main")
+        self.assertFalse(result["created_commit"])
+        self.assertFalse(
+            any("Git: Merged" in message for message in logger.messages),
+            logger.messages,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
