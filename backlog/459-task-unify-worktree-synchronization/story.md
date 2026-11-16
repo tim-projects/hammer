@@ -1,0 +1,1 @@
+As a maintainer, I want one worktree synchronization implementation shared by mounting and pipeline entry, so branch creation, local-main synchronization, and conflict handling behave consistently everywhere.

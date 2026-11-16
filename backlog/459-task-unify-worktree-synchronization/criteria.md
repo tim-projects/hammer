@@ -1,0 +1,8 @@
+- [ ] WorktreeSyncHook is the only implementation of task branch and worktree synchronization
+- [ ] READY to PROGRESSING creates missing branch and worktree and synchronizes it
+- [ ] tasks mount creates missing worktree and uses the same synchronization behavior
+- [ ] Local main is preferred over origin/main as the merge source
+- [ ] Local and remote main divergence produces an actionable blocker
+- [ ] Conflict detection does not write conflict markers or overwrite uncommitted files
+- [ ] Conflict blockers include task ID, branch, local main commit, conflicting paths, and resolution steps
+- [ ] Regression tests prove mount and pipeline synchronization parity
