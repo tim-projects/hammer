@@ -3,7 +3,9 @@
   "Ti": "Synchronize stale task branches before validation",
   "Ty": "task",
   "Cr": "261116 08:29",
-  "Bl": [],
+  "Bl": [
+    "459-task-unify-worktree-synchronization"
+  ],
   "Pr": 1,
   "Br": "461-task-synchronize-stale-task-branche",
   "Pt": 453
