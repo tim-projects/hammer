@@ -18,6 +18,16 @@
   "Rr": true,
   "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": null,
-  "DoneAt": null
+  "PatchGenTime": 1794918670.922609,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tests/test_mount_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/454-task-write-user-tests-for-453-imple/patches/tests_test_mount_sync.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "d6a114a8e668de7b3efc4309fa9d8fb7b20aa5a0",
+    "base": "ec111998a1906851c45da75ddb324c636362b68e"
+  }
 }
