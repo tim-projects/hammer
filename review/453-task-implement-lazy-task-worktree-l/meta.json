@@ -1,0 +1,37 @@
+{
+  "Id": 453,
+  "Ti": "Implement lazy task worktree lifecycle and unified synchronization",
+  "Ty": "task",
+  "Cr": "261116 08:21",
+  "Bl": [
+    "455-task-create-tasks-lazily-without-br",
+    "457-task-make-task-branch-guard-require",
+    "459-task-unify-worktree-synchronization",
+    "461-task-synchronize-stale-task-branche"
+  ],
+  "Pr": 1,
+  "Br": "453-task-implement-lazy-task-worktree-l",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794896028.839741,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/453-task-implement-lazy-task-worktree-l/patches/tasks.py.patch"
+    },
+    {
+      "file": "tests/test_usage_blockers.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/453-task-implement-lazy-task-worktree-l/patches/tests_test_usage_blockers.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "c18dd0980254146a08f243cb3971b8ac1b7d7262",
+    "base": "b8b9d28803792ad5142e095d59333c8ca8319650"
+  }
+}

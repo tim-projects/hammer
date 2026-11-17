@@ -1,7 +1,0 @@
-diff --git a/testing/453-task-implement-lazy-task-worktree-l/tech.md b/testing/453-task-implement-lazy-task-worktree-l/tech.md
-new file mode 100644
-index 0000000..0a9c98e
---- /dev/null
-+++ b/testing/453-task-implement-lazy-task-worktree-l/tech.md
-@@ -0,0 +1 @@
-+Implement the approved lifecycle across task creation, mounting, pipeline entry, guard evaluation, and validation. Task creation must not create a branch, worktree, or manifest entry. READY to PROGRESSING and tasks mount must call one canonical WorktreeSyncHook implementation that creates missing task worktrees when needed, resolves local main first, fetches remote main only for divergence detection, and reports actionable manual-resolution blockers for conflicts. BACKLOG and READY records must be valid without local branches or worktrees. Branch and worktree existence become mandatory when implementation begins and before later promotion.
