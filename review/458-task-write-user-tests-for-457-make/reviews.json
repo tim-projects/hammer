@@ -39,6 +39,16 @@
       "bytes": 720,
       "ts": 1794915454.9320009,
       "prev_hash": "aac1b416a5df10a10dc27e93ec4eac8149a8a1a75bd5bacc442db2b5ed0b67dd"
+    },
+    {
+      "seq": 5,
+      "file": "testing/458-task-write-user-tests-for-457-make/plan.md",
+      "patch": "testing_458-task-write-user-tests-for-457-make_plan.md.patch",
+      "md5": "0ae1e4ac861e489a2741890d2a0f80fd",
+      "sha256": "5340dd5cb08ab465d332e08dc05d1a88e0193485cd0b7c3bb8a967daee8e01a1",
+      "bytes": 630,
+      "ts": 1794915456.2989378,
+      "prev_hash": "7272a2baeb453070201fef16fdb0cba1775cbfd43a9553825c089d88bea8f40b"
     }
   ]
 }
