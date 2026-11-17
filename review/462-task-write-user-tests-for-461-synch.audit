@@ -1,0 +1,8 @@
+{
+    "task_id": "462",
+    "patch_hash": "444a8f991bbd1fad8e7b73b80786035d",
+    "patch_files": [
+        "tests_test_validation_sync.py.patch"
+    ],
+    "status": "verified"
+}
