@@ -1,0 +1,1 @@
+tests/test_lazy_task_creation.py: 4 passed in task worktree; existing main coverage proves no branch/worktree/manifest for primary and paired tasks, planned-branch-only output, metadata preservation, and branchless BACKLOG/READY states.
