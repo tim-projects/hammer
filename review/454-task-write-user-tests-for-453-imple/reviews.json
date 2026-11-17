@@ -10,5 +10,8 @@
       "ts": 1794918798.9615984,
       "prev_hash": null
     }
-  ]
+  ],
+  "summary": "Reviewed the sole test patch: added the missing actionable remote-main divergence guidance assertions; no production changes.",
+  "summary_at": 1794918799.8633194,
+  "reviewed_at": 1794918799.8633199
 }
