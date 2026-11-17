@@ -9,6 +9,16 @@
       "bytes": 455,
       "ts": 1794896036.2176576,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "tests/test_usage_blockers.py",
+      "patch": "tests_test_usage_blockers.py.patch",
+      "md5": "4682fba7f0f5e61c9a97486d0030e77e",
+      "sha256": "8d2e2842987a359786ca346f8e6583fed1ab3ae50398fc3ec89a143bd45c7b8e",
+      "bytes": 861,
+      "ts": 1794896037.2324975,
+      "prev_hash": "d31174d6c48e0a3b86db88d71ef36559a549a91ef9b97a3fdd680667ea1c035b"
     }
   ]
 }
