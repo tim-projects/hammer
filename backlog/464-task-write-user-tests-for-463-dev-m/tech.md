@@ -1,21 +1,9 @@
-**Observed leftovers** (`ls -dt /tmp/hammer_tasks_*`): the dev stores AND, the expensive part,
-a full git clone of the source repo per test at `<store>-repo` (contains AGENTS.md, README.md,
-check.py, git history — ~300K and up each).
-
-**Leak mechanics (verified in code + experiment):**
-- `tests/hammer_test_base.py:52-53` — every test gets `tempfile.mkdtemp(prefix="hammer_tasks_")`
-  as its dev store.
-- `tasks_ai/context.py:88-91` (`dev_repo_path`) — the dev repo is `<store path>-repo`;
-  `_ensure_dev_repo` (context.py:93+) clones the source repo into it on the CLI's first `--dev`
-  invocation in that test. Path is keyed on the store, so a fresh mkdtemp per test can never
-  reuse an existing clone.
-- `tests/hammer_test_base.py:146-149` — `tearDown` does rmtree(test_root), rmtree(dev store),
-  rmtree(dev repo, **ignore_errors=True**).
-- Experiment (2026-11-09, main): `python3 -m pytest tests/test_init_backup.py -q` (2 passed)
-  left +2 `/tmp/hammer_*` dirs. So a green, completed run still leaks: cleanup is not strict
-  and/or is skipped on the path that test takes (ignore_errors masks failure; tearDown is not
-  addCleanup, so setUp failures and killed runs also leak).
-- Scale evidence: 1790 `/tmp/hammer_tasks_*-repo` dirs, `/tmp` 4.7G/4.7G tmpfs after roughly
-  three full-suite runs plus in-repo work. A single clean suite run still leaves ~391M.
-- Impact chain: ENOSPC → worktree adds, git writes and shutil fail → order-independent tests
-  fail → suites cannot be trusted → CI signal destroyed.
+Test additions (in the new repo these land with Task 14's test plan; in tasks-ai they prove
+task 463's fix before it merges):
+1. Net-growth test: count `/tmp/hammer_*` dirs before and after running one test file (subprocess
+   pytest on a small file) and assert zero net growth. Put it in `tests/` as its own test module.
+2. Loud-failure test: monkeypatch `shutil.rmtree` to raise inside the harness tearDown path and
+   assert the test FAILS (proves the ignore_errors removal is real).
+3. addCleanup test: raise in setUp after the mkdtemp calls and assert the dirs are still removed.
+4. Fixture note: prefer `tmp_path` over `tempfile.mkdtemp` in `tests/hammer_test_base.py:52-53`
+   if it keeps automatic reclamation — only if it does not break HAMMER_DEV_TASKS_DIR semantics.
