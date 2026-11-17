@@ -2,4 +2,6 @@
 Task: 462-task-write-user-tests-for-461-synch
 ---
 
-- Progress: 
+- Progress: Added only missing actionable-blocker assertions in tests/test_validation_sync.py: local-work and conflict payloads now prove task ID, branch, default/local commit, affected paths, worktree path, and concrete recovery guidance. Existing tests prove stale clean branches synchronize before checks, tracked/untracked files are preserved, conflicts preserve content, and validation does not run after a blocker. Focused verification: 4 passed; ruff check and format check passed. No production changes.
+- Findings: 
+- Mitigations: 
