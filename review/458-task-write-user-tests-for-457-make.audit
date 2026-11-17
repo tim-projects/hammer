@@ -1,0 +1,16 @@
+{
+    "task_id": "458",
+    "patch_hash": "d143f478eb769322405947ee3df69bd1",
+    "patch_files": [
+        "testing_458-task-write-user-tests-for-457-make_criteria.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_current-task.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_meta.json.patch",
+        "testing_458-task-write-user-tests-for-457-make_notes.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_plan.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_progress.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_research.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_story.md.patch",
+        "testing_458-task-write-user-tests-for-457-make_tech.md.patch"
+    ],
+    "status": "verified"
+}
