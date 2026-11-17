@@ -90,5 +90,8 @@
       "ts": 1794915461.1969895,
       "prev_hash": "0b2c0d1200eec8a2962462341b3bbda0ea052f202efeccaea94e9c16a01d5191"
     }
-  ]
+  ],
+  "summary": "Reviewed all nine metadata-only patches: checked state-specific criteria, research, progress evidence, and metadata; no production or test-code changes.",
+  "summary_at": 1794915474.409316,
+  "reviewed_at": 1794915474.409317
 }
