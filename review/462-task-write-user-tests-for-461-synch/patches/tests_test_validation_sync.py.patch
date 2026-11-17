@@ -1,0 +1,51 @@
+diff --git a/tests/test_validation_sync.py b/tests/test_validation_sync.py
+index af16f2ad..d371a0d7 100644
+--- a/tests/test_validation_sync.py
++++ b/tests/test_validation_sync.py
+@@ -7,6 +7,7 @@ import unittest
+ from types import SimpleNamespace
+ 
+ from tasks_ai.git_service import GitService
++from tasks_ai.messages import MessageRegistry
+ from tasks_ai.pipeline_hooks import ValidationHook
+ 
+ 
+@@ -141,7 +142,17 @@ class ValidationFreshnessTest(unittest.TestCase):
+             self.validate()
+ 
+         self.assertEqual([], self.cli.validations)
+-        self.assertEqual("WORKTREE_LOCAL_WORK", self.cli.action_required_calls[0][0])
++        code, details = self.cli.action_required_calls[0]
++        self.assertEqual("WORKTREE_LOCAL_WORK", code)
++        self.assertEqual(self.task_id, details["task_id"])
++        self.assertEqual(self.branch, details["branch"])
++        self.assertEqual("main", details["default"])
++        self.assertTrue(details["local_commit"])
++        self.assertEqual("base.txt, scratch.txt", details["paths"])
++        self.assertEqual(self.worktree, details["worktree_path"])
++        hint = MessageRegistry().get_hint(code, **details)
++        self.assertIn("Commit or stash the local work", hint)
++        self.assertIn("./hammer tasks mount 461", hint)
+         with open(tracked, encoding="utf-8") as handle:
+             self.assertEqual("local edit\n", handle.read())
+         with open(untracked, encoding="utf-8") as handle:
+@@ -160,7 +171,18 @@ class ValidationFreshnessTest(unittest.TestCase):
+             self.validate()
+ 
+         self.assertEqual([], self.cli.validations)
+-        self.assertEqual("WORKTREE_SYNC_CONFLICT", self.cli.action_required_calls[0][0])
++        code, details = self.cli.action_required_calls[0]
++        self.assertEqual("WORKTREE_SYNC_CONFLICT", code)
++        self.assertEqual(self.task_id, details["task_id"])
++        self.assertEqual(self.branch, details["branch"])
++        self.assertEqual("main", details["default"])
++        self.assertTrue(details["local_commit"])
++        self.assertEqual("base.txt", details["paths"])
++        self.assertEqual(self.worktree, details["worktree_path"])
++        hint = MessageRegistry().get_hint(code, **details)
++        self.assertIn("Resolve every conflicting path manually", hint)
++        self.assertIn("git add <paths>", hint)
++        self.assertIn("./hammer tasks mount 461", hint)
+         with open(shared, encoding="utf-8") as handle:
+             self.assertEqual("branch side\n", handle.read())
+ 

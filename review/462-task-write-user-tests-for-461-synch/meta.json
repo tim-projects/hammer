@@ -1,0 +1,28 @@
+{
+  "Id": 462,
+  "Ti": "Write user tests for 461: Synchronize stale task branches before validation",
+  "Ty": "task",
+  "Cr": "261116 08:29",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "462-task-write-user-tests-for-461-synch",
+  "Pt": 461,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794917583.740277,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tests/test_validation_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/462-task-write-user-tests-for-461-synch/patches/tests_test_validation_sync.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "67a968b811b0e8acee98ead3e2790c561c592e6a",
+    "base": "270dbb2efd42d2deb782fa37528eba040e865551"
+  }
+}
