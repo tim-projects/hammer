@@ -69,6 +69,16 @@
       "bytes": 663,
       "ts": 1794915458.793961,
       "prev_hash": "2ef69f318a8d554d4ffd58856ddd513b0065ad217fe06efbafdd94525281041c"
+    },
+    {
+      "seq": 8,
+      "file": "testing/458-task-write-user-tests-for-457-make/story.md",
+      "patch": "testing_458-task-write-user-tests-for-457-make_story.md.patch",
+      "md5": "aec2c4a881afd8ec0598a1a918549789",
+      "sha256": "8e82a288099527b536a509852c07bb42ff67e7229d2a4ad2cf9f8f229f525eb5",
+      "bytes": 467,
+      "ts": 1794915459.890981,
+      "prev_hash": "645ff7751398e1ed0ad23f13b4a1b5e46e6a55a7bb2d3692f7b3d339d9e61b7e"
     }
   ]
 }
