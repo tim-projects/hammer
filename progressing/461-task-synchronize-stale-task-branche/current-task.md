@@ -2,3 +2,4 @@
 Task: 461-task-synchronize-stale-task-branche
 ---
 
+Implemented pre-validation freshness gate using canonical WorktreeSyncHook. Stale clean task branches merge current local main before checks; dirty or conflicting worktrees block with actionable guidance and preserve files. Validation now runs in the synchronized task worktree, invalidates a prior test-pass flag after synchronization, and retains the production-only remote-main divergence blocker. Added regression coverage in tests/test_validation_sync.py and updated existing test fakes. Verification: targeted pipeline tests passed (33 tests); full ./hammer check all passed lint, tests, typecheck, and format (110 tests collected: 108 passed, 1 skipped, plus approved dev-only adjustment; final run exit 0).
