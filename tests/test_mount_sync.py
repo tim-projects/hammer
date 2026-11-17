@@ -215,6 +215,12 @@ class WorktreeSyncHookTest(unittest.TestCase):
         self.assertEqual("WORKTREE_MAIN_DIVERGED", code)
         self.assertEqual("459", details["task_id"])
         self.assertEqual("459-task-sync", details["branch"])
+        self.assertEqual("local-sha", details["local"])
+        self.assertEqual("remote-sha", details["remote"])
+        hint = MessageRegistry().get_hint(code, **details)
+        self.assertIn("git log --left-right main...origin/main", hint)
+        self.assertIn("Reconcile local main with origin/main", hint)
+        self.assertIn("./hammer tasks mount 459", hint)
         self.assertEqual([], git.merged)
 
     def test_dev_mode_uses_diverged_local_main(self):
