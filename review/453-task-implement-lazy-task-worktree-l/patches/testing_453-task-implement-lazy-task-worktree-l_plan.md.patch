@@ -1,0 +1,12 @@
+diff --git a/testing/453-task-implement-lazy-task-worktree-l/plan.md b/testing/453-task-implement-lazy-task-worktree-l/plan.md
+new file mode 100644
+index 0000000..3efe9b3
+--- /dev/null
++++ b/testing/453-task-implement-lazy-task-worktree-l/plan.md
+@@ -0,0 +1,5 @@
++1. 1. Implement lazy task creation and state-aware guard semantics.
++2. 2. Consolidate mount and pipeline synchronization under WorktreeSyncHook.
++3. 3. Use local main first and add divergence/conflict blockers.
++4. 4. Add pre-validation freshness synchronization.
++5. 5. Add user-level regression coverage and promote through the pipeline.
+\ No newline at end of file

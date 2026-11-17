@@ -1,0 +1,7 @@
+diff --git a/testing/453-task-implement-lazy-task-worktree-l/story.md b/testing/453-task-implement-lazy-task-worktree-l/story.md
+new file mode 100644
+index 0000000..6a90b8a
+--- /dev/null
++++ b/testing/453-task-implement-lazy-task-worktree-l/story.md
+@@ -0,0 +1 @@
++As a maintainer, I want task worktrees to be created only when development begins and synchronized through one code path, so backlog and ready tasks do not accumulate stale worktrees and every active task starts from the intended local main code.
