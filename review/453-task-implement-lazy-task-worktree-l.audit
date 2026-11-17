@@ -1,0 +1,9 @@
+{
+    "task_id": "453",
+    "patch_hash": "d2747bbb62fdab4e9d59572eef914e15",
+    "patch_files": [
+        "tasks.py.patch",
+        "tests_test_usage_blockers.py.patch"
+    ],
+    "status": "verified"
+}
