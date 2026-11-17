@@ -70,5 +70,8 @@
       "ts": 1794886585.208706,
       "prev_hash": "261eccdeafd34c1aabb3a6a1f35cbb45d371a78b15dca48b1bc7f7fe8096c2e4"
     }
-  ]
+  ],
+  "summary": "Read all 7 patches. The change reuses WorktreeSyncHook before validation, runs checks in the synchronized task worktree, blocks dirty/conflicting stale branches without modifying them, preserves production divergence protection, and adds focused regression coverage.",
+  "summary_at": 1794886697.5259998,
+  "reviewed_at": 1794886697.5260007
 }
