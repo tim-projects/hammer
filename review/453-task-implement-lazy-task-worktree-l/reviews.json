@@ -90,5 +90,8 @@
       "ts": 1794892975.0973127,
       "prev_hash": "6ff6b0657ebd5fb1927232d6642e707b7c33b85079c3a76d1dadef0fbc4f516d"
     }
-  ]
+  ],
+  "summary": "Reviewed all 9 task-record patches; implementation scope is contained in merged subtasks 455, 457, 459, and 461, with no regressions found.",
+  "summary_at": 1794892981.2924716,
+  "reviewed_at": 1794892981.2924728
 }
