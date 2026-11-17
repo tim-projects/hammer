@@ -1,0 +1,1 @@
+tests/test_validation_sync.py: 4 passed; ruff check and ruff format --check passed. Coverage proves stale branches sync before validation, unsafe branches preserve work and block checks, and blocker guidance is actionable.
