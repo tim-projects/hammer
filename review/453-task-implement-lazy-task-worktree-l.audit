@@ -1,0 +1,16 @@
+{
+    "task_id": "453",
+    "patch_hash": "2a90e5c2311afe546ac554c351154b78",
+    "patch_files": [
+        "testing_453-task-implement-lazy-task-worktree-l_criteria.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_current-task.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_meta.json.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_notes.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_plan.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_progress.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_research.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_story.md.patch",
+        "testing_453-task-implement-lazy-task-worktree-l_tech.md.patch"
+    ],
+    "status": "verified"
+}
