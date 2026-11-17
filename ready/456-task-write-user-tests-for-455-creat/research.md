@@ -1,0 +1,1 @@
+Inspected main regression coverage. tests/test_lazy_task_creation.py already covers all criteria: primary and paired task have no branch/worktree/manifest entry; output reports planned branch only; metadata/counter/priority/parent preservation; BACKLOG and READY need no local Git state. Baseline focused suite passes: 49 tests across the four lazy lifecycle files.
