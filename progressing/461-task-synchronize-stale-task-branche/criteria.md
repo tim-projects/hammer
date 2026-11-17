@@ -1,6 +1,6 @@
-- [ ] Validation compares the active task branch with current local main before running checks
-- [ ] A stale but safely mergeable task branch is synchronized before validation
-- [ ] A stale branch with local work or conflicts blocks validation with actionable guidance
-- [ ] The freshness gate preserves uncommitted and untracked files
-- [ ] Validation does not run after a stale-branch blocker is raised
-- [ ] Regression tests prove stale code cannot silently pass validation against outdated local main
+- [x] Validation compares the active task branch with current local main before running checks
+- [x] A stale but safely mergeable task branch is synchronized before validation
+- [x] A stale branch with local work or conflicts blocks validation with actionable guidance
+- [x] The freshness gate preserves uncommitted and untracked files
+- [x] Validation does not run after a stale-branch blocker is raised
+- [x] Regression tests prove stale code cannot silently pass validation against outdated local main
