@@ -10,5 +10,8 @@
       "ts": 1794917642.2009013,
       "prev_hash": null
     }
-  ]
+  ],
+  "summary": "Reviewed the sole test patch: strengthened local-work and conflict blocker assertions with required details and recovery guidance; no production changes.",
+  "summary_at": 1794917643.1779706,
+  "reviewed_at": 1794917643.1779711
 }
