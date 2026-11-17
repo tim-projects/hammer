@@ -1,0 +1,7 @@
+diff --git a/testing/458-task-write-user-tests-for-457-make/story.md b/testing/458-task-write-user-tests-for-457-make/story.md
+new file mode 100644
+index 0000000..850d2cb
+--- /dev/null
++++ b/testing/458-task-write-user-tests-for-457-make/story.md
+@@ -0,0 +1 @@
++As a maintainer, I want branch and worktree requirements to reflect pipeline state, so READY validates detailed task information without requiring Git state that is not needed until implementation starts.

@@ -1,0 +1,7 @@
+diff --git a/testing/458-task-write-user-tests-for-457-make/tech.md b/testing/458-task-write-user-tests-for-457-make/tech.md
+new file mode 100644
+index 0000000..df8cf9d
+--- /dev/null
++++ b/testing/458-task-write-user-tests-for-457-make/tech.md
+@@ -0,0 +1 @@
++Correct GuardEngine state semantics. BACKLOG and READY records must not produce GUARD_REMOTE_DIVERGENCE merely because no local branch exists. GUARD_REMOTE_DIVERGENCE must only describe an actual remote/local divergence, including evidence that a remote task branch exists, and must not block normal branchless backlog or ready tasks. Keep branch existence mandatory for promoted states. Ensure the transition into PROGRESSING may create missing branch and worktree state through WorktreeSyncHook before later promotion gates assess it.

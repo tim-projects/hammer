@@ -1,0 +1,8 @@
+diff --git a/testing/458-task-write-user-tests-for-457-make/research.md b/testing/458-task-write-user-tests-for-457-make/research.md
+new file mode 100644
+index 0000000..6aeb878
+--- /dev/null
++++ b/testing/458-task-write-user-tests-for-457-make/research.md
+@@ -0,0 +1 @@
++Inspected main and tasks_ai/guard_engine.py. tests/test_guard.py already provides user-level coverage for branchless BACKLOG/READY without GUARD_REMOTE_DIVERGENCE, branchless READY to PROGRESSING branch creation, genuine remote branch evidence, promoted-state GUARD_BRANCH_MISSING, and state-specific gate behavior. Baseline lazy lifecycle suites pass (49 tests).
+\ No newline at end of file

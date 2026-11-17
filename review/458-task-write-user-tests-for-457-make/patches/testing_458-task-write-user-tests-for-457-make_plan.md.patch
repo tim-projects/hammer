@@ -1,0 +1,12 @@
+diff --git a/testing/458-task-write-user-tests-for-457-make/plan.md b/testing/458-task-write-user-tests-for-457-make/plan.md
+new file mode 100644
+index 0000000..f9fc2e3
+--- /dev/null
++++ b/testing/458-task-write-user-tests-for-457-make/plan.md
+@@ -0,0 +1,5 @@
++1. 1. Review how GuardEngine derives local and remote branch state.
++2. 2. Restrict remote divergence findings to genuine remote evidence and applicable states.
++3. 3. Preserve promoted-state branch requirements.
++4. 4. Add branchless BACKLOG, READY, and genuine-divergence regression tests.
++5. 5. Run guard and pipeline-transition suites.
+\ No newline at end of file
