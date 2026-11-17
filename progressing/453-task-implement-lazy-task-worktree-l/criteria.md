@@ -7,3 +7,4 @@
 - [x] Merge conflicts preserve local work, list conflicting paths, and require manual resolution
 - [x] Validation detects and synchronizes a stale task branch or blocks before running checks
 - [x] Regression tests cover the complete lazy-worktree lifecycle and unified synchronization behavior
+- [x] Missing verification proof reports a Hammer voice WHAT/WHY/HOW/CONSEQUENCE blocker
