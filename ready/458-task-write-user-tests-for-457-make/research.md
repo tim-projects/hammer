@@ -1,0 +1,1 @@
+Inspected main and tasks_ai/guard_engine.py. tests/test_guard.py already provides user-level coverage for branchless BACKLOG/READY without GUARD_REMOTE_DIVERGENCE, branchless READY to PROGRESSING branch creation, genuine remote branch evidence, promoted-state GUARD_BRANCH_MISSING, and state-specific gate behavior. Baseline lazy lifecycle suites pass (49 tests).
