@@ -39,6 +39,16 @@
       "bytes": 504,
       "ts": 1794892970.020974,
       "prev_hash": "e4573baadfbb70a15d72dbc83ac6a352412945e3f432fac50af62ec35c0e93f0"
+    },
+    {
+      "seq": 5,
+      "file": "testing/453-task-implement-lazy-task-worktree-l/plan.md",
+      "patch": "testing_453-task-implement-lazy-task-worktree-l_plan.md.patch",
+      "md5": "57bd74ab6b109c25969cdef2e455cab6",
+      "sha256": "47fa90e17ade014fb946af9a653455a6b16d75989a3a5ac7e8abec737701ee3a",
+      "bytes": 633,
+      "ts": 1794892971.0944142,
+      "prev_hash": "38f3cd2a4671b4a9dd3b39718bd5ca0fdbd62bb8354d13183b84b59e53074d60"
     }
   ]
 }
