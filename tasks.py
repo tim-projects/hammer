@@ -282,6 +282,7 @@ if __name__ == "__main__":
     ver_p = subparsers.add_parser(
         "verify", help="Verify task criteria and generate cryptographic audit."
     )
+    ver_p.hammer_voice = True
     ver_p.add_argument("id", help="Task Id to verify.")
     ver_p.add_argument(
         "--proof", required=True, help="Evidence for criteria completion."
