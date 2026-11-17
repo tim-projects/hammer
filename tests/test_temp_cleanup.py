@@ -1,0 +1,52 @@
+import errno
+import glob
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from tests.hammer_test_base import cleanup_path
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def hammer_temp_paths():
+    return set(glob.glob("/tmp/hammer_*"))
+
+
+class TempCleanupTest(unittest.TestCase):
+    def test_cleanup_retries_a_transient_busy_directory(self):
+        path = tempfile.mkdtemp(prefix="hammer_cleanup_retry_")
+        self.addCleanup(shutil.rmtree, path, True)
+        busy = OSError(errno.ENOTEMPTY, "Directory not empty")
+        with patch("tests.hammer_test_base.shutil.rmtree", side_effect=[busy, None]):
+            cleanup_path(path)
+
+    def test_cleanup_fails_loudly_when_removal_is_broken(self):
+        path = tempfile.mkdtemp(prefix="hammer_cleanup_failure_")
+        self.addCleanup(shutil.rmtree, path, True)
+        with (
+            patch("tests.hammer_test_base.shutil.rmtree", side_effect=OSError("broken")),
+            self.assertRaises(OSError),
+        ):
+            cleanup_path(path)
+
+    def test_init_backup_suite_leaves_no_hammer_temp_paths(self):
+        before = hammer_temp_paths()
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "tests/test_init_backup.py", "-q"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        after = hammer_temp_paths()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(after - before, set())
+
+
+if __name__ == "__main__":
+    unittest.main()

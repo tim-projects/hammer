@@ -2,7 +2,6 @@
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,13 +10,15 @@ from datetime import datetime, timedelta
 
 from tasks_ai.constants import STATE_FOLDERS
 from tasks_ai.file_manager import FM
-from tests.hammer_test_base import ensure_dev_repo
+from tests.hammer_test_base import cleanup_dev_store, cleanup_path, ensure_dev_repo
 
 
 class TestTasksAI(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        self.addCleanup(cleanup_path, self.test_dir)
         self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        self.addCleanup(cleanup_dev_store, self.dev_tasks_dir)
         os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
@@ -72,9 +73,6 @@ class TestTasksAI(unittest.TestCase):
             json.dump(config_data, f)
 
     def tearDown(self):
-        shutil.rmtree(self.test_dir, ignore_errors=True)
-        shutil.rmtree(self.dev_tasks_dir, ignore_errors=True)
-        shutil.rmtree(self.dev_repo_dir, ignore_errors=True)
         # The store switch keys on this env var, so leaving it set turns every
         # later non-dev test into a dev one.
         os.environ.pop("HAMMER_DEV_TASKS_DIR", None)

@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 import unittest
 
+from tests.hammer_test_base import cleanup_dev_store
+
 
 class TestInitBackup(unittest.TestCase):
     def setUp(self):
@@ -13,7 +15,9 @@ class TestInitBackup(unittest.TestCase):
         # 'init --force' against an inherited or hardcoded /tmp/.tasks wipes and
         # re-clones whatever store that name points at.
         self.prev_dev_env = os.environ.get("HAMMER_DEV_TASKS_DIR")
+        self.addCleanup(self._restore_dev_env)
         self.dev_tasks = tempfile.mkdtemp(prefix="hammer_tasks_")
+        self.addCleanup(cleanup_dev_store, self.dev_tasks)
         os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks
         if os.path.exists(self.dev_tasks):
             shutil.rmtree(self.dev_tasks)
@@ -25,16 +29,16 @@ class TestInitBackup(unittest.TestCase):
         with open(os.path.join(self.dev_tasks, ".task_counter"), "w") as f:
             f.write("1")
 
-    def tearDown(self):
-        if os.path.exists(self.dev_tasks):
-            shutil.rmtree(self.dev_tasks)
-        backup_root = os.path.join(os.path.dirname(self.dev_tasks), ".tasks.backup")
-        if os.path.exists(backup_root):
-            shutil.rmtree(backup_root)
+    def _restore_dev_env(self):
         if self.prev_dev_env is None:
             os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
         else:
             os.environ["HAMMER_DEV_TASKS_DIR"] = self.prev_dev_env
+
+    def tearDown(self):
+        backup_root = os.path.join(os.path.dirname(self.dev_tasks), ".tasks.backup")
+        if os.path.exists(backup_root):
+            shutil.rmtree(backup_root)
 
     def test_init_creates_backup_in_dev_mode(self):
         subprocess.run(["./hammer", "tasks", "--dev", "init", "--force"], check=True)
