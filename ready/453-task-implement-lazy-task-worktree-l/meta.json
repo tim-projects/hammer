@@ -13,5 +13,7 @@
   "Br": "453-task-implement-lazy-task-worktree-l",
   "Pt": null,
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Rr": true,
+  "Tp": false
 }
