@@ -1,0 +1,64 @@
+diff --git a/tests/test_mount_sync.py b/tests/test_mount_sync.py
+index fb5e08e7..05ff0162 100644
+--- a/tests/test_mount_sync.py
++++ b/tests/test_mount_sync.py
+@@ -7,6 +7,7 @@ import unittest
+ 
+ from tasks_ai.commands import mount as mount_cmd
+ from tasks_ai.git_service import GitService
++from tasks_ai.messages import MessageRegistry
+ from tasks_ai.pipeline_hooks import WorktreeSyncHook
+ 
+ 
+@@ -228,11 +229,13 @@ class WorktreeSyncHookTest(unittest.TestCase):
+ 
+     def test_pipeline_entry_uses_the_canonical_hook(self):
+         git = FakeGit()
++        git.worktrees.exists = False
+         cli = FakeCLI(git)
+         task = type("Task", (), {"metadata": {"Id": 459, "Br": "459-task-sync"}})()
+ 
+         WorktreeSyncHook().execute(cli, task, "READY", "PROGRESSING", "/task")
+ 
++        self.assertEqual([("459", "459-task-sync", "main")], git.worktrees.created)
+         self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
+ 
+     def test_missing_branch_and_worktree_are_created_from_local_main(self):
+@@ -246,6 +249,7 @@ class WorktreeSyncHookTest(unittest.TestCase):
+ 
+     def test_mount_delegates_to_the_canonical_hook(self):
+         git = FakeGit()
++        git.worktrees.exists = False
+         cli = FakeCLI(git)
+         cli.find_task = lambda task_id: ("/fake/459-task", "PROGRESSING")
+         task = type("Task", (), {"metadata": {"Id": 459, "Br": "459-task-sync"}})()
+@@ -256,9 +260,29 @@ class WorktreeSyncHookTest(unittest.TestCase):
+         finally:
+             mount_cmd.FM = original_fm
+ 
++        self.assertEqual([("459", "459-task-sync", "main")], git.worktrees.created)
+         self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
+         self.assertEqual("/wt", cli.finished["worktree_path"])
+ 
++    def test_conflict_hint_includes_resolution_steps(self):
++        details = {
++            "task_id": "459",
++            "branch": "459-task-sync",
++            "default": "main",
++            "local_commit": "local-sha",
++            "paths": "shared.txt, app.py",
++            "worktree_path": "/wt",
++        }
++
++        hint = MessageRegistry().get_hint("WORKTREE_SYNC_CONFLICT", **details)
++
++        self.assertIn("459-task-sync", hint)
++        self.assertIn("local-sha", hint)
++        self.assertIn("shared.txt, app.py", hint)
++        self.assertIn("Resolve every conflicting path manually", hint)
++        self.assertIn("git add <paths>", hint)
++        self.assertIn("./hammer tasks mount 459", hint)
++
+ 
+ if __name__ == "__main__":
+     unittest.main()

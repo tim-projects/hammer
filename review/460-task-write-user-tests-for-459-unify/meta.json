@@ -1,0 +1,28 @@
+{
+  "Id": 460,
+  "Ti": "Write user tests for 459: Unify worktree synchronization under WorktreeSyncHook",
+  "Ty": "task",
+  "Cr": "261116 08:29",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "460-task-write-user-tests-for-459-unify",
+  "Pt": 459,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794916650.982496,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tests/test_mount_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/460-task-write-user-tests-for-459-unify/patches/tests_test_mount_sync.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "34616789c25235695e97fe0d458a751b455890f5",
+    "base": "6781e2b62403672843c03c154787cc507b84e33b"
+  }
+}
