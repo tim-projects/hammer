@@ -1,0 +1,60 @@
+{
+  "Id": 456,
+  "Ti": "Write user tests for 455: Create tasks lazily without branches or worktrees",
+  "Ty": "task",
+  "Cr": "261116 08:29",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "456-task-write-user-tests-for-455-creat",
+  "Pt": 455,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794914224.493024,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/criteria.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_criteria.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/current-task.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_current-task.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/meta.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_meta.json.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/notes.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_notes.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/plan.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_plan.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/progress.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_progress.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/research.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_research.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/story.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_story.md.patch"
+    },
+    {
+      "file": "testing/456-task-write-user-tests-for-455-creat/tech.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/456-task-write-user-tests-for-455-creat/patches/testing_456-task-write-user-tests-for-455-creat_tech.md.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "8af86273f97cdd637f1b80e791cacee49c8f8086",
+    "base": "8af86273f97cdd637f1b80e791cacee49c8f8086"
+  }
+}

@@ -1,0 +1,12 @@
+diff --git a/testing/456-task-write-user-tests-for-455-creat/criteria.md b/testing/456-task-write-user-tests-for-455-creat/criteria.md
+new file mode 100644
+index 0000000..3ce252e
+--- /dev/null
++++ b/testing/456-task-write-user-tests-for-455-creat/criteria.md
+@@ -0,0 +1,5 @@
++- [x] Creating one task creates no local branch, worktree directory, or worktree manifest entry
++- [x] The automatically paired user-test task also creates no branch, worktree, or manifest entry
++- [x] Create output reports the planned branch without claiming that a worktree already exists
++- [x] Existing create behavior preserves task metadata, counters, priorities, and parent relationships
++- [x] Regression tests prove BACKLOG and READY tasks can exist without local Git state
+\ No newline at end of file

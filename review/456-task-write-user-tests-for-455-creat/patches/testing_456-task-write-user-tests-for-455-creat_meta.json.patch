@@ -1,0 +1,25 @@
+diff --git a/testing/456-task-write-user-tests-for-455-creat/meta.json b/testing/456-task-write-user-tests-for-455-creat/meta.json
+new file mode 100644
+index 0000000..a14b7c2
+--- /dev/null
++++ b/testing/456-task-write-user-tests-for-455-creat/meta.json
+@@ -0,0 +1,18 @@
++{
++  "Id": 456,
++  "Ti": "Write user tests for 455: Create tasks lazily without branches or worktrees",
++  "Ty": "task",
++  "Cr": "261116 08:29",
++  "Bl": [],
++  "Pr": 1,
++  "Br": "456-task-write-user-tests-for-455-creat",
++  "Pt": 455,
++  "Rc": "",
++  "Vp": true,
++  "Rr": true,
++  "Tp": true,
++  "Reviewed": false,
++  "AuditPassed": false,
++  "PatchGenTime": null,
++  "DoneAt": null
++}
+\ No newline at end of file

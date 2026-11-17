@@ -1,0 +1,11 @@
+diff --git a/testing/456-task-write-user-tests-for-455-creat/plan.md b/testing/456-task-write-user-tests-for-455-creat/plan.md
+new file mode 100644
+index 0000000..c902963
+--- /dev/null
++++ b/testing/456-task-write-user-tests-for-455-creat/plan.md
+@@ -0,0 +1,4 @@
++1. 1. Remove worktree creation from task and paired-task creation.
++2. 2. Adjust create output to describe the future worktree rather than an existing one.
++3. 3. Add user-level assertions for absent branches, directories, and manifest entries.
++4. 4. Run creation, task-listing, mount, and worktree regression suites.
+\ No newline at end of file

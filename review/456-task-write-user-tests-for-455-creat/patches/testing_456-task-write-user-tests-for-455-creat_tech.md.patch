@@ -1,0 +1,7 @@
+diff --git a/testing/456-task-write-user-tests-for-455-creat/tech.md b/testing/456-task-write-user-tests-for-455-creat/tech.md
+new file mode 100644
+index 0000000..e40a4d6
+--- /dev/null
++++ b/testing/456-task-write-user-tests-for-455-creat/tech.md
+@@ -0,0 +1 @@
++Remove primary and paired-task worktree creation from tasks_ai/commands/create.py. Task creation must persist metadata only and must not create a local branch, git worktree, or .tasks/worktrees.json entry. Worktree creation belongs to the unified WorktreeSyncHook when READY enters PROGRESSING or when tasks mount is requested. Update create output so it does not claim a worktree path exists.

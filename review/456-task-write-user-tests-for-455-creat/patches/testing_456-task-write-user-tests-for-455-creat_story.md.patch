@@ -1,0 +1,7 @@
+diff --git a/testing/456-task-write-user-tests-for-455-creat/story.md b/testing/456-task-write-user-tests-for-455-creat/story.md
+new file mode 100644
+index 0000000..7877241
+--- /dev/null
++++ b/testing/456-task-write-user-tests-for-455-creat/story.md
+@@ -0,0 +1 @@
++As a maintainer, I want newly created tasks to remain worktree-free until development begins, so the backlog does not accumulate unused branches, directories, and manifest entries that become stale.
