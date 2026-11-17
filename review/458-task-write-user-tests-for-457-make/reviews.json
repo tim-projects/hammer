@@ -19,6 +19,16 @@
       "bytes": 799,
       "ts": 1794915452.7090511,
       "prev_hash": "ec0cc4f459d4937cafa5a6a1cfa74d2828ce41b42ba68a31cccebdc92a4942ab"
+    },
+    {
+      "seq": 3,
+      "file": "testing/458-task-write-user-tests-for-457-make/meta.json",
+      "patch": "testing_458-task-write-user-tests-for-457-make_meta.json.patch",
+      "md5": "2bd306961dae73a75bc4aa1aea9c1196",
+      "sha256": "1b34a6e91b23578eb1e07a14d37cd3822bef10dd74528aa880728cf4981f42b1",
+      "bytes": 681,
+      "ts": 1794915453.8025131,
+      "prev_hash": "a9c9635f10ebf3cf87a33b73d5f634e85414011c3acf291909e8eafd4696b788"
     }
   ]
 }
