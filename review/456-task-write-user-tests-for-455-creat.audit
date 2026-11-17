@@ -1,0 +1,16 @@
+{
+    "task_id": "456",
+    "patch_hash": "5381150eb498c28dc9103cc04330c968",
+    "patch_files": [
+        "testing_456-task-write-user-tests-for-455-creat_criteria.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_current-task.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_meta.json.patch",
+        "testing_456-task-write-user-tests-for-455-creat_notes.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_plan.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_progress.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_research.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_story.md.patch",
+        "testing_456-task-write-user-tests-for-455-creat_tech.md.patch"
+    ],
+    "status": "verified"
+}
