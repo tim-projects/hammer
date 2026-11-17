@@ -1,0 +1,1 @@
+tests/test_guard.py focused selection in task worktree: 4 passed, 27 deselected; existing user tests cover branchless BACKLOG/READY, branch creation on PROGRESSING, genuine remote divergence, and promoted-state branch enforcement.
