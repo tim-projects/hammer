@@ -369,8 +369,8 @@ class TasksCLI:
     def _validate_path(self, path):
         return self.validation.validate_path(path)
 
-    def run_tool(self, tool_name=None, fix=False):
-        return self.validation.run_tool(tool_name=tool_name, fix=fix)
+    def run_tool(self, tool_name=None, fix=False, cwd=None):
+        return self.validation.run_tool(tool_name=tool_name, fix=fix, cwd=cwd)
 
     def find_task(self, filename):
         return self.task_service.find_task(filename)

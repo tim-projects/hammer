@@ -8,10 +8,24 @@ from hammer_test_base import HammerTestBase
 from tasks_ai.pipeline_hooks import ProgressUpdateHook, ValidationHook
 
 
+class FakeWorktrees:
+    def get_worktree_path(self, task_id):
+        return "/tmp"
+
+
+class FakeGit:
+    def __init__(self):
+        self.worktrees = FakeWorktrees()
+
+    def get_default_branch(self):
+        return None
+
+
 class FakeCli:
     def __init__(self):
         self.validations = []
         self.errors = []
+        self.git = FakeGit()
 
     def console(self, *args):
         pass
@@ -23,7 +37,7 @@ class FakeCli:
         self.errors.append(message)
         raise RuntimeError(message)
 
-    def run_tool(self, tool_name=None, fix=False):
+    def run_tool(self, tool_name=None, fix=False, cwd=None):
         self.validations.append(tool_name)
 
     def _atomic_write(self, path, task):
