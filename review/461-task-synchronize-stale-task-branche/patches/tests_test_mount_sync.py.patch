@@ -1,0 +1,29 @@
+diff --git a/tests/test_mount_sync.py b/tests/test_mount_sync.py
+index f0cb13ab..fb5e08e7 100644
+--- a/tests/test_mount_sync.py
++++ b/tests/test_mount_sync.py
+@@ -143,6 +143,7 @@ class FakeGit:
+ class FakeCLI:
+     def __init__(self, git):
+         self.git = git
++        self.dev = False
+         self.context = FakeContext("/repo")
+         self.lines = []
+         self.action_required_calls = []
+@@ -215,6 +216,16 @@ class WorktreeSyncHookTest(unittest.TestCase):
+         self.assertEqual("459-task-sync", details["branch"])
+         self.assertEqual([], git.merged)
+ 
++    def test_dev_mode_uses_diverged_local_main(self):
++        git = FakeGit(diverged=True)
++        cli = FakeCLI(git)
++        cli.dev = True
++
++        WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
++
++        self.assertEqual([], cli.action_required_calls)
++        self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
++
+     def test_pipeline_entry_uses_the_canonical_hook(self):
+         git = FakeGit()
+         cli = FakeCLI(git)

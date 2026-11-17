@@ -1,0 +1,54 @@
+{
+  "Id": 461,
+  "Ti": "Synchronize stale task branches before validation",
+  "Ty": "task",
+  "Cr": "261116 08:29",
+  "Bl": [
+    "459-task-unify-worktree-synchronization"
+  ],
+  "Pr": 1,
+  "Br": "461-task-synchronize-stale-task-branche",
+  "Pt": 453,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1794886449.71496,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tasks_ai_validation.py.patch"
+    },
+    {
+      "file": "tests/test_mount_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tests_test_mount_sync.py.patch"
+    },
+    {
+      "file": "tests/test_reject_validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tests_test_reject_validation.py.patch"
+    },
+    {
+      "file": "tests/test_validation_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/461-task-synchronize-stale-task-branche/patches/tests_test_validation_sync.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "96fd58bae77f33d60020b97114f647cb5cc143dd",
+    "base": "e24fdb0ec63f1a2d97fb32458e67d7e68eb90c9d"
+  }
+}

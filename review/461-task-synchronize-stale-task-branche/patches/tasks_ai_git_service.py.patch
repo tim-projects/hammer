@@ -1,0 +1,19 @@
+diff --git a/tasks_ai/git_service.py b/tasks_ai/git_service.py
+index d7dc84f6..a8d40c35 100644
+--- a/tasks_ai/git_service.py
++++ b/tasks_ai/git_service.py
+@@ -113,6 +113,14 @@ class GitService:
+                 return branch
+         return None
+ 
++    def is_ancestor(self, source: str, target: str, cwd: str | None = None) -> bool:
++        """True when source is reachable from target."""
++        result = self.run(
++            ["merge-base", "--is-ancestor", source, target],
++            cwd=cwd or self.context.main_repo_root,
++        )
++        return result.returncode == 0
++
+     def is_merged(
+         self, branch: str, target: str | None = None, cwd: str | None = None
+     ) -> bool:

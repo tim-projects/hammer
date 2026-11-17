@@ -1,0 +1,27 @@
+diff --git a/tasks_ai/validation.py b/tasks_ai/validation.py
+index b97d0b28..31b31f62 100644
+--- a/tasks_ai/validation.py
++++ b/tasks_ai/validation.py
+@@ -104,7 +104,12 @@ class Validation:
+         self.cli.error(f"Path outside repository: {path}")
+         return False
+ 
+-    def run_tool(self, tool_name: str | None = None, fix: bool = False):
++    def run_tool(
++        self,
++        tool_name: str | None = None,
++        fix: bool = False,
++        cwd: str | None = None,
++    ):
+         """Run configured tools (lint, test, typecheck, format)."""
+         # Resolve project root independently of CWD using the same logic as repo_script
+         install_dir = Path(__file__).resolve().parent.parent
+@@ -123,7 +128,7 @@ class Validation:
+             cmd.append("--dev")
+ 
+         # repo_root is still needed for execution context
+-        repo_root = self.cli.context.repo_root or os.getcwd()
++        repo_root = cwd or self.cli.context.repo_root or os.getcwd()
+         capture = True
+         run_env = os.environ.copy()
+         if self.cli.dev:

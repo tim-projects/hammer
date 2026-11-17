@@ -1,0 +1,64 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index 9e928e21..0c22fbb3 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -150,12 +150,24 @@ class ValidationHook(PipelineHook):
+                     f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
+                 )
+ 
++        task_id = str(task.metadata.get("Id", ""))
++        branch = _task_branch(task, filepath)
++        worktree_path = cli.git.worktrees.get_worktree_path(task_id)
++        if not worktree_path:
++            cli.action_required("WORKTREE_NOT_FOUND", task_id=task_id)
++        synchronized = WorktreeSyncHook().synchronize_before_validation(
++            cli, task_id, branch, worktree_path
++        )
++        if synchronized:
++            task.metadata["Tp"] = False
++            cli._atomic_write(filepath, task)
++
+         # Skip expensive rerun if validation already passed
+         if task.metadata.get("Tp"):
+             cli.log("DEBUG: Validation already passed; skipping rerun.")
+             return
+ 
+-        cli.run_tool("all")
++        cli.run_tool("all", cwd=worktree_path)
+ 
+         # If we reach here, all checks passed
+         task.metadata["Tp"] = True
+@@ -474,6 +486,24 @@ class WorktreeSyncHook(PipelineHook):
+                 cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
+         return cli.git.worktrees.get_worktree_path(task_id)
+ 
++    def synchronize_before_validation(self, cli, task_id, branch, worktree_path):
++        """Synchronize a stale task branch before validation checks run."""
++        default_branch = cli.git.get_default_branch()
++        merge_source = (
++            cli.git.resolve_merge_source(default_branch) if default_branch else None
++        )
++        if not merge_source:
++            return False
++
++        branch_tip = cli.git.run(
++            ["rev-parse", branch], cwd=cli.context.main_repo_root
++        ).stdout.strip()
++        if cli.git.is_ancestor(merge_source, branch_tip, cwd=worktree_path):
++            return False
++
++        self.synchronize(cli, task_id, branch, worktree_path)
++        return True
++
+     def synchronize(self, cli, task_id, branch, worktree_path):
+         """Synchronize a worktree from local main without touching local work."""
+         cli.console("worktree", "sync", branch)
+@@ -491,7 +521,7 @@ class WorktreeSyncHook(PipelineHook):
+             ["rev-parse", default_branch], cwd=cli.context.main_repo_root
+         ).stdout.strip()
+         local, remote, diverged = cli.git.main_branch_divergence(default_branch)
+-        if diverged:
++        if diverged and not cli.dev:
+             cli.action_required(
+                 "WORKTREE_MAIN_DIVERGED",
+                 task_id=task_id,
