@@ -14,7 +14,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1794917583.740277,
-  "DoneAt": null,
+  "DoneAt": 1794917700.340363,
   "PatchFiles": [
     {
       "file": "tests/test_validation_sync.py",
