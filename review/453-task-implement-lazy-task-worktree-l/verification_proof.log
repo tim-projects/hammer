@@ -1,0 +1,1 @@
+Reviewed tasks.py.patch and tests_test_usage_blockers.py.patch; usage blocker now renders Hammer voice WHAT/WHY/HOW/CONSEQUENCE. Focused test: 4 passed with 15 subtests. Full check all passed.
