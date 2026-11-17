@@ -1,5 +1,5 @@
-- [ ] Creating one task creates no local branch, worktree directory, or worktree manifest entry
-- [ ] The automatically paired user-test task also creates no branch, worktree, or manifest entry
-- [ ] Create output reports the planned branch without claiming that a worktree already exists
-- [ ] Existing create behavior preserves task metadata, counters, priorities, and parent relationships
-- [ ] Regression tests prove BACKLOG and READY tasks can exist without local Git state
+- [x] Creating one task creates no local branch, worktree directory, or worktree manifest entry
+- [x] The automatically paired user-test task also creates no branch, worktree, or manifest entry
+- [x] Create output reports the planned branch without claiming that a worktree already exists
+- [x] Existing create behavior preserves task metadata, counters, priorities, and parent relationships
+- [x] Regression tests prove BACKLOG and READY tasks can exist without local Git state
