@@ -10,5 +10,8 @@
       "ts": 1794916665.5002365,
       "prev_hash": null
     }
-  ]
+  ],
+  "summary": "Reviewed the sole test patch: added missing-worktree assertions for pipeline entry and mount, plus actionable conflict-hint assertions; no production changes.",
+  "summary_at": 1794916666.6026087,
+  "reviewed_at": 1794916666.6026096
 }
