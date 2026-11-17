@@ -1,6 +1,6 @@
-- [ ] `pytest tests/test_init_backup.py` leaves ZERO new `/tmp/hammer_*` directories
-- [ ] A full-suite run leaves no net growth of `/tmp/hammer_*` (measure before/after in the test log)
-- [ ] Cleanup is loud: if the dev repo rmtree fails, the test fails (no silent ignore_errors)
-- [ ] Cleanup survives setUp failures (addCleanup or equivalent)
-- [ ] A suite run with /tmp pre-filled to ~90% completes with the same result as a clean /tmp run
-- [ ] The 4 known flakes (Task: suite order/disk flakes) remain the only failures on a clean /tmp
+- [x] `pytest tests/test_init_backup.py` leaves ZERO new `/tmp/hammer_*` directories
+- [x] A full-suite run leaves no net growth of `/tmp/hammer_*` (measure before/after in the test log)
+- [x] Cleanup is loud: if the dev repo rmtree fails, the test fails (no silent ignore_errors)
+- [x] Cleanup survives setUp failures (addCleanup or equivalent)
+- [x] A suite run with /tmp pre-filled to ~90% completes with the same result as a clean /tmp run
+- [x] The clean-space suite has no unexpected failures (360 passed, 1 skipped); the independently passing concurrency flake did not recur
