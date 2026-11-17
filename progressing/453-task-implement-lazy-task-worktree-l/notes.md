@@ -1,1 +1,1 @@
-Umbrella implementation verified. Subtasks 455, 457, 459, and 461 are merged. Focused regressions: 49 passed. Full ./hammer check all passed (lint, test, typecheck, format). No additional code changes required.
+Umbrella implementation verified. Subtasks 455, 457, 459, and 461 are merged. Updated the missing-proof usage blocker to use the documented Hammer voice WHAT/WHY/HOW/CONSEQUENCE format. Focused usage-blocker tests: 4 passed with 15 subtests.
