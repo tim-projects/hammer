@@ -56,6 +56,18 @@ class TestUsageBlockers(unittest.TestCase):
             result.stderr,
         )
 
+    def test_verify_usage_blocker_uses_hammer_voice(self):
+        result = run_hammer("tasks", "verify", "453")
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("✗ HAMMER SAY NO! FIX! 🔨", result.stderr)
+        for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
+            self.assertIn(section, result.stderr)
+        self.assertIn(
+            "Run './hammer tasks verify --help'",
+            result.stderr,
+        )
+
     def test_successful_help_is_not_a_blocker(self):
         invocations = [
             ("tasks", "--help"),
