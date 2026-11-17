@@ -20,5 +20,8 @@
       "ts": 1794896037.2324975,
       "prev_hash": "d31174d6c48e0a3b86db88d71ef36559a549a91ef9b97a3fdd680667ea1c035b"
     }
-  ]
+  ],
+  "summary": "Reviewed both patches: verify usage now opts into existing Hammer voice rendering, and regression coverage asserts the required WHAT/WHY/HOW/CONSEQUENCE sections.",
+  "summary_at": 1794896045.215876,
+  "reviewed_at": 1794896045.2158768
 }
