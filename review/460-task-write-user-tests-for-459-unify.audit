@@ -1,0 +1,8 @@
+{
+    "task_id": "460",
+    "patch_hash": "ba93fb61935712655a7e324ec6e0e767",
+    "patch_files": [
+        "tests_test_mount_sync.py.patch"
+    ],
+    "status": "verified"
+}
