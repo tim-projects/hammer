@@ -510,6 +510,7 @@ class TestTasksAI(unittest.TestCase):
         # A bare path-shaped token still has to name a real file
         res = self.run_cmd(["modify", task_file, "--story", "./no-such-story.md"])
         self.assertFalse(res["success"])
+        self.assertEqual(res.get("error_code"), "CONTENT_FILE_NOT_FOUND")
         self.assertIn("not found", res["error"])
 
     def test_research_gate_requires_recorded_research(self):
@@ -535,7 +536,9 @@ class TestTasksAI(unittest.TestCase):
 
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertFalse(res["success"], "PROGRESSING must be blocked before research")
-        self.assertIn("Research pass not recorded", res["error"])
+        self.assertEqual(res.get("status"), "next_step", res)
+        self.assertNotIn("error", res)
+        self.assertIn("Research pass not recorded", res["hint"])
         self.assertIn("--research", res["hint"], "hint must name the remedy")
 
         # findings arrive as a file (bulk pass) like every other long-form flag
@@ -612,8 +615,8 @@ class TestTasksAI(unittest.TestCase):
         self.run_cmd(["move", task_file, "READY"])
         res = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertFalse(res["success"])
-        self.assertNotIn("Unknown error", res["error"])
-        self.assertIn("Research", res["error"])
+        self.assertNotIn("Unknown error", res["next_step"])
+        self.assertIn("Research", res["hint"])
         for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
             self.assertIn(section, res["hint"], f"hint missing {section}")
 
@@ -1061,15 +1064,17 @@ class TestTasksAI(unittest.TestCase):
         self.assertFalse(
             res["success"], "Should not allow STAGING without regression check"
         )
-        error = res.get("error", "").lower()
-        self.assertIn("regression", error, f"Error should mention regression: {res}")
+        error = res.get("next_step", "").lower()
+        self.assertIn(
+            "regression", error, f"Next step should mention regression: {res}"
+        )
 
         # --regression-check must now fail WITHOUT a verifiable per-patch review
         res = self.run_cmd(["modify", task_file, "--regression-check"])
         self.assertFalse(
             res["success"], "Should not allow --regression-check without --reviewed"
         )
-        self.assertIn("regression", res.get("error", "").lower(), res)
+        self.assertIn("regression", res.get("next_step", "").lower(), res)
 
         # Full review workflow: audit -> verify -> --reviewed -> --regression-check
         self.complete_review_gate(task_file)

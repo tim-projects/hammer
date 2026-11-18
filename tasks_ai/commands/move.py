@@ -52,7 +52,7 @@ def run(cli, filename, new_status=None, yes=False, force=False):
             try:
                 success = move_logic(cli, filename, state, yes=yes, force=force)
             except Exception as e:  # noqa: BLE001
-                cli.error(str(e))
+                cli.error("INTERNAL_ERROR", detail=str(e))
             if not success:
                 return
         _, final_state = cli.find_task(filename)

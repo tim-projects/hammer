@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import unittest
@@ -32,23 +33,24 @@ def run_hammer(*args):
     )
 
 
-class TestUsageBlockers(unittest.TestCase):
-    def test_invalid_usage_is_reported_as_a_blocker(self):
+class TestUsageNextSteps(unittest.TestCase):
+    def test_invalid_usage_is_reported_as_a_next_step(self):
         for args, detail in INVALID_USAGE:
             with self.subTest(command=" ".join(args)):
                 result = run_hammer(*args)
 
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("usage:", result.stderr.lower())
-                self.assertIn(": blocker:", result.stderr)
+                self.assertIn("NEXT STEP:", result.stderr)
+                self.assertNotIn(": blocker:", result.stderr)
                 self.assertNotIn(": error:", result.stderr)
                 self.assertIn(detail, result.stderr)
 
-    def test_checkpoint_usage_blocker_uses_hammer_voice(self):
+    def test_checkpoint_usage_next_step_is_actionable(self):
         result = run_hammer("tasks", "checkpoint")
 
         self.assertEqual(result.returncode, 2)
-        self.assertIn("✗ HAMMER SAY NO! FIX! 🔨", result.stderr)
+        self.assertIn("NEXT STEP:", result.stderr)
         for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
             self.assertIn(section, result.stderr)
         self.assertIn(
@@ -56,11 +58,11 @@ class TestUsageBlockers(unittest.TestCase):
             result.stderr,
         )
 
-    def test_verify_usage_blocker_uses_hammer_voice(self):
+    def test_verify_usage_next_step_is_actionable(self):
         result = run_hammer("tasks", "verify", "453")
 
         self.assertEqual(result.returncode, 2)
-        self.assertIn("✗ HAMMER SAY NO! FIX! 🔨", result.stderr)
+        self.assertIn("NEXT STEP:", result.stderr)
         for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
             self.assertIn(section, result.stderr)
         self.assertIn(
@@ -68,7 +70,17 @@ class TestUsageBlockers(unittest.TestCase):
             result.stderr,
         )
 
-    def test_successful_help_is_not_a_blocker(self):
+    def test_json_usage_error_uses_next_step_schema(self):
+        result = run_hammer("tasks", "-j", "checkpoint")
+
+        self.assertEqual(result.returncode, 2)
+        response = json.loads(result.stdout)
+        self.assertFalse(response["success"])
+        self.assertEqual(response["status"], "next_step")
+        self.assertNotIn("error", response)
+        self.assertNotIn("error_code", response)
+
+    def test_successful_help_is_not_a_next_step(self):
         invocations = [
             ("tasks", "--help"),
             ("check", "--help"),
@@ -81,7 +93,7 @@ class TestUsageBlockers(unittest.TestCase):
                 result = run_hammer(*args)
 
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertNotIn(": blocker:", result.stderr)
+                self.assertNotIn("NEXT STEP:", result.stderr)
 
 
 if __name__ == "__main__":

@@ -378,7 +378,7 @@ def perform_move(cli, task, current_state, new_status, filepath):
     from .file_manager import FM
 
     if not filepath:
-        cli.error("Invalid task path.")
+        cli.error("INVALID_TASK_PATH")
     filepath_str = str(filepath)
     sync_task_content(cli, filepath_str, task, is_final=new_status == "ARCHIVED")
     task.metadata.pop("St", None)

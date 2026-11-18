@@ -44,9 +44,11 @@ def run(cli, filename, confirm=None):
 
     # Permanent deletion
     if current_state != "REJECTED":
-        cli.error(
-            f"Task must be in REJECTED state to delete. Currently in {current_state}.",
-            hint="Use 'hammer tasks delete <id>' first to move to REJECTED, then confirm.",
+        cli.next_step(
+            "STATE_REQUIRED",
+            task_id=filename,
+            required_state="REJECTED",
+            current_state=current_state,
         )
 
     try:
@@ -64,7 +66,7 @@ def run(cli, filename, confirm=None):
             f"Deleted: [{task.metadata.get('Id', '')}] {tt} | {task.metadata.get('Ti', '')}"
         )
     except Exception as e:  # noqa: BLE001
-        cli.error(str(e))
+        cli.error("INTERNAL_ERROR", detail=str(e))
 
     cli.finish(
         {

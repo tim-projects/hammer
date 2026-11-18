@@ -66,6 +66,7 @@ class TestDevWriteAudit(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.test_dir, ignore_errors=True)
+        shutil.rmtree(self.dev_repo, ignore_errors=True)
 
     def git(self, *args, cwd=None):
         return subprocess.run(  # noqa: PLW1510

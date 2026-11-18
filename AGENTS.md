@@ -5,7 +5,7 @@ When using ./hammer and it returns a genuine error (identified by an error code)
 2. **Report the error** - Tell the user what happened and the error message
 3. **Wait for instruction** - Do not try to fix or work around the error without asking
 
-Expected workflow prerequisites and workflow stalls are not genuine errors. When terminal output starts with `NEXT STEP`, or JSON output has `status: next_step`, follow the supplied action and continue the workflow. These responses still exit non-zero and keep their pipeline gate blocked until the required action is complete.
+Expected workflow prerequisites and workflow stalls are not genuine errors. When terminal output starts with `NEXT STEP`, or JSON output has `status: next_step`, follow the supplied action and continue the workflow. These responses still exit non-zero and keep their pipeline gate blocked until the required action is complete. Stop and report only genuine errors, identified by a non-empty JSON `error_code` (or terminal `Error [CODE]`).
 
 ```bash
 # Use this repo's version (recommended)
