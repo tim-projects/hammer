@@ -1,10 +1,10 @@
-- [ ] Parser-generated usage stalls use terminal `NEXT STEP:` wording and JSON `status: next_step`; no output-facing `: blocker:` label remains
-- [ ] Validation and check failures use `status: next_step` and next-step wording; `CHECK <tool>: BLOCKER` and `BLOCKER:` output are removed or renamed consistently
-- [ ] Pipeline and command prerequisite stalls use `status: next_step` and omit the `error` field; they do not expose a Hammer error code
-- [ ] Genuine failures remain distinguishable from next-step stalls and expose a stable non-empty Hammer error code in JSON output while retaining the human-readable `error` message
-- [ ] A next-step response exits non-zero and identifies one actionable next move
-- [ ] Existing `action_required` status and helper name are replaced by the single `next_step` convention; no duplicate next-step status remains
-- [ ] Task dependency terminology such as linked blockers, BLOCKED state, and `BLOCKER_INCOMPLETE` domain behavior remains valid where it is not describing command-response status
-- [ ] `AGENTS.md` says to stop for genuine errors with an error code and to continue for terminal `NEXT STEP:` or JSON `status: next_step`
-- [ ] Usage, validation, pipeline-gate, action-required, and error-envelope tests are updated and pass
-- [ ] A full test-suite run passes with no new `/tmp/hammer_*` growth
+- [x] Parser-generated usage stalls use terminal `NEXT STEP:` wording and JSON `status: next_step`; no output-facing `: blocker:` label remains
+- [x] Validation and check failures use `status: next_step` and next-step wording; `CHECK <tool>: BLOCKER` and `BLOCKER:` output are removed or renamed consistently
+- [x] Pipeline and command prerequisite stalls use `status: next_step` and omit the `error` field; they do not expose a Hammer error code
+- [x] Genuine failures remain distinguishable from next-step stalls and expose a stable non-empty Hammer error code in JSON output while retaining the human-readable `error` message
+- [x] A next-step response exits non-zero and identifies one actionable next move
+- [x] Existing `action_required` status and helper name are replaced by the single `next_step` convention; no duplicate next-step status remains
+- [x] Task dependency terminology such as linked blockers, BLOCKED state, and `BLOCKER_INCOMPLETE` domain behavior remains valid where it is not describing command-response status
+- [x] `AGENTS.md` says to stop for genuine errors with an error code and to continue for terminal `NEXT STEP:` or JSON `status: next_step`
+- [x] Usage, validation, pipeline-gate, action-required, and error-envelope tests are updated and pass
+- [x] A full test-suite run passes with no new `/tmp/hammer_*` growth
