@@ -57,7 +57,7 @@ def run(
         missing.append("--repro")
 
     if missing:
-        cli.error(
+        cli.next_step(
             "MISSING_PARTS",
             missing_parts=", ".join(missing),
             issue_repro=" --repro <repro>" if task_type == "issue" else "",
@@ -86,7 +86,7 @@ def run(
             too_short.append(f"--repro (min {MIN_LEN} chars)")
 
     if too_short:
-        cli.error("TOO_SHORT", too_short=", ".join(too_short))
+        cli.next_step("TOO_SHORT", too_short=", ".join(too_short))
 
     if priority is not None:
         try:
@@ -295,4 +295,4 @@ def run(
             }
         )
     except Exception as e:  # noqa: BLE001
-        cli.error(str(e))
+        cli.error("INTERNAL_ERROR", detail=str(e))

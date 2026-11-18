@@ -9,7 +9,7 @@ from ..utils import parse_filename
 def run(cli, show_all=False):
     """Execution logic for 'tasks list'."""
     if not os.path.exists(cli.tasks_path):
-        cli.error("INIT_REQUIRED")
+        cli.next_step("INIT_REQUIRED")
 
     # Check if we should output JSON
     output_json = cli.as_json

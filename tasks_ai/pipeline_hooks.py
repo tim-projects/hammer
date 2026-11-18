@@ -146,15 +146,16 @@ class ValidationHook(PipelineHook):
         # Enforce presence of essential files
         for required_file in ["criteria.md", "progress.md"]:
             if not os.path.exists(os.path.join(filepath, required_file)):
-                cli.error(
-                    f"WHAT: Missing {required_file} | WHY: Pipeline governance requires {required_file} to be present | HOW: Run 'touch {os.path.join(filepath, required_file)}' to create the file | CONSEQUENCE: Transition halted."
+                cli.next_step(
+                    "REQUIRED_FILE_MISSING",
+                    path=os.path.join(filepath, required_file),
                 )
 
         task_id = str(task.metadata.get("Id", ""))
         branch = _task_branch(task, filepath)
         worktree_path = cli.git.worktrees.get_worktree_path(task_id)
         if not worktree_path:
-            cli.action_required("WORKTREE_NOT_FOUND", task_id=task_id)
+            cli.next_step("WORKTREE_NOT_FOUND", task_id=task_id)
         synchronized = WorktreeSyncHook().synchronize_before_validation(
             cli, task_id, branch, worktree_path
         )
@@ -193,11 +194,11 @@ class ContentSufficiencyHook(PipelineHook):
 
         if current_state == "BACKLOG" and new_status not in ("BACKLOG", "REJECTED"):  # noqa: SIM102
             if not has_complete_content(task, os.path.basename(filepath)):
-                cli.error("Task lacks required content to leave BACKLOG.")
+                cli.next_step("CONTENT_REQUIRED")
 
         if new_status == "PROGRESSING":  # noqa: SIM102
             if not has_complete_content(task, os.path.basename(filepath)):
-                cli.error("Task lacks sufficient detail to move to PROGRESSING.")
+                cli.next_step("CONTENT_REQUIRED")
 
 
 class ResearchGateHook(PipelineHook):
@@ -220,7 +221,7 @@ class ResearchGateHook(PipelineHook):
         if task.metadata.get("Rr") and len(research) >= self.MIN_RESEARCH_LEN:
             return
 
-        cli.error("RESEARCH_REQUIRED", task_id=task.metadata.get("Id"))
+        cli.next_step("RESEARCH_REQUIRED", task_id=task.metadata.get("Id"))
 
 
 class BlockerCheckHook(PipelineHook):
@@ -232,7 +233,7 @@ class BlockerCheckHook(PipelineHook):
             for b in bl:
                 _, bs = cli.find_task(str(b))
                 if bs not in ("DONE", "ARCHIVED"):
-                    cli.error("BLOCKER_INCOMPLETE", blocker=b)
+                    cli.next_step("BLOCKER_INCOMPLETE", blocker=b)
 
 
 class TestingToReviewGateHook(PipelineHook):
@@ -241,9 +242,9 @@ class TestingToReviewGateHook(PipelineHook):
     def execute(self, cli, task, current_state, new_status, filepath):
         if current_state == "TESTING" and new_status == "REVIEW":
             if not task.metadata.get("Tp", False):
-                cli.error(
-                    "Tests must be passed before moving to REVIEW.",
-                    hint="Run 'hammer tasks modify <id> --tests-passed' to mark tests as passed.",
+                cli.next_step(
+                    "REGRESSION_CHECK_NOT_PASSED",
+                    task_id=task.metadata.get("Id"),
                 )
 
             # Robust check: if patches is empty, auto-pass regression check
@@ -483,7 +484,7 @@ class WorktreeSyncHook(PipelineHook):
                 task_id, branch, base_ref=base_ref
             )
             if not worktree_path:
-                cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
+                cli.next_step("WORKTREE_NOT_FOUND", task_id=task_id)
         return cli.git.worktrees.get_worktree_path(task_id)
 
     def synchronize_before_validation(self, cli, task_id, branch, worktree_path):
@@ -522,7 +523,7 @@ class WorktreeSyncHook(PipelineHook):
         ).stdout.strip()
         local, remote, diverged = cli.git.main_branch_divergence(default_branch)
         if diverged and not cli.dev:
-            cli.action_required(
+            cli.next_step(
                 "WORKTREE_MAIN_DIVERGED",
                 task_id=task_id,
                 branch=branch,
@@ -534,7 +535,7 @@ class WorktreeSyncHook(PipelineHook):
         conflicts = cli.git.conflicting_files(worktree_path, merge_source)
         local_paths = cli.git.uncommitted_files(worktree_path)
         if conflicts:
-            cli.action_required(
+            cli.next_step(
                 "WORKTREE_SYNC_CONFLICT",
                 task_id=task_id,
                 branch=branch,
@@ -544,7 +545,7 @@ class WorktreeSyncHook(PipelineHook):
                 worktree_path=worktree_path,
             )
         if local_paths:
-            cli.action_required(
+            cli.next_step(
                 "WORKTREE_LOCAL_WORK",
                 task_id=task_id,
                 branch=branch,
@@ -562,7 +563,7 @@ class WorktreeSyncHook(PipelineHook):
                 merge_source=merge_source,
             )
         except PipelineMergeConflict as e:
-            cli.action_required(
+            cli.next_step(
                 "WORKTREE_SYNC_CONFLICT",
                 task_id=task_id,
                 branch=e.branch,
@@ -641,7 +642,7 @@ class ProgressUpdateHook(PipelineHook):
                     current_content = f.read().strip()
 
                 if last_content == current_content:
-                    cli.error(
+                    cli.next_step(
                         "NO_PROGRESS_UPDATE",
                         progress_path=progress_path,
                         current_path=current_path,
@@ -809,7 +810,7 @@ class WorktreeExistsHook(PipelineHook):
 
             cli.move(task.metadata.get("Id"), "PROGRESSING")
 
-            cli.error("WORKTREE_MISSING_AUTO_DEMOTED", branch=branch)
+            cli.next_step("WORKTREE_MISSING_AUTO_DEMOTED", branch=branch)
 
 
 class DoneAtHook(PipelineHook):
