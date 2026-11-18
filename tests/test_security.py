@@ -51,10 +51,10 @@ class TestSecurity(unittest.TestCase):
         # Create a task with weird characters
         self.cli.create(
             "Task with <script>alert(1)</script>",
-            story="...",
-            tech="...",
-            criteria="...",
-            plan="...",
+            story="A story long enough to satisfy task creation validation.",
+            tech="Technical details long enough to satisfy task creation validation.",
+            criteria="Acceptance criteria long enough to satisfy task creation validation.",
+            plan="A plan long enough to satisfy task creation validation.",
         )
 
         # Check generated ID in backlog

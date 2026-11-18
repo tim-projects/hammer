@@ -100,6 +100,12 @@ class HammerTestBase(unittest.TestCase):
             ["git", "clone", os.getcwd(), self.repo_path],
             check=True,
             capture_output=True,
+            env={
+                **os.environ,
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "maintenance.auto",
+                "GIT_CONFIG_VALUE_0": "false",
+            },
         )
         subprocess.run(
             ["git", "fetch", "origin", "tasks"],

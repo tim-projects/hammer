@@ -8,7 +8,7 @@ def run(cli, filename=None):
     filepath, task = cli.get_active_task(filename)
     if not filepath or not task:
         candidates = cli.processing_candidates()
-        cli.error(
+        cli.next_step(
             "NO_ACTIVE_TASK",
             usage="./hammer tasks checkpoint <id>",
             candidates=", ".join(candidates) if candidates else "none",

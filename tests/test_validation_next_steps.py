@@ -19,13 +19,18 @@ class FakeCLI:
             {"repo_root": root, "main_repo_root": root},
         )()
         self.errors = []
+        self.next_steps = []
 
     def error(self, code, **kwargs):
         self.errors.append((code, kwargs))
         raise RuntimeError(code)
 
+    def next_step(self, code, **kwargs):
+        self.next_steps.append((code, kwargs))
+        raise RuntimeError(code)
 
-class TestValidationBlockers(unittest.TestCase):
+
+class TestValidationNextSteps(unittest.TestCase):
     def run_validation(self, payload, returncode=1):
         cli = FakeCLI("/tmp/repo")
         result = subprocess.CompletedProcess(
@@ -39,9 +44,9 @@ class TestValidationBlockers(unittest.TestCase):
             self.assertRaises(RuntimeError),
         ):
             Validation(cli).run_tool("all")
-        return cli.errors[0]
+        return cli.next_steps[0]
 
-    def test_failed_lint_output_is_preserved_as_the_blocker(self):
+    def test_failed_lint_output_is_preserved_as_the_next_step(self):
         code, details = self.run_validation(
             {
                 "success": False,
@@ -62,10 +67,10 @@ class TestValidationBlockers(unittest.TestCase):
             }
         )
 
-        self.assertEqual(code, "PIPELINE_VALIDATION_FAILED")
+        self.assertEqual(code, "VALIDATION_FAILED")
         self.assertEqual(details["tool"], "lint")
-        self.assertIn("BLOCKER F401", details["msg"])
-        self.assertIn("Found 1 lint blocker", details["msg"])
+        self.assertIn("FINDING F401", details["msg"])
+        self.assertIn("Found 1 lint finding", details["msg"])
         self.assertNotIn('"severity": "error"', details["msg"])
 
     def test_failed_tool_without_output_keeps_tool_and_exit_code(self):
@@ -79,17 +84,17 @@ class TestValidationBlockers(unittest.TestCase):
             }
         )
 
-        self.assertEqual(code, "PIPELINE_VALIDATION_FAILED")
-        self.assertTrue(details["msg"].startswith("BLOCKER typecheck:"))
+        self.assertEqual(code, "VALIDATION_FAILED")
+        self.assertTrue(details["msg"].startswith("NEXT STEP: Fix typecheck"))
         self.assertIn("2", details["msg"])
         self.assertNotIn("Tool execution failed", details["msg"])
 
-    def test_check_results_render_each_failure_as_a_readable_blocker(self):
+    def test_check_results_render_each_failure_as_a_readable_next_step(self):
         output = format_check_results(
             [
                 {
                     "success": False,
-                    "status": "blocker",
+                    "status": "next_step",
                     "tool": "test",
                     "stdout": "1 failed, 99 passed",
                     "stderr": "test details",
@@ -98,13 +103,13 @@ class TestValidationBlockers(unittest.TestCase):
             ]
         )
 
-        self.assertIn("CHECK test: BLOCKER", output)
+        self.assertIn("CHECK test: NEXT_STEP", output)
         self.assertIn("exit_code: 1", output)
         self.assertIn("1 failed, 99 passed", output)
         self.assertIn("test details", output)
         self.assertNotIn("Results: [", output)
 
-    def test_validator_marks_every_failed_check_as_a_blocker(self):
+    def test_validator_marks_every_failed_check_as_a_next_step(self):
         validator = Validator.__new__(Validator)
         validator.project_root = "/tmp/repo"
         validator.dev = False
@@ -123,18 +128,17 @@ class TestValidationBlockers(unittest.TestCase):
             check = validator.run_check("lint")
 
         self.assertFalse(check["success"])
-        self.assertEqual(check["status"], "blocker")
+        self.assertEqual(check["status"], "next_step")
 
-    def test_validation_message_describes_a_promotion_blocker(self):
+    def test_validation_message_describes_an_actionable_next_step(self):
         messages = MessageRegistry()
-        error = messages.get_error("PIPELINE_VALIDATION_FAILED")
-        hint = messages.get_hint("PIPELINE_VALIDATION_FAILED", msg="lint failed")
+        next_step = messages.get_next_step("VALIDATION_FAILED", tool="lint")
+        hint = messages.get_next_step_hint("VALIDATION_FAILED", tool="lint")
 
-        self.assertIn("blocked", error.lower())
-        self.assertIn("blocker", hint.lower())
+        self.assertIn("lint", next_step.lower())
+        self.assertIn("check all", next_step.lower())
         self.assertIn("remains in its current state", hint)
-        self.assertIn("hammer check all", hint)
-        self.assertNotIn("Governance rules broken", hint)
+        self.assertNotIn("Unknown error", next_step)
 
 
 if __name__ == "__main__":

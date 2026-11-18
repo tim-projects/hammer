@@ -38,7 +38,7 @@ def _print_record(record):
 def run_all(cli):
     """Execution logic for 'tasks show --all': every task's .md files and metadata."""
     if not os.path.exists(cli.tasks_path):
-        cli.error("INIT_REQUIRED")
+        cli.next_step("INIT_REQUIRED")
 
     records = []
     for state, folder in STATE_FOLDERS.items():
@@ -66,8 +66,8 @@ def run_task_all(cli, filename):
     filepath, _ = cli.find_task(filename)
     if not filepath:
         cli.error(
-            f"Task '{filename}' not found.",
-            hint="Use 'hammer tasks list' to see available task Ids.",
+            "TASK_NOT_FOUND",
+            filename=filename,
         )
     filepath_str = str(filepath)
     state = next(
@@ -91,8 +91,8 @@ def run(cli, filename, section=None, show_all=False):
     filepath, _ = cli.find_task(filename)
     if not filepath:
         cli.error(
-            f"Task '{filename}' not found.",
-            hint="Use 'hammer tasks list' to see available task Ids.",
+            "TASK_NOT_FOUND",
+            filename=filename,
         )
     filepath_str = str(filepath)
     task = FM.load(filepath_str)

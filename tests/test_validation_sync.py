@@ -38,7 +38,7 @@ class FakeCLI:
             main_repo_root=git_service.context.main_repo_root,
         )
         self.validations = []
-        self.action_required_calls = []
+        self.next_step_calls = []
 
     def console(self, *args):
         pass
@@ -49,8 +49,8 @@ class FakeCLI:
     def error(self, code, **kwargs):
         raise RuntimeError(code)
 
-    def action_required(self, code, **kwargs):
-        self.action_required_calls.append((code, kwargs))
+    def next_step(self, code, **kwargs):
+        self.next_step_calls.append((code, kwargs))
         raise SystemExit(1)
 
     def run_tool(self, tool_name=None, fix=False, cwd=None):
@@ -142,7 +142,7 @@ class ValidationFreshnessTest(unittest.TestCase):
             self.validate()
 
         self.assertEqual([], self.cli.validations)
-        code, details = self.cli.action_required_calls[0]
+        code, details = self.cli.next_step_calls[0]
         self.assertEqual("WORKTREE_LOCAL_WORK", code)
         self.assertEqual(self.task_id, details["task_id"])
         self.assertEqual(self.branch, details["branch"])
@@ -150,7 +150,7 @@ class ValidationFreshnessTest(unittest.TestCase):
         self.assertTrue(details["local_commit"])
         self.assertEqual("base.txt, scratch.txt", details["paths"])
         self.assertEqual(self.worktree, details["worktree_path"])
-        hint = MessageRegistry().get_hint(code, **details)
+        hint = MessageRegistry().get_next_step_hint(code, **details)
         self.assertIn("Commit or stash the local work", hint)
         self.assertIn("./hammer tasks mount 461", hint)
         with open(tracked, encoding="utf-8") as handle:
@@ -171,7 +171,7 @@ class ValidationFreshnessTest(unittest.TestCase):
             self.validate()
 
         self.assertEqual([], self.cli.validations)
-        code, details = self.cli.action_required_calls[0]
+        code, details = self.cli.next_step_calls[0]
         self.assertEqual("WORKTREE_SYNC_CONFLICT", code)
         self.assertEqual(self.task_id, details["task_id"])
         self.assertEqual(self.branch, details["branch"])
@@ -179,7 +179,7 @@ class ValidationFreshnessTest(unittest.TestCase):
         self.assertTrue(details["local_commit"])
         self.assertEqual("base.txt", details["paths"])
         self.assertEqual(self.worktree, details["worktree_path"])
-        hint = MessageRegistry().get_hint(code, **details)
+        hint = MessageRegistry().get_next_step_hint(code, **details)
         self.assertIn("Resolve every conflicting path manually", hint)
         self.assertIn("git add <paths>", hint)
         self.assertIn("./hammer tasks mount 461", hint)
