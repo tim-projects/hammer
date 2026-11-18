@@ -349,6 +349,16 @@
       "bytes": 562,
       "ts": 1795014815.3928301,
       "prev_hash": "4605c640b05cd7a43182f67bc3970b6d56b6e911368c16594d5953df1f9afec1"
+    },
+    {
+      "seq": 36,
+      "file": "tests/test_cli_robustness.py",
+      "patch": "tests_test_cli_robustness.py.patch",
+      "md5": "0822b2ce87247c5c47699264eaaa2f84",
+      "sha256": "8995bce403781e2aeff092503ddbcb35e4e2af7ca9c0c9245a732d27abff23a1",
+      "bytes": 919,
+      "ts": 1795014817.2982628,
+      "prev_hash": "79f525da2ed05d6e06aff80ef29421dce0f80522fab381ef80a541d1d8bbdf73"
     }
   ]
 }
