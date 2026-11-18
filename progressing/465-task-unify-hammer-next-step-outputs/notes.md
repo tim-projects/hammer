@@ -1,0 +1,3 @@
+- Progress: Implemented one next_step response contract across parser, validation, pipeline, and command prerequisites. Genuine JSON errors now expose non-empty error_code; next-step JSON omits error/error_code. Added data/next_steps.json and updated AGENTS.md. Full pytest: 359 passed, 1 skipped, 290 subtests passed. Ruff and compile checks pass. Fixed dev clone hardlink race and bounded test cleanup.
+- Findings: 
+- Mitigations: 
