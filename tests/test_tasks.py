@@ -1065,7 +1065,9 @@ class TestTasksAI(unittest.TestCase):
             res["success"], "Should not allow STAGING without regression check"
         )
         error = res.get("next_step", "").lower()
-        self.assertIn("regression", error, f"Next step should mention regression: {res}")
+        self.assertIn(
+            "regression", error, f"Next step should mention regression: {res}"
+        )
 
         # --regression-check must now fail WITHOUT a verifiable per-patch review
         res = self.run_cmd(["modify", task_file, "--regression-check"])
