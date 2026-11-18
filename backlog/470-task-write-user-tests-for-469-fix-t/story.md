@@ -1,0 +1,1 @@
+As a Hammer developer running the full test suite, I need the transition-matrix test to recognize validation blockers returned through the unified next-step contract, so that a valid transition rejection is not reported as a test failure.
