@@ -3,7 +3,9 @@
   "Ti": "Dev mode leaks per-test throwaway repos into /tmp until the suite fails with ENOSPC",
   "Ty": "issue",
   "Cr": "261117 17:03",
-  "Bl": [],
+  "Bl": [
+    "469-issue-fix-transition-matrix-for-unif"
+  ],
   "Pr": 1,
   "Br": "463-issue-dev-mode-leaks-per-test-throwa",
   "Pt": null,
