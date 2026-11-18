@@ -1,0 +1,1 @@
+As a Python maintainer, I want an optional `unref` check to run alongside Ruff so I can detect unreferenced Python definitions when that extra analysis is useful, without forcing every project or contributor to install or run `unref`.

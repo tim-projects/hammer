@@ -1,0 +1,8 @@
+- [ ] `unref` is available as an opt-in companion Python lint check while the existing Ruff lint check remains configured and runs unchanged.
+- [ ] The companion check is disabled by default and does not require `unref` to be installed when it is not configured.
+- [ ] When enabled, `unref` runs in the task worktree/project root, reports findings, and produces a validation blocker on a non-zero exit.
+- [ ] When enabled but the `unref` executable is unavailable, validation fails with an actionable tool-not-found error rather than silently skipping the check.
+- [ ] `check lint --fix` does not attempt an unsupported `unref` autofix and continues to use Ruff's existing fix behavior.
+- [ ] Configuration help/docs describe how to enable the optional companion check and install `unref`; the dependency is not made mandatory for normal Ruff-only projects.
+- [ ] Focused tests cover disabled behavior, enabled pass/fail behavior, missing-executable behavior, and the retained Ruff fix behavior.
+- [ ] Relevant Ruff, focused pytest, and project validation checks pass with no regressions.
