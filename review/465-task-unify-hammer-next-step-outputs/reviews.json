@@ -39,6 +39,16 @@
       "bytes": 23635,
       "ts": 1795014752.1948748,
       "prev_hash": "cfbb87b45cb0d695ed9dfc3900b3671836fba8955888df602a25df55c71f3dd5"
+    },
+    {
+      "seq": 5,
+      "file": "data/next_steps.json",
+      "patch": "data_next_steps.json.patch",
+      "md5": "5a722ef1f3b0c7fc40010b2a36419271",
+      "sha256": "f913bd49e794516521f8a3ac8ad611122df44b8ae65453b5c0f33b96aacb690c",
+      "bytes": 10695,
+      "ts": 1795014754.2086,
+      "prev_hash": "ca76be9d18ae5f328d0a0bb25a96b1a168c0f32b465042ebec16b47666114ad4"
     }
   ]
 }
