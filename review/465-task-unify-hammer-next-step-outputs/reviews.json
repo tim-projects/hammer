@@ -470,5 +470,8 @@
       "ts": 1795014837.9386415,
       "prev_hash": "0a12fd08c35293e94c8229924bc6630e43fa027a2b78ab549469912cf8b58acf"
     }
-  ]
+  ],
+  "summary": "Reviewed all 47 patches: unified parser, validation, pipeline, command, and registry responses under next_step; genuine errors expose error_code; dependency blocker terminology remains domain-specific; tests and cleanup fixtures cover the contract and bounded temporary storage.",
+  "summary_at": 1795015057.106292,
+  "reviewed_at": 1795015057.106293
 }
