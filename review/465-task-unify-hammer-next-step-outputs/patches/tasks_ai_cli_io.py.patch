@@ -1,0 +1,93 @@
+diff --git a/tasks_ai/cli_io.py b/tasks_ai/cli_io.py
+index abc19c81..4005438e 100644
+--- a/tasks_ai/cli_io.py
++++ b/tasks_ai/cli_io.py
+@@ -11,21 +11,36 @@ def configure_sigpipe():
+         signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+ 
+ 
+-class BlockerArgumentParser(argparse.ArgumentParser):
+-    """Report invalid usage as a blocker while preserving argparse's details."""
++class NextStepArgumentParser(argparse.ArgumentParser):
++    """Report invalid usage as an actionable next step."""
+ 
+     def error(self, message):
+         self.print_usage(sys.stderr)
++        next_step = (
++            f"Correct the command syntax: {message}. "
++            f"Run './hammer {self.prog} --help' to see correct usage."
++        )
++        if any(arg in ("-j", "--json") for arg in sys.argv[1:]):
++            print(
++                json.dumps(
++                    {
++                        "success": False,
++                        "status": "next_step",
++                        "next_step": next_step,
++                    }
++                )
++            )
++            self.exit(2)
+         if getattr(self, "hammer_voice", False):
+             self.exit(
+                 2,
+-                f"{self.prog}: blocker: ✗ HAMMER SAY NO! FIX! 🔨\n"
++                f"NEXT STEP: {next_step}\n"
+                 f"WHAT: {message}.\n"
+-                "WHY: Command syntax invalid. HAMMER demand precision.\n"
++                "WHY: Command syntax invalid.\n"
+                 f"HOW: Run './hammer {self.prog} --help' to see correct usage.\n"
+-                "CONSEQUENCE: Command halted. FIX COMMAND.\n",
++                "CONSEQUENCE: Command halted until the syntax is corrected.\n",
+             )
+-        self.exit(2, f"{self.prog}: blocker: {message}\n")
++        self.exit(2, f"NEXT STEP: {next_step}\n")
+ 
+ 
+ def get_terminal_width():
+@@ -42,11 +57,17 @@ def log(cli, message):
+         print(message)
+ 
+ 
+-def error(cli, message, hint=None):
++def error(cli, message, hint=None, error_code="UNEXPECTED_ERROR"):
++    error_code = str(error_code).strip() or "UNEXPECTED_ERROR"
+     if cli.quiet:
+-        pass
+-    elif cli.as_json:
+-        response = {"success": False, "error": message, "messages": cli.output_messages}
++        sys.exit(1)
++    if cli.as_json:
++        response = {
++            "success": False,
++            "error_code": error_code,
++            "error": message,
++            "messages": cli.output_messages,
++        }
+         if hint:
+             response["hint"] = hint
+         print(json.dumps(response))
+@@ -54,19 +75,19 @@ def error(cli, message, hint=None):
+     else:
+         if hint:
+             message = f"{message} | HINT: {hint}"
+-        print(f"Error: {message}", file=sys.stderr)
++        print(f"Error [{error_code}]: {message}", file=sys.stderr)
+         sys.exit(1)
+ 
+ 
+-def action_required(cli, message, hint=None):
++def next_step(cli, message, hint=None):
+     """Render an expected workflow prerequisite without weakening the gate."""
+     if cli.quiet:
+         sys.exit(1)
+     if cli.as_json:
+         response = {
+             "success": False,
+-            "status": "action_required",
+-            "error": message,
++            "status": "next_step",
++            "next_step": message,
+             "messages": cli.output_messages,
+         }
+         if hint:

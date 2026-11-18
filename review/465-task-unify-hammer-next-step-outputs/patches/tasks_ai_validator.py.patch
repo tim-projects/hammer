@@ -1,0 +1,59 @@
+diff --git a/tasks_ai/validator.py b/tasks_ai/validator.py
+index 9dfb4b7d..3b272efb 100644
+--- a/tasks_ai/validator.py
++++ b/tasks_ai/validator.py
+@@ -10,7 +10,7 @@ def format_check_results(results: list[dict]) -> str:
+     lines = []
+     for result in results:
+         success = bool(result.get("success"))
+-        status = result.get("status") or ("pass" if success else "blocker")
++        status = result.get("status") or ("pass" if success else "next_step")
+         tool = result.get("tool", "validation")
+         lines.append(f"CHECK {tool}: {status.upper()}")
+         if success:
+@@ -24,8 +24,8 @@ def format_check_results(results: list[dict]) -> str:
+     return "\n".join(lines)
+ 
+ 
+-def format_ruff_blockers(output: str) -> str:
+-    """Present Ruff violations as promotion blockers, not tool errors."""
++def format_ruff_findings(output: str) -> str:
++    """Present Ruff violations as actionable findings, not Hammer errors."""
+     try:
+         findings = json.loads(output)
+     except (json.JSONDecodeError, TypeError):
+@@ -41,9 +41,9 @@ def format_ruff_blockers(output: str) -> str:
+         filename = finding.get("filename", "")
+         code = finding.get("code", "")
+         message = finding.get("message", "")
+-        lines.append(f"BLOCKER {code} {filename}:{row}:{column}: {message}")
++        lines.append(f"FINDING {code} {filename}:{row}:{column}: {message}")
+     count = len(lines)
+-    lines.append(f"Found {count} lint blocker{'s' if count != 1 else ''}.")
++    lines.append(f"Found {count} lint finding{'s' if count != 1 else ''}.")
+     return "\n".join(lines)
+ 
+ 
+@@ -273,11 +273,11 @@ class Validator:
+ 
+         stdout = result.stdout
+         if tool_type == "lint" and tool == "ruff":
+-            stdout = format_ruff_blockers(stdout)
++            stdout = format_ruff_findings(stdout)
+         success = result.returncode == 0
+         return {
+             "success": success,
+-            "status": "pass" if success else "blocker",
++            "status": "pass" if success else "next_step",
+             "tool": tool_type,
+             "stdout": stdout,
+             "stderr": result.stderr,
+@@ -316,7 +316,7 @@ class Validator:
+         success = result.returncode == 0
+         return {
+             "success": success,
+-            "status": "pass" if success else "blocker",
++            "status": "pass" if success else "next_step",
+             "tool": "debug",
+             "stdout": result.stdout,
+             "stderr": result.stderr,

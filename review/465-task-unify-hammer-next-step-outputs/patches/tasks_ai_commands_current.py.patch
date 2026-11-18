@@ -1,0 +1,13 @@
+diff --git a/tasks_ai/commands/current.py b/tasks_ai/commands/current.py
+index 41e26dc0..e15f79a6 100644
+--- a/tasks_ai/commands/current.py
++++ b/tasks_ai/commands/current.py
+@@ -10,7 +10,7 @@ def run(cli, filename=None):
+     filepath, task = cli.get_active_task(filename)
+     if not filepath or not task:
+         candidates = cli.processing_candidates()
+-        cli.error(
++        cli.next_step(
+             "NO_ACTIVE_TASK",
+             usage="./hammer tasks current <id>",
+             candidates=", ".join(candidates) if candidates else "none",

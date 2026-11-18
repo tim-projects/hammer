@@ -1,0 +1,36 @@
+diff --git a/tasks_ai/commands.py b/tasks_ai/commands.py
+index 5b9982d9..b6230305 100644
+--- a/tasks_ai/commands.py
++++ b/tasks_ai/commands.py
+@@ -27,7 +27,7 @@ class Commands:
+                 with open(config_path, "w") as f:
+                     yaml.safe_dump(cfg, f)
+             except Exception as e:  # noqa: BLE001
+-                self.cli.error(f"❌ CONFIG SAVE FAIL! {e}! 🔨")
++                self.cli.error("CONFIG_SAVE_FAILED", detail=str(e))
+ 
+         if action == "detect":
+             detected = self.cli._detect_tools()
+@@ -65,19 +65,16 @@ class Commands:
+                 print("\nRun 'config detect' to auto-detect project tools.")
+         elif action == "get":
+             if not key:
+-                self.cli.error("❌ MISSING CONFIG KEY! 🔨")
++                self.cli.error("MISSING_CONFIG_KEY")
+             if self.cli.as_json:
+                 self.cli.finish({"key": key, "value": cfg.get(key)})
+             else:
+                 print(cfg.get(key, ""))
+         elif action == "set":
+             if not key or value is None:
+-                self.cli.error("❌ MISSING CONFIG KEY OR VALUE! 🔨")
++                self.cli.error("MISSING_CONFIG_KEY_OR_VALUE")
+             if key not in ALLOWED_CONFIG_KEYS:
+-                self.cli.error(
+-                    f"❌ INVALID CONFIG KEY '{key}'! 🔨",
+-                    hint=f"ALLOWED: {', '.join(sorted(ALLOWED_CONFIG_KEYS))}! RUN 'tasks config detect' AUTO-DETECT TOOLS!",
+-                )
++                self.cli.error("INVALID_CONFIG_KEY", key=key)
+             cfg[key] = value
+             save_config(cfg)
+             if self.cli.as_json:

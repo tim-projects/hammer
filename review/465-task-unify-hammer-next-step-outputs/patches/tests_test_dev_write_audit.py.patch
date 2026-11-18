@@ -1,0 +1,12 @@
+diff --git a/tests/test_dev_write_audit.py b/tests/test_dev_write_audit.py
+index 24f1121b..f3836c7e 100644
+--- a/tests/test_dev_write_audit.py
++++ b/tests/test_dev_write_audit.py
+@@ -66,6 +66,7 @@ class TestDevWriteAudit(unittest.TestCase):
+ 
+     def tearDown(self):
+         shutil.rmtree(self.test_dir, ignore_errors=True)
++        shutil.rmtree(self.dev_repo, ignore_errors=True)
+ 
+     def git(self, *args, cwd=None):
+         return subprocess.run(  # noqa: PLW1510

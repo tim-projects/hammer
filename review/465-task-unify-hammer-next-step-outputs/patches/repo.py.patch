@@ -1,0 +1,39 @@
+diff --git a/repo.py b/repo.py
+index abbfd732..3399015f 100755
+--- a/repo.py
++++ b/repo.py
+@@ -39,7 +39,7 @@ import sys
+ from pathlib import Path
+ 
+ sys.path.append(os.getcwd())
+-from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
++from tasks_ai.cli_io import NextStepArgumentParser, configure_sigpipe
+ 
+ try:
+     from tasks_ai.cli import TasksCLI
+@@ -105,13 +105,13 @@ def warn(msg):
+         print(f"{YELLOW}[repo] WARN:{NC} {msg}")
+ 
+ 
+-def error(msg, hint=None):
++def error(msg, hint=None, error_code="REPO_ERROR"):
+     if hint:
+         msg = f"{msg} | HINT: {hint}"
+     if FLAGS["json"]:
+-        print(json.dumps({"success": False, "error": msg}))
++        print(json.dumps({"success": False, "error_code": error_code, "error": msg}))
+     else:
+-        print(f"{RED}[repo] ERROR:{NC} {msg}")
++        print(f"{RED}[repo] ERROR [{error_code}]:{NC} {msg}")
+     sys.exit(1)
+ 
+ 
+@@ -572,7 +572,7 @@ def global_flags():
+ 
+ 
+ def build_parser():
+-    parser = BlockerArgumentParser(
++    parser = NextStepArgumentParser(
+         prog="repo",
+         description=__doc__,
+         formatter_class=argparse.RawDescriptionHelpFormatter,

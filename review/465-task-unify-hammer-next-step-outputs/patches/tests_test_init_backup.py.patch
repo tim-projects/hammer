@@ -1,0 +1,12 @@
+diff --git a/tests/test_init_backup.py b/tests/test_init_backup.py
+index 408e6000..168be58c 100644
+--- a/tests/test_init_backup.py
++++ b/tests/test_init_backup.py
+@@ -28,6 +28,7 @@ class TestInitBackup(unittest.TestCase):
+     def tearDown(self):
+         if os.path.exists(self.dev_tasks):
+             shutil.rmtree(self.dev_tasks)
++        shutil.rmtree(self.dev_tasks + "-repo", ignore_errors=True)
+         backup_root = os.path.join(os.path.dirname(self.dev_tasks), ".tasks.backup")
+         if os.path.exists(backup_root):
+             shutil.rmtree(backup_root)

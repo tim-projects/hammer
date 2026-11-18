@@ -1,0 +1,212 @@
+{
+  "Id": 465,
+  "Ti": "Unify Hammer next-step outputs and error-code semantics",
+  "Ty": "task",
+  "Cr": "261118 04:00",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "465-task-unify-hammer-next-step-outputs",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795013944.146235,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/AGENTS.md.patch"
+    },
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/check.py.patch"
+    },
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/data_hints.json.patch"
+    },
+    {
+      "file": "data/next_steps.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/data_next_steps.json.patch"
+    },
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/guard.py.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_io.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_cli_io.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_audit.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/checkpoint.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_checkpoint.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/current.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_current.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/delete.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_delete.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/list.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_list.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/modify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_modify.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/mount.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_mount.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/review.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_review.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/show.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_show.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/verify.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_commands_verify.py.patch"
+    },
+    {
+      "file": "tasks_ai/context.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_context.py.patch"
+    },
+    {
+      "file": "tasks_ai/counter.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_counter.py.patch"
+    },
+    {
+      "file": "tasks_ai/messages.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_messages.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_validation.py.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_blocker_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_blocker_states.py.patch"
+    },
+    {
+      "file": "tests/test_check_worktree.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_check_worktree.py.patch"
+    },
+    {
+      "file": "tests/test_cli_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_cli_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_dev_write_audit.py.patch"
+    },
+    {
+      "file": "tests/test_init_backup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_init_backup.py.patch"
+    },
+    {
+      "file": "tests/test_mount_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_mount_sync.py.patch"
+    },
+    {
+      "file": "tests/test_next_step.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_next_step.py.patch"
+    },
+    {
+      "file": "tests/test_repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_repo.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_security.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_security.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_usage_next_steps.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_usage_next_steps.py.patch"
+    },
+    {
+      "file": "tests/test_validation_next_steps.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_validation_next_steps.py.patch"
+    },
+    {
+      "file": "tests/test_validation_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/465-task-unify-hammer-next-step-outputs/patches/tests_test_validation_sync.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "f410f15a078f2b287c56fb64357ee5832ad9528c",
+    "base": "8742f202a279ee28aa1b266115c91e2560ea5592"
+  }
+}

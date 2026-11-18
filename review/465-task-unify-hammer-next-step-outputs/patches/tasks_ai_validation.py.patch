@@ -1,0 +1,81 @@
+diff --git a/tasks_ai/validation.py b/tasks_ai/validation.py
+index 31b31f62..2bdea03d 100644
+--- a/tasks_ai/validation.py
++++ b/tasks_ai/validation.py
+@@ -5,7 +5,7 @@ import sys
+ from pathlib import Path
+ from typing import TYPE_CHECKING
+ 
+-from .validator import format_ruff_blockers
++from .validator import format_ruff_findings
+ 
+ if TYPE_CHECKING:
+     from .cli_engine import TasksCLI
+@@ -101,7 +101,7 @@ class Validation:
+         if any(abs_path.startswith(os.path.abspath(root)) for root in allowed_roots):
+             return True
+ 
+-        self.cli.error(f"Path outside repository: {path}")
++        self.cli.error("PATH_OUTSIDE_REPOSITORY", path=path)
+         return False
+ 
+     def run_tool(
+@@ -116,7 +116,7 @@ class Validation:
+         check_py = install_dir / "check.py"
+ 
+         if not check_py.exists():
+-            self.cli.error("check.py not found in project root.")
++            self.cli.error("CHECK_TOOL_MISSING")
+             return
+ 
+         cmd = [sys.executable, str(check_py), tool_name or "all"]
+@@ -175,24 +175,23 @@ class Validation:
+                     if details:
+                         details = str(details).strip()
+                         if tool == "lint":
+-                            details = format_ruff_blockers(details)
+-                        error_msg = f"BLOCKER {tool}: {details}"
+-                    else:
+-                        exit_code = failed_line.get("exit_code", "unknown")
++                            details = format_ruff_findings(details)
+                         error_msg = (
+-                            f"BLOCKER {tool}: check failed with exit code {exit_code}"
++                            f"NEXT STEP: Fix {tool} validation failures: {details}"
+                         )
+-                    self.cli.error(
+-                        "PIPELINE_VALIDATION_FAILED",
+-                        hint_code="PIPELINE_VALIDATION_FAILED",
++                    else:
++                        exit_code = failed_line.get("exit_code", "unknown")
++                        error_msg = f"NEXT STEP: Fix {tool} validation failure (exit code {exit_code})"
++                    self.cli.next_step(
++                        "VALIDATION_FAILED",
+                         msg=error_msg,
+                         tool=tool,
+                     )
+             except json.JSONDecodeError:
+-                self.cli.error(
+-                    "PIPELINE_VALIDATION_FAILED",
+-                    hint_code="PIPELINE_VALIDATION_FAILED",
+-                    msg=f"BLOCKER validation: Failed to parse tool output: {result.stdout}",
++                self.cli.next_step(
++                    "VALIDATION_FAILED",
++                    msg=f"NEXT STEP: Fix invalid validation output: {result.stdout}",
++                    tool="validation",
+                 )
+         else:
+             if result.stdout:
+@@ -201,9 +200,9 @@ class Validation:
+                 print(result.stderr, file=sys.stderr)
+ 
+             if result.returncode != 0:
+-                self.cli.error(
+-                    "PIPELINE_VALIDATION_FAILED",
+-                    hint_code="PIPELINE_VALIDATION_FAILED",
+-                    msg=f"BLOCKER validation: {result.stderr or result.stdout}",
++                self.cli.next_step(
++                    "VALIDATION_FAILED",
++                    msg=f"NEXT STEP: Fix validation failure: {result.stderr or result.stdout}",
++                    tool="validation",
+                 )
+         return result

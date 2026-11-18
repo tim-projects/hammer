@@ -1,0 +1,13 @@
+diff --git a/tests/test_robustness.py b/tests/test_robustness.py
+index 48a6b6ed..d688f3ac 100755
+--- a/tests/test_robustness.py
++++ b/tests/test_robustness.py
+@@ -1724,7 +1724,7 @@ class TestRobustness(unittest.TestCase):
+         # Without Rc, STAGING should fail
+         res = self.run_cmd(["move", file, "STAGING"])
+         self.assertFalse(res["success"])
+-        self.assertIn("regression", res.get("error", "").lower())
++        self.assertIn("regression", res.get("next_step", "").lower())
+ 
+         # Set Rc
+         self.complete_review_gate(file)

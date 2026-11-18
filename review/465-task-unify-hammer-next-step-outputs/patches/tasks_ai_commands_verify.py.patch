@@ -1,0 +1,34 @@
+diff --git a/tasks_ai/commands/verify.py b/tasks_ai/commands/verify.py
+index d117fe5f..5f3aa94d 100644
+--- a/tasks_ai/commands/verify.py
++++ b/tasks_ai/commands/verify.py
+@@ -4,9 +4,9 @@ import os
+ def run(cli, task_id, proof):
+     task_path, state = cli.find_task(task_id)
+     if not task_path or state != "REVIEW":
+-        cli.error(
+-            f"Task {task_id} must be in REVIEW state to perform verification.",
+-            hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW",
++        cli.next_step(
++            "REVIEW_STATE_REQUIRED",
++            task_id=task_id,
+         )
+     current_path, _ = cli.find_task(task_id)
+     task_folder_name = os.path.basename(current_path)
+@@ -19,13 +19,13 @@ def run(cli, task_id, proof):
+     is_auto_passed = task.metadata.get("Rc") == "PASSED"
+     if not is_auto_passed:
+         if not os.path.exists(patches_dir) or not os.listdir(patches_dir):
+-            cli.error("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
++            cli.next_step("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
+         if not os.path.exists(audit_file):
+-            cli.error("AUDIT_MISSING", audit_path=audit_file, task_id=task_id)
++            cli.next_step("AUDIT_MISSING", audit_path=audit_file, task_id=task_id)
+         from ..audit import verify_audit
+ 
+         if not verify_audit(task_path, patches_dir, audit_file):
+-            cli.error("AUDIT_MISMATCH", task_id=task_id)
++            cli.next_step("AUDIT_MISMATCH", task_id=task_id)
+     proof_path = os.path.join(task_path, "verification_proof.log")
+     with open(proof_path, "w") as f:
+         f.write(proof)

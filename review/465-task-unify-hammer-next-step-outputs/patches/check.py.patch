@@ -1,0 +1,136 @@
+diff --git a/check.py b/check.py
+index 1c253238..d7186ac6 100755
+--- a/check.py
++++ b/check.py
+@@ -254,7 +254,7 @@ def run_debug_check(fix=False, as_json=False, dev=False):
+                 json.dumps(
+                     {
+                         "success": result.returncode == 0,
+-                        "status": "pass" if result.returncode == 0 else "blocker",
++                        "status": "pass" if result.returncode == 0 else "next_step",
+                         "tool": "debug",
+                         "configured": "internal",
+                         "stdout": result.stdout,
+@@ -282,15 +282,15 @@ def run_debug_check(fix=False, as_json=False, dev=False):
+                 json.dumps(
+                     {
+                         "success": False,
+-                        "status": "blocker",
++                        "status": "next_step",
+                         "tool": "debug",
+-                        "error": msg,
++                        "next_step": msg,
+                         "configured": "internal",
+                     }
+                 )
+             )
+         else:
+-            print(f"BLOCKER: {msg}")
++            print(f"NEXT STEP: {msg}")
+         return 1
+     except Exception as e:  # noqa: BLE001
+         msg = f"Failed to run debug check: {e!s}"
+@@ -299,15 +299,15 @@ def run_debug_check(fix=False, as_json=False, dev=False):
+                 json.dumps(
+                     {
+                         "success": False,
+-                        "status": "blocker",
++                        "status": "next_step",
+                         "tool": "debug",
+-                        "error": msg,
++                        "next_step": msg,
+                         "configured": "internal",
+                     }
+                 )
+             )
+         else:
+-            print(f"BLOCKER: {msg}")
++            print(f"NEXT STEP: {msg}")
+         return 1
+ 
+ 
+@@ -336,15 +336,15 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
+                 json.dumps(
+                     {
+                         "success": False,
+-                        "status": "blocker",
++                        "status": "next_step",
+                         "tool": tool_type,
+-                        "error": msg,
++                        "next_step": msg,
+                         "configured": tool,
+                     }
+                 )
+             )
+         else:
+-            print(f"BLOCKER: {msg}")
++            print(f"NEXT STEP: {msg}")
+         return 1
+ 
+     commands = get_commands(fix, auto_fix_ruff=auto_fix_ruff).get(tool_type, {})
+@@ -387,15 +387,15 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
+                     json.dumps(
+                         {
+                             "success": False,
+-                            "status": "blocker",
++                            "status": "next_step",
+                             "tool": tool_type,
+-                            "error": msg,
++                            "next_step": msg,
+                             "configured": tool,
+                         }
+                     )
+                 )
+             else:
+-                print(f"BLOCKER: {msg}")
++                print(f"NEXT STEP: {msg}")
+             return 1
+ 
+     cmd = commands[lookup_key].copy()
+@@ -415,15 +415,15 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
+                 json.dumps(
+                     {
+                         "success": False,
+-                        "status": "blocker",
++                        "status": "next_step",
+                         "tool": tool_type,
+-                        "error": msg,
++                        "next_step": msg,
+                         "configured": tool,
+                     }
+                 )
+             )
+         else:
+-            print(f"BLOCKER: {msg}")
++            print(f"NEXT STEP: {msg}")
+         return 1
+ 
+     cmd[0] = cmd0
+@@ -491,15 +491,15 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
+                 json.dumps(
+                     {
+                         "success": False,
+-                        "status": "blocker",
++                        "status": "next_step",
+                         "tool": tool_type,
+-                        "error": msg,
++                        "next_step": msg,
+                         "configured": tool,
+                     }
+                 )
+             )
+         else:
+-            print(f"BLOCKER: {msg}")
++            print(f"NEXT STEP: {msg}")
+         return 1
+ 
+     # Attach captured output to result for unified handling
+@@ -511,7 +511,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
+             json.dumps(
+                 {
+                     "success": result.returncode == 0,
+-                    "status": "pass" if result.returncode == 0 else "blocker",
++                    "status": "pass" if result.returncode == 0 else "next_step",
+                     "tool": tool_type,
+                     "configured": tool,
+                     "stdout": result.stdout,

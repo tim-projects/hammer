@@ -1,0 +1,85 @@
+diff --git a/tests/test_mount_sync.py b/tests/test_mount_sync.py
+index d001747f..d677744c 100644
+--- a/tests/test_mount_sync.py
++++ b/tests/test_mount_sync.py
+@@ -147,7 +147,7 @@ class FakeCLI:
+         self.dev = False
+         self.context = FakeContext("/repo")
+         self.lines = []
+-        self.action_required_calls = []
++        self.next_step_calls = []
+ 
+     def console(self, type_tag, action, result):
+         self.lines.append((type_tag, action, result))
+@@ -158,8 +158,8 @@ class FakeCLI:
+     def error(self, code, **kwargs):
+         raise AssertionError(f"unexpected error: {code}")
+ 
+-    def action_required(self, code, **kwargs):
+-        self.action_required_calls.append((code, kwargs))
++    def next_step(self, code, **kwargs):
++        self.next_step_calls.append((code, kwargs))
+         raise SystemExit(1)
+ 
+     def finish(self, data=None):
+@@ -174,7 +174,7 @@ class WorktreeSyncHookTest(unittest.TestCase):
+         WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+         self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
+-        self.assertEqual([], cli.action_required_calls)
++        self.assertEqual([], cli.next_step_calls)
+ 
+     def test_conflict_blocker_contains_actionable_details(self):
+         git = FakeGit(conflicts=["shared.txt", "app.py"])
+@@ -183,7 +183,7 @@ class WorktreeSyncHookTest(unittest.TestCase):
+         with self.assertRaises(SystemExit):
+             WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+-        code, details = cli.action_required_calls[0]
++        code, details = cli.next_step_calls[0]
+         self.assertEqual("WORKTREE_SYNC_CONFLICT", code)
+         self.assertEqual("459", details["task_id"])
+         self.assertEqual("459-task-sync", details["branch"])
+@@ -199,7 +199,7 @@ class WorktreeSyncHookTest(unittest.TestCase):
+         with self.assertRaises(SystemExit):
+             WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+-        code, details = cli.action_required_calls[0]
++        code, details = cli.next_step_calls[0]
+         self.assertEqual("WORKTREE_LOCAL_WORK", code)
+         self.assertEqual("scratch.txt", details["paths"])
+         self.assertEqual([], git.merged)
+@@ -211,13 +211,13 @@ class WorktreeSyncHookTest(unittest.TestCase):
+         with self.assertRaises(SystemExit):
+             WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+-        code, details = cli.action_required_calls[0]
++        code, details = cli.next_step_calls[0]
+         self.assertEqual("WORKTREE_MAIN_DIVERGED", code)
+         self.assertEqual("459", details["task_id"])
+         self.assertEqual("459-task-sync", details["branch"])
+         self.assertEqual("local-sha", details["local"])
+         self.assertEqual("remote-sha", details["remote"])
+-        hint = MessageRegistry().get_hint(code, **details)
++        hint = MessageRegistry().get_next_step_hint(code, **details)
+         self.assertIn("git log --left-right main...origin/main", hint)
+         self.assertIn("Reconcile local main with origin/main", hint)
+         self.assertIn("./hammer tasks mount 459", hint)
+@@ -230,7 +230,7 @@ class WorktreeSyncHookTest(unittest.TestCase):
+ 
+         WorktreeSyncHook().synchronize(cli, "459", "459-task-sync", "/wt")
+ 
+-        self.assertEqual([], cli.action_required_calls)
++        self.assertEqual([], cli.next_step_calls)
+         self.assertEqual([("/wt", "main", "459-task-sync", "main")], git.merged)
+ 
+     def test_pipeline_entry_uses_the_canonical_hook(self):
+@@ -280,7 +280,7 @@ class WorktreeSyncHookTest(unittest.TestCase):
+             "worktree_path": "/wt",
+         }
+ 
+-        hint = MessageRegistry().get_hint("WORKTREE_SYNC_CONFLICT", **details)
++        hint = MessageRegistry().get_next_step_hint("WORKTREE_SYNC_CONFLICT", **details)
+ 
+         self.assertIn("459-task-sync", hint)
+         self.assertIn("local-sha", hint)

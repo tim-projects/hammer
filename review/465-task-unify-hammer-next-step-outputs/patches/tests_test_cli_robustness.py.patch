@@ -1,0 +1,24 @@
+diff --git a/tests/test_cli_robustness.py b/tests/test_cli_robustness.py
+index 349044d5..8ade1b10 100644
+--- a/tests/test_cli_robustness.py
++++ b/tests/test_cli_robustness.py
+@@ -36,7 +36,8 @@ class TestCLIRobustness(unittest.TestCase):
+         )
+ 
+         self.assertNotEqual(result.returncode, 0)
+-        self.assertIn("Missing:", result.stderr)
++        self.assertIn("NEXT STEP:", result.stdout)
++        self.assertIn("Provide the missing task fields", result.stdout)
+ 
+     def test_create_validation_short_fields(self):
+         """Task create should fail if fields are too short."""
+@@ -67,7 +68,8 @@ class TestCLIRobustness(unittest.TestCase):
+         )
+ 
+         self.assertNotEqual(result.returncode, 0)
+-        self.assertIn("Too short:", result.stderr)
++        self.assertIn("NEXT STEP:", result.stdout)
++        self.assertIn("Provide enough detail", result.stdout)
+ 
+ 
+ if __name__ == "__main__":

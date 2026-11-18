@@ -1,0 +1,120 @@
+diff --git a/data/next_steps.json b/data/next_steps.json
+new file mode 100644
+index 00000000..3fa06085
+--- /dev/null
++++ b/data/next_steps.json
+@@ -0,0 +1,114 @@
++{
++  "RESEARCH_REQUIRED": {
++    "message": "Record the required research findings for task {task_id}.",
++    "hint": "WHAT: Research pass not recorded.\nWHY: HAMMER demand read-only research (codebase file / online search) before BUILD.\nHOW: Run 'hammer tasks modify {task_id} --research \"<findings>\"'. File path work for bulk note.\nCONSEQUENCE: READY -> PROGRESSING stay blocked. NO research, NO submit."
++  },
++  "BLOCKER_INCOMPLETE": {
++    "message": "Finish linked blocker {blocker} before entering PROGRESSING.",
++    "hint": "WHAT: Blocker {blocker} is not complete.\nWHY: A blocked task can enter PROGRESSING only when every linked blocker is DONE or ARCHIVED.\nHOW: Finish blocker {blocker}, or run 'hammer tasks unlink <blocked-task-id> {blocker}' if the dependency is no longer needed.\nCONSEQUENCE: PROGRESSING stays blocked."
++  },
++  "WORKTREE_NOT_FOUND": {
++    "message": "Create and mount the worktree for task {task_id}.",
++    "hint": "WHAT: Worktree not found for task {task_id}.\nWHY: No dedicated worktree has been created for this task.\nHOW: Run 'tasks mount {task_id}' to create and mount a worktree.\nCONSEQUENCE: Task work cannot be isolated. CREATE WORKTREE."
++  },
++  "WORKTREE_MAIN_DIVERGED": {
++    "message": "Reconcile local {default} ({local}) with origin/{default} ({remote}) for task {task_id}.",
++    "hint": "WHAT: Local main and origin/main differ for task {task_id} branch '{branch}'.\nWHY: Synchronizing from a diverged main would hide one side of the history.\nHOW:\n   1. Inspect: git log --left-right main...origin/main\n   2. Reconcile local {default} with origin/{default}.\n   3. Retry: ./hammer tasks mount {task_id}\nCONSEQUENCE: Worktree synchronization blocked. RECONCILE MAIN."
++  },
++  "WORKTREE_SYNC_CONFLICT": {
++    "message": "Resolve the worktree sync conflict for task {task_id} at {local_commit}: {paths}.",
++    "hint": "WHAT: Task {task_id} branch '{branch}' conflicts with local {default} at {local_commit}.\nWHY: Conflicting paths: {paths}.\nHOW:\n   1. Navigate: cd {worktree_path}\n   2. Inspect: git status\n   3. Resolve every conflicting path manually.\n   4. Stage and commit the resolution: git add <paths> && git commit -m 'Resolve {default} sync conflict'\n   5. Retry: ./hammer tasks mount {task_id}\nCONSEQUENCE: Worktree synchronization blocked. RESOLVE CONFLICTS."
++  },
++  "WORKTREE_LOCAL_WORK": {
++    "message": "Commit or stash local work for task {task_id} before synchronization: {paths}.",
++    "hint": "WHAT: Task {task_id} branch '{branch}' has uncommitted local work.\nWHY: Synchronizing could overwrite local files. Local {default}: {local_commit}. Paths: {paths}.\nHOW:\n   1. Navigate: cd {worktree_path}\n   2. Inspect: git status\n   3. Commit or stash the local work.\n   4. Retry: ./hammer tasks mount {task_id}\nCONSEQUENCE: Worktree synchronization blocked. PRESERVE LOCAL WORK."
++  },
++  "REGRESSION_CHECK_NOT_PASSED": {
++    "message": "Complete the review and regression checks for task {task_id}.",
++    "hint": "WHAT: Regression check not passed (Rc flag not set).\nWHY: Pipeline governance requires a verifiable review.\nHOW: 1. './hammer tasks audit {task_id}' to refresh the current patches.\n     2. './hammer tasks review {task_id}' for EACH patch (repeat until all are marked reviewed).\n     3. './hammer tasks modify {task_id} --reviewed \"<short summary of what you read>\"'.\n     4. './hammer tasks verify {task_id} --proof \"<evidence>\"'.\n     5. './hammer tasks modify {task_id} --regression-check' to pass the gate.\nCONSEQUENCE: Promotion halted. REVIEW EVERY PATCH."
++  },
++  "UNFINISHED_CHECKBOXES": {
++    "message": "Complete every unchecked acceptance criterion for task {task_id}.",
++    "hint": "WHAT: Task contain unfinished checkbox (- [ ]).\nWHY: INCOMPLETE CRITERIA. HAMMER forbid promotion.\nHOW: Merely marking checkboxes is not the goal. Confirm each subtask is genuinely complete, then use './hammer tasks show <id>' to verify criteria before retrying.\nCONSEQUENCE: Pipeline halt. FIX CRITERIA."
++  },
++  "PROOF_MISSING": {
++    "message": "Bind verification proof for task {task_id}.",
++    "hint": "WHAT: Verification proof missing for task {task_id}: {proof_path}.\nWHY: Promotion requires a receipt-bound review of every current patch.\nHOW: 1. Review every patch: './hammer tasks review {task_id}' (repeat until no patches remain).\n     2. Finalize: './hammer tasks modify {task_id} --reviewed \"<summary>\"'.\n     3. Bind proof: './hammer tasks verify {task_id} --proof \"<evidence>\"'.\n     4. Pass the gate: './hammer tasks modify {task_id} --regression-check'.\nCONSEQUENCE: Promotion halted. COMPLETE REVIEW."
++  },
++  "AUDIT_PATCH_MISSING": {
++    "message": "Generate the missing review patches for task {task_id}.",
++    "hint": "WHAT: Regression patches missing from {patches_dir}.\nWHY: Patch generation failure or migration issue (patches not found in STAGING).\nHOW: 1. Move task back to REVIEW using './hammer tasks move {task_id} REVIEW -y'.\n     2. This will re-trigger the migration logic to move patches from REVIEW to STAGING.\n     3. Then try moving to STAGING again.\nCONSEQUENCE: Audit impossible. FIX PATH."
++  },
++  "AUDIT_MISSING": {
++    "message": "Generate the missing cryptographic audit for task {task_id}.",
++    "hint": "WHAT: Cryptographic audit missing: {audit_path}.\nWHY: Code review required.\nHOW: Run './hammer tasks audit {task_id}'.\nCONSEQUENCE: Audit chain broken. OBEY AUDIT."
++  },
++  "AUDIT_MISMATCH": {
++    "message": "Refresh and review the stale audit artifacts for task {task_id}.",
++    "hint": "WHAT: Audit mismatch. Code change since last audit.\nHOW: 1. Re-review patch. 2. Run './hammer tasks audit {task_id}'. 3. Run './hammer tasks verify {task_id} --proof \"...\"'.\nCONSEQUENCE: Integrity fail. LOCK CHAIN."
++  },
++  "REVIEW_INCOMPLETE": {
++    "message": "Review the remaining patches for task {task_id}: {missing}.",
++    "hint": "WHAT: Not every patch has been read: {missing}.\nWHY: Each patch must be read via 'tasks review' before the review can be finalized.\nHOW: {hint}\nCONSEQUENCE: Cherry-picked review blocked. READ ALL."
++  },
++  "REVIEW_SUMMARY_REQUIRED": {
++    "message": "Write the required review summary for task {task_id}.",
++    "hint": "WHAT: The review cannot be finalized without a written summary.\nWHY: A summary proves the reviewer processed what they read.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. WRITE SUMMARY."
++  },
++  "REVIEW_SUMMARY_TOO_SHORT": {
++    "message": "Expand the review summary for task {task_id}.",
++    "hint": "WHAT: The review summary is too short.\nWHY: A one-liner is not a review summary.\nHOW: {hint}\nCONSEQUENCE: Review not finalized. ADD DETAIL."
++  },
++  "NO_PATCHES": {
++    "message": "Generate review patches for task {task_id} before reviewing them.",
++    "hint": "WHAT: No review patches exist for task {task_id}.\nWHY: Patch generation failed or artifacts were removed.\nHOW: ./hammer tasks audit {task_id}\nCONSEQUENCE: No diff to review. GENERATE FIRST."
++  },
++  "PATCH_NOT_IN_TASK": {
++    "message": "Choose one of the available review patches for task {task_id}.",
++    "hint": "WHAT: Patch '{patch}' is not part of task {task_id}.\nWHY: Only the task's own patches can be reviewed.\nHOW: Available: {expected}\nCONSEQUENCE: Wrong file. PICK FROM LIST."
++  },
++  "REVIEW_STATE_REQUIRED": {
++    "message": "Move task {task_id} to REVIEW before reviewing patches.",
++    "hint": "WHAT: Task {task_id} is not in REVIEW.\nWHY: Patches exist only in REVIEW.\nHOW: ./hammer tasks move {task_id} REVIEW\nCONSEQUENCE: Nothing to review yet. MOVE FIRST."
++  },
++  "STATE_REQUIRED": {
++    "message": "Move task {task_id} to {required_state} before running this command.",
++    "hint": "WHAT: Task {task_id} must be in {required_state} state; it is currently in {current_state}.\nWHY: PIPELINE GOVERNANCE VIOLATION.\nHOW: Use './hammer tasks move <id> {required_state}'.\nCONSEQUENCE: Promotion blocked. OBEY PIPELINE."
++  },
++  "NO_ACTIVE_TASK": {
++    "message": "Pass a task id to select the active task.",
++    "hint": "WHAT: No active task found.\nWHY: Without an explicit id these commands would hit an arbitrary PROGRESSING task and mislabel its record. \nHOW: Pass the task id (see usage above).\nCONSEQUENCE: Progress zero. SMASH WORK INTO MOTION."
++  },
++  "INIT_REQUIRED": {
++    "message": "Initialize the task store before running this command.",
++    "hint": "WHAT: Task not initialized.\nWHY: NO WORKTREE FOUND. HAMMER need foundation.\nHOW: Run './hammer tasks init'.\nCONSEQUENCE: Hammer BLADE-LESS. FIX FOUNDATION."
++  },
++  "MISSING_PARTS": {
++    "message": "Provide the missing task fields: {missing_parts}.",
++    "hint": "WHAT: Mandatory task parameters are missing: {missing_parts}.\nWHY: HAMMER command is incomplete.\nHOW: Usage: tasks create '<title>' --story '<story>' --tech '<tech>' --criteria '<criteria>' --plan '<plan>'{issue_repro}.\nCONSEQUENCE: Command aborted. FIX INSTRUCTION."
++  },
++  "TOO_SHORT": {
++    "message": "Provide enough detail for: {too_short}.",
++    "hint": "WHAT: TOO SHORT: {too_short}.\nWHY: INSUFFICIENT DETAIL. HAMMER demand substance.\nHOW: Provide more detail.\nCONSEQUENCE: Task rejected. FIX CONTENT."
++  },
++  "VALIDATION_FAILED": {
++    "message": "Fix the failed {tool} validation check, then run ./hammer check all.",
++    "hint": "WHAT: Validation failed for {tool}: {msg}.\nWHY: The code-quality gate is not satisfied.\nHOW: Fix the validation failure shown above, then run './hammer check all' and retry the transition.\nCONSEQUENCE: Task remains in its current state."
++  },
++  "WORKTREE_MISSING_AUTO_DEMOTED": {
++    "message": "Restore the missing worktree for branch {branch}.",
++    "hint": "WHAT: Worktree '{branch}' missing, auto-demoted to PROGRESSING.\nWHY: Task worktree was not found.\nHOW: Run 'tasks mount {task_id}' to recreate the worktree.\nCONSEQUENCE: Promotion halted. MOUNT WORKTREE."
++  },
++  "REQUIRED_FILE_MISSING": {
++    "message": "Create the missing required file {path}.",
++    "hint": ""
++  },
++  "NO_PROGRESS_UPDATE": {
++    "message": "Record a progress update in {progress_path} before continuing.",
++    "hint": "WHAT: No progress update detected.\nWHY: PROGRESS STAGNATION. HAMMER demand record.\nHOW: Update {progress_path} or {current_path} with progress, finding, mitigation.\nCONSEQUENCE: Progress unknown. SUBMIT UPDATE."
++  },
++  "CONTENT_REQUIRED": {
++    "message": "Add the required task content before continuing.",
++    "hint": ""
++  }
++}

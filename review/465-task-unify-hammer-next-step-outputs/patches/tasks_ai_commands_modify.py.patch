@@ -1,0 +1,114 @@
+diff --git a/tasks_ai/commands/modify.py b/tasks_ai/commands/modify.py
+index a39f8dd2..8f3080d5 100644
+--- a/tasks_ai/commands/modify.py
++++ b/tasks_ai/commands/modify.py
+@@ -53,7 +53,7 @@ def run(
+     """Execution logic for 'tasks modify'."""
+     filepath, _ = cli.find_task(filename)
+     if not filepath:
+-        cli.error(f"Task '{filename}' not found.")
++        cli.error("TASK_NOT_FOUND", filename=filename)
+     task = FM.load(filepath)
+     fname = os.path.basename(filepath)
+     task_id = fname.rsplit(".", 1)[0]
+@@ -73,7 +73,7 @@ def run(
+     if title:
+         title = title.strip()
+         if len(title) < 10:
+-            cli.error("Title too vague.")
++            cli.error("TITLE_TOO_VAGUE")
+         task.metadata["Ti"] = title
+         updated = True
+     if story:
+@@ -138,13 +138,13 @@ def run(
+         else:
+             summary = reviewed if isinstance(reviewed, str) else None
+             if summary is None:
+-                cli.error(
++                cli.next_step(
+                     "REVIEW_SUMMARY_REQUIRED",
+                     task_id=task_id,
+                     hint=f'Finalize with a summary: tasks modify {task_id} --reviewed "<what you read in each patch>".',
+                 )
+             if len(summary.strip()) < 40:
+-                cli.error(
++                cli.next_step(
+                     "REVIEW_SUMMARY_TOO_SHORT",
+                     task_id=task_id,
+                     hint="Summarize what you read in each patch (at least 40 characters).",
+@@ -163,7 +163,7 @@ def run(
+                 if name not in covered_patches(reviews, patches_dir, expected)
+             ]
+             if missing:
+-                cli.error(
++                cli.next_step(
+                     "REVIEW_INCOMPLETE",
+                     task_id=task_id,
+                     missing=", ".join(missing),
+@@ -200,7 +200,7 @@ def run(
+             has_changes = _has_real_patches(task, patches_dir)
+             if has_changes:
+                 if not task.metadata.get("Reviewed"):
+-                    cli.error(
++                    cli.next_step(
+                         "REGRESSION_CHECK_NOT_PASSED",
+                         task_id=task_id,
+                         hint=f"Run 'tasks review {task_id}' and then 'tasks modify {task_id} --reviewed \"<summary>\"'.",
+@@ -209,7 +209,7 @@ def run(
+                     review_dir, task_folder_name, "reviews.json"
+                 )
+                 if not os.path.exists(reviews_path):
+-                    cli.error(
++                    cli.next_step(
+                         "REGRESSION_CHECK_NOT_PASSED",
+                         task_id=task_id,
+                         hint=f"Run 'tasks review {task_id}' to record receipts for every patch.",
+@@ -217,7 +217,7 @@ def run(
+                 with open(reviews_path) as fh:
+                     review_records = json.load(fh)
+                 if not review_records.get("summary"):
+-                    cli.error(
++                    cli.next_step(
+                         "REVIEW_SUMMARY_REQUIRED",
+                         task_id=task_id,
+                         hint=f'Finalize the review: tasks modify {task_id} --reviewed "<summary>".',
+@@ -230,7 +230,7 @@ def run(
+                 covered = covered_patches(review_records, patches_dir, expected_patches)
+                 if covered != expected_patches:
+                     missing = sorted(expected_patches - covered)
+-                    cli.error(
++                    cli.next_step(
+                         "AUDIT_MISMATCH",
+                         task_id=task_id,
+                         hint=f"Review receipts do not cover the current patch set ({', '.join(missing)}). Re-run 'tasks review {task_id}'.",
+@@ -246,7 +246,7 @@ def run(
+                 if not snapshot or not patches_are_fresh(
+                     cli, branch, patches_dir, patch_files, snapshot
+                 ):
+-                    cli.error(
++                    cli.next_step(
+                         "AUDIT_MISMATCH",
+                         task_id=task_id,
+                         hint=f"Patch set is stale against the branch. Run 'tasks audit {task_id}' to refresh it, then review every refreshed patch.",
+@@ -254,17 +254,17 @@ def run(
+ 
+                 audit_path = os.path.join(review_dir, f"{task_id}.audit")
+                 if not os.path.exists(audit_path):
+-                    cli.error("AUDIT_MISSING", audit_path=audit_path)
++                    cli.next_step("AUDIT_MISSING", audit_path=audit_path)
+                 from ..audit import verify_audit
+                 from ..pipeline import PipelineError
+ 
+                 if not verify_audit(filepath, patches_dir, audit_path):
+-                    cli.error("AUDIT_MISMATCH", task_id=task_id)
++                    cli.next_step("AUDIT_MISMATCH", task_id=task_id)
+                 try:
+                     cli.pipeline.check_audit_integrity(cli, task_id, filepath)
+                 except PipelineError as e:
+-                    if e.code == "PROOF_MISSING":
+-                        cli.action_required(e.code, **e.kwargs)
++                    if e.code in cli.messages.next_steps:
++                        cli.next_step(e.code, **e.kwargs)
+                     cli.error(e.code, **e.kwargs)
+             else:
+                 cli.log(
