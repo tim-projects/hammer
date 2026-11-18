@@ -75,6 +75,12 @@ class HammerTestBase(unittest.TestCase):
             ["git", "clone", os.getcwd(), self.repo_path],
             check=True,
             capture_output=True,
+            env={
+                **os.environ,
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "maintenance.auto",
+                "GIT_CONFIG_VALUE_0": "false",
+            },
         )
         subprocess.run(
             ["git", "fetch", "origin", "tasks"],
@@ -144,9 +150,14 @@ class HammerTestBase(unittest.TestCase):
             json.dump(config_data, f)
 
     def tearDown(self):
-        shutil.rmtree(self.test_root)
-        shutil.rmtree(self.dev_tasks_dir)
-        shutil.rmtree(dev_repo_path(self.dev_tasks_dir), ignore_errors=True)
+        for path in (
+            self.test_root,
+            self.dev_tasks_dir,
+            dev_repo_path(self.dev_tasks_dir),
+        ):
+            shutil.rmtree(path, ignore_errors=True)
+            if os.path.exists(path):
+                shutil.rmtree(path)
 
     def run_tasks(self, args):
         return subprocess.run(

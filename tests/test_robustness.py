@@ -1724,7 +1724,7 @@ class TestRobustness(unittest.TestCase):
         # Without Rc, STAGING should fail
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertFalse(res["success"])
-        self.assertIn("regression", res.get("error", "").lower())
+        self.assertIn("regression", res.get("next_step", "").lower())
 
         # Set Rc
         self.complete_review_gate(file)

@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tasks_ai.cli_io import BlockerArgumentParser, configure_sigpipe
+from tasks_ai.cli_io import NextStepArgumentParser, configure_sigpipe
 from tasks_ai.help_text import agent_epilog
 from tasks_ai.validator import ValidationError, Validator, format_check_results
 
@@ -49,7 +49,7 @@ def project_root():
 
 
 def build_parser():
-    parser = BlockerArgumentParser(
+    parser = NextStepArgumentParser(
         prog="check",
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -96,7 +96,7 @@ def main():
                 [
                     {
                         "success": False,
-                        "status": "blocker",
+                        "status": "next_step",
                         "tool": "validation",
                         "stdout": str(e),
                         "stderr": "",

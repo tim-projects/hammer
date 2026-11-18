@@ -8,6 +8,7 @@ class MessageRegistry:
         data_path = os.path.join(os.path.dirname(package_dir), data_dir)
         self.errors = self._load_json(os.path.join(data_path, "errors.json"))
         self.hints = self._load_json(os.path.join(data_path, "hints.json"))
+        self.next_steps = self._load_json(os.path.join(data_path, "next_steps.json"))
 
     def _load_json(self, path):
         if not os.path.exists(path):
@@ -20,8 +21,18 @@ class MessageRegistry:
             return "{" + key + "}"
 
     def get_error(self, code, **kwargs):
-        msg = self.errors.get(code, f"Unknown error: {code}")
-        return msg.format_map(self.SafeFormatter(kwargs))
+        msg = self.errors.get(code, code)
+        return str(msg).format_map(self.SafeFormatter(kwargs))
 
     def get_hint(self, code, **kwargs):
         return self.hints.get(code, "").format_map(self.SafeFormatter(kwargs))
+
+    def get_next_step(self, code, **kwargs):
+        entry = self.next_steps.get(code, {})
+        message = entry.get("message", f"Complete the required step for {code}.")
+        return message.format_map(self.SafeFormatter(kwargs))
+
+    def get_next_step_hint(self, code, **kwargs):
+        entry = self.next_steps.get(code, {})
+        hint = entry.get("hint", "")
+        return hint.format_map(self.SafeFormatter(kwargs))

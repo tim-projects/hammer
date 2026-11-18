@@ -22,7 +22,7 @@ class TaskCounterProtector:
                     recovered_id = cli._recover_task_counter_from_tasks()
                     current = recovered_id if recovered_id is not None else 0
                 else:
-                    cli.error("Tasks not initialized. Run 'hammer tasks init' first.")
+                    cli.next_step("INIT_REQUIRED")
             else:
                 if os.path.exists(self.hash_file):
                     if not cli._verify_counter_hash(self.counter_file, self.hash_file):

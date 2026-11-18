@@ -8,9 +8,9 @@ from ..utils import commit_task_paths, parse_filename
 def run(cli, task_id):
     task_path, state = cli.find_task(task_id)
     if not task_path or state != "REVIEW":
-        cli.error(
-            f"Task {task_id} must be in REVIEW state to perform audit.",
-            hint="Move task to REVIEW: ./hammer tasks move <id> REVIEW",
+        cli.next_step(
+            "REVIEW_STATE_REQUIRED",
+            task_id=task_id,
         )
     current_path, _ = cli.find_task(task_id)
     task = FM.load(current_path)
@@ -55,7 +55,7 @@ def run(cli, task_id):
                 or not os.path.exists(patches_dir)
                 or not os.listdir(patches_dir)
             ):
-                cli.error("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
+                cli.next_step("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
             task.metadata["PatchFiles"] = patches
             task.metadata["PatchSnapshot"] = get_patch_snapshot(cli, branch)
             task.metadata["Reviewed"] = False
@@ -65,7 +65,7 @@ def run(cli, task_id):
                 os.remove(reviews_path)
             FM.dump(task, current_path)
         except Exception:  # noqa: BLE001
-            cli.error("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
+            cli.next_step("AUDIT_PATCH_MISSING", patches_dir=patches_dir)
     output_path = os.path.join(review_dir, f"{task_folder_name}.audit")
     generate_audit(task_id, current_path, patches_dir, output_path)
     # Close out this task's review artifacts: the audit file and the patch it
