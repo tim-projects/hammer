@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import cast
 
-from .cli_io import action_required, error, finish, log
+from .cli_io import error, finish, log, next_step
 from .constants import (
     CURRENT_TASK_FILENAME,
     STATE_FOLDERS,
@@ -244,14 +244,17 @@ class TasksCLI:
         log(self, f"[{type_tag.lower()}] {action.lower()} -> {result.lower()}")
 
     def error(self, code, hint_code=None, **kwargs):
+        code = str(code).strip() or "UNEXPECTED_ERROR"
         message = self.messages.get_error(code, **kwargs)
         hint = self.messages.get_hint(hint_code or code, **kwargs)
-        error(self, message, hint=hint if hint else None)
+        error(self, message, hint=hint if hint else None, error_code=code)
 
-    def action_required(self, code, hint_code=None, **kwargs):
-        message = self.messages.get_error(code, **kwargs)
-        hint = self.messages.get_hint(hint_code or code, **kwargs)
-        action_required(self, message, hint=hint if hint else None)
+    def next_step(self, code, hint_code=None, **kwargs):
+        code = str(code).strip() or "UNKNOWN_NEXT_STEP"
+        custom_hint = kwargs.pop("hint", None)
+        message = self.messages.get_next_step(code, **kwargs)
+        hint = custom_hint or self.messages.get_next_step_hint(hint_code or code, **kwargs)
+        next_step(self, message, hint=hint if hint else None)
 
     def finish(self, data=None):
         finish(self, data=data)
@@ -260,7 +263,7 @@ class TasksCLI:
     def _atomic_write(self, path, task_or_content):
         """Write a task or content to a path atomically."""
         if path is None:
-            self.error("DEBUG: _atomic_write path is None!")
+            self.error("INTERNAL_ERROR", detail="Atomic write received an empty path.")
             return
 
         if hasattr(task_or_content, "metadata"):
@@ -356,11 +359,11 @@ class TasksCLI:
             return self.pipeline.validate_gate(self, task, target_state, task_path)
         except Exception as e:  # noqa: BLE001
             if hasattr(e, "code"):
-                if e.code == "PROOF_MISSING":
-                    self.action_required(e.code, **e.kwargs)
+                if e.code in self.messages.next_steps:
+                    self.next_step(e.code, **e.kwargs)
                 self.error(e.code, **e.kwargs)
             else:
-                self.error(str(e))
+                self.error("INTERNAL_ERROR", detail=str(e))
             sys.exit(1)
 
     def _detect_tools(self):
@@ -761,7 +764,7 @@ class TasksCLI:
             ) or self._tasks_directory_has_data(self.tasks_path)
             if initialized:
                 if not force:
-                    self.error("Dev tasks already initialized. Use --force to reset.")
+                    self.error("DEV_ALREADY_INITIALIZED")
                 else:
                     self._backup_tasks_directory(self.tasks_path)
                     self.log(f"Resetting dev tasks at {self.tasks_path}")
@@ -772,6 +775,7 @@ class TasksCLI:
             clone_result = self._run_git(
                 [
                     "clone",
+                    "--no-hardlinks",
                     "--branch",
                     TASKS_BRANCH,
                     "--depth",
@@ -783,8 +787,9 @@ class TasksCLI:
             )
             if clone_result.returncode != 0:
                 self.error(
-                    f"Failed to clone tasks branch '{TASKS_BRANCH}' from parent repo. "
-                    "Ensure the branch exists and the parent repo is a valid git repository."
+                    "TASKS_CLONE_FAILED",
+                    branch=TASKS_BRANCH,
+                    detail=(clone_result.stderr or clone_result.stdout or "unknown error").strip(),
                 )
             if self.dev:
                 # Cloning sets origin to the invoked repo; a dev store must carry
@@ -811,7 +816,7 @@ class TasksCLI:
 
         # Non-dev (production) storage path
         if not force and os.path.exists(self.tasks_path):
-            self.error("Tasks already initialized. Use --force to backup and reset.")
+            self.error("PRODUCTION_ALREADY_INITIALIZED")
         elif force and os.path.exists(self.tasks_path):
             self._backup_tasks_directory(self.tasks_path)
 
@@ -855,9 +860,7 @@ class TasksCLI:
             if self._tasks_directory_has_data(self.tasks_path):
                 self._backup_tasks_directory(self.tasks_path)
                 if not force:
-                    self.error(
-                        "Found existing .tasks directory with data. Use --force to reset."
-                    )
+                    self.error("EXISTING_TASKS_DATA")
             if os.path.isdir(self.tasks_path):
                 shutil.rmtree(self.tasks_path)
             else:
@@ -866,6 +869,7 @@ class TasksCLI:
         clone_result = self._run_git(
             [
                 "clone",
+                "--no-hardlinks",
                 "--branch",
                 TASKS_BRANCH,
                 "--depth",
@@ -877,8 +881,9 @@ class TasksCLI:
         )
         if clone_result.returncode != 0:
             self.error(
-                f"Failed to clone tasks branch '{TASKS_BRANCH}' from parent repo. "
-                "Ensure the branch exists and the parent repo is a valid git repository."
+                "TASKS_CLONE_FAILED",
+                branch=TASKS_BRANCH,
+                detail=(clone_result.stderr or clone_result.stdout or "unknown error").strip(),
             )
         self._commit_tasks_store_gitignore()
 
@@ -958,9 +963,7 @@ class TasksCLI:
                 else:
                     os.remove(tasks_path)
             else:
-                self.error(
-                    f"The directory '{tasks_path}' already exists. Use --force to overwrite, or delete it first."
-                )
+                self.error("RESTORE_PATH_EXISTS", path=tasks_path)
 
         remote_url = self._run_git(
             ["remote", "get-url", "origin"], cwd=self.root
@@ -972,13 +975,12 @@ class TasksCLI:
             ["ls-remote", "--heads", remote_url, branch], cwd=self.root
         )
         if not branch_check.stdout.strip():
-            self.error(
-                f"Branch '{branch}' not found at '{remote_url}'. Cannot restore."
-            )
+            self.error("RESTORE_BRANCH_MISSING", branch=branch, remote_url=remote_url)
 
         clone_result = self._run_git(
             [
                 "clone",
+                "--no-hardlinks",
                 "--branch",
                 branch,
                 "--depth",
@@ -989,10 +991,7 @@ class TasksCLI:
             check=False,
         )
         if clone_result.returncode != 0:
-            self.error(
-                f"Failed to clone branch '{branch}' from '{remote_url}'. "
-                "Ensure the branch exists and the source is a valid git repository."
-            )
+            self.error("RESTORE_CLONE_FAILED", branch=branch, remote_url=remote_url)
 
         self.log(f"Restored .tasks from branch '{branch}' at {tasks_path}")
         self.finish({"restored": True, "branch": branch, "path": tasks_path})
@@ -1289,7 +1288,7 @@ class TasksCLI:
         """Undo the last operation on a task by restoring previous state from git."""
         filepath, _current_state = self.find_task(filename)
         if not filepath:
-            self.error(f"Task '{filename}' not found.")
+            self.error("TASK_NOT_FOUND", filename=filename)
 
         filepath_str = cast(str, filepath)
         fname = os.path.basename(filepath_str)
@@ -1308,9 +1307,9 @@ class TasksCLI:
                 if c
             ]
             if not scoped_commits:
-                self.error("Nothing to undo: no git history found.")
+                self.error("UNDO_NOT_FOUND")
             if len(scoped_commits) < 2:
-                self.error("Nothing to undo: first commit.")
+                self.error("UNDO_FIRST_COMMIT")
             prev_commit = scoped_commits[0]
             prev_prev_commit = scoped_commits[1]
 
@@ -1321,7 +1320,7 @@ class TasksCLI:
                 .stdout.strip()
                 .startswith("Undo:")
             ):
-                self.error("Cannot undo twice.")
+                self.error("UNDO_ALREADY_DONE")
 
             tree_res = self._run_git(
                 ["ls-tree", "--name-only", "-r", prev_prev_commit], cwd=self.tasks_path
@@ -1493,7 +1492,7 @@ class TasksCLI:
                 .strip()
             )
         except subprocess.CalledProcessError:
-            self.error("Not a git repository. Run 'git init' to start.")
+            self.error("NOT_GIT_REPOSITORY")
             sys.exit(1)
 
     def _tasks_directory_has_data(self, path):

@@ -17,7 +17,7 @@ def run(cli, task_id):
     hook = WorktreeSyncHook()
     wt_path = hook.ensure_worktree(cli, task_id, branch)
     if not wt_path:
-        cli.error("WORKTREE_NOT_FOUND", task_id=task_id)
+        cli.next_step("WORKTREE_NOT_FOUND", task_id=task_id)
 
     # Path first: a synchronization blocker must never bury where to go.
     cli.log(f"Worktree mounted at: {wt_path}")

@@ -28,6 +28,7 @@ class TestInitBackup(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.dev_tasks):
             shutil.rmtree(self.dev_tasks)
+        shutil.rmtree(self.dev_tasks + "-repo", ignore_errors=True)
         backup_root = os.path.join(os.path.dirname(self.dev_tasks), ".tasks.backup")
         if os.path.exists(backup_root):
             shutil.rmtree(backup_root)

@@ -110,7 +110,9 @@ class TestBlockerCompletionStates(BlockerStateTestBase):
 
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertFalse(payload["success"], payload)
-        self.assertIn("Blocker must be DONE or ARCHIVED first", payload["error"])
+        self.assertEqual(payload.get("status"), "next_step", payload)
+        self.assertNotIn("error", payload)
+        self.assertIn("Blocker", payload["hint"])
         self.assertIn("PROGRESSING stays blocked", payload["hint"])
 
 

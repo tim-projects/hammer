@@ -35,7 +35,7 @@ def parse_results(stdout):
     results = [
         {"tool": tool, "success": status == "PASS"}
         for tool, status in re.findall(
-            r"^CHECK ([^:]+): (PASS|BLOCKER)$", stdout, re.MULTILINE
+            r"^CHECK ([^:]+): (PASS|NEXT_STEP)$", stdout, re.MULTILINE
         )
     ]
     assert results, f"no CHECK summaries in wrapper output: {stdout}"

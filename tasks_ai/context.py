@@ -102,7 +102,7 @@ class ProjectContext:
             return path
         os.makedirs(os.path.dirname(path), exist_ok=True)
         result = subprocess.run(
-            ["git", "clone", "--quiet", source, path],
+            ["git", "clone", "--quiet", "--no-hardlinks", source, path],
             capture_output=True,
             text=True,
             check=False,
