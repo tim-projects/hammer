@@ -253,7 +253,9 @@ class TasksCLI:
         code = str(code).strip() or "UNKNOWN_NEXT_STEP"
         custom_hint = kwargs.pop("hint", None)
         message = self.messages.get_next_step(code, **kwargs)
-        hint = custom_hint or self.messages.get_next_step_hint(hint_code or code, **kwargs)
+        hint = custom_hint or self.messages.get_next_step_hint(
+            hint_code or code, **kwargs
+        )
         next_step(self, message, hint=hint if hint else None)
 
     def finish(self, data=None):
@@ -789,7 +791,9 @@ class TasksCLI:
                 self.error(
                     "TASKS_CLONE_FAILED",
                     branch=TASKS_BRANCH,
-                    detail=(clone_result.stderr or clone_result.stdout or "unknown error").strip(),
+                    detail=(
+                        clone_result.stderr or clone_result.stdout or "unknown error"
+                    ).strip(),
                 )
             if self.dev:
                 # Cloning sets origin to the invoked repo; a dev store must carry
@@ -883,7 +887,9 @@ class TasksCLI:
             self.error(
                 "TASKS_CLONE_FAILED",
                 branch=TASKS_BRANCH,
-                detail=(clone_result.stderr or clone_result.stdout or "unknown error").strip(),
+                detail=(
+                    clone_result.stderr or clone_result.stdout or "unknown error"
+                ).strip(),
             )
         self._commit_tasks_store_gitignore()
 

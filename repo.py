@@ -109,11 +109,7 @@ def error(msg, hint=None, error_code="REPO_ERROR"):
     if hint:
         msg = f"{msg} | HINT: {hint}"
     if FLAGS["json"]:
-        print(
-            json.dumps(
-                {"success": False, "error_code": error_code, "error": msg}
-            )
-        )
+        print(json.dumps({"success": False, "error_code": error_code, "error": msg}))
     else:
         print(f"{RED}[repo] ERROR [{error_code}]:{NC} {msg}")
     sys.exit(1)

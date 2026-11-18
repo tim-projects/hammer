@@ -176,12 +176,12 @@ class Validation:
                         details = str(details).strip()
                         if tool == "lint":
                             details = format_ruff_findings(details)
-                        error_msg = f"NEXT STEP: Fix {tool} validation failures: {details}"
+                        error_msg = (
+                            f"NEXT STEP: Fix {tool} validation failures: {details}"
+                        )
                     else:
                         exit_code = failed_line.get("exit_code", "unknown")
-                        error_msg = (
-                            f"NEXT STEP: Fix {tool} validation failure (exit code {exit_code})"
-                        )
+                        error_msg = f"NEXT STEP: Fix {tool} validation failure (exit code {exit_code})"
                     self.cli.next_step(
                         "VALIDATION_FAILED",
                         msg=error_msg,
