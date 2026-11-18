@@ -419,6 +419,16 @@
       "bytes": 561,
       "ts": 1795014828.1287112,
       "prev_hash": "de805bf5a608c99a9771bfaa584b91cc6ecec96148196e4004b77ac51989eada"
+    },
+    {
+      "seq": 43,
+      "file": "tests/test_security.py",
+      "patch": "tests_test_security.py.patch",
+      "md5": "4652099728e6fb7f1edd6389e4bea202",
+      "sha256": "b6afa4758cfa7e01aa59e4d2a2a35c7a7422750b3cb15a921fcc0839753e150c",
+      "bytes": 832,
+      "ts": 1795014829.8989017,
+      "prev_hash": "3eab5094bebd82c60433fca9b0b8655708b711a82f3dc096bc567a35b83c442f"
     }
   ]
 }
