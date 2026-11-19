@@ -113,11 +113,10 @@ class TestStoreConcurrency(unittest.TestCase):
 
     def make_processing_task(self, title, criteria=ACCEPT):
         task_id, task_file = self.make_task(title, criteria)
-        moved = self.run_cmd(["move", task_file, "READY"])
-        self.assertTrue(moved["success"], moved)
-        # The READY exit gate demands a recorded research pass before PROGRESSING.
         recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
         self.assertTrue(recorded["success"], recorded)
+        moved = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(moved["success"], moved)
         moved = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(moved["success"], moved)
         return task_id, task_file
@@ -291,10 +290,10 @@ class TestStoreConcurrency(unittest.TestCase):
         _, task_file = self.make_task(
             "Alpha task for fresh branch gate", criteria=BOXES
         )
-        moved = self.run_cmd(["move", task_file, "READY"])
-        self.assertTrue(moved["success"], moved)
         recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
         self.assertTrue(recorded["success"], recorded)
+        moved = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(moved["success"], moved)
         moved = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(moved["success"], moved)
         task_path = os.path.join(self.store, "progressing", task_file)
@@ -387,6 +386,8 @@ class TestStoreConcurrency(unittest.TestCase):
             (1, 11),
             "the sibling-prefix scenario needs ids 1 and 11",
         )
+        recorded = self.run_cmd(["modify", file_eleven, "--research", RESEARCH])
+        self.assertTrue(recorded["success"], recorded)
         self.run_cmd(["move", file_eleven, "READY"])
         before_one = self.snapshot_folder(file_one, "backlog")
         self.assertTrue(before_one, "task 1 must exist in the store")
@@ -408,6 +409,8 @@ class TestStoreConcurrency(unittest.TestCase):
             return [e for e in os.listdir(self.store) if "tmp" in e.lower()]
 
         task_id, file = self.make_task("Eleven task for undo temp files")
+        recorded = self.run_cmd(["modify", file, "--research", RESEARCH])
+        self.assertTrue(recorded["success"], recorded)
         self.run_cmd(["move", file, "READY"])
         self.assertEqual(temp_entries(), [], "the store must start clean")
         res = self.run_cmd(["undo", str(task_id)])

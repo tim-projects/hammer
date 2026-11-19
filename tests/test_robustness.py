@@ -56,18 +56,7 @@ class TestRobustness(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def enter_progressing(self, file):
-        """Record a research pass, then start work.
-
-        The READY exit gate demands recorded research (Rr + findings) before
-        PROGRESSING; an unchecked move leaves the task stuck in READY and
-        makes every downstream gate assertion vacuous.
-        """
-        findings = (
-            "Read pipeline_hooks.py exit-hook registration, move_logic and the "
-            "tests covering this flow."
-        )
-        res = self.run_cmd(["modify", file, "--research", findings])
-        self.assertTrue(res["success"], f"research record failed for {file}: {res}")
+        """Start work after the task has entered READY."""
         res = self.run_cmd(["move", file, "PROGRESSING"])
         self.assertTrue(res["success"], f"move to PROGRESSING failed for {file}: {res}")
 
@@ -134,6 +123,17 @@ class TestRobustness(unittest.TestCase):
                     f.write(content.replace("- [ ]", "- [x]"))
 
     def run_cmd(self, args, check=False):
+        if len(args) > 2 and args[0] == "move" and "READY" in args[2].split(","):
+            for task_ref in args[1].split(","):
+                self.run_cmd(
+                    [
+                        "modify",
+                        task_ref,
+                        "--research",
+                        "Read the relevant pipeline implementation and regression tests.",
+                    ]
+                )
+
         result = subprocess.run(  # noqa: PLW1510
             [self.script_path, "tasks", "-j"] + args,
             cwd=self.repo_dir,
