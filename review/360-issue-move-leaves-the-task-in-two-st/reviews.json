@@ -129,6 +129,16 @@
       "bytes": 1337,
       "ts": 1795124263.4203377,
       "prev_hash": "1155957219b93c2230aa260334a3b27cd04dd8267ac314019e3dc6cc4bbf4aea"
+    },
+    {
+      "seq": 14,
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tests_test_move_state_consistency.py.patch",
+      "patch": "testing_360-issue-move-leaves-the-task-in-two-st_patches_tests_test_move_state_consistency.py.patch.patch",
+      "md5": "eac4efa64ab6b75ecfcd5df219a13890",
+      "sha256": "67f39d0b832872a4d8d4b4cddd42dc9290687f806033a35ac4186c3492578c5f",
+      "bytes": 6059,
+      "ts": 1795124265.541265,
+      "prev_hash": "1d117c0c871a8a667acb31f2252a5067f7aa56041d24b6bd9e6833b621d55b14"
     }
   ]
 }
