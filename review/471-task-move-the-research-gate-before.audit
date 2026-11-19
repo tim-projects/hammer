@@ -1,0 +1,28 @@
+{
+    "task_id": "471",
+    "patch_hash": "6889740aff16b9d0e9d385675990e387",
+    "patch_files": [
+        "AGENTS.md.patch",
+        "data_next_steps.json.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_help_text.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_test_all_transitions.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_blocker_states.py.patch",
+        "tests_test_default_branch.py.patch",
+        "tests_test_dev_isolation.py.patch",
+        "tests_test_dev_write_audit.py.patch",
+        "tests_test_guard.py.patch",
+        "tests_test_reject_validation.py.patch",
+        "tests_test_require_task_id.py.patch",
+        "tests_test_robustness.py.patch",
+        "tests_test_store_concurrency.py.patch",
+        "tests_test_store_writes.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_tasks_modular.py.patch",
+        "tests_test_worktree_system.py.patch"
+    ],
+    "status": "verified"
+}
