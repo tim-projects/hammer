@@ -10,5 +10,8 @@
       "ts": 1795051896.396968,
       "prev_hash": null
     }
-  ]
+  ],
+  "summary": "Reviewed the sole transition-matrix patch: it adds unified next_step and hint validation-blocker detection while preserving legacy error handling and leaving transition branch logic unchanged.",
+  "summary_at": 1795051904.820569,
+  "reviewed_at": 1795051904.8205702
 }
