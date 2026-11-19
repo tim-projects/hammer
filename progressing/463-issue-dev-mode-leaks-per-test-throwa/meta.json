@@ -11,12 +11,12 @@
   "Pt": null,
   "Rr": true,
   "Tp": false,
-  "Rc": "PASSED",
-  "Vp": true,
-  "Reviewed": true,
+  "Rc": "",
+  "Vp": false,
+  "Reviewed": false,
   "AuditPassed": false,
-  "PatchGenTime": 1795062627.633317,
-  "DoneAt": 1795062881.973097,
+  "PatchGenTime": null,
+  "DoneAt": null,
   "PatchFiles": [
     {
       "file": "AGENTS.md",
