@@ -8,11 +8,12 @@
   "Br": "360-issue-move-leaves-the-task-in-two-st",
   "Pt": null,
   "Rr": true,
-  "Tp": false,
+  "Tp": true,
   "Rc": "",
-  "Vp": false,
+  "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
   "PatchGenTime": null,
-  "DoneAt": null
+  "DoneAt": null,
+  "St": "TESTING"
 }
