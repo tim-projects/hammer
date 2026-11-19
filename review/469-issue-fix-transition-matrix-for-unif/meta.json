@@ -1,0 +1,28 @@
+{
+  "Id": 469,
+  "Ti": "Fix transition matrix for unified next-step responses",
+  "Ty": "issue",
+  "Cr": "261118 18:41",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "469-issue-fix-transition-matrix-for-unif",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Rr": true,
+  "Tp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795051889.679929,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tests/test_all_transitions.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/469-issue-fix-transition-matrix-for-unif/patches/tests_test_all_transitions.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "94384c44fd8e7b6b967d3910fdd2ad905ec92247",
+    "base": "59a0976ae815ed61e5730a2f5f4438fb4820c2f1"
+  }
+}
