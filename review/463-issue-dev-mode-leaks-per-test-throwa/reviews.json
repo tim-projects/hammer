@@ -20,5 +20,8 @@
       "ts": 1795099721.533134,
       "prev_hash": "103214f1de2a8028417580af921d41cccb3744d6b3bf6eb6f08cd63da12c9292"
     }
-  ]
+  ],
+  "summary": "Both patches read in full: tasks_ai_context.py.patch adds reclaim_stale_dev_dirs + TTL constants, called only on the cold path before the dev-repo clone, nothing else touched; tests_test_dev_repo_reclamation.py.patch adds 3 focused tests (stale swept, live/fresh/foreign untouched, addCleanup covers setUp failure). Duplicate coverage deliberately deferred to the existing tests/test_temp_cleanup.py. Matches the task plan and criteria.",
+  "summary_at": 1795099722.4279878,
+  "reviewed_at": 1795099722.4279885
 }
