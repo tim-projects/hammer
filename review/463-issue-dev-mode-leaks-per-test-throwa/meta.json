@@ -1,0 +1,34 @@
+{
+  "Id": 463,
+  "Ti": "Dev mode leaks per-test throwaway repos into /tmp until the suite fails with ENOSPC",
+  "Ty": "issue",
+  "Cr": "261117 17:03",
+  "Bl": [
+    "469-issue-fix-transition-matrix-for-unif"
+  ],
+  "Pr": 1,
+  "Br": "463-issue-dev-mode-leaks-per-test-throwa",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795099236.656639,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/context.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tasks_ai_context.py.patch"
+    },
+    {
+      "file": "tests/test_dev_repo_reclamation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_dev_repo_reclamation.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "d210bb379f809207806540e5bc405aebd280db01",
+    "base": "c2f2174a4bd27646ef3e681a47e84b9149d1e0db"
+  }
+}
