@@ -80,5 +80,8 @@
       "ts": 1795120329.4954813,
       "prev_hash": "7014ec838dfe8e09d27047a9de88b790cdd4b76bde1139e53b313adbb7aff83e"
     }
-  ]
+  ],
+  "summary": "Reviewed all eight patches: physical moves are locked and rollback-safe; duplicate readers and guard use consistent St metadata; list emits one row per task id; focused concurrency tests cover the two-folder window; validation timeouts allow the full suite to finish.",
+  "summary_at": 1795120331.7081764,
+  "reviewed_at": 1795120331.7081783
 }
