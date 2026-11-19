@@ -1,0 +1,10 @@
+{
+  "Id": 474,
+  "Ti": "Write user tests for 473: Full pytest suite has order-dependent flakes masking real failures",
+  "Ty": "task",
+  "Cr": "261119 14:00",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "474-task-write-user-tests-for-473-full",
+  "Pt": 473
+}

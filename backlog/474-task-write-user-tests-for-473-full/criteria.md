@@ -1,0 +1,3 @@
+- [ ] Each of the three tests passes standalone AND in a full-suite run
+- [ ] Two consecutive full-suite runs produce identical results
+- [ ] Root cause of each flake documented (order dependence, env leakage, or real race)
