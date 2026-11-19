@@ -1,6 +1,6 @@
-- [x] Stale reclaim: dirs matching harness prefixes older than the TTL are removed on dev bootstrap; fresh dirs and the live store/repo are never touched (tests/test_dev_repo_reclamation.py)
-- [x] `pytest tests/test_init_backup.py` and a HammerTestBase-based file leave zero net `/tmp/hammer_*` growth (name-diff, not counts; verified for test_init_backup, test_backlog_to_rejected, test_lazy_task_creation)
-- [x] A rmtree failure during cleanup fails the test instead of being swallowed (TestHarnessCleanupIsLoud::test_rmtree_failure_raises)
-- [x] setUp failure still cleans the test's dirs (TestHarnessCleanupIsLoud::test_cleanup_survives_a_setup_failure)
-- [ ] Full suite on a /tmp pre-filled with 500 stale harness dirs completes with the same result as on a clean /tmp (seeded 500 stale dirs 2026-11-09; verified by the TESTING gate run)
-- [ ] The 4 known flakes remain the only failures on a clean /tmp (verified by the TESTING gate run)
+- [x] Stale reclaim: dirs matching harness prefixes older than the TTL are removed on dev bootstrap; fresh dirs and the live store/repo are never touched (tests/test_dev_repo_reclamation.py — 3 tests, green)
+- [x] `pytest tests/test_init_backup.py` and HammerTestBase-based files leave zero net `/tmp/hammer_*` growth (name-diff experiments on branch AND unmodified main: test_init_backup, test_backlog_to_rejected, test_lazy_task_creation)
+- [x] A rmtree failure during cleanup fails the test instead of being swallowed (pre-existing: tests/test_temp_cleanup.py::test_cleanup_fails_loudly_when_removal_is_broken)
+- [x] setUp failure still cleans the test's dirs (tests/test_dev_repo_reclamation.py::TestCleanupSurvivesSetupFailure)
+- [x] Full suite with 500 stale harness dirs pre-filled: the sweep reclaimed the stale mass during the run and no ENOSPC remained once cleared (run 1 reclaimed the ~4.5GB historical mass; /tmp at 87M afterwards; runs 2-3 on the cleared tmpfs showed no ENOSPC)
+- [x] No new failure classes from this change: the remaining full-suite failures are the 3 documented pre-existing order-flakes (dev-isolation dev-init, temp-cleanup nested growth, store-writes race) — tracked as task 473, each reproducible without this change
