@@ -131,14 +131,12 @@ class TestDevWriteAudit(unittest.TestCase):
         id_b, file_b = self.make_task("Beta dev audit task")
         for task_file in (file_a, file_b):
             self.assertTrue(
-                self.payload(self.run_dev(["move", task_file, "READY"]))["success"]
-            )
-        # The READY exit gate demands a recorded research pass before PROGRESSING.
-        for task_file in (file_a, file_b):
-            self.assertTrue(
                 self.payload(
                     self.run_dev(["modify", task_file, "--research", RESEARCH])
                 )["success"]
+            )
+            self.assertTrue(
+                self.payload(self.run_dev(["move", task_file, "READY"]))["success"]
             )
         for task_file in (file_a, file_b):
             self.assertTrue(
@@ -203,12 +201,12 @@ class TestDevWriteAudit(unittest.TestCase):
     def test_dev_artifacts_live_under_the_dev_roots(self):
         self.assertTrue(self.payload(self.run_dev(["init"]))["success"])
         _, file_a = self.make_task("Alpha dev roots probe task")
-        moved = self.payload(self.run_dev(["move", file_a, "READY"]))
-        self.assertTrue(moved["success"], moved)
         recorded = self.payload(
             self.run_dev(["modify", file_a, "--research", RESEARCH])
         )
         self.assertTrue(recorded["success"], recorded)
+        moved = self.payload(self.run_dev(["move", file_a, "READY"]))
+        self.assertTrue(moved["success"], moved)
         moved = self.payload(self.run_dev(["move", file_a, "PROGRESSING"]))
         self.assertTrue(moved["success"], moved)
         with open(os.path.join(self.store, "worktrees.json")) as handle:

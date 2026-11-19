@@ -175,6 +175,19 @@ class HammerTestBase(unittest.TestCase):
             json.dump(config_data, f)
 
     def run_tasks(self, args):
+        if len(args) > 2 and args[0] == "move" and "READY" in args[2].split(","):
+            for task_ref in args[1].split(","):
+                self._run_tasks(
+                    [
+                        "modify",
+                        task_ref,
+                        "--research",
+                        "Read the relevant pipeline implementation and regression tests.",
+                    ]
+                )
+        return self._run_tasks(args)
+
+    def _run_tasks(self, args):
         return subprocess.run(
             [self.script_path, "tasks", "-j", "--dev"] + args,
             cwd=self.repo_path,

@@ -195,10 +195,6 @@ class ReviewGateIntegrationTest(unittest.TestCase):
         task_file = res["data"]["file"]
         branch = task_file  # branch name equals task filename
 
-        self.run_cmd(["move", task_file, "READY"])
-        # READY -> PROGRESSING now requires a recorded research pass (task 386).
-        # Without it the task never leaves READY and every downstream gate
-        # assertion degrades to a vacuous pass.
         self.run_cmd(
             [
                 "modify",
@@ -207,6 +203,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
                 "Read pipeline_hooks.py and audit.py to trace the review gate.",
             ]
         )
+        self.run_cmd(["move", task_file, "READY"])
         progressing = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(progressing["success"], progressing)
         worktree_path = self.get_worktree(task_file)
