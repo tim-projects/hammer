@@ -2,6 +2,7 @@ import os
 
 from .constants import STATE_FOLDERS
 from .file_manager import FM
+from .utils import select_task_candidate
 
 
 class TaskService:
@@ -49,21 +50,7 @@ class TaskService:
                             continue
         if not matches:
             return (None, None)
-        selected = None
-        if len(matches) == 1:
-            selected = matches[0]
-        else:
-            for path, state in matches:
-                if state not in ("ARCHIVED", "REJECTED", "BACKLOG"):
-                    selected = (path, state)
-                    break
-            if not selected:
-                for path, state in matches:
-                    if state in ("READY", "BACKLOG"):
-                        selected = (path, state)
-                        break
-            if not selected:
-                selected = matches[0]
+        selected = select_task_candidate(matches)
         if selected and self.cli._validate_path(selected[0]):
             task_path, state = selected
             folder_name = os.path.basename(os.path.dirname(task_path))
