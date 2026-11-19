@@ -210,5 +210,8 @@
       "ts": 1795073897.0694625,
       "prev_hash": "63a39fbdbc9993e734c32acbe5c45bd173e691a6dbe90948bf13763dd8ff4a76"
     }
-  ]
+  ],
+  "summary": "Reviewed all 21 patches: the gate moved to BACKLOG -> READY, guard precedence is preserved, guidance matches the new transition, and fixtures record research before promotion.",
+  "summary_at": 1795073968.077178,
+  "reviewed_at": 1795073968.0771794
 }
