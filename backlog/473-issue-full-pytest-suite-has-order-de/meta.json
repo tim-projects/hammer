@@ -1,0 +1,10 @@
+{
+  "Id": 473,
+  "Ti": "Full pytest suite has order-dependent flakes masking real failures",
+  "Ty": "issue",
+  "Cr": "261119 14:00",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "473-issue-full-pytest-suite-has-order-de",
+  "Pt": null
+}
