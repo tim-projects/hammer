@@ -15,7 +15,7 @@
   "AuditPassed": false,
   "PatchGenTime": 1795124178.334828,
   "DoneAt": 1795120569.419933,
-  "St": "REVIEW",
+  "St": "STAGING",
   "PatchFiles": [
     {
       "file": "review/360-issue-move-leaves-the-task-in-two-st.audit",
