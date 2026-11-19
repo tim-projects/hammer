@@ -39,6 +39,16 @@
       "bytes": 2849,
       "ts": 1795062675.8372538,
       "prev_hash": "1a2eebb301159d8d29c7ba6f707fd5f19cb216016f50704df1a90e4a5e28f141"
+    },
+    {
+      "seq": 5,
+      "file": "tests/test_audit_verify_integration.py",
+      "patch": "tests_test_audit_verify_integration.py.patch",
+      "md5": "5b429f800d2360d7dd7a4ebc23fe04f1",
+      "sha256": "def4175cf8965e7d1e6be0b09f97580d00e178e48b450c46991b3a73924edc4e",
+      "bytes": 1530,
+      "ts": 1795062677.3017845,
+      "prev_hash": "bbf474880d555537cf68105bff9bac53bfa252904b57620b05251c97804c698d"
     }
   ]
 }
