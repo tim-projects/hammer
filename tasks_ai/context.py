@@ -18,7 +18,9 @@ HARNESS_STALE_AFTER = 24 * 60 * 60
 # state; widen only if a suite ever legitimately runs longer than a day.
 
 
-def clone_local(source: str, dest: str, *extra_args: str) -> subprocess.CompletedProcess:
+def clone_local(
+    source: str, dest: str, *extra_args: str
+) -> subprocess.CompletedProcess:
     """Clone a local repo into `dest` through a throwaway path, retrying transient failures.
 
     A local clone with --no-hardlinks copies every object; under load that copy can fail
@@ -55,6 +57,7 @@ def clone_local(source: str, dest: str, *extra_args: str) -> subprocess.Complete
         time.sleep(0.2 * 2**attempt)
     shutil.rmtree(tmp, ignore_errors=True)
     return last if last is not None else subprocess.CompletedProcess([], 1)
+
 
 class ProjectContext:
     """

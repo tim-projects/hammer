@@ -391,8 +391,13 @@ class TestCloneRobustness(unittest.TestCase):
         subprocess.run(
             ["git", "-C", self.source, "commit", "-qm", "init"],
             check=True,
-            env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
-                 "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
+            env={
+                **os.environ,
+                "GIT_AUTHOR_NAME": "t",
+                "GIT_AUTHOR_EMAIL": "t@t",
+                "GIT_COMMITTER_NAME": "t",
+                "GIT_COMMITTER_EMAIL": "t@t",
+            },
         )
         self.dest = tempfile.mkdtemp(prefix="clone_dst_")
         shutil.rmtree(self.dest)
@@ -405,7 +410,9 @@ class TestCloneRobustness(unittest.TestCase):
             if cmd[:2] == ["git", "clone"]:
                 calls.append(cmd)
                 if len(calls) == 1:
-                    return subprocess.CompletedProcess(cmd, 1, "", "failed to copy file")
+                    return subprocess.CompletedProcess(
+                        cmd, 1, "", "failed to copy file"
+                    )
             return real_run(cmd, *a, **k)
 
         with patch.object(context_module.subprocess, "run", flaky):
