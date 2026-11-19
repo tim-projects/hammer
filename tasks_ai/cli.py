@@ -323,15 +323,11 @@ class TasksCLI:
 
     def _append_log(self, path, message, section="progress"):
         FM.append_log(path, message, section=section)
-        if path:
-            # FM.append_log writes the section file (progress.md by default), not
-            # a separate activity.log: staging the wrong name fails silently and
-            # the log line never reaches the store.
-            rel_log = os.path.join(
-                os.path.relpath(path, self.tasks_path), f"{section}.md"
-            )
-            if store_is_git(self):
-                self._run_git(["add", rel_log], cwd=self.tasks_path)
+        # Deliberately no 'git add' here: an unlocked stage sits in the shared
+        # index until some other command's commit sweeps it in, which is exactly
+        # how one task's log line ended up in another task's commit. Every caller
+        # commits through commit_task_paths, which stages the whole task dir
+        # (this log included) under the store lock.
 
     def _run_git(self, cmd, cwd=None, check=False):
         return self.git.run(cmd, cwd=cwd, check=check)
@@ -763,30 +759,31 @@ class TasksCLI:
             initialized = os.path.isdir(
                 os.path.join(self.tasks_path, ".git")
             ) or self._tasks_directory_has_data(self.tasks_path)
+            backup_path = None
             if initialized:
                 if not force:
                     self.error("DEV_ALREADY_INITIALIZED")
                 else:
-                    self._backup_tasks_directory(self.tasks_path)
+                    backup_path = self._backup_tasks_directory(self.tasks_path)
                     self.log(f"Resetting dev tasks at {self.tasks_path}")
                     shutil.rmtree(self.tasks_path)
 
             from .constants import TASKS_BRANCH
+            from .context import clone_local
 
-            clone_result = self._run_git(
-                [
-                    "clone",
-                    "--no-hardlinks",
-                    "--branch",
-                    TASKS_BRANCH,
-                    "--depth",
-                    "1",
-                    self.context.invoked_repo_root or self.root,
-                    self.tasks_path,
-                ],
-                check=False,
+            clone_result = clone_local(
+                self.context.invoked_repo_root or self.root,
+                self.tasks_path,
+                "--branch",
+                TASKS_BRANCH,
+                "--depth",
+                "1",
             )
             if clone_result.returncode != 0:
+                if backup_path and os.path.isdir(backup_path):
+                    # The reset removed the store before cloning: a failed clone must
+                    # not leave the operator with nothing where their records were.
+                    shutil.copytree(backup_path, self.tasks_path, dirs_exist_ok=True)
                 self.error(
                     "TASKS_CLONE_FAILED",
                     branch=TASKS_BRANCH,
