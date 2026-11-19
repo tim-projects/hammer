@@ -29,6 +29,16 @@
       "bytes": 502,
       "ts": 1795062674.5080671,
       "prev_hash": "6dc9eda7ed19cb457d3eb41c5d6e0baaf763c525266c6e7fe83bb97bdfe5fd55"
+    },
+    {
+      "seq": 4,
+      "file": "tests/hammer_test_base.py",
+      "patch": "tests_hammer_test_base.py.patch",
+      "md5": "92eafab6a9b144f3589f89e02ad0d129",
+      "sha256": "d91877902d39e7d3bb9d2189d5a251a094a0039510a34119f530f572b94fad6a",
+      "bytes": 2849,
+      "ts": 1795062675.8372538,
+      "prev_hash": "1a2eebb301159d8d29c7ba6f707fd5f19cb216016f50704df1a90e4a5e28f141"
     }
   ]
 }
