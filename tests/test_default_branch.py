@@ -142,12 +142,12 @@ class MasterRepoTestBase(unittest.TestCase):
         )
 
         self.assertTrue(
-            self.run_cmd(["move", task_file, "READY"])["success"],
-            "move READY failed",
-        )
-        self.assertTrue(
             self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
             "research record failed",
+        )
+        self.assertTrue(
+            self.run_cmd(["move", task_file, "READY"])["success"],
+            "move READY failed",
         )
         self.assertTrue(
             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
@@ -229,11 +229,11 @@ class TestMasterNamedRepo(MasterRepoTestBase):
         master_tip = git(["rev-parse", "master"], self.repo_dir).stdout.strip()
 
         self.assertTrue(
-            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
-        )
-        self.assertTrue(
             self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
             "research record failed",
+        )
+        self.assertTrue(
+            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
         )
         self.assertTrue(
             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
@@ -261,11 +261,11 @@ class TestNoDefaultBranch(MasterRepoTestBase):
         task_file = data["file"]
 
         self.assertTrue(
-            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
-        )
-        self.assertTrue(
             self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
             "research record failed",
+        )
+        self.assertTrue(
+            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
         )
         self.assertTrue(
             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],

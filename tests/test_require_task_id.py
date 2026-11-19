@@ -98,11 +98,10 @@ class TestRequireTaskId(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         task_file = res["data"]["file"]
-        ready = self.run_cmd(["move", task_file, "READY"])
-        self.assertTrue(ready["success"], ready)
-        # The READY exit gate demands a recorded research pass before PROGRESSING.
         research = self.run_cmd(["modify", task_file, "--research", RESEARCH])
         self.assertTrue(research["success"], research)
+        ready = self.run_cmd(["move", task_file, "READY"])
+        self.assertTrue(ready["success"], ready)
         progressing = self.run_cmd(["move", task_file, "PROGRESSING"])
         self.assertTrue(progressing["success"], progressing)
         return res["data"]["id"], task_file
