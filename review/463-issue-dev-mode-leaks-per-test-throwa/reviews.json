@@ -130,5 +130,8 @@
       "ts": 1795062700.3917208,
       "prev_hash": "1dd34f7179cc90cf7bdfe071ed9db2b265edfcb1cc3440c61dde6c810f6c1391"
     }
-  ]
+  ],
+  "summary": "Reviewed all 13 patches: fail-loud creation-time cleanup removes dev stores and keyed repo clones, bounded ENOTEMPTY retry handles detached Git maintenance, regression coverage verifies zero temp growth and clean JSON messages, and AGENTS.md clarifies next-step continuation.",
+  "summary_at": 1795062778.113278,
+  "reviewed_at": 1795062778.1132793
 }
