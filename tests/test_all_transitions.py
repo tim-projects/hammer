@@ -64,10 +64,18 @@ class TestAllTransitions(HammerTestBase):
             output = json.loads(res.stdout)
             success = output.get("success", False)
             error = output.get("error", "")
+            next_step = output.get("next_step", "")
+            hint = output.get("hint", "")
             is_allowed = target in ALLOWED_TRANSITIONS.get(current, [])
+            validation_messages = ["Validation failed", "regression check", "lint"]
             is_validation_error = any(
-                msg.lower() in error.lower()
-                for msg in ["Validation failed", "regression check", "lint"]
+                msg.lower() in error.lower() for msg in validation_messages
+            ) or (
+                output.get("status") == "next_step"
+                and any(
+                    msg.lower() in f"{next_step} {hint}".lower()
+                    for msg in validation_messages
+                )
             )
             any(
                 msg.lower() in error.lower()
