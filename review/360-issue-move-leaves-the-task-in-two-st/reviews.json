@@ -220,5 +220,8 @@
       "ts": 1795124283.6185977,
       "prev_hash": "c95988d8305b6f7e39ae97caf6e127716c2094dbc00e4da3e5643f2ec6bc703e"
     }
-  ]
+  ],
+  "summary": "Re-reviewed all 22 final code and task-record patches after rollback fix and final validation: physical moves are locked and rollback-safe; duplicate readers and guard use consistent St metadata; list emits one row per task id; focused concurrency tests cover the two-folder window; final full validation passes.",
+  "summary_at": 1795124301.924534,
+  "reviewed_at": 1795124301.924535
 }
