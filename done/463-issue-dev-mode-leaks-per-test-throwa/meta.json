@@ -16,7 +16,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1795062627.633317,
-  "DoneAt": null,
+  "DoneAt": 1795062881.973097,
   "PatchFiles": [
     {
       "file": "AGENTS.md",
