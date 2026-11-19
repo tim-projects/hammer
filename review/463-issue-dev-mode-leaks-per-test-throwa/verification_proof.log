@@ -1,1 +1,1 @@
-Reviewed all 13 patches. Ruff format/check pass. Focused tests pass. Full-suite runs recorded zero net /tmp/hammer_* growth, including at 92% disk usage.
+Full suites on the branch (3 runs) show only the 3 documented pre-existing order-flakes (task 473); the sweep reclaimed the historical 4.5GB /tmp orphan mass and no ENOSPC remained after clearing; new tests (3) green; lint PASS; the dev-isolation flake reproduces on unmodified main.
