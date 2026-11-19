@@ -430,42 +430,51 @@ def perform_move(cli, task, current_state, new_status, filepath):
         original_state = task.metadata.get("St")
         task.metadata["St"] = new_status
         FM.dump(task, filepath_str)
-        fname = task.metadata.get("Br") or str(task.metadata.get("Id", "unknown-task"))
-        new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
-        if filepath_str != new_filepath:
-            atomic_write(new_filepath, task, fm=FM)
-            task_folder_name = os.path.basename(filepath_str)
-            patches_src = os.path.join(
-                cli.tasks_path, "review", task_folder_name, "patches"
+        try:
+            fname = task.metadata.get("Br") or str(
+                task.metadata.get("Id", "unknown-task")
             )
-            patches_dst = os.path.join(
-                cli.tasks_path, STATE_FOLDERS[new_status], fname, "patches"
+            new_filepath = os.path.join(
+                cli.tasks_path, STATE_FOLDERS[new_status], fname
             )
-            if os.path.exists(patches_src):
-                os.makedirs(os.path.dirname(patches_dst), exist_ok=True)
-                shutil.move(patches_src, patches_dst)
-                cli.log(f"Migrated patches directory to {new_status}")
-            audit_src = os.path.join(
-                cli.tasks_path, "review", f"{task_folder_name}.audit"
-            )
-            audit_dst = os.path.join(
-                cli.tasks_path, STATE_FOLDERS[new_status], f"{fname}.audit"
-            )
-            if os.path.exists(audit_src):
-                shutil.move(audit_src, audit_dst)
-                cli.log(f"Migrated audit file to {new_status}")
+            if filepath_str != new_filepath:
+                atomic_write(new_filepath, task, fm=FM)
+                task_folder_name = os.path.basename(filepath_str)
+                patches_src = os.path.join(
+                    cli.tasks_path, "review", task_folder_name, "patches"
+                )
+                patches_dst = os.path.join(
+                    cli.tasks_path, STATE_FOLDERS[new_status], fname, "patches"
+                )
+                if os.path.exists(patches_src):
+                    os.makedirs(os.path.dirname(patches_dst), exist_ok=True)
+                    shutil.move(patches_src, patches_dst)
+                    cli.log(f"Migrated patches directory to {new_status}")
+                audit_src = os.path.join(
+                    cli.tasks_path, "review", f"{task_folder_name}.audit"
+                )
+                audit_dst = os.path.join(
+                    cli.tasks_path, STATE_FOLDERS[new_status], f"{fname}.audit"
+                )
+                if os.path.exists(audit_src):
+                    shutil.move(audit_src, audit_dst)
+                    cli.log(f"Migrated audit file to {new_status}")
+                if os.path.exists(filepath_str):
+                    if os.path.isdir(filepath_str):
+                        shutil.rmtree(filepath_str)
+                    else:
+                        os.remove(filepath_str)
+            else:
+                atomic_write(new_filepath, task, fm=FM)
+            cli._append_log(new_filepath, f"{current_state}->{new_status}")
+        except Exception:
             if os.path.exists(filepath_str):
-                if os.path.isdir(filepath_str):
-                    shutil.rmtree(filepath_str)
+                if original_state is None:
+                    task.metadata.pop("St", None)
                 else:
-                    os.remove(filepath_str)
-        else:
-            atomic_write(new_filepath, task, fm=FM)
-        cli._append_log(new_filepath, f"{current_state}->{new_status}")
-        if original_state is None:
-            task.metadata.pop("St", None)
-        else:
-            task.metadata["St"] = original_state
+                    task.metadata["St"] = original_state
+                FM.dump(task, filepath_str)
+            raise
     return task
 
 
