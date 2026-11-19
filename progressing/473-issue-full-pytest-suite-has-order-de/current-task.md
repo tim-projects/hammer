@@ -1,3 +1,6 @@
+---
+---
+
 # Task 473 — progress log
 
 ## Root causes found and fixed
