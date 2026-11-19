@@ -135,7 +135,6 @@ class TestRejectWithoutProgressFiles(HammerTestBase):
         data = json.loads(created.stdout)["data"]
         task_id = str(data["id"])
         task_file = data["file"]
-        self.run_tasks(["move", task_id, "READY"])
         self.run_tasks(
             [
                 "modify",
@@ -144,6 +143,7 @@ class TestRejectWithoutProgressFiles(HammerTestBase):
                 "Read the progress update hook and rejection transition before testing.",
             ]
         )
+        self.run_tasks(["move", task_id, "READY"])
         self.run_tasks(["move", task_id, "PROGRESSING"])
 
         task_dir = os.path.join(self.dev_tasks_dir, "progressing", task_file)

@@ -66,7 +66,6 @@ class TasksCLI:
 
         # Register EXIT hooks (Pre-move gates/checks)
         self.hook_registry.register_exit_hook("READY", MainBranchProtectionHook())
-        self.hook_registry.register_exit_hook("READY", ResearchGateHook())
         self.hook_registry.register_exit_hook("BACKLOG", ContentSufficiencyHook())
         # Guard runs at every gate: a duplicate ID must never progress
         for state in [
@@ -79,6 +78,7 @@ class TasksCLI:
             "DONE",
         ]:
             self.hook_registry.register_exit_hook(state, GuardGateHook())
+        self.hook_registry.register_exit_hook("BACKLOG", ResearchGateHook())
         self.hook_registry.register_exit_hook("PROGRESSING", MainBranchProtectionHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ValidationHook())
         self.hook_registry.register_exit_hook("PROGRESSING", ProgressUpdateHook())

@@ -65,8 +65,6 @@ class BlockerStateTestBase(HammerTestBase):
         blocker = self.create_task(BASE_ID + 2, "Blocker State Completion Task")
         link = self.run_tasks(["link", blocked["file"], blocker["file"]])
         self.assertEqual(link.returncode, 0, link.stdout + link.stderr)
-        ready = self.run_tasks(["move", blocked["file"], "READY"])
-        self.assertEqual(ready.returncode, 0, ready.stdout + ready.stderr)
         research = self.run_tasks(
             [
                 "modify",
@@ -76,6 +74,8 @@ class BlockerStateTestBase(HammerTestBase):
             ]
         )
         self.assertEqual(research.returncode, 0, research.stdout + research.stderr)
+        ready = self.run_tasks(["move", blocked["file"], "READY"])
+        self.assertEqual(ready.returncode, 0, ready.stdout + ready.stderr)
         return blocked, blocker
 
     def enter_progressing(self, blocked_file):

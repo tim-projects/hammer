@@ -81,6 +81,10 @@ def test_move_and_delete(setup_tasks):
     )
 
     # Move through states
+    cli.modify(
+        task_id,
+        research="Read the task move path and state transition implementation.",
+    )
     cli.move(task_id, "READY")
     _, state = cli.find_task(task_id)
     assert state == "READY"

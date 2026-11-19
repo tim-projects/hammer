@@ -202,19 +202,19 @@ class ContentSufficiencyHook(PipelineHook):
 
 
 class ResearchGateHook(PipelineHook):
-    """READY -> PROGRESSING requires a recorded read-only research pass.
+    """BACKLOG -> READY requires a recorded read-only research pass.
 
     The pass itself is read-only (codebase files, online search); only its
     findings are written back, via 'tasks modify --research', which stores
     the research part and sets the Rr attestation. The gate needs both: a
     bare Rr flag with no findings, or findings never attested, both mean the
-    task moved to implementation without anyone looking at the code.
+    task entered the ready queue without anyone looking at the code.
     """
 
     MIN_RESEARCH_LEN = 10
 
     def execute(self, cli, task, current_state, new_status, filepath):
-        if new_status != "PROGRESSING":
+        if current_state != "BACKLOG" or new_status != "READY":
             return
 
         research = str(task.parts.get("research") or "").strip()
