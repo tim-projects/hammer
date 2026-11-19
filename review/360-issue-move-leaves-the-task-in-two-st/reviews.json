@@ -179,6 +179,16 @@
       "bytes": 987,
       "ts": 1795124274.535313,
       "prev_hash": "765c6d0cea87c693d0f047302292d9f56b0caf5ba82ffb997ce25d220dc42d89"
+    },
+    {
+      "seq": 19,
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/reviews.json",
+      "patch": "testing_360-issue-move-leaves-the-task-in-two-st_reviews.json.patch",
+      "md5": "2494cd471fe169949812e0762e9d0046",
+      "sha256": "ca201ee631635ac04dc8791576ab4fec60cc800fad512c23dddc0157be9c2bfd",
+      "bytes": 3824,
+      "ts": 1795124276.511264,
+      "prev_hash": "d7c0aa16f65bd24de79d151580cb56d0bde9610cb6962987ff092a5da442d1d8"
     }
   ]
 }
