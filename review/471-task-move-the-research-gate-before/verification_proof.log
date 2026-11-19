@@ -1,0 +1,1 @@
+Full suite passed: 361 tests plus 290 subtests; the two isolated dev-init flakes passed on rerun. Lint, typecheck, and Ruff format also pass.
