@@ -1,0 +1,148 @@
+diff --git a/tests/test_move_state_consistency.py b/tests/test_move_state_consistency.py
+new file mode 100644
+index 00000000..97df9820
+--- /dev/null
++++ b/tests/test_move_state_consistency.py
+@@ -0,0 +1,142 @@
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++import threading
++import unittest
++from unittest.mock import patch
++
++from tasks_ai.cli import TasksCLI
++from tasks_ai.constants import STATE_FOLDERS
++from tasks_ai.file_manager import FM
++
++
++class TestMoveStateConsistency(unittest.TestCase):
++    def setUp(self):
++        sys._called_from_test = True  # type: ignore[attr-defined]
++        self.test_dir = tempfile.mkdtemp(prefix="hammer_move_state_")
++        self.repo_dir = os.path.join(self.test_dir, "repo")
++        os.makedirs(self.repo_dir)
++        subprocess.run(["git", "init"], cwd=self.repo_dir, check=True)
++        subprocess.run(  # noqa: PLW1510
++            ["git", "config", "user.email", "test@example.com"], cwd=self.repo_dir
++        )
++        subprocess.run(  # noqa: PLW1510
++            ["git", "config", "user.name", "Test User"], cwd=self.repo_dir
++        )
++        self.old_cwd = os.getcwd()
++        os.chdir(self.repo_dir)
++        self.cli = TasksCLI()
++        self.cli.init()
++        self.cli.create(
++            "Move state consistency task",
++            story="A user needs one visible copy of a task during a move.",
++            tech="The destination state is recorded in task metadata.",
++            criteria="Readers see one task while the move is in progress.",
++            plan="1. Move the task\n2. Verify its state",
++        )
++        self.task_id = "1"
++        self.cli.modify(
++            self.task_id,
++            research="Read the move implementation and state-folder readers before testing.",
++        )
++        self.task_path, self.state = self.cli.find_task(self.task_id)
++        self.task = FM.load(self.task_path)
++
++    def tearDown(self):
++        os.chdir(self.old_cwd)
++        shutil.rmtree(self.test_dir, ignore_errors=True)
++
++    def _write_state(self, path, state):
++        task = FM.load(path)
++        task.metadata["St"] = state
++        FM.dump(task, path)
++
++    def test_duplicate_readers_prefer_matching_metadata_state(self):
++        source = self.task_path
++        destination = os.path.join(
++            self.cli.tasks_path, STATE_FOLDERS["READY"], os.path.basename(source)
++        )
++        shutil.copytree(source, destination)
++        self._write_state(destination, "READY")
++        self._write_state(source, "READY")
++
++        path, state = self.cli.find_task(self.task_id)
++        self.assertEqual(path, destination)
++        self.assertEqual(state, "READY")
++
++        self.cli.as_json = True
++        self.cli.finish = lambda data=None: setattr(self.cli, "listed", data)
++        from tasks_ai.commands import list as list_command
++
++        list_command.run(self.cli)
++        rows = [row for state_rows in self.cli.listed.values() for row in state_rows]
++        matching = [row for row in rows if row["id"] == 1]
++        self.assertEqual(len(matching), 1)
++
++    def test_guard_ignores_consistent_duplicate_state(self):
++        source = self.task_path
++        destination = os.path.join(
++            self.cli.tasks_path, STATE_FOLDERS["READY"], os.path.basename(source)
++        )
++        shutil.copytree(source, destination)
++        self._write_state(destination, "READY")
++        self._write_state(source, "READY")
++
++        from tasks_ai.guard_engine import GuardEngine
++
++        engine = GuardEngine(
++            repo_root=self.repo_dir,
++            tasks_path=self.cli.tasks_path,
++            cwd=self.repo_dir,
++        )
++        findings = engine.scan()
++        self.assertNotIn(
++            "GUARD_STATE_DUPLICATE", {finding["code"] for finding in findings}
++        )
++
++    def test_locked_move_blocks_list_until_destination_is_complete(self):
++        source = self.task_path
++        destination = os.path.join(
++            self.cli.tasks_path, STATE_FOLDERS["READY"], os.path.basename(source)
++        )
++        move_started = threading.Event()
++        release_move = threading.Event()
++        original_rmtree = shutil.rmtree
++
++        def slow_rmtree(path, *args, **kwargs):
++            if path == source:
++                move_started.set()
++                release_move.wait(5)
++            return original_rmtree(path, *args, **kwargs)
++
++        def move_task():
++            self.cli.move(self.task_id, "READY")
++
++        with patch("tasks_ai.commands.move.shutil.rmtree", side_effect=slow_rmtree):
++            mover = threading.Thread(target=move_task)
++            mover.start()
++            self.assertTrue(move_started.wait(5))
++
++            self.cli.as_json = True
++            self.cli.finish = lambda data=None: setattr(self.cli, "listed", data)
++            from tasks_ai.commands import list as list_command
++
++            list_command.run(self.cli)
++            rows = [
++                row for state_rows in self.cli.listed.values() for row in state_rows
++            ]
++            matching = [row for row in rows if row["id"] == 1]
++            self.assertEqual(len(matching), 1)
++            self.assertEqual(matching[0]["state"], "READY")
++
++            release_move.set()
++            mover.join(5)
++            self.assertFalse(mover.is_alive())
++            self.assertTrue(os.path.isdir(destination))
++            self.assertFalse(os.path.exists(source))
++
++
++if __name__ == "__main__":
++    unittest.main()

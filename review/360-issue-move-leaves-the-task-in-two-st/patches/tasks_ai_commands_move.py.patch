@@ -1,0 +1,163 @@
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index 562bfdb7..2601e4eb 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -6,7 +6,7 @@ from ..cli_errors import PipelineBranchMissing, PipelineMergeConflict, PipelineP
+ from ..constants import STATE_FOLDERS
+ from ..file_manager import FM
+ from ..pipeline import PipelineError
+-from ..utils import commit_task_paths, parse_filename, perform_move
++from ..utils import commit_task_paths, parse_filename, perform_move, store_lock
+ 
+ 
+ def run(cli, filename, new_status=None, yes=False, force=False):
+@@ -181,70 +181,87 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+     os.makedirs(staging_path, exist_ok=True)
+     staged_task_path = os.path.join(staging_path, os.path.basename(filepath_str))
+ 
+-    try:
+-        # Stage: Physically move/copy the task directory
+-        if os.path.exists(staged_task_path):
+-            shutil.rmtree(staged_task_path)
+-        shutil.copytree(filepath_str, staged_task_path, dirs_exist_ok=True)
+-
+-        # Validate: Re-load task from staged path and run enter hooks
+-        new_task = FM.load(staged_task_path)
+-        new_filepath = os.path.join(
+-            cli.tasks_path,
+-            STATE_FOLDERS[new_status],
+-            os.path.basename(filepath_str),
+-        )
++    with store_lock(cli):
++        original_state = FM.load(filepath_str).metadata.get("St")
++        try:
++            # Both records declare the destination state while the move is in
++            # flight, so readers can reject the stale source copy deterministically.
++            source_task = FM.load(filepath_str)
++            source_task.metadata["St"] = new_status
++            FM.dump(source_task, filepath_str)
+ 
+-        # Run Enter Hooks (Post-move actions)
+-        # Enter hooks run even under --force, so expose the force flag for
+-        # GuardRecordHook (forced-bypass recorder).
+-        cli._last_move_force = force
+-        cli.hook_registry.run_enter_hooks(
+-            cli, new_task, current_state, new_status, staged_task_path
+-        )
++            # Stage: Physically move/copy the task directory
++            if os.path.exists(staged_task_path):
++                shutil.rmtree(staged_task_path)
++            shutil.copytree(filepath_str, staged_task_path, dirs_exist_ok=True)
+ 
+-        # Commit: Physical move
+-        os.makedirs(os.path.dirname(new_filepath), exist_ok=True)
+-        if os.path.exists(new_filepath):
+-            for item in os.listdir(staged_task_path):
+-                src = os.path.join(staged_task_path, item)
+-                dst = os.path.join(new_filepath, item)
+-                if os.path.isdir(src):
+-                    shutil.copytree(src, dst, dirs_exist_ok=True)
+-                else:
+-                    shutil.copy2(src, dst)
+-            shutil.rmtree(staged_task_path)
+-        else:
+-            os.rename(staged_task_path, new_filepath)
+-
+-        # Cleanup original
+-        if os.path.exists(filepath_str):
+-            if os.path.isdir(filepath_str):
+-                shutil.rmtree(filepath_str)
++            # Validate: Re-load task from staged path and run enter hooks
++            new_task = FM.load(staged_task_path)
++            new_task.metadata["St"] = new_status
++            new_filepath = os.path.join(
++                cli.tasks_path,
++                STATE_FOLDERS[new_status],
++                os.path.basename(filepath_str),
++            )
++
++            # Run Enter Hooks (Post-move actions)
++            # Enter hooks run even under --force, so expose the force flag for
++            # GuardRecordHook (forced-bypass recorder).
++            cli._last_move_force = force
++            cli.hook_registry.run_enter_hooks(
++                cli, new_task, current_state, new_status, staged_task_path
++            )
++            new_task.metadata["St"] = new_status
++            FM.dump(new_task, staged_task_path)
++
++            # Commit: Physical move
++            os.makedirs(os.path.dirname(new_filepath), exist_ok=True)
++            if os.path.exists(new_filepath):
++                for item in os.listdir(staged_task_path):
++                    src = os.path.join(staged_task_path, item)
++                    dst = os.path.join(new_filepath, item)
++                    if os.path.isdir(src):
++                        shutil.copytree(src, dst, dirs_exist_ok=True)
++                    else:
++                        shutil.copy2(src, dst)
++                shutil.rmtree(staged_task_path)
+             else:
+-                os.remove(filepath_str)
+-    except Exception:
+-        # Cleanup staging on failure
+-        if os.path.exists(staged_task_path):
+-            shutil.rmtree(staged_task_path)
+-        raise
+-
+-    # Commit every path this move touches: the store is shared by every agent, so
+-    # a store-wide add would commit their pending work under this move's message.
+-    # The old state folder is recorded as deleted, the .ops staging copy (which
+-    # legacy store-wide adds committed) too, and the task's audit sibling, which
+-    # 'tasks audit' writes into review/ and which must not stay pending for
+-    # someone else's commit to sweep up.
+-    audit_sibling = os.path.join(
+-        cli.tasks_path, "review", f"{os.path.basename(filepath_str)}.audit"
+-    )
+-    commit_task_paths(
+-        cli,
+-        new_filepath,
+-        f"Mv {os.path.basename(filepath_str)} -> {new_status}",
+-        filepath_str,
+-        staged_task_path,
+-        audit_sibling,
+-    )
++                os.rename(staged_task_path, new_filepath)
++
++            # Cleanup original
++            if os.path.exists(filepath_str):
++                if os.path.isdir(filepath_str):
++                    shutil.rmtree(filepath_str)
++                else:
++                    os.remove(filepath_str)
++        except Exception:
++            # Cleanup staging on failure
++            if os.path.exists(staged_task_path):
++                shutil.rmtree(staged_task_path)
++            if os.path.exists(filepath_str):
++                if original_state is None:
++                    source_task.metadata.pop("St", None)
++                else:
++                    source_task.metadata["St"] = original_state
++                FM.dump(source_task, filepath_str)
++            raise
++
++        # Commit every path this move touches: the store is shared by every agent, so
++        # a store-wide add would commit their pending work under this move's message.
++        # The old state folder is recorded as deleted, the .ops staging copy (which
++        # legacy store-wide adds committed) too, and the task's audit sibling, which
++        # 'tasks audit' writes into review/ and which must not stay pending for
++        # someone else's commit to sweep up.
++        audit_sibling = os.path.join(
++            cli.tasks_path, "review", f"{os.path.basename(filepath_str)}.audit"
++        )
++        commit_task_paths(
++            cli,
++            new_filepath,
++            f"Mv {os.path.basename(filepath_str)} -> {new_status}",
++            filepath_str,
++            staged_task_path,
++            audit_sibling,
++        )
+ 
+     return True

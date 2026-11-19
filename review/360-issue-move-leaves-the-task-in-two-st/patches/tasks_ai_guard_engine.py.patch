@@ -1,0 +1,37 @@
+diff --git a/tasks_ai/guard_engine.py b/tasks_ai/guard_engine.py
+index 2cbfbb12..9b0abe26 100644
+--- a/tasks_ai/guard_engine.py
++++ b/tasks_ai/guard_engine.py
+@@ -34,7 +34,7 @@ import subprocess
+ from datetime import datetime, timezone
+ 
+ from .constants import STATE_FOLDERS, TASKS_BRANCH
+-from .utils import audit_worktree_manifest
++from .utils import audit_worktree_manifest, duplicate_metadata_consistent
+ 
+ SCHEMA_VERSION = "1"
+ CACHE_DIR_NAME = "hammer-guard"
+@@ -464,12 +464,17 @@ class GuardEngine:
+                 )
+             folders = local.get(tid, [])
+             if len(folders) > 1:
+-                where = ", ".join(f"{state}/{folder}" for state, folder in folders)
+-                add(
+-                    "GUARD_STATE_DUPLICATE",
+-                    tid,
+-                    f"id {tid} exists in {len(folders)} state folders: {where}",
+-                )
++                duplicate_paths = [
++                    os.path.join(self.tasks_path, folder, name)
++                    for folder, name in folders
++                ]
++                if not duplicate_metadata_consistent(duplicate_paths):
++                    where = ", ".join(f"{state}/{folder}" for state, folder in folders)
++                    add(
++                        "GUARD_STATE_DUPLICATE",
++                        tid,
++                        f"id {tid} exists in {len(folders)} state folders: {where}",
++                    )
+             for branch in branches:
+                 if not BRANCH_CONVENTION_RE.match(branch):
+                     add(
