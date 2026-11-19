@@ -1,0 +1,1 @@
+Full-suite run 1: 369 passed, 0 failed (all three flake tests green in-suite). Run 2: 368 passed + one residual failure of the same test (rare transient local-clone failure, measured ~1 per 2 suites, down from ~25% of file runs; residual tracked in upgrade-work Task 54). Race test 5/5 stress loop. 7 consecutive 12/12 file runs. Lint PASS.
