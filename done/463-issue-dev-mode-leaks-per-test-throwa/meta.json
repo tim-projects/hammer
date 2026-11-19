@@ -16,7 +16,7 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1795099236.656639,
-  "DoneAt": null,
+  "DoneAt": 1795100044.303466,
   "PatchFiles": [
     {
       "file": "tasks_ai/context.py",
