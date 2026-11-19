@@ -144,6 +144,51 @@ def worktree_path_matches(wt_path: str, worktrees_base: str, branch: str) -> boo
     return os.path.abspath(wt_path) == os.path.join(worktrees_base, branch)
 
 
+def task_metadata_state(path: str):
+    """Return the state declared by a task record, if any."""
+    try:
+        return FM.load(path).metadata.get("St")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def select_task_candidate(candidates):
+    """Choose one physical copy of a task when several folders contain its id."""
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0]
+
+    matching = [
+        (path, state)
+        for path, state in candidates
+        if task_metadata_state(path) == state
+    ]
+    if matching:
+        return min(matching, key=lambda match: match[0])
+
+    selected = None
+    for path, state in candidates:
+        if state not in ("ARCHIVED", "REJECTED", "BACKLOG"):
+            selected = (path, state)
+            break
+    if not selected:
+        for path, state in candidates:
+            if state in ("READY", "BACKLOG"):
+                selected = (path, state)
+                break
+    return selected or candidates[0]
+
+
+def duplicate_metadata_consistent(paths) -> bool:
+    """Whether duplicate task records agree on their declared state."""
+    states = [task_metadata_state(path) for path in paths]
+    explicit = [state for state in states if state]
+    if not explicit:
+        return False
+    return len(explicit) == len(states) and len(set(explicit)) == 1
+
+
 def parse_filename(name: str) -> tuple[str, str]:
     """Parse task filename to extract type and slug."""
     if not name:
@@ -380,38 +425,56 @@ def perform_move(cli, task, current_state, new_status, filepath):
     if not filepath:
         cli.error("INVALID_TASK_PATH")
     filepath_str = str(filepath)
-    sync_task_content(cli, filepath_str, task, is_final=new_status == "ARCHIVED")
-    task.metadata.pop("St", None)
-    fname = task.metadata.get("Br") or str(task.metadata.get("Id", "unknown-task"))
-    new_filepath = os.path.join(cli.tasks_path, STATE_FOLDERS[new_status], fname)
-    if filepath_str != new_filepath:
-        atomic_write(new_filepath, task, fm=FM)
-        task_folder_name = os.path.basename(filepath_str)
-        patches_src = os.path.join(
-            cli.tasks_path, "review", task_folder_name, "patches"
-        )
-        patches_dst = os.path.join(
-            cli.tasks_path, STATE_FOLDERS[new_status], fname, "patches"
-        )
-        if os.path.exists(patches_src):
-            os.makedirs(os.path.dirname(patches_dst), exist_ok=True)
-            shutil.move(patches_src, patches_dst)
-            cli.log(f"Migrated patches directory to {new_status}")
-        audit_src = os.path.join(cli.tasks_path, "review", f"{task_folder_name}.audit")
-        audit_dst = os.path.join(
-            cli.tasks_path, STATE_FOLDERS[new_status], f"{fname}.audit"
-        )
-        if os.path.exists(audit_src):
-            shutil.move(audit_src, audit_dst)
-            cli.log(f"Migrated audit file to {new_status}")
-        if os.path.exists(filepath_str):
-            if os.path.isdir(filepath_str):
-                shutil.rmtree(filepath_str)
+    with store_lock(cli):
+        sync_task_content(cli, filepath_str, task, is_final=new_status == "ARCHIVED")
+        original_state = task.metadata.get("St")
+        task.metadata["St"] = new_status
+        FM.dump(task, filepath_str)
+        try:
+            fname = task.metadata.get("Br") or str(
+                task.metadata.get("Id", "unknown-task")
+            )
+            new_filepath = os.path.join(
+                cli.tasks_path, STATE_FOLDERS[new_status], fname
+            )
+            if filepath_str != new_filepath:
+                atomic_write(new_filepath, task, fm=FM)
+                task_folder_name = os.path.basename(filepath_str)
+                patches_src = os.path.join(
+                    cli.tasks_path, "review", task_folder_name, "patches"
+                )
+                patches_dst = os.path.join(
+                    cli.tasks_path, STATE_FOLDERS[new_status], fname, "patches"
+                )
+                if os.path.exists(patches_src):
+                    os.makedirs(os.path.dirname(patches_dst), exist_ok=True)
+                    shutil.move(patches_src, patches_dst)
+                    cli.log(f"Migrated patches directory to {new_status}")
+                audit_src = os.path.join(
+                    cli.tasks_path, "review", f"{task_folder_name}.audit"
+                )
+                audit_dst = os.path.join(
+                    cli.tasks_path, STATE_FOLDERS[new_status], f"{fname}.audit"
+                )
+                if os.path.exists(audit_src):
+                    shutil.move(audit_src, audit_dst)
+                    cli.log(f"Migrated audit file to {new_status}")
+                if os.path.exists(filepath_str):
+                    if os.path.isdir(filepath_str):
+                        shutil.rmtree(filepath_str)
+                    else:
+                        os.remove(filepath_str)
             else:
-                os.remove(filepath_str)
-    else:
-        atomic_write(new_filepath, task, fm=FM)
-    cli._append_log(new_filepath, f"{current_state}->{new_status}")
+                atomic_write(new_filepath, task, fm=FM)
+            cli._append_log(new_filepath, f"{current_state}->{new_status}")
+        except Exception:
+            if os.path.exists(filepath_str):
+                if original_state is None:
+                    task.metadata.pop("St", None)
+                else:
+                    task.metadata["St"] = original_state
+                FM.dump(task, filepath_str)
+            raise
     return task
 
 
