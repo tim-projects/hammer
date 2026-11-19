@@ -1,0 +1,7 @@
+- [ ] BACKLOG -> READY is blocked with RESEARCH_REQUIRED when the task has no research findings or the recorded findings are shorter than 10 characters
+- [ ] BACKLOG -> READY succeeds after `tasks modify --research` records findings and sets the Rr attestation
+- [ ] READY -> PROGRESSING is no longer blocked solely by a missing research pass, so existing READY tasks can proceed
+- [ ] Other BACKLOG targets and transitions into READY from states other than BACKLOG are unaffected
+- [ ] The RESEARCH_REQUIRED hint and AGENTS.md describe the BACKLOG -> READY gate instead of READY -> PROGRESSING
+- [ ] Regression tests cover the blocked BACKLOG -> READY transition, the successful transition after recording research, and READY -> PROGRESSING without research
+- [ ] check all passes in the task worktree
