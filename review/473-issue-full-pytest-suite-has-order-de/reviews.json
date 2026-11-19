@@ -30,5 +30,8 @@
       "ts": 1795128338.4688017,
       "prev_hash": "cf0a12d8ee33a2f82833b020eea05c96294ad0ed22e76f6863c8f13a78bf0580"
     }
-  ]
+  ],
+  "summary": "tasks_ai_cli.py.patch: removes the unlocked git add in _append_log (the store-writes race) and routes the dev init clone through clone_local with backup restore on total failure. tasks_ai_context.py.patch: adds clone_local (refuse non-dir dest, tmp clone + swap, 5-attempt bounded retry) and wires _ensure_dev_repo to it. tests_test_dev_isolation.py.patch: TestCloneRobustness - retry absorbs one transient failure, failed clone leaves no dest/tmp debris. All three read in full; matches the task plan; no unrelated changes.",
+  "summary_at": 1795128350.886142,
+  "reviewed_at": 1795128350.886143
 }
