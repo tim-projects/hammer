@@ -6,5 +6,7 @@
     "166-task-write-user-tests-for-165"
   ],
   "Pr": 2,
-  "Br": "165-task-implement-git-hook-to-restrict"
+  "Br": "165-task-implement-git-hook-to-restrict",
+  "Rc": "",
+  "Vp": false
 }
