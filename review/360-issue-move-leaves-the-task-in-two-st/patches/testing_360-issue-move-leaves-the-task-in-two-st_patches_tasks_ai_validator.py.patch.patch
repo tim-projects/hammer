@@ -1,0 +1,28 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_validator.py.patch b/testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_validator.py.patch
+new file mode 100644
+index 0000000..02f1e43
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_validator.py.patch
+@@ -0,0 +1,22 @@
++diff --git a/tasks_ai/validator.py b/tasks_ai/validator.py
++index 3b272efb..7045e5be 100644
++--- a/tasks_ai/validator.py
+++++ b/tasks_ai/validator.py
++@@ -288,14 +288,13 @@ class Validator:
++         """Run all configured checks."""
++         results = []
++         for tool in ["lint", "test", "typecheck", "format"]:
++-            # The pinned pytest list includes the slow pipeline suites
++-            # (test_robustness, test_store_writes); they run in ~8 min, so the
++-            # 300s default makes `check all` time out before it can report.
+++            # The pinned pytest list includes the slow pipeline suites and can
+++            # exceed 15 minutes in CI, so `check all` allows 30 minutes.
++             results.append(
++                 self.run_check(
++                     tool,
++                     fix,
++-                    timeout=900,
+++                    timeout=1800,
++                     auto_fix_ruff=tool == "lint",
++                 )
++             )

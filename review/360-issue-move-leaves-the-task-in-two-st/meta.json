@@ -1,0 +1,113 @@
+{
+  "Id": 360,
+  "Ti": "Move leaves the task in two state folders between write and delete",
+  "Ty": "issue",
+  "Cr": "261108 08:57",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "360-issue-move-leaves-the-task-in-two-st",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795124178.334828,
+  "DoneAt": 1795120569.419933,
+  "St": "REVIEW",
+  "PatchFiles": [
+    {
+      "file": "review/360-issue-move-leaves-the-task-in-two-st.audit",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/review_360-issue-move-leaves-the-task-in-two-st.audit.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/.audit_hash",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_.audit_hash.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/criteria.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_criteria.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/current-task.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_current-task.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/meta.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_meta.json.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/notes.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_notes.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/check.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_check.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_commands_list.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_commands_list.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_commands_move.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_commands_move.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_guard_engine.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_guard_engine.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_task_service.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_task_service.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_utils.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_utils.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_validator.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_validator.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tests_test_move_state_consistency.py.patch",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_patches_tests_test_move_state_consistency.py.patch.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/plan.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_plan.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/progress.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_progress.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/repro.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_repro.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/research.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_research.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/reviews.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_reviews.json.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/story.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_story.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/tech.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_tech.md.patch"
+    },
+    {
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/verification_proof.log",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/360-issue-move-leaves-the-task-in-two-st/patches/testing_360-issue-move-leaves-the-task-in-two-st_verification_proof.log.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "c04567ee7aa006d007d7a4763b448c5849825bca",
+    "base": "c04567ee7aa006d007d7a4763b448c5849825bca"
+  }
+}

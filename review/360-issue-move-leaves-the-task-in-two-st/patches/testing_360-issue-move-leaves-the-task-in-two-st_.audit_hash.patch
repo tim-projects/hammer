@@ -1,0 +1,8 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/.audit_hash b/testing/360-issue-move-leaves-the-task-in-two-st/.audit_hash
+new file mode 100644
+index 0000000..e9028ed
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/.audit_hash
+@@ -0,0 +1 @@
++93921ccb08feab49067c66c09c5b954c61e8c734c7303ff05039e7785804b7c3
+\ No newline at end of file

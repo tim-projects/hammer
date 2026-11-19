@@ -1,0 +1,9 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/notes.md b/testing/360-issue-move-leaves-the-task-in-two-st/notes.md
+new file mode 100644
+index 0000000..10b8b22
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/notes.md
+@@ -0,0 +1,3 @@
++- Progress: Locked both physical move implementations across the complete filesystem transaction; added St-aware duplicate resolution shared by find_task, list, and guard; added focused duplicate and concurrent-reader tests; raised check-all timeout to 30 minutes after the full suite exceeded 15 minutes.
++- Findings: The duplicate window existed in both tasks_ai/utils.py perform_move and tasks_ai/commands/move.py move_logic. list deduplicated folder names rather than task IDs, while the guard rejected every same-ID folder pair without reading St metadata.
++- Mitigations: Destination state is written into both records during a move so readers can select the authoritative copy; list groups candidates by metadata Id; guard accepts a duplicate pair only when every record declares the same St. Full ./hammer check all passes in 19m02s.

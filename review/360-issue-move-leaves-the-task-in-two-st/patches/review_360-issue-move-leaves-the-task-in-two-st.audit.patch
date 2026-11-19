@@ -1,0 +1,22 @@
+diff --git a/review/360-issue-move-leaves-the-task-in-two-st.audit b/review/360-issue-move-leaves-the-task-in-two-st.audit
+new file mode 100644
+index 0000000..f0f2cf2
+--- /dev/null
++++ b/review/360-issue-move-leaves-the-task-in-two-st.audit
+@@ -0,0 +1,15 @@
++{
++    "task_id": "360",
++    "patch_hash": "228ba27a60dc0cf243158cb3a98ff940",
++    "patch_files": [
++        "check.py.patch",
++        "tasks_ai_commands_list.py.patch",
++        "tasks_ai_commands_move.py.patch",
++        "tasks_ai_guard_engine.py.patch",
++        "tasks_ai_task_service.py.patch",
++        "tasks_ai_utils.py.patch",
++        "tasks_ai_validator.py.patch",
++        "tests_test_move_state_consistency.py.patch"
++    ],
++    "status": "verified"
++}
+\ No newline at end of file

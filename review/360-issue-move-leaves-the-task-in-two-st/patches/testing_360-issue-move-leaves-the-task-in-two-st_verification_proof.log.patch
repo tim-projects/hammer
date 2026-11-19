@@ -1,0 +1,8 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/verification_proof.log b/testing/360-issue-move-leaves-the-task-in-two-st/verification_proof.log
+new file mode 100644
+index 0000000..2b6669c
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/verification_proof.log
+@@ -0,0 +1 @@
++111 tests passed, 1 skipped; lint, typecheck, format, and debug checks passed on task branch e90199ce
+\ No newline at end of file

@@ -1,0 +1,38 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/patches/check.py.patch b/testing/360-issue-move-leaves-the-task-in-two-st/patches/check.py.patch
+new file mode 100644
+index 0000000..5be48ac
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/patches/check.py.patch
+@@ -0,0 +1,32 @@
++diff --git a/check.py b/check.py
++index d7186ac6..cfa7a2b0 100755
++--- a/check.py
+++++ b/check.py
++@@ -458,8 +458,8 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
++                     stdout=stdout_file,
++                     stderr=stderr_file,
++                     # The pinned pytest list includes the slow pipeline suites
++-                    # (test_robustness, test_store_writes); they run in ~8 min.
++-                    timeout=900,
+++                    # and can exceed 15 minutes in CI.
+++                    timeout=1800,
++                     env=env,
++                     check=False,
++                 )
++@@ -478,14 +478,14 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
++             result = subprocess.run(
++                 cmd_to_run,
++                 cwd=project_root,
++-                timeout=900,
+++                timeout=1800,
++                 env=env,
++                 check=False,
++             )
++             stdout_content = ""
++             stderr_content = ""
++     except subprocess.TimeoutExpired:
++-        msg = f"Tool '{tool}' timed out after 5 minutes."
+++        msg = f"Tool '{tool}' timed out after 30 minutes."
++         if as_json:
++             print(
++                 json.dumps(

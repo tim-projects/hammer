@@ -1,0 +1,13 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/plan.md b/testing/360-issue-move-leaves-the-task-in-two-st/plan.md
+new file mode 100644
+index 0000000..f8c8cb9
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/plan.md
+@@ -0,0 +1,6 @@
++1. Wrap perform_move's body in store_lock (reentrant with the commit that follows)
++2. Make find_task deterministic on duplicates: prefer the folder whose state matches metadata St
++3. Make list dedupe by task id
++4. Make the guard's state-duplicate check St-aware
++5. Tests: constructed duplicate folders; reader-during-move with threads; check all
++6. Move leaves the task in two state folders between write and delete
+\ No newline at end of file

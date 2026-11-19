@@ -1,0 +1,8 @@
+diff --git a/testing/360-issue-move-leaves-the-task-in-two-st/story.md b/testing/360-issue-move-leaves-the-task-in-two-st/story.md
+new file mode 100644
+index 0000000..66cbbfa
+--- /dev/null
++++ b/testing/360-issue-move-leaves-the-task-in-two-st/story.md
+@@ -0,0 +1 @@
++As an operator running agents on separate worktrees, I need a task to exist in exactly one state folder at every observable moment, so another agent's list, find_task, or guard scan during a move never sees a duplicated task or a false GUARD_STATE_DUPLICATE rejection.
+\ No newline at end of file
