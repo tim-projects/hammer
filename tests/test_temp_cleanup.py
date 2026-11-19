@@ -29,7 +29,9 @@ class TempCleanupTest(unittest.TestCase):
         path = tempfile.mkdtemp(prefix="hammer_cleanup_failure_")
         self.addCleanup(shutil.rmtree, path, True)
         with (
-            patch("tests.hammer_test_base.shutil.rmtree", side_effect=OSError("broken")),
+            patch(
+                "tests.hammer_test_base.shutil.rmtree", side_effect=OSError("broken")
+            ),
             self.assertRaises(OSError),
         ):
             cleanup_path(path)

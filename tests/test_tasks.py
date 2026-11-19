@@ -705,6 +705,15 @@ class TestTasksAI(unittest.TestCase):
         )
         self.assertFalse(os.path.exists(os.path.join(self.dev_tasks_dir, "done", file)))
 
+    def test_json_output_has_no_debug_config_message(self):
+        res = self.run_cmd(["list"])
+        self.assertTrue(res["success"], res)
+        self.assertNotIn(
+            "DEBUG: Loading config from",
+            " ".join(res.get("messages", [])),
+            res,
+        )
+
     def test_conflicting_promotion_halts_with_merge_conflict(self):
         """A promotion whose merge conflicts halts with MERGE_CONFLICT, cleanly.
 

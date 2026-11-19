@@ -193,7 +193,6 @@ class TasksCLI:
         # Production has exactly one store. Read its config from the canonical
         # path, then reject any override that resolves elsewhere.
         cfg = self._get_config()
-        self.log(f"DEBUG: Loading config from {self.tasks_path}")
         if (
             not dev
             and not os.environ.get("HAMMER_DEV_TASKS_DIR")
