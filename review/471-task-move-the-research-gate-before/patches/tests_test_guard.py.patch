@@ -1,0 +1,50 @@
+diff --git a/tests/test_guard.py b/tests/test_guard.py
+index fb244048..a259f916 100755
+--- a/tests/test_guard.py
++++ b/tests/test_guard.py
+@@ -263,17 +263,13 @@ class TestGuardGate(GuardTestBase):
+ 
+     def test_clean_task_passes_gates(self):
+         folder = self.create_task(counter_value=BASE_ID - 1)
++        research = self.run_tasks(["modify", str(BASE_ID), "--research", RESEARCH])
++        self.assertEqual(
++            research.returncode,
++            0,
++            f"research record failed: {research.stdout} {research.stderr}",
++        )
+         for target in ("READY", "PROGRESSING"):
+-            if target == "PROGRESSING":
+-                # The READY exit gate demands a recorded research pass first.
+-                research = self.run_tasks(
+-                    ["modify", str(BASE_ID), "--research", RESEARCH]
+-                )
+-                self.assertEqual(
+-                    research.returncode,
+-                    0,
+-                    f"research record failed: {research.stdout} {research.stderr}",
+-                )
+             result = self.run_tasks(["move", str(BASE_ID), target])
+             self.assertEqual(
+                 result.returncode,
+@@ -285,6 +281,8 @@ class TestGuardGate(GuardTestBase):
+     def test_branchless_backlog_and_ready_have_no_remote_divergence(self):
+         """Early task states do not require Git state that is not created yet."""
+         self.create_task(counter_value=BASE_ID - 1)
++        research = self.run_tasks(["modify", str(BASE_ID), "--research", RESEARCH])
++        self.assertEqual(research.returncode, 0, research.stdout)
+ 
+         self.assertNotIn(
+             ("GUARD_REMOTE_DIVERGENCE", BASE_ID),
+@@ -305,10 +303,10 @@ class TestGuardGate(GuardTestBase):
+         """The PROGRESSING sync hook supplies branch state after the READY gate."""
+         self.create_task(counter_value=BASE_ID - 1)
+         branch = self._find_folder(BASE_ID, "backlog")
+-        ready = self.run_tasks(["move", str(BASE_ID), "READY"])
+-        self.assertEqual(ready.returncode, 0, ready.stdout)
+         research = self.run_tasks(["modify", str(BASE_ID), "--research", RESEARCH])
+         self.assertEqual(research.returncode, 0, research.stdout)
++        ready = self.run_tasks(["move", str(BASE_ID), "READY"])
++        self.assertEqual(ready.returncode, 0, ready.stdout)
+ 
+         result = self.run_tasks(["move", str(BASE_ID), "PROGRESSING"])
+         self.assertEqual(

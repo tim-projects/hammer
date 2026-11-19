@@ -1,0 +1,57 @@
+diff --git a/tests/test_default_branch.py b/tests/test_default_branch.py
+index 8ca50c03..2f9cbd6a 100644
+--- a/tests/test_default_branch.py
++++ b/tests/test_default_branch.py
+@@ -141,14 +141,14 @@ class MasterRepoTestBase(unittest.TestCase):
+             self.repo_dir, ".task-worktrees", task_file
+         )
+ 
+-        self.assertTrue(
+-            self.run_cmd(["move", task_file, "READY"])["success"],
+-            "move READY failed",
+-        )
+         self.assertTrue(
+             self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
+             "research record failed",
+         )
++        self.assertTrue(
++            self.run_cmd(["move", task_file, "READY"])["success"],
++            "move READY failed",
++        )
+         self.assertTrue(
+             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
+             "move PROGRESSING failed",
+@@ -228,13 +228,13 @@ class TestMasterNamedRepo(MasterRepoTestBase):
+         task_file = data["file"]
+         master_tip = git(["rev-parse", "master"], self.repo_dir).stdout.strip()
+ 
+-        self.assertTrue(
+-            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
+-        )
+         self.assertTrue(
+             self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
+             "research record failed",
+         )
++        self.assertTrue(
++            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
++        )
+         self.assertTrue(
+             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
+             "move PROGRESSING failed",
+@@ -260,13 +260,13 @@ class TestNoDefaultBranch(MasterRepoTestBase):
+         data = self.create_task()
+         task_file = data["file"]
+ 
+-        self.assertTrue(
+-            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
+-        )
+         self.assertTrue(
+             self.run_cmd(["modify", task_file, "--research", RESEARCH])["success"],
+             "research record failed",
+         )
++        self.assertTrue(
++            self.run_cmd(["move", task_file, "READY"])["success"], "move READY failed"
++        )
+         self.assertTrue(
+             self.run_cmd(["move", task_file, "PROGRESSING"])["success"],
+             "move PROGRESSING failed",

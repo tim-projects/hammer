@@ -1,0 +1,15 @@
+diff --git a/tests/test_tasks_modular.py b/tests/test_tasks_modular.py
+index f13f5af6..a29e70a9 100644
+--- a/tests/test_tasks_modular.py
++++ b/tests/test_tasks_modular.py
+@@ -81,6 +81,10 @@ def test_move_and_delete(setup_tasks):
+     )
+ 
+     # Move through states
++    cli.modify(
++        task_id,
++        research="Read the task move path and state transition implementation.",
++    )
+     cli.move(task_id, "READY")
+     _, state = cli.find_task(task_id)
+     assert state == "READY"

@@ -1,0 +1,19 @@
+diff --git a/tests/test_dev_isolation.py b/tests/test_dev_isolation.py
+index b66a0ab3..311b25c6 100644
+--- a/tests/test_dev_isolation.py
++++ b/tests/test_dev_isolation.py
+@@ -202,12 +202,14 @@ class TestDevCannotBlockARealTask(DevIsolationTestBase):
+                     "Br": branch,
+                     "Pr": 2,
+                     "Bl": [],
++                    "Rr": True,
+                 },
+                 parts={
+                     "story": STORY,
+                     "tech": TECH,
+                     "criteria": CRITERIA,
+                     "plan": PLAN,
++                    "research": "Read the real-task promotion and guard path.",
+                 },
+             ),
+             task_dir,

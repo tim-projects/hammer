@@ -1,0 +1,13 @@
+diff --git a/data/next_steps.json b/data/next_steps.json
+index 3fa06085..50bcb959 100644
+--- a/data/next_steps.json
++++ b/data/next_steps.json
+@@ -1,7 +1,7 @@
+ {
+   "RESEARCH_REQUIRED": {
+     "message": "Record the required research findings for task {task_id}.",
+-    "hint": "WHAT: Research pass not recorded.\nWHY: HAMMER demand read-only research (codebase file / online search) before BUILD.\nHOW: Run 'hammer tasks modify {task_id} --research \"<findings>\"'. File path work for bulk note.\nCONSEQUENCE: READY -> PROGRESSING stay blocked. NO research, NO submit."
++    "hint": "WHAT: Research pass not recorded.\nWHY: HAMMER demands read-only research (codebase file / online search) before READY.\nHOW: Run 'hammer tasks modify {task_id} --research \"<findings>\"'. File path works for bulk notes.\nCONSEQUENCE: BACKLOG -> READY stays blocked. NO research, NO ready."
+   },
+   "BLOCKER_INCOMPLETE": {
+     "message": "Finish linked blocker {blocker} before entering PROGRESSING.",

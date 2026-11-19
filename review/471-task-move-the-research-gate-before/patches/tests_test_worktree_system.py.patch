@@ -1,0 +1,27 @@
+diff --git a/tests/test_worktree_system.py b/tests/test_worktree_system.py
+index 80f4e3b3..6d25a48e 100644
+--- a/tests/test_worktree_system.py
++++ b/tests/test_worktree_system.py
+@@ -189,6 +189,10 @@ class TestWorktreeSystem(unittest.TestCase):
+ 
+         # Pipeline gates enforce correctly when the transition is driven from
+         # inside the worktree (MainBranchProtectionHook sees the task branch)
++        res = self.run_cmd(
++            ["modify", data["file"], "--research", RESEARCH], cwd=worktree_path
++        )
++        self.assertTrue(res["success"], f"research record failed: {res}")
+         res = self.run_cmd(["move", data["file"], "READY"], cwd=worktree_path)
+         self.assertTrue(
+             res["success"], f"move READY from inside worktree failed: {res}"
+@@ -218,10 +222,9 @@ class TestWorktreeSystem(unittest.TestCase):
+         worktree_path = self.mount_task(data)
+         self.assertTrue(os.path.isdir(worktree_path))
+ 
+-        self.assertTrue(self.run_cmd(["move", task_file, "READY"])["success"])
+-        # The READY exit gate demands a recorded research pass before PROGRESSING.
+         research = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+         self.assertTrue(research["success"], f"research record failed: {research}")
++        self.assertTrue(self.run_cmd(["move", task_file, "READY"])["success"])
+         res = self.run_cmd(["move", task_file, "PROGRESSING"])
+         self.assertTrue(res["success"], f"move PROGRESSING failed: {res}")
+ 

@@ -1,0 +1,108 @@
+{
+  "Id": 471,
+  "Ti": "Move the research gate before READY",
+  "Ty": "task",
+  "Cr": "261119 00:25",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "471-task-move-the-research-gate-before",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795073277.611369,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/AGENTS.md.patch"
+    },
+    {
+      "file": "data/next_steps.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/data_next_steps.json.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tasks_ai_help_text.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_all_transitions.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_all_transitions.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_blocker_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_blocker_states.py.patch"
+    },
+    {
+      "file": "tests/test_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_dev_isolation.py.patch"
+    },
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_dev_write_audit.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_reject_validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_reject_validation.py.patch"
+    },
+    {
+      "file": "tests/test_require_task_id.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_require_task_id.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_store_concurrency.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_store_concurrency.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_store_writes.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_tasks_modular.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_tasks_modular.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/471-task-move-the-research-gate-before/patches/tests_test_worktree_system.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "b3696a3be89db049da6f4e6ee9116786ebe707b1",
+    "base": "cf3e989258feabb5ef02e983238a62fa50e8d84c"
+  }
+}

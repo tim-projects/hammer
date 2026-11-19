@@ -1,0 +1,83 @@
+diff --git a/tests/test_store_writes.py b/tests/test_store_writes.py
+index bb9e5d24..99ee659c 100644
+--- a/tests/test_store_writes.py
++++ b/tests/test_store_writes.py
+@@ -187,10 +187,9 @@ class TestCheckpointStoreWrites(unittest.TestCase):
+         )
+         self.assertTrue(res["success"], res)
+         task_file = res["data"]["file"]
++        recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
++        self.assertTrue(recorded["success"], recorded)
+         for state in ("READY", "PROGRESSING"):
+-            if state == "PROGRESSING":
+-                recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
+-                self.assertTrue(recorded["success"], recorded)
+             moved = self.run_cmd(["move", task_file, state])
+             self.assertTrue(moved["success"], moved)
+         return res["data"]["id"], task_file
+@@ -432,6 +431,8 @@ class TestCheckpointStoreWrites(unittest.TestCase):
+         b_edit = f"{STORY}\nagent B uncommitted edit"
+         self.write_part(file_b, "story", b_edit, state="backlog")
+ 
++        recorded = self.run_cmd(["modify", file_a, "--research", RESEARCH])
++        self.assertTrue(recorded["success"], recorded)
+         res = self.run_cmd(["move", file_a, "READY"])
+         self.assertTrue(res["success"], res)
+ 
+@@ -462,6 +463,8 @@ class TestCheckpointStoreWrites(unittest.TestCase):
+ 
+     def test_store_has_no_pending_leftovers_after_move(self):
+         _, file_a = self.make_task("Gamma task for move cleanliness")
++        recorded = self.run_cmd(["modify", file_a, "--research", RESEARCH])
++        self.assertTrue(recorded["success"], recorded)
+         res = self.run_cmd(["move", file_a, "READY"])
+         self.assertTrue(res["success"], res)
+ 
+@@ -490,6 +493,8 @@ class TestCheckpointStoreWrites(unittest.TestCase):
+             file_b, "story", f"{STORY}\nagent B uncommitted edit", state="backlog"
+         )
+ 
++        recorded = self.run_cmd(["modify", file_a, "--research", RESEARCH])
++        self.assertTrue(recorded["success"], recorded)
+         moved = self.run_cmd(["move", file_a, "READY"])
+         self.assertTrue(moved["success"], moved)
+ 
+@@ -521,6 +526,8 @@ class TestCheckpointStoreWrites(unittest.TestCase):
+         self.assertTrue(self.store_git("add", "--", ".ops/staging").returncode == 0)
+         self.store_git("commit", "-m", "legacy staging commit")
+ 
++        recorded = self.run_cmd(["modify", file_a, "--research", RESEARCH])
++        self.assertTrue(recorded["success"], recorded)
+         moved = self.run_cmd(["move", file_a, "READY"])
+         self.assertTrue(moved["success"], moved)
+ 
+@@ -890,10 +897,9 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
+     def test_archive_hook_pushes_only_the_archived_task(self):
+         file_c = self.make_task("Gamma task for archive scoping")
+         file_b = self.make_task("Beta task for archive scoping")
++        recorded = self.run_cmd(["modify", file_c, "--research", RESEARCH])
++        self.assertTrue(recorded["success"], recorded)
+         for state in ("READY", "PROGRESSING"):
+-            if state == "PROGRESSING":
+-                recorded = self.run_cmd(["modify", file_c, "--research", RESEARCH])
+-                self.assertTrue(recorded["success"], recorded)
+             moved = self.run_cmd(["move", file_c, state])
+             self.assertTrue(moved["success"], moved)
+         worktree = os.path.join(self.repo_dir, ".task-worktrees", file_c)
+@@ -948,13 +954,11 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
+         """Two agents writing at once: two commits, each its own task's."""
+         file_a = self.make_task("Alpha task for concurrent scoping")
+         file_b = self.make_task("Beta task for concurrent scoping")
++        for task_file in (file_a, file_b):
++            recorded = self.run_cmd(["modify", task_file, "--research", RESEARCH])
++            self.assertTrue(recorded["success"], recorded)
+         for state in ("READY", "PROGRESSING"):
+             for task_file in (file_a, file_b):
+-                if state == "PROGRESSING":
+-                    recorded = self.run_cmd(
+-                        ["modify", task_file, "--research", RESEARCH]
+-                    )
+-                    self.assertTrue(recorded["success"], recorded)
+                 moved = self.run_cmd(["move", task_file, state])
+                 self.assertTrue(moved["success"], moved)
+         self.assertTrue(self.run_cmd(["link", file_a, file_b])["success"])
