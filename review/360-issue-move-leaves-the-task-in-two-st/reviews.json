@@ -69,6 +69,16 @@
       "bytes": 964,
       "ts": 1795120326.4887774,
       "prev_hash": "98dfbf504c4a918115e5366fd0bb7334d4e4ad4857f462350cb90850d86022ac"
+    },
+    {
+      "seq": 8,
+      "file": "tests/test_move_state_consistency.py",
+      "patch": "tests_test_move_state_consistency.py.patch",
+      "md5": "76c7569e480654a10fa0ef67884b9d81",
+      "sha256": "07315badb5994ae05037cf41f34236c92eec708545456a113f05419b736d93d4",
+      "bytes": 5514,
+      "ts": 1795120329.4954813,
+      "prev_hash": "7014ec838dfe8e09d27047a9de88b790cdd4b76bde1139e53b313adbb7aff83e"
     }
   ]
 }
