@@ -14,8 +14,8 @@
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1795128294.217579,
-  "DoneAt": null,
-  "St": "STAGING",
+  "DoneAt": 1795128486.683907,
+  "St": "DONE",
   "PatchFiles": [
     {
       "file": "tasks_ai/cli.py",
