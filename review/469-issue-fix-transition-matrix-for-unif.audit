@@ -1,0 +1,8 @@
+{
+    "task_id": "469",
+    "patch_hash": "5ad743b6ef5246ded305e89d820989e1",
+    "patch_files": [
+        "tests_test_all_transitions.py.patch"
+    ],
+    "status": "verified"
+}
