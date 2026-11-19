@@ -1,0 +1,20 @@
+{
+    "task_id": "463",
+    "patch_hash": "87f3ce50f2faae9cb5971650759c8836",
+    "patch_files": [
+        "AGENTS.md.patch",
+        "hammer_test_base.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tests_hammer_test_base.py.patch",
+        "tests_test_audit_verify_integration.py.patch",
+        "tests_test_central_store.py.patch",
+        "tests_test_dev_store_guard.py.patch",
+        "tests_test_dev_write_audit.py.patch",
+        "tests_test_init_backup.py.patch",
+        "tests_test_robustness_bugfix.py.patch",
+        "tests_test_tasks.py.patch",
+        "tests_test_tasks_gitignore.py.patch",
+        "tests_test_temp_cleanup.py.patch"
+    ],
+    "status": "verified"
+}
