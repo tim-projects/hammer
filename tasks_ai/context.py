@@ -1,9 +1,21 @@
+import glob
 import os
+import shutil
 import subprocess
+import tempfile
+import time
 
 
 class DevRepoUnavailable(Exception):
     """Dev mode cannot be isolated: no repo to act on, and the real one is off limits."""
+
+
+HARNESS_DIR_PREFIXES = ("hammer_tasks_", "hammer_test_", "hammer_remote_")
+HARNESS_STALE_AFTER = 24 * 60 * 60
+# shortcut: a fixed 1-day TTL. A dir younger than this belongs to a run in flight
+# (a full suite takes ~40 min); a day-old harness dir is an orphan of a crashed
+# run. Sweeping on the cold dev path keeps /tmp bounded without touching live
+# state; widen only if a suite ever legitimately runs longer than a day.
 
 
 class ProjectContext:
@@ -89,6 +101,34 @@ class ProjectContext:
         """Throwaway repo of a dev store, keyed on the store so it is reused."""
         return os.path.abspath(tasks_path) + "-repo"
 
+    @staticmethod
+    def reclaim_stale_dev_dirs(tasks_path: str, now: float | None = None) -> None:
+        """Remove harness dirs abandoned by interrupted runs.
+
+        Completed tests clean their own dirs (tests/hammer_test_base.py registers
+        addCleanup for each); a killed run cannot. Without reclamation /tmp only
+        grows until ENOSPC turns every suite run into environmental failures. Only
+        the harness-made prefixes under the temp dir are eligible, never the live
+        store or its dev repo, and only when this store's repo is about to be
+        cloned (the cold path).
+        """
+        now = time.time() if now is None else now
+        live = {
+            os.path.abspath(tasks_path),
+            ProjectContext.dev_repo_path(tasks_path),
+        }
+        for prefix in HARNESS_DIR_PREFIXES:
+            for path in glob.glob(os.path.join(tempfile.gettempdir(), prefix + "*")):
+                if not os.path.isdir(path):
+                    continue
+                if os.path.abspath(path) in live:
+                    continue
+                try:
+                    if now - os.path.getmtime(path) > HARNESS_STALE_AFTER:
+                        shutil.rmtree(path, ignore_errors=True)
+                except OSError:
+                    continue
+
     def _ensure_dev_repo(self, source: str, tasks_path: str) -> str:
         """Clone `source` into the dev repo, once per HAMMER_DEV_TASKS_DIR.
 
@@ -100,6 +140,9 @@ class ProjectContext:
         path = self.dev_repo_path(tasks_path)
         if os.path.isdir(os.path.join(path, ".git")):
             return path
+        # Cold path: a new dev repo is about to be cloned, so this is the one
+        # place where sweeping abandoned harness dirs is free of live-state risk.
+        self.reclaim_stale_dev_dirs(tasks_path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         result = subprocess.run(
             ["git", "clone", "--quiet", "--no-hardlinks", source, path],
