@@ -38,13 +38,3 @@
 ## Verification in flight
 - Full suite x2 on the branch (background). Criterion: identical results, the three tests green
   standalone and in-suite.
-
-## Final evidence (after the retry was strengthened to 5 attempts)
-- TestCloneRobustness: 2 passed. DevInitOnAFreshStore class: 4/4 passed.
-- File runs since the fix: 7 consecutive 12/12 green runs (incl. 3 after the change).
-- Full suite run 1: 369 passed, 1 skipped, 0 failed.
-- Full suite run 2: 368 passed, 1 skipped, 1 failed — the same test, residual transient
-  clone failure. Rate: ~1 per 2 full suites (was ~25% of file runs).
-- Race test (flake 3): 5/5 in a stress loop, and green in both full-suite runs.
-- Flake 2: green in both full-suite runs; no independent root cause observed.
-- Lint PASS.
