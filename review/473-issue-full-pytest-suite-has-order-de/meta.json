@@ -1,0 +1,37 @@
+{
+  "Id": 473,
+  "Ti": "Full pytest suite has order-dependent flakes masking real failures",
+  "Ty": "issue",
+  "Cr": "261119 14:00",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "473-issue-full-pytest-suite-has-order-de",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795128294.217579,
+  "DoneAt": null,
+  "St": "REVIEW",
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/473-issue-full-pytest-suite-has-order-de/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/context.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/473-issue-full-pytest-suite-has-order-de/patches/tasks_ai_context.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/473-issue-full-pytest-suite-has-order-de/patches/tests_test_dev_isolation.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "babf536517ec293cb1942dccb1a2cfe19335e65f",
+    "base": "7c691b53124575eed1b7f231b5fa6e700419b3f9"
+  }
+}
