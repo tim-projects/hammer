@@ -1,0 +1,1 @@
+Focused transition-matrix test passed (1 passed in 35.60s); mandatory TESTING gate passed 109 tests with 1 skipped plus lint, typecheck, format, and debug checks; full suite had one transient unrelated dev-init clone race that passed on immediate isolated rerun.
