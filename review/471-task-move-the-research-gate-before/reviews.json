@@ -189,6 +189,16 @@
       "bytes": 6429,
       "ts": 1795073893.2912264,
       "prev_hash": "57fc341bc9e0338d3bf080443d977e47c6325769ecaca1299d313a2a7ad4f50c"
+    },
+    {
+      "seq": 20,
+      "file": "tests/test_tasks_modular.py",
+      "patch": "tests_test_tasks_modular.py.patch",
+      "md5": "54b625ba985a9b41f04e6741dcf1571e",
+      "sha256": "f54f31ce764573ce6d7e7620dae9b7c4a916d4fef5524a6571053f40e9500c85",
+      "bytes": 489,
+      "ts": 1795073895.072748,
+      "prev_hash": "ce32fbf6f1b380c3c26128fa4f86963a02a5baf862f06b84d8abed4f8cb199e9"
     }
   ]
 }
