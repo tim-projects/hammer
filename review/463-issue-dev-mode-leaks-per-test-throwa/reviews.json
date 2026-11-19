@@ -109,6 +109,16 @@
       "bytes": 2091,
       "ts": 1795062697.6298964,
       "prev_hash": "1a0bee2c767f12573eb4ceb70844a0b201e2b17cc654bb20219d539fc4aef061"
+    },
+    {
+      "seq": 12,
+      "file": "tests/test_tasks_gitignore.py",
+      "patch": "tests_test_tasks_gitignore.py.patch",
+      "md5": "f0f84b1a6dc8a362a3fca628e2e0b54e",
+      "sha256": "d0695ef7a7bec28834b56f0940e0c578529473a1442d9fe1fb8d09414b497774",
+      "bytes": 1092,
+      "ts": 1795062699.0025551,
+      "prev_hash": "53f6ae8600d261c52bdf25b98f1d3e1204b1bbb3d0bad33e7d7b3b4632cc60cc"
     }
   ]
 }
