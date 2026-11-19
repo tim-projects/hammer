@@ -1,15 +1,29 @@
 {
     "task_id": "360",
-    "patch_hash": "228ba27a60dc0cf243158cb3a98ff940",
+    "patch_hash": "22d24962effb3c2f077ab4f3bc2672c9",
     "patch_files": [
-        "check.py.patch",
-        "tasks_ai_commands_list.py.patch",
-        "tasks_ai_commands_move.py.patch",
-        "tasks_ai_guard_engine.py.patch",
-        "tasks_ai_task_service.py.patch",
-        "tasks_ai_utils.py.patch",
-        "tasks_ai_validator.py.patch",
-        "tests_test_move_state_consistency.py.patch"
+        "review_360-issue-move-leaves-the-task-in-two-st.audit.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_.audit_hash.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_criteria.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_current-task.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_meta.json.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_notes.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_check.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_commands_list.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_commands_move.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_guard_engine.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_task_service.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_utils.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_validator.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_patches_tests_test_move_state_consistency.py.patch.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_plan.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_progress.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_repro.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_research.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_reviews.json.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_story.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_tech.md.patch",
+        "testing_360-issue-move-leaves-the-task-in-two-st_verification_proof.log.patch"
     ],
     "status": "verified"
 }
