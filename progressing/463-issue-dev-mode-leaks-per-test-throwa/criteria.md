@@ -1,6 +1,6 @@
-- [x] `pytest tests/test_init_backup.py` leaves ZERO new `/tmp/hammer_*` directories
-- [x] A full-suite run leaves no net growth of `/tmp/hammer_*` (measure before/after in the test log)
-- [x] Cleanup is loud: if the dev repo rmtree fails, the test fails (no silent ignore_errors)
-- [x] Cleanup survives setUp failures (addCleanup or equivalent)
-- [x] A suite run with /tmp pre-filled to ~90% completes with the same result as a clean /tmp run
-- [x] The clean-space suite has no unexpected failures (360 passed, 1 skipped); the independently passing concurrency flake did not recur
+- [ ] Stale reclaim: dirs matching harness prefixes older than the TTL are removed on dev bootstrap; fresh dirs and the live store/repo are never touched
+- [ ] `pytest tests/test_init_backup.py` and a HammerTestBase-based file leave zero net `/tmp/hammer_*` growth (name-diff, not counts)
+- [ ] A rmtree failure during cleanup fails the test instead of being swallowed
+- [ ] setUp failure still cleans the test's dirs (addCleanup)
+- [ ] Full suite on a /tmp pre-filled with 500 stale harness dirs completes with the same result as on a clean /tmp
+- [ ] The 4 known flakes remain the only failures on a clean /tmp

@@ -1,21 +1,20 @@
-**Observed leftovers** (`ls -dt /tmp/hammer_tasks_*`): the dev stores AND, the expensive part,
-a full git clone of the source repo per test at `<store>-repo` (contains AGENTS.md, README.md,
-check.py, git history — ~300K and up each).
+**Corrected evidence (2026-11-09, main a5b971e8, direct name-diff experiments):**
+- `pytest tests/test_init_backup.py` (2 passed): added dirs = **none**. `pytest tests/test_backlog_to_rejected.py`
+  (HammerTestBase, 1 passed): added = **none**. Same for `tests/test_lazy_task_creation.py`.
+  So the earlier "+2 per green run" reading was a measurement artifact — completed runs do NOT leak.
+- All 388 current `/tmp/hammer_*` dirs predate today: they are orphans of interrupted runs, older
+  code, or manual `--dev` sessions. Nothing ever reclaims them → /tmp only grows (observed
+  1790 dirs, tmpfs 100%, 16K free) → once full, every suite run dies with ENOSPC and masks real
+  failures (173 failed/180 passed vs the true 4 failed/353 passed on a cleared /tmp).
+- Cleanup exists per test: `tests/hammer_test_base.py:30-34` `cleanup_dev_store` → `cleanup_path`
+  (retries ENOTEMPTY, raises on persistent failure); base `tearDown` (146-149) rmtrees three dirs
+  but with `ignore_errors=True` on the dev repo — inconsistent with the non-base path and silent.
+- `tearDown` (not addCleanup): a setUp failure in the base path leaks that test's dirs.
 
-**Leak mechanics (verified in code + experiment):**
-- `tests/hammer_test_base.py:52-53` — every test gets `tempfile.mkdtemp(prefix="hammer_tasks_")`
-  as its dev store.
-- `tasks_ai/context.py:88-91` (`dev_repo_path`) — the dev repo is `<store path>-repo`;
-  `_ensure_dev_repo` (context.py:93+) clones the source repo into it on the CLI's first `--dev`
-  invocation in that test. Path is keyed on the store, so a fresh mkdtemp per test can never
-  reuse an existing clone.
-- `tests/hammer_test_base.py:146-149` — `tearDown` does rmtree(test_root), rmtree(dev store),
-  rmtree(dev repo, **ignore_errors=True**).
-- Experiment (2026-11-09, main): `python3 -m pytest tests/test_init_backup.py -q` (2 passed)
-  left +2 `/tmp/hammer_*` dirs. So a green, completed run still leaks: cleanup is not strict
-  and/or is skipped on the path that test takes (ignore_errors masks failure; tearDown is not
-  addCleanup, so setUp failures and killed runs also leak).
-- Scale evidence: 1790 `/tmp/hammer_tasks_*-repo` dirs, `/tmp` 4.7G/4.7G tmpfs after roughly
-  three full-suite runs plus in-repo work. A single clean suite run still leaves ~391M.
-- Impact chain: ENOSPC → worktree adds, git writes and shutil fail → order-independent tests
-  fail → suites cannot be trusted → CI signal destroyed.
+**Two real defects remain:** (1) no reclamation of stale harness dirs — unbounded /tmp growth
+across crashed runs and manual sessions; (2) inconsistent, silent cleanup in HammerTestBase
+(ignore_errors + tearDown-not-addCleanup).
+
+**Fix:** `context.py` dev bootstrap sweeps stale `/tmp/hammer_*` dirs (harness prefixes only,
+under tempfile.gettempdir(), mtime older than a TTL, never the live repo/store) on the cold path
+(when a new dev repo clone is created); `hammer_test_base` cleanup made strict + addCleanup.

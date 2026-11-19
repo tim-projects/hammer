@@ -1,11 +1,10 @@
-1. 1. Trace which path leaks: instrument one test (print the mkdtemp path, ls after tearDown) to
-2.    confirm whether the store dir, the `-repo` clone, or both survive, and why
-3.    (ignore_errors failure vs. tearDown not reached).
-4. 2. Harden `tests/hammer_test_base.py` tearDown (and add addCleanup for the same dirs): remove
-5.    ignore_errors, fail loudly on cleanup failure.
-6. 3. Consider pytest's `tmp_path` fixture instead of mkdtemp for automatic reclamation.
-7. 4. Decide the policy for interrupted runs: either accept (documented) or a bootstrap-time sweep
-8.    of stale `hammer_*` harness dirs that no live store references. Do NOT sweep live repos.
-9. 5. Add the regression test from the criteria (zero net growth for one file; run-count stable).
-10. 6. Re-run the full suite twice back-to-back on a clean /tmp and confirm identical results and
-11.    no net growth.
+1. 1. `tasks_ai/context.py`: add `reclaim_stale_dev_dirs(tasks_path, now=None)` + call it on the cold
+2.    path in `_ensure_dev_repo` (before cloning). Rules: tempdir only, `hammer_tasks_*` /
+3.    `hammer_test_*` / `hammer_remote_*` prefixes (and their `-repo` clones), TTL 1 day, skip the
+4.    current store and its repo.
+5. 2. `tests/hammer_test_base.py`: replace the ignore_errors tearDown rmtree with `cleanup_dev_store`
+6.    and register addCleanup for test_root/dev store/dev repo so setUp failures clean too.
+7. 3. Tests (new `tests/test_dev_repo_reclamation.py`): stale swept / fresh kept / live kept;
+8.    zero-net-growth name-diff for one base-based file; loud failure on rmtree error.
+9. 4. Run affected files, then the full suite twice on a /tmp seeded with 500 stale dirs: identical
+10.    results, dirs swept, no ENOSPC.
