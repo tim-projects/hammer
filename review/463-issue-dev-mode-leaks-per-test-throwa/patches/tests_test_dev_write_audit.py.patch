@@ -1,0 +1,37 @@
+diff --git a/tests/test_dev_write_audit.py b/tests/test_dev_write_audit.py
+index f3836c7e..650622ed 100644
+--- a/tests/test_dev_write_audit.py
++++ b/tests/test_dev_write_audit.py
+@@ -13,11 +13,12 @@ refused.
+ 
+ import json
+ import os
+-import shutil
+ import subprocess
+ import tempfile
+ import unittest
+ 
++from tests.hammer_test_base import cleanup_path
++
+ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ 
+ RESEARCH = (
+@@ -34,6 +35,7 @@ PLAN = "Sufficiently long planning details here to pass validation"
+ class TestDevWriteAudit(unittest.TestCase):
+     def setUp(self):
+         self.test_dir = tempfile.mkdtemp(prefix="hammer_dev_audit_")
++        self.addCleanup(cleanup_path, self.test_dir)
+         self.prod = os.path.join(self.test_dir, "prod")
+         os.makedirs(self.prod)
+         for args in (
+@@ -64,10 +66,6 @@ class TestDevWriteAudit(unittest.TestCase):
+         self.env = dict(os.environ, HAMMER_DEV_TASKS_DIR=self.store)
+         self.script_path = os.path.join(PROJECT_ROOT, "hammer")
+ 
+-    def tearDown(self):
+-        shutil.rmtree(self.test_dir, ignore_errors=True)
+-        shutil.rmtree(self.dev_repo, ignore_errors=True)
+-
+     def git(self, *args, cwd=None):
+         return subprocess.run(  # noqa: PLW1510
+             ["git"] + list(args), cwd=cwd or self.prod, capture_output=True, text=True

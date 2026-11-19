@@ -1,0 +1,33 @@
+diff --git a/tests/test_audit_verify_integration.py b/tests/test_audit_verify_integration.py
+index 976a1844..2deea4ca 100644
+--- a/tests/test_audit_verify_integration.py
++++ b/tests/test_audit_verify_integration.py
+@@ -23,13 +23,15 @@ import tempfile
+ import unittest
+ 
+ from tasks_ai.file_manager import FM
+-from tests.hammer_test_base import ensure_dev_repo
++from tests.hammer_test_base import cleanup_dev_store, cleanup_path, ensure_dev_repo
+ 
+ 
+ class ReviewGateIntegrationTest(unittest.TestCase):
+     def setUp(self):
+         self.test_dir = tempfile.mkdtemp()
++        self.addCleanup(cleanup_path, self.test_dir)
+         self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
++        self.addCleanup(cleanup_dev_store, self.dev_tasks_dir)
+         # Restore the variable even if setUp fails later: this file runs before
+         # tests that issue non-dev commands, and a leaked value pointing at a
+         # deleted store silently redirects their store (task 364).
+@@ -103,11 +105,6 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+         with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
+             json.dump(config_data, f)
+ 
+-    def tearDown(self):
+-        shutil.rmtree(self.test_dir, ignore_errors=True)
+-        shutil.rmtree(self.dev_tasks_dir, ignore_errors=True)
+-        shutil.rmtree(self.dev_tasks_dir + "-repo", ignore_errors=True)
+-
+     # --- helpers (mirror tests/test_tasks.py proven patterns) ---
+     def run_cmd(self, args):
+         env = os.environ.copy()

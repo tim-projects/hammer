@@ -1,0 +1,12 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 0013d4f2..033f7e9e 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -193,7 +193,6 @@ class TasksCLI:
+         # Production has exactly one store. Read its config from the canonical
+         # path, then reject any override that resolves elsewhere.
+         cfg = self._get_config()
+-        self.log(f"DEBUG: Loading config from {self.tasks_path}")
+         if (
+             not dev
+             and not os.environ.get("HAMMER_DEV_TASKS_DIR")

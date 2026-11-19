@@ -1,0 +1,37 @@
+diff --git a/tests/test_central_store.py b/tests/test_central_store.py
+index 9000c3db..0576bf8e 100644
+--- a/tests/test_central_store.py
++++ b/tests/test_central_store.py
+@@ -1,6 +1,5 @@
+ import json
+ import os
+-import shutil
+ import subprocess
+ import tempfile
+ import unittest
+@@ -8,6 +7,7 @@ import unittest
+ from tasks_ai.git_service import GitService
+ from tasks_ai.utils import audit_worktree_manifest, commit_task_paths, store_is_git
+ from tasks_ai.worktree_manager import WorktreeManager
++from tests.hammer_test_base import cleanup_path
+ 
+ 
+ class Context:
+@@ -41,6 +41,7 @@ def git(*args, cwd, check=False):
+ class TestCentralStore(unittest.TestCase):
+     def setUp(self):
+         self.tmp = tempfile.mkdtemp(prefix="hammer_central_store_")
++        self.addCleanup(cleanup_path, self.tmp)
+         self.repo = os.path.join(self.tmp, "repo")
+         self.store = os.path.join(self.repo, ".tasks")
+         os.makedirs(self.store)
+@@ -52,9 +53,6 @@ class TestCentralStore(unittest.TestCase):
+         git("add", "README.md", cwd=self.repo)
+         git("commit", "-m", "initial", cwd=self.repo, check=True)
+ 
+-    def tearDown(self):
+-        shutil.rmtree(self.tmp, ignore_errors=True)
+-
+     def run_hammer(self, args):
+         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+         script = os.path.join(self.repo, "hammer")

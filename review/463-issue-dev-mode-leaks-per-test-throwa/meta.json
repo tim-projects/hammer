@@ -1,0 +1,78 @@
+{
+  "Id": 463,
+  "Ti": "Dev mode leaks per-test throwaway repos into /tmp until the suite fails with ENOSPC",
+  "Ty": "issue",
+  "Cr": "261117 17:03",
+  "Bl": [
+    "469-issue-fix-transition-matrix-for-unif"
+  ],
+  "Pr": 1,
+  "Br": "463-issue-dev-mode-leaks-per-test-throwa",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795062627.633317,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/AGENTS.md.patch"
+    },
+    {
+      "file": "hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/hammer_test_base.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_central_store.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_central_store.py.patch"
+    },
+    {
+      "file": "tests/test_dev_store_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_dev_store_guard.py.patch"
+    },
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_dev_write_audit.py.patch"
+    },
+    {
+      "file": "tests/test_init_backup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_init_backup.py.patch"
+    },
+    {
+      "file": "tests/test_robustness_bugfix.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_robustness_bugfix.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_tasks_gitignore.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_tasks_gitignore.py.patch"
+    },
+    {
+      "file": "tests/test_temp_cleanup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/463-issue-dev-mode-leaks-per-test-throwa/patches/tests_test_temp_cleanup.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "3d0301663b96ea72507d15e824cec9e07192c96b",
+    "base": "98db0221f8a5a40a0e2d49d943c0799e58e55cbf"
+  }
+}
