@@ -1,9 +1,10 @@
 import json
 import os
-import shutil
 import subprocess
 import tempfile
 import unittest
+
+from tests.hammer_test_base import cleanup_path
 
 STORE_CONFIG = {
     "repo": {
@@ -19,6 +20,7 @@ STORE_CONFIG = {
 class TestTasksGitignore(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp(prefix="hammer_gitignore_")
+        self.addCleanup(cleanup_path, self.test_dir)
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
         self.git("init")
@@ -35,9 +37,6 @@ class TestTasksGitignore(unittest.TestCase):
         self.git("add", "hammer")
         self.git("commit", "-m", "Add hammer")
         self.seed_tasks_branch()
-
-    def tearDown(self):
-        shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def git(self, *args, cwd=None, check=True):
         return subprocess.run(

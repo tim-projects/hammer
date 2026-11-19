@@ -19,11 +19,12 @@ remaining source, including a shell that exported it by hand.
 """
 
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+
+from tests.hammer_test_base import cleanup_dev_store
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TEST_DIR)
@@ -97,8 +98,7 @@ class TestDevStoreGuard(unittest.TestCase):
 
     def test_isolated_dev_store_still_initializes(self):
         self.dev_tasks = tempfile.mkdtemp(prefix="hammer_guard_")
-        self.addCleanup(shutil.rmtree, self.dev_tasks, ignore_errors=True)
-        self.addCleanup(shutil.rmtree, self.dev_tasks + "-repo", ignore_errors=True)
+        self.addCleanup(cleanup_dev_store, self.dev_tasks)
         os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks
         result = subprocess.run(  # noqa: PLW1510
             [sys.executable, self.script, "tasks", "--dev", "init", "--force"],

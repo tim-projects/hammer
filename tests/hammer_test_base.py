@@ -1,14 +1,36 @@
+import errno
 import json
 import os
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 
 def dev_repo_path(tasks_dir):
     """Where the --dev CLI keeps its throwaway repo (see tasks_ai/context.py)."""
     return os.path.abspath(tasks_dir) + "-repo"
+
+
+def cleanup_path(path):
+    """Remove a test-owned path, failing loudly if cleanup fails."""
+    for attempt in range(5):
+        if not os.path.lexists(path):
+            return
+        try:
+            shutil.rmtree(path)
+            return
+        except OSError as error:
+            if error.errno != errno.ENOTEMPTY or attempt == 4:
+                raise
+            time.sleep(0.1)
+
+
+def cleanup_dev_store(tasks_dir):
+    """Remove the dev repo clone and its store."""
+    cleanup_path(dev_repo_path(tasks_dir))
+    cleanup_path(tasks_dir)
 
 
 def ensure_dev_repo(tasks_dir):
@@ -25,7 +47,8 @@ def ensure_dev_repo(tasks_dir):
 
 class MockGitRemote:
     def __init__(self, repo_dir):
-        self.remote_dir = tempfile.mkdtemp(prefix="hammer_remote_")
+        self._remote = tempfile.TemporaryDirectory(prefix="hammer_remote_")
+        self.remote_dir = self._remote.name
         self.repo_dir = repo_dir
         subprocess.run(["git", "init", "--bare", self.remote_dir], check=True)
 
@@ -44,13 +67,15 @@ class MockGitRemote:
         return self.remote_dir
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        shutil.rmtree(self.remote_dir)
+        self._remote.cleanup()
 
 
 class HammerTestBase(unittest.TestCase):
     def setUp(self):
         self.test_root = tempfile.mkdtemp(prefix="hammer_test_")
+        self.addCleanup(cleanup_path, self.test_root)
         self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        self.addCleanup(cleanup_dev_store, self.dev_tasks_dir)
         # Leak-proofing: register the restores BEFORE any mutation. A test that
         # failed mid-way used to skip tearDown and leak the env var (and a
         # deleted cwd) into every later test file in the same run.
@@ -148,16 +173,6 @@ class HammerTestBase(unittest.TestCase):
         }
         with open(os.path.join(self.dev_tasks_dir, "config.yaml"), "w") as f:
             json.dump(config_data, f)
-
-    def tearDown(self):
-        for path in (
-            self.test_root,
-            self.dev_tasks_dir,
-            dev_repo_path(self.dev_tasks_dir),
-        ):
-            shutil.rmtree(path, ignore_errors=True)
-            if os.path.exists(path):
-                shutil.rmtree(path)
 
     def run_tasks(self, args):
         return subprocess.run(
