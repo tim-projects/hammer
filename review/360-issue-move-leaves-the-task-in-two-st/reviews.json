@@ -99,6 +99,16 @@
       "bytes": 1948,
       "ts": 1795124256.6098127,
       "prev_hash": "6df7519d089e97f9398167ba0326c0a05fcd0c1d8b6b2e073509c18873d35883"
+    },
+    {
+      "seq": 11,
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/patches/tasks_ai_task_service.py.patch",
+      "patch": "testing_360-issue-move-leaves-the-task-in-two-st_patches_tasks_ai_task_service.py.patch.patch",
+      "md5": "185023000d076bfaa6e2e8116a50ba38",
+      "sha256": "59d9b805b39a05007e438698dad810dbd4af3af3fc628d33cdc5fee2c02d015b",
+      "bytes": 1647,
+      "ts": 1795124259.0239527,
+      "prev_hash": "8d35a632acdfee56c2a5a346bbe0482a12ef2fe866497fc3bdb02bb40903a1f6"
     }
   ]
 }
