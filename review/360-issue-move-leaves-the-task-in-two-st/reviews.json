@@ -39,6 +39,16 @@
       "bytes": 1193,
       "ts": 1795124190.5392838,
       "prev_hash": "042641445c6e6d3d2dd92d1995c04c243851dca1f35d2a950d89038a7596083b"
+    },
+    {
+      "seq": 5,
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/meta.json",
+      "patch": "testing_360-issue-move-leaves-the-task-in-two-st_meta.json.patch",
+      "md5": "d7cd112e46740e50b260b2d3c84c0a4e",
+      "sha256": "d91bf7250f994b3092c1dcfcfd032b2b1e59bbadcf03a68f045ddda65f6c155b",
+      "bytes": 2485,
+      "ts": 1795124192.844778,
+      "prev_hash": "e62686fad7989466788f6d0c915f9f647b95035ac315557ab2150401014c7df2"
     }
   ]
 }
