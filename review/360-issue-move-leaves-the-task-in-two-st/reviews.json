@@ -139,6 +139,16 @@
       "bytes": 6059,
       "ts": 1795124265.541265,
       "prev_hash": "1d117c0c871a8a667acb31f2252a5067f7aa56041d24b6bd9e6833b621d55b14"
+    },
+    {
+      "seq": 15,
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/plan.md",
+      "patch": "testing_360-issue-move-leaves-the-task-in-two-st_plan.md.patch",
+      "md5": "5da36c252278da91647ef9aa23a8811c",
+      "sha256": "9b40846f56e2e3f337fb10faaf94a774f56e99ae62aec3c1ac6640866c09b681",
+      "bytes": 716,
+      "ts": 1795124267.7167795,
+      "prev_hash": "a8452d95d8cc001440d89389502796d28aa69d0a7b1da27bb391e039023dce71"
     }
   ]
 }
