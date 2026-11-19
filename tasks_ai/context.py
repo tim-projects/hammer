@@ -18,6 +18,47 @@ HARNESS_STALE_AFTER = 24 * 60 * 60
 # state; widen only if a suite ever legitimately runs longer than a day.
 
 
+def clone_local(
+    source: str, dest: str, *extra_args: str
+) -> subprocess.CompletedProcess:
+    """Clone a local repo into `dest` through a throwaway path, retrying transient failures.
+
+    A local clone with --no-hardlinks copies every object; under load that copy can fail
+    with ENOENT while the destination tree is still being built (observed: intermittent
+    `git clone --branch tasks` failures that made full-suite runs flaky, ~25% of file runs
+    before the retry). Cloning into
+    `<dest>.tmp-<pid>` and swapping on success means a failed attempt never leaves a
+    half-written repo behind; the bounded retry absorbs the transient.
+    """
+    tmp = f"{dest}.tmp-{os.getpid()}"
+    if os.path.exists(dest) and not os.path.isdir(dest):
+        # A file where the repo belongs is an occupied path, not a clone target:
+        # refuse it rather than silently clobbering whatever put it there.
+        return subprocess.CompletedProcess(
+            ["git", "clone"],
+            1,
+            "",
+            f"destination path '{dest}' exists and is not a directory",
+        )
+    last: subprocess.CompletedProcess | None = None
+    for attempt in range(5):
+        shutil.rmtree(tmp, ignore_errors=True)
+        last = subprocess.run(
+            ["git", "clone", "--quiet", "--no-hardlinks", *extra_args, source, tmp],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if last.returncode == 0:
+            if os.path.isdir(dest):
+                shutil.rmtree(dest, ignore_errors=True)
+            os.replace(tmp, dest)
+            return last
+        time.sleep(0.2 * 2**attempt)
+    shutil.rmtree(tmp, ignore_errors=True)
+    return last if last is not None else subprocess.CompletedProcess([], 1)
+
+
 class ProjectContext:
     """
     Central authority for path resolution and environment detection.
@@ -144,12 +185,7 @@ class ProjectContext:
         # place where sweeping abandoned harness dirs is free of live-state risk.
         self.reclaim_stale_dev_dirs(tasks_path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        result = subprocess.run(
-            ["git", "clone", "--quiet", "--no-hardlinks", source, path],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = clone_local(source, path)
         if result.returncode != 0:
             raise DevRepoUnavailable(
                 f"detached dev repo could not be cloned from {source} "
