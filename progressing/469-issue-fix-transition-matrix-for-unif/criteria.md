@@ -1,3 +1,3 @@
-- [ ] `python3 -m pytest tests/test_all_transitions.py -q` passes
-- [ ] The transition-matrix test recognizes validation blockers in the unified next-step response without weakening transition assertions
-- [ ] The full suite has no unexpected failures
+- [x] `python3 -m pytest tests/test_all_transitions.py -q` passes
+- [x] The transition-matrix test recognizes validation blockers in the unified next-step response without weakening transition assertions
+- [x] The full suite has no unexpected failures
