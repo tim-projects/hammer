@@ -1,18 +1,21 @@
 import json
 import os
-import shutil
 import subprocess
 import tempfile
 import unittest
+
+from tests.hammer_test_base import cleanup_dev_store, cleanup_path
 
 
 class TestRobustnessBugfix(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        self.addCleanup(cleanup_path, self.test_dir)
         # Isolated dev store: the default /tmp/.tasks is shared by every dev
         # test in the suite, and one file's corrupted/created state can block
         # another file's create.
         self.dev_tasks_dir = tempfile.mkdtemp(prefix="hammer_tasks_")
+        self.addCleanup(cleanup_dev_store, self.dev_tasks_dir)
         os.environ["HAMMER_DEV_TASKS_DIR"] = self.dev_tasks_dir
         self.repo_dir = os.path.join(self.test_dir, "repo")
         os.makedirs(self.repo_dir)
@@ -33,9 +36,6 @@ class TestRobustnessBugfix(unittest.TestCase):
         )
 
     def tearDown(self):
-        shutil.rmtree(self.test_dir)
-        shutil.rmtree(self.dev_tasks_dir, ignore_errors=True)
-        shutil.rmtree(self.dev_tasks_dir + "-repo", ignore_errors=True)
         os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
 
     def test_corrupted_meta_json_does_not_crash_cli(self):
