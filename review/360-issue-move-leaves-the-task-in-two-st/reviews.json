@@ -209,6 +209,16 @@
       "bytes": 2116,
       "ts": 1795124281.0196693,
       "prev_hash": "37a9adafbb42457b0ff6b5a921564468a49decde4ac526a43a32f0d7d6dd50e0"
+    },
+    {
+      "seq": 22,
+      "file": "testing/360-issue-move-leaves-the-task-in-two-st/verification_proof.log",
+      "patch": "testing_360-issue-move-leaves-the-task-in-two-st_verification_proof.log.patch",
+      "md5": "1e261507b541fc244ec7d638c5b745bc",
+      "sha256": "8e947564e3e72c4a0153324e546e51bda7253e1cd9a30bee651234e89f96e367",
+      "bytes": 440,
+      "ts": 1795124283.6185977,
+      "prev_hash": "c95988d8305b6f7e39ae97caf6e127716c2094dbc00e4da3e5643f2ec6bc703e"
     }
   ]
 }
