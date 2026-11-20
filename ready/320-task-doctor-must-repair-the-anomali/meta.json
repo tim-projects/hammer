@@ -10,5 +10,6 @@
   "Rc": "",
   "Vp": false,
   "Tp": false,
-  "Rr": true
+  "Rr": true,
+  "St": "READY"
 }
