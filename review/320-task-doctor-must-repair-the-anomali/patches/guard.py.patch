@@ -1,0 +1,36 @@
+diff --git a/guard.py b/guard.py
+index 8b7a2b06..0f7ae6b1 100755
+--- a/guard.py
++++ b/guard.py
+@@ -54,20 +54,20 @@ done
+ """
+ 
+ FIX_PLAN = {
+-    "GUARD_DUPLICATE_ID": "hammer tasks doctor --fix to reconcile; the guard "
+-    "never deletes branches itself.",
+-    "GUARD_STATE_DUPLICATE": "hammer tasks doctor --fix to move the duplicate "
+-    "folder back to its metadata state.",
+-    "GUARD_BRANCH_NONCONFORMANT": "hammer tasks doctor --fix to correct "
+-    "metadata.Br to the folder name.",
++    "GUARD_DUPLICATE_ID": "recreate the task with a fresh ID, then hammer tasks "
++    "mount <id>; doctor will not choose between conflicting branches.",
++    "GUARD_STATE_DUPLICATE": "recreate the task with a fresh ID, then hammer tasks "
++    "mount <id>; doctor will not choose between conflicting folders.",
++    "GUARD_BRANCH_NONCONFORMANT": "recreate the task with a fresh ID, then hammer tasks "
++    "mount <id>; doctor will not rename a live branch.",
+     "GUARD_BRANCH_MISSING": "hammer tasks mount <id> to restore the branch, "
+     "or move the task back to PROGRESSING.",
+-    "GUARD_DUPLICATE_REMOTE_ID": "hammer guard refresh --fetch, then "
+-    "hammer tasks doctor --fix to reconcile.",
++    "GUARD_DUPLICATE_REMOTE_ID": "hammer guard refresh --fetch, then recreate "
++    "the task with a fresh ID and hammer tasks mount <id>.",
+     "GUARD_REMOTE_DIVERGENCE": "hammer tasks mount <id> to restore the branch "
+-    "from origin, then hammer tasks doctor --fix.",
+-    "GUARD_WORKTREE_ORPHAN": "hammer tasks mount <id> or "
+-    "hammer tasks doctor --fix to reconcile worktrees.",
++    "from origin; recreate with a fresh ID if the remote identity is ambiguous.",
++    "GUARD_WORKTREE_ORPHAN": "recreate the task with a fresh ID and hammer tasks "
++    "mount <id>; preserve the old worktree until it is reviewed.",
+     "GUARD_WORKTREE_MISSING": "hammer tasks mount <id>.",
+     "GUARD_UNAVAILABLE": "hammer guard rebuild; --force overrides and logs.",
+ }

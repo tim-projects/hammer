@@ -1,0 +1,49 @@
+{
+  "Id": 320,
+  "Ti": "Doctor reports guard anomalies instead of repairing them",
+  "Ty": "task",
+  "Cr": "261105 06:44",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "320-task-doctor-must-repair-the-anomali",
+  "Pt": null,
+  "Rc": "",
+  "Vp": true,
+  "Tp": true,
+  "Rr": true,
+  "St": "REVIEW",
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795153624.5483,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/320-task-doctor-must-repair-the-anomali/patches/data_hints.json.patch"
+    },
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/320-task-doctor-must-repair-the-anomali/patches/guard.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/320-task-doctor-must-repair-the-anomali/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tests/test_doctor_guard_anomalies.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/320-task-doctor-must-repair-the-anomali/patches/tests_test_doctor_guard_anomalies.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/320-task-doctor-must-repair-the-anomali/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_ownership_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/320-task-doctor-must-repair-the-anomali/patches/tests_test_worktree_ownership_user.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "eca4a91c92d8c82f21d5cfda39fd68f57d08fa2b",
+    "base": "53c09726c079b1f514aa542e538f390baf94c831"
+  }
+}
