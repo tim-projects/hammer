@@ -50,5 +50,8 @@
       "ts": 1795152579.1916447,
       "prev_hash": "d36176f52f64c0ac6254990568864097a7a1e304e903ba0e49948c6554fd4f89"
     }
-  ]
+  ],
+  "summary": "Reviewed all five patches: wrapper normalizes JSON in every position, tool parsers preserve the directive, help overrides JSON, output remains valid JSON on errors, and the matrix plus regression tests cover the required paths.",
+  "summary_at": 1795152588.593615,
+  "reviewed_at": 1795152588.5936162
 }
