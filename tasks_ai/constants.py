@@ -129,6 +129,7 @@ ALLOWED_CONFIG_KEYS = {
     "plan",
     "tasks_dir",
     "repo.lint",
+    "repo.lint_secondary",
     "repo.test",
     "repo.type_check",
     "repo.format",
