@@ -1,0 +1,45 @@
+{
+  "Id": 370,
+  "Ti": "Global -j or --json output flag must work in any flag order on every hammer command",
+  "Ty": "task",
+  "Cr": "261108 14:31",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "370-task-global-j-or-json-output-flag-m",
+  "Pt": null,
+  "Tp": true,
+  "Rr": true,
+  "Rc": "",
+  "Vp": true,
+  "St": "REVIEW",
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795152512.529502,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "docs/JSON_FLAG_MATRIX.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/370-task-global-j-or-json-output-flag-m/patches/docs_JSON_FLAG_MATRIX.md.patch"
+    },
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/370-task-global-j-or-json-output-flag-m/patches/guard.py.patch"
+    },
+    {
+      "file": "hammer",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/370-task-global-j-or-json-output-flag-m/patches/hammer.patch"
+    },
+    {
+      "file": "tasks_ai/check_wrapper.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/370-task-global-j-or-json-output-flag-m/patches/tasks_ai_check_wrapper.py.patch"
+    },
+    {
+      "file": "tests/test_global_json_flag.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/370-task-global-j-or-json-output-flag-m/patches/tests_test_global_json_flag.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "227b2668c3a516c59a23c234b5095d4a7ef3c754",
+    "base": "cb101f35e27f6cb7417fc6946d126549aafb7a32"
+  }
+}
