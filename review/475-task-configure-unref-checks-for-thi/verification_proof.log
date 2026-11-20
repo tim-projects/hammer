@@ -1,0 +1,1 @@
+unref 0.3.2 exits 0 with configured baseline. ./hammer check lint passes with Ruff and unref. Temporary newly_unreferenced_probe was detected by unref and Hammer exited 1. Full pipeline validation passed: 111 tests passed, 1 skipped; Ruff lint/format, Pyright, and debug checks passed.
