@@ -1,10 +1,12 @@
 import importlib.util
+import json
 import os
 import subprocess
 import unittest
 from unittest.mock import patch
 
 from tasks_ai.constants import ALLOWED_CONFIG_KEYS
+from tasks_ai.validation import Validation
 from tasks_ai.validator import Validator
 
 ROOT_CHECK_PATH = os.path.join(
@@ -140,6 +142,49 @@ class TestOptionalUnrefLint(unittest.TestCase):
         self.assertIn("--fix", ruff_command)
         self.assertNotIn("--fix", unref_command)
         self.assertEqual(unref_command, ["/usr/bin/unref"])
+
+    def test_promotion_message_keeps_secondary_failure_without_primary_output(self):
+        class FakeCLI:
+            as_json = True
+            dev = False
+
+            def __init__(self):
+                self.context = type(
+                    "Context",
+                    (),
+                    {"repo_root": os.getcwd(), "main_repo_root": os.getcwd()},
+                )()
+                self.next_steps = []
+
+            def next_step(self, code, **kwargs):
+                self.next_steps.append((code, kwargs))
+                raise RuntimeError(code)
+
+        cli = FakeCLI()
+        payload = {
+            "success": False,
+            "tool": "lint",
+            "stdout": "",
+            "stderr": "",
+            "secondary_stdout": "Tool 'unref' not found in PATH or venv.",
+            "exit_code": 127,
+        }
+        result = completed(
+            ["check.py", "lint", "--json"],
+            returncode=1,
+            stdout=json.dumps(payload),
+        )
+
+        with (
+            patch("tasks_ai.validation.subprocess.run", return_value=result),
+            self.assertRaises(RuntimeError),
+        ):
+            Validation(cli).run_tool("lint")
+
+        code, details = cli.next_steps[0]
+        self.assertEqual(code, "VALIDATION_FAILED")
+        self.assertIn("unref:", details["msg"])
+        self.assertIn("not found in PATH", details["msg"])
 
     def test_legacy_gate_supports_the_same_opt_in_contract(self):
         config = {"repo": {"lint": "ruff", "lint_secondary": "unref"}}
