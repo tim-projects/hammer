@@ -11,11 +11,11 @@
   "Vp": true,
   "Tp": false,
   "Rr": true,
-  "St": "STAGING",
+  "St": "DONE",
   "Reviewed": true,
   "AuditPassed": false,
   "PatchGenTime": 1795153624.5483,
-  "DoneAt": null,
+  "DoneAt": 1795153707.189464,
   "PatchFiles": [
     {
       "file": "data/hints.json",
