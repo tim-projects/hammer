@@ -1,7 +1,7 @@
-- [ ] A full list/matrix of every hammer command combination (tool x command x flags, including auto-detected shortcuts) is produced and documented
-- [ ] -j and --json are accepted in any flag order on every command (before or after subcommands, flags, and args)
-- [ ] Every command combination accepts -j/--json (no command rejects it as an unrecognized argument)
-- [ ] When -j/--json is passed, output is always valid JSON, regardless of success or failure
-- [ ] Help overrides JSON: when -h/--help is present, only human-readable help text is emitted and no JSON is printed, so parsers never see mixed output
-- [ ] -j/--json does not leak into help text output, and help detection happens before the JSON directive is applied
-- [ ] Existing tests pass and new tests cover flag-order permutations plus a representative command from every combination group
+- [x] A full list/matrix of every hammer command combination (tool x command x flags, including auto-detected shortcuts) is produced and documented
+- [x] -j and --json are accepted in any flag order on every command (before or after subcommands, flags, and args)
+- [x] Every command combination accepts -j/--json (no command rejects it as an unrecognized argument)
+- [x] When -j/--json is passed, output is always valid JSON, regardless of success or failure
+- [x] Help overrides JSON: when -h/--help is present, only human-readable help text is emitted and no JSON is printed, so parsers never see mixed output
+- [x] -j/--json does not leak into help text output, and help detection happens before the JSON directive is applied
+- [x] Existing tests pass and new tests cover flag-order permutations plus a representative command from every combination group
