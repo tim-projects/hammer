@@ -1,0 +1,1 @@
+Focused unref/validation tests: 13 passed. Full pipeline gate: 111 passed, 1 skipped; Ruff lint and format passed; Pyright passed; debug check passed. Ruff lint/format and git diff checks passed.
