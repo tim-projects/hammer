@@ -1,0 +1,13 @@
+{
+    "task_id": "320",
+    "patch_hash": "9681a688233f3a5b276a6373f2ee5c59",
+    "patch_files": [
+        "data_hints.json.patch",
+        "guard.py.patch",
+        "tasks_ai_commands_doctor.py.patch",
+        "tests_test_doctor_guard_anomalies.py.patch",
+        "tests_test_robustness.py.patch",
+        "tests_test_worktree_ownership_user.py.patch"
+    ],
+    "status": "verified"
+}
