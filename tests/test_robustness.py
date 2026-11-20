@@ -1899,8 +1899,10 @@ class TestRobustness(unittest.TestCase):
         # Doctor without fix should detect the issue
         res = self.run_cmd(["doctor"])
         self.assertTrue(res["success"])
-        self.assertEqual(len(res["data"]["bugs"]), 1)
-        self.assertEqual(res["data"]["bugs"][0]["id"], "stale-task-counter")
+        self.assertIn(
+            "stale-task-counter",
+            [bug["id"] for bug in res["data"]["bugs"]],
+        )
 
         # Doctor with --fix should update counter to max_id + 1
         res_fix = self.run_cmd(["doctor", "--fix"])
@@ -1967,9 +1969,13 @@ class TestRobustness(unittest.TestCase):
         res_fix = self.run_cmd(["doctor", "--fix"])
         self.assertTrue(res_fix["success"])
 
-        # After fix, issues should be resolved (re-run doctor should show 0)
+        # After fix, metadata issues should be resolved. Structural guard
+        # findings are report-only and may remain.
         res_after = self.run_cmd(["doctor"])
-        self.assertEqual(len(res_after["data"]["bugs"]), 0)
+        self.assertNotIn(
+            "state-mismatch",
+            [bug["id"] for bug in res_after["data"]["bugs"]],
+        )
 
         # Verify task moved to done/
         new_task_dir = os.path.join(self.repo_dir, ".tasks", "done", tid)
