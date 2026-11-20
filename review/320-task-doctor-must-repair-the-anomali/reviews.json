@@ -60,5 +60,8 @@
       "ts": 1795153648.093055,
       "prev_hash": "3832c4fdc33b8fef37ad0497ac83856040f9925b88ccb99183f3aff4156b722f"
     }
-  ]
+  ],
+  "summary": "Reviewed all six patches: guard findings are report-only, safe metadata repairs remain, hints use fresh-create/mount workflow, and read-only doctor no longer writes reports.",
+  "summary_at": 1795153653.4052684,
+  "reviewed_at": 1795153653.4052696
 }
