@@ -1,0 +1,6 @@
+- [ ] `unref` is installed in the project's `venv` and its executable is discoverable by Hammer.
+- [ ] Hammer shared config enables `repo.lint_secondary: unref`.
+- [ ] `pyproject.toml` contains a path-scoped baseline for the existing `unref` findings, without excluding active source trees or globally whitelisting names.
+- [ ] `unref` exits zero against the project after the baseline is applied.
+- [ ] Hammer lint validation passes with both Ruff and `unref` enabled.
+- [ ] A newly introduced unreferenced function is still detected by the configured `unref` check.
