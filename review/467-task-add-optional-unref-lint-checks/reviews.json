@@ -19,6 +19,16 @@
       "bytes": 4536,
       "ts": 1795176529.6105056,
       "prev_hash": "34478fae9ae62f6d6d1fa24c168c44f93a4a2cad808b278d09b0c8b6476bb406"
+    },
+    {
+      "seq": 3,
+      "file": "docs/TROUBLESHOOTING.md",
+      "patch": "docs_TROUBLESHOOTING.md.patch",
+      "md5": "6da7ea137c83ca08722751289a4d2c1a",
+      "sha256": "248b3ebed823d9331f4ad50f42aaf4b75e9f2ee9c542592f365c637e7e32a6a4",
+      "bytes": 736,
+      "ts": 1795176530.8131015,
+      "prev_hash": "9256808e24c1bc415d69344ea03fd6963b48d1a6e9eb81e00dc8ff629c064166"
     }
   ]
 }
