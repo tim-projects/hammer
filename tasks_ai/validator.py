@@ -16,7 +16,7 @@ def format_check_results(results: list[dict]) -> str:
         if success:
             continue
         lines.append(f"  exit_code: {result.get('exit_code', 'unknown')}")
-        for label in ("stdout", "stderr"):
+        for label in ("stdout", "stderr", "secondary_stdout", "secondary_stderr"):
             output = str(result.get(label) or "").strip()
             if output:
                 lines.append(f"  {label}:")
@@ -199,6 +199,63 @@ class Validator:
             },
         }
 
+    def _secondary_lint_tool(self) -> str | None:
+        tool = self.config.get("repo.lint_secondary")
+        if tool is None:
+            tool = self.config.get("repo", {}).get("lint_secondary")
+        return tool
+
+    def _run_secondary_lint(self, timeout: int, primary_tool: str) -> dict | None:
+        tool = self._secondary_lint_tool()
+        if not tool:
+            return None
+        if tool != "unref":
+            raise ValidationError(
+                f"Unsupported secondary lint tool '{tool}'. Only 'unref' is supported."
+            )
+        if primary_tool != "ruff":
+            raise ValidationError(
+                "repo.lint_secondary requires repo.lint to be set to 'ruff'."
+            )
+
+        cmd0 = shutil.which("unref")
+        if not cmd0:
+            venv_bin = Path(self.project_root) / "venv" / "bin" / "unref"
+            if venv_bin.exists():
+                cmd0 = str(venv_bin)
+        if not cmd0:
+            return {
+                "success": False,
+                "status": "next_step",
+                "tool": "lint",
+                "stdout": "Tool 'unref' not found in PATH or venv. Install it or disable repo.lint_secondary.",
+                "stderr": "",
+                "exit_code": 127,
+            }
+
+        run_env = os.environ.copy()
+        run_env["CI"] = "true"
+        try:
+            result = subprocess.run(  # noqa: PLW1510
+                [cmd0],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                env=run_env,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            raise ValidationError(f"Tool 'unref' timed out after {timeout} seconds.")
+
+        return {
+            "success": result.returncode == 0,
+            "status": "pass" if result.returncode == 0 else "next_step",
+            "tool": "lint",
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "exit_code": result.returncode,
+        }
+
     def run_check(
         self,
         tool_type: str,
@@ -275,13 +332,30 @@ class Validator:
         if tool_type == "lint" and tool == "ruff":
             stdout = format_ruff_findings(stdout)
         success = result.returncode == 0
+        exit_code = result.returncode
+        stderr = result.stderr
+
+        secondary = (
+            self._run_secondary_lint(timeout, tool) if tool_type == "lint" else None
+        )
+        secondary_stdout = ""
+        secondary_stderr = ""
+        if secondary is not None:
+            secondary_stdout = secondary["stdout"]
+            secondary_stderr = secondary["stderr"]
+            success = success and secondary["success"]
+            if not secondary["success"]:
+                exit_code = secondary["exit_code"]
+
         return {
             "success": success,
             "status": "pass" if success else "next_step",
             "tool": tool_type,
             "stdout": stdout,
-            "stderr": result.stderr,
-            "exit_code": result.returncode,
+            "stderr": stderr,
+            "secondary_stdout": secondary_stdout,
+            "secondary_stderr": secondary_stderr,
+            "exit_code": exit_code,
         }
 
     def run_all(self, fix: bool = False, force: bool = False) -> list[dict]:

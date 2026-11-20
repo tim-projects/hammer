@@ -311,6 +311,70 @@ def run_debug_check(fix=False, as_json=False, dev=False):
         return 1
 
 
+def get_secondary_lint_tool(config):
+    tool = config.get("repo.lint_secondary")
+    if tool is None:
+        tool = config.get("repo", {}).get("lint_secondary")
+    return tool
+
+
+def run_secondary_lint(config, project_root, primary_tool):
+    tool = get_secondary_lint_tool(config)
+    if not tool:
+        return None
+    if tool != "unref":
+        return {
+            "success": False,
+            "stdout": f"Unsupported secondary lint tool '{tool}'. Only 'unref' is supported.",
+            "stderr": "",
+            "exit_code": 2,
+        }
+    if primary_tool != "ruff":
+        return {
+            "success": False,
+            "stdout": "repo.lint_secondary requires repo.lint to be set to 'ruff'.",
+            "stderr": "",
+            "exit_code": 2,
+        }
+
+    cmd0 = shutil.which("unref")
+    if not cmd0:
+        venv_bin = os.path.join(project_root, "venv", "bin", "unref")
+        if os.path.exists(venv_bin):
+            cmd0 = venv_bin
+    if not cmd0:
+        return {
+            "success": False,
+            "stdout": "Tool 'unref' not found in PATH or venv. Install it or disable repo.lint_secondary.",
+            "stderr": "",
+            "exit_code": 127,
+        }
+
+    try:
+        result = subprocess.run(
+            [cmd0],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=1800,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "stdout": "Tool 'unref' timed out after 30 minutes.",
+            "stderr": "",
+            "exit_code": 124,
+        }
+
+    return {
+        "success": result.returncode == 0,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "exit_code": result.returncode,
+    }
+
+
 def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=False):
     sys.stderr.flush()
     config = load_config(dev)
@@ -506,17 +570,33 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
     result.stdout = stdout_content
     result.stderr = stderr_content
 
+    secondary = (
+        run_secondary_lint(config, project_root, tool) if tool_type == "lint" else None
+    )
+    success = result.returncode == 0
+    exit_code = result.returncode
+    secondary_stdout = ""
+    secondary_stderr = ""
+    if secondary is not None:
+        secondary_stdout = secondary["stdout"]
+        secondary_stderr = secondary["stderr"]
+        success = success and secondary["success"]
+        if not secondary["success"]:
+            exit_code = secondary["exit_code"]
+
     if as_json:
         print(
             json.dumps(
                 {
-                    "success": result.returncode == 0,
-                    "status": "pass" if result.returncode == 0 else "next_step",
+                    "success": success,
+                    "status": "pass" if success else "next_step",
                     "tool": tool_type,
                     "configured": tool,
                     "stdout": result.stdout,
                     "stderr": result.stderr,
-                    "exit_code": result.returncode,
+                    "secondary_stdout": secondary_stdout,
+                    "secondary_stderr": secondary_stderr,
+                    "exit_code": exit_code,
                 }
             )
         )
@@ -525,8 +605,12 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
             print(result.stdout)
         if result.stderr:
             print(result.stderr, file=sys.stderr)
+        if secondary_stdout:
+            print(f"unref:\n{secondary_stdout}")
+        if secondary_stderr:
+            print(f"unref:\n{secondary_stderr}", file=sys.stderr)
 
-        if result.returncode == 0:
+        if success:
             print(f"✅ {tool} passed")
         else:
             print(f"❌ {tool} failed")
@@ -534,7 +618,7 @@ def run_check(tool_type, fix=False, as_json=False, dev=False, auto_fix_ruff=Fals
                 "\n⚠️ Do not bypass the tool - fix the actual code issues, not the validation config."
             )
 
-    return result.returncode
+    return exit_code
 
 
 def run_all(fix=False, as_json=False, dev=False, force=False):
