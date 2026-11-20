@@ -10,5 +10,8 @@
       "ts": 1795196507.5964453,
       "prev_hash": null
     }
-  ]
+  ],
+  "summary": "Read the sole pyproject.toml patch in full. Verified path-scoped baselines cover only the 45 existing findings, active source trees remain included, and no names are globally whitelisted. Direct scan and Hammer lint both pass; a new unused function was confirmed blocked.",
+  "summary_at": 1795206894.3948228,
+  "reviewed_at": 1795206894.3948238
 }
