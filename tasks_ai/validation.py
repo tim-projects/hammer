@@ -172,13 +172,22 @@ class Validation:
                         or failed_line.get("stdout")
                         or failed_line.get("stderr")
                     )
+                    secondary = str(
+                        failed_line.get("secondary_stdout")
+                        or failed_line.get("secondary_stderr")
+                        or ""
+                    ).strip()
                     if details:
                         details = str(details).strip()
                         if tool == "lint":
                             details = format_ruff_findings(details)
+                        if secondary:
+                            details = f"{details}\nunref:\n{secondary}"
                         error_msg = (
                             f"NEXT STEP: Fix {tool} validation failures: {details}"
                         )
+                    elif secondary:
+                        error_msg = f"NEXT STEP: Fix {tool} validation failures: unref:\n{secondary}"
                     else:
                         exit_code = failed_line.get("exit_code", "unknown")
                         error_msg = f"NEXT STEP: Fix {tool} validation failure (exit code {exit_code})"
