@@ -1,0 +1,1 @@
+834fcd85 Doctor reports structural guard anomalies safely
