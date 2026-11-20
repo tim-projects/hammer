@@ -1,6 +1,7 @@
-- [ ] doctor output lists guard anomaly codes (code, task id, detail, fix hint) alongside existing metadata bugs, delegating to the guard engine so it stays a single source of truth
-- [ ] doctor --fix still repairs metadata.Id, metadata.Br, metadata.St, wrong directory names, wrong state folders, and the stale task counter, exactly as before
-- [ ] doctor --fix makes no attempt at structural repair (duplicate ids, state duplicates, nonconformant/missing branches, remote divergence, worktree codes) and prints those codes with hints pointing at the fresh-start/mount workflow
-- [ ] GUARD_* entries in data/hints.json that currently point at 'hammer tasks doctor --fix' are repointed to the correct fresh-start/mount workflow
-- [ ] doctor without --fix remains read-only (no writes, no commits)
-- [ ] tests: guard anomalies appear in doctor output; structural codes are reported but not repaired; existing metadata repair tests still pass
+- [ ] ## Criteria
+- [x] doctor output lists guard anomaly codes (code, task id, detail, fix hint) alongside existing metadata bugs, delegating to the guard engine so it stays a single source of truth
+- [x] doctor --fix still repairs metadata.Id, metadata.Br, metadata.St, wrong directory names, wrong state folders, and the stale task counter, exactly as before
+- [x] doctor --fix makes no attempt at structural repair (duplicate ids, state duplicates, nonconformant/missing branches, remote divergence, worktree codes) and prints those codes with hints pointing at the fresh-start/mount workflow
+- [x] GUARD_* entries in data/hints.json that currently point at 'hammer tasks doctor --fix' are repointed to the correct fresh-start/mount workflow
+- [x] doctor without --fix remains read-only (no writes, no commits)
+- [x] tests: guard anomalies appear in doctor output; structural codes are reported but not repaired; existing metadata repair tests still pass

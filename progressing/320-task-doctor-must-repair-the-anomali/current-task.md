@@ -2,6 +2,7 @@
 Task: 320-task-doctor-must-repair-the-anomali
 ---
 
+
 - Progress:
   - Implemented doctor reporting through GuardEngine so guard codes, task IDs, details, and hints are surfaced from the single source of truth.
   - Kept safe repairs limited to metadata Id/Br/St, task directory/state placement, and stale task counter.
