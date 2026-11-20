@@ -230,6 +230,20 @@ tasks config set repo.lint ruff
 tasks config set repo.type_check pyright
 ```
 
+#### Optional Python lint companion
+
+Ruff remains the required lint tool. `unref` can be enabled as an additional
+check for unreferenced Python definitions:
+
+```bash
+pip install unref
+tasks config set repo.lint_secondary unref
+```
+
+The setting is optional and disabled by default. If it is enabled but the
+`unref` executable is unavailable, validation fails with a tool-not-found
+message rather than skipping the check.
+
 ## Running Validation
 
 ### Check Command

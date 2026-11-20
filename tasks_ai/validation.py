@@ -176,6 +176,13 @@ class Validation:
                         details = str(details).strip()
                         if tool == "lint":
                             details = format_ruff_findings(details)
+                        secondary = str(
+                            failed_line.get("secondary_stdout")
+                            or failed_line.get("secondary_stderr")
+                            or ""
+                        ).strip()
+                        if secondary:
+                            details = f"{details}\nunref:\n{secondary}"
                         error_msg = (
                             f"NEXT STEP: Fix {tool} validation failures: {details}"
                         )
