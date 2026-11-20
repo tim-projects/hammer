@@ -1,0 +1,1 @@
+Reviewed unref docs and PyPI metadata; inspected tasks_ai/validator.py, tasks_ai/validation.py, tasks_ai/commands/config.py, tasks_ai/cli.py, check.py, and focused tests. Design: preserve repo.lint as Ruff, add an opt-in repo.lint_secondary=unref companion setting, execute it only when explicitly configured, and report its findings as validation blockers.
