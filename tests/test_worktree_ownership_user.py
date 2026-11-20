@@ -121,20 +121,20 @@ class TestGuardSeesUnownedDirectories(OwnershipTestBase):
         self.assertIn("GUARD_WORKTREE_UNREGISTERED", text)
         self.assertIn(stray, text)
 
-    def test_doctor_fix_removes_only_the_stray(self):
+    def test_doctor_fix_reports_but_does_not_remove_the_stray(self):
         payload = self.create_task()
         real = self.mount_task(payload)
         stray = os.path.join(self.dev_repo_dir, ".task-worktrees", "999-task-none")
         os.makedirs(stray)
 
-        self.doctor(fix=True)
-        self.assertFalse(os.path.exists(stray), "stray directory survived --fix")
+        report = self.doctor(fix=True)
+        self.assertIn("GUARD_WORKTREE_UNREGISTERED", report.stdout + report.stderr)
+        self.assertTrue(os.path.exists(stray), "doctor must not delete ambiguous work")
         self.assertTrue(os.path.exists(real), "the registered worktree was damaged")
-        self.assertNotIn("GUARD_WORKTREE_UNREGISTERED", self.guard_scan().stdout)
 
 
-class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
-    def test_targeted_fix_removes_merged_branch_and_stale_manifest_entry(self):
+class TestDoctorReportsMissingWorktrees(OwnershipTestBase):
+    def test_targeted_fix_reports_but_does_not_remove_stale_manifest_entry(self):
         payload = self.create_task()
         worktree = self.mount_task(payload)
         self.remove_worktree(worktree)
@@ -144,12 +144,11 @@ class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
 
         result = self.doctor(fix=True, task_id=payload["id"])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertNotIn(str(payload["id"]), self.manifest())
-        self.assertFalse(os.path.exists(worktree))
+        self.assertIn(str(payload["id"]), self.manifest())
         branch = self.git(
             ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
         )
-        self.assertNotEqual(0, branch.returncode)
+        self.assertEqual(0, branch.returncode)
 
     def test_targeted_fix_preserves_an_unmerged_branch(self):
         payload = self.create_task()
@@ -162,7 +161,7 @@ class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
 
         result = self.doctor(fix=True, task_id=payload["id"])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertNotIn(str(payload["id"]), self.manifest())
+        self.assertIn(str(payload["id"]), self.manifest())
         branch = self.git(
             ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
         )
@@ -178,7 +177,7 @@ class TestDoctorRepairsMissingWorktrees(OwnershipTestBase):
         result = self.doctor(fix=True, task_id=first["id"])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         manifest = self.manifest()
-        self.assertNotIn(str(first["id"]), manifest)
+        self.assertIn(str(first["id"]), manifest)
         self.assertIn(str(second["id"]), manifest)
 
 
