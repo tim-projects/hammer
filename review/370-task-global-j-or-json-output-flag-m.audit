@@ -1,0 +1,12 @@
+{
+    "task_id": "370",
+    "patch_hash": "7bbe2e4570d543cf846db4f2d00cb6f1",
+    "patch_files": [
+        "docs_JSON_FLAG_MATRIX.md.patch",
+        "guard.py.patch",
+        "hammer.patch",
+        "tasks_ai_check_wrapper.py.patch",
+        "tests_test_global_json_flag.py.patch"
+    ],
+    "status": "verified"
+}
