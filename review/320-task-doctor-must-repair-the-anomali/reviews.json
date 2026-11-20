@@ -49,6 +49,16 @@
       "bytes": 1461,
       "ts": 1795153646.9104319,
       "prev_hash": "3b3d42034f20b90ae1372540bfa2c958236881ab54b9064e89548331fab2ee49"
+    },
+    {
+      "seq": 6,
+      "file": "tests/test_worktree_ownership_user.py",
+      "patch": "tests_test_worktree_ownership_user.py.patch",
+      "md5": "7143c7889785a3a44ed6cd7711167a53",
+      "sha256": "784ee4eeea04296dfa8c120b7fb61fb1f82541cd9206d97953ca57898b37ba14",
+      "bytes": 3225,
+      "ts": 1795153648.093055,
+      "prev_hash": "3832c4fdc33b8fef37ad0497ac83856040f9925b88ccb99183f3aff4156b722f"
     }
   ]
 }
