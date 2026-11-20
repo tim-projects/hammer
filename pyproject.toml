@@ -5,3 +5,110 @@ exclude = [
     ".tasks",
     "__pycache__",
 ]
+
+[tool.unref]
+
+# Baseline existing findings while keeping new unreferenced code visible.
+[[tool.unref.overrides]]
+paths = ["check.py"]
+used-names = ["get_tool"]
+
+[[tool.unref.overrides]]
+paths = ["dev_feature.py"]
+used-names = ["dev_feature"]
+
+[[tool.unref.overrides]]
+paths = ["guard.py"]
+used-names = ["warn"]
+
+[[tool.unref.overrides]]
+paths = ["repo.py"]
+used-names = ["STATE_FOLDERS", "SCRIPT_DIR"]
+
+[[tool.unref.overrides]]
+paths = ["setup_test_env.py"]
+used-names = ["setup_test_repo"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/cli.py"]
+used-names = ["logs_path", "_generate_review_diff", "_run_repo", "get_tool", "_sync_task_content", "_has_path", "_get_git_root"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/cli_engine.py"]
+used-names = ["repo_script", "logs_path", "_tasks_directory_has_data"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/cli_io.py"]
+used-names = ["get_terminal_width"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/commands/unarchive.py"]
+used-names = ["run"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/commands.py"]
+used-names = ["Commands"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/constants.py"]
+used-names = ["get_workflows", "AGENT_GUIDANCE", "RETENTION_DAYS"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/context.py"]
+used-names = ["resolve_worktree_path"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/git_service.py"]
+used-names = ["sync_pipeline"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/guard_engine.py"]
+used-names = ["staleness_warn_min", "_tasks_ref_object"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/libs/file_utils.py"]
+used-names = ["wait_for_file"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/libs/path_utils.py"]
+used-names = ["get_task_path"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/pipeline.py"]
+used-names = ["check_transition"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/pipeline_hooks.py"]
+used-names = ["PatchMigrationHook", "VerifyArtifactsHook"]
+
+[[tool.unref.overrides]]
+paths = ["tasks_ai/worktree_manager.py"]
+used-names = ["get_worktree_branch"]
+
+[[tool.unref.overrides]]
+paths = ["tests/check.py"]
+used-names = ["get_git_root", "ROOT", "get_tool"]
+
+[[tool.unref.overrides]]
+paths = ["tests/hammer_test_base.py"]
+used-names = ["ensure_dev_repo", "MockGitRemote"]
+
+[[tool.unref.overrides]]
+paths = ["tests/repo.py"]
+used-names = ["STATE_FOLDERS", "SCRIPT_DIR"]
+
+[[tool.unref.overrides]]
+paths = ["tests/test_dev_repo_reclamation.py"]
+used-names = ["runTest"]
+
+[[tool.unref.overrides]]
+paths = ["tests/test_move_state_consistency.py"]
+used-names = ["task"]
+
+[[tool.unref.overrides]]
+paths = ["tests/test_store_writes.py"]
+used-names = ["store_git"]
+
+[[tool.unref.overrides]]
+paths = ["tests/test_tasks.py"]
+used-names = ["git_checkout"]
