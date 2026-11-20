@@ -1,0 +1,29 @@
+{
+  "Id": 475,
+  "Ti": "Configure unref checks for this project",
+  "Ty": "task",
+  "Cr": "261120 12:58",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "475-task-configure-unref-checks-for-thi",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795196504.941028,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "pyproject.toml",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/475-task-configure-unref-checks-for-thi/patches/pyproject.toml.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "427fcd71c9488616d9f7f6f31e58975d5d158c65",
+    "base": "c32ef41a50cd3acd312b3fac789080af1ab240fb"
+  }
+}
