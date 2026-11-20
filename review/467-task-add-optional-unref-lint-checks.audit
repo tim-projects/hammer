@@ -1,0 +1,14 @@
+{
+    "task_id": "467",
+    "patch_hash": "b4afd7cc09d06b4859397d097bb74129",
+    "patch_files": [
+        "README.md.patch",
+        "check.py.patch",
+        "docs_TROUBLESHOOTING.md.patch",
+        "tasks_ai_constants.py.patch",
+        "tasks_ai_validation.py.patch",
+        "tasks_ai_validator.py.patch",
+        "tests_test_unref_lint.py.patch"
+    ],
+    "status": "verified"
+}
