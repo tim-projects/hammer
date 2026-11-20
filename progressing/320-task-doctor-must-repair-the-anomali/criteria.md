@@ -1,4 +1,3 @@
-- [ ] ## Criteria
 - [x] doctor output lists guard anomaly codes (code, task id, detail, fix hint) alongside existing metadata bugs, delegating to the guard engine so it stays a single source of truth
 - [x] doctor --fix still repairs metadata.Id, metadata.Br, metadata.St, wrong directory names, wrong state folders, and the stale task counter, exactly as before
 - [x] doctor --fix makes no attempt at structural repair (duplicate ids, state duplicates, nonconformant/missing branches, remote divergence, worktree codes) and prints those codes with hints pointing at the fresh-start/mount workflow
