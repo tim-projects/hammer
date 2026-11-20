@@ -19,6 +19,7 @@ Examples:
 """
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -55,12 +56,26 @@ def build_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=agent_epilog("check"),
     )
+    parser.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help="JSON output.",
+    )
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
         "--fix", action="store_true", help="Apply fixes where possible."
     )
     common.add_argument(
         "--dev", action="store_true", help="Use /tmp/.tasks for config."
+    )
+    common.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help="JSON output.",
     )
     sub = parser.add_subparsers(dest="command", metavar="command")
     for name, help_text in COMMAND_HELP.items():
@@ -77,6 +92,7 @@ def main():
     configure_sigpipe()
     parser = build_parser()
     args = parser.parse_args()
+    args.json = getattr(args, "json", False)
 
     if not args.command:
         parser.print_help()
@@ -91,26 +107,39 @@ def main():
         else:
             results = [validator.run_check(args.command, args.fix)]
     except ValidationError as e:
-        print(
-            format_check_results(
-                [
-                    {
-                        "success": False,
-                        "status": "next_step",
-                        "tool": "validation",
-                        "stdout": str(e),
-                        "stderr": "",
-                        "exit_code": 1,
-                    }
-                ]
-            )
-        )
+        results = [
+            {
+                "success": False,
+                "status": "next_step",
+                "tool": "validation",
+                "stdout": str(e),
+                "stderr": "",
+                "exit_code": 1,
+            }
+        ]
+        if args.json:
+            print(json.dumps({"success": False, "results": results}))
+        else:
+            print(format_check_results(results))
         sys.exit(1)
     except Exception as e:  # noqa: BLE001
-        print(f"Error: {e}")
+        if args.json:
+            print(json.dumps({"success": False, "error": str(e)}))
+        else:
+            print(f"Error: {e}")
         sys.exit(1)
 
-    print(format_check_results(results))
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "success": all(result["success"] for result in results),
+                    "results": results,
+                }
+            )
+        )
+    else:
+        print(format_check_results(results))
     sys.exit(0 if all(r["success"] for r in results) else 1)
 
 
