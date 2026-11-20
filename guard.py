@@ -11,6 +11,7 @@ Commands:
   hooks             Install/emit git-hook wrappers into the common hooks dir
 """
 
+import argparse
 import json
 import os
 import subprocess
@@ -288,6 +289,12 @@ def build_parser():
         description=__doc__,
         epilog=agent_epilog("guard"),
     )
+    parser.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        help="JSON output.",
+    )
     sub = parser.add_subparsers(dest="command")
 
     check = sub.add_parser("check", help="gate verdict for one task")
@@ -295,32 +302,32 @@ def build_parser():
     check.add_argument("--from", dest="from_state")
     check.add_argument("--to", dest="to_state")
     check.add_argument("--branch")
-    check.add_argument("--json", action="store_true")
+    check.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     check.add_argument("--dev", action="store_true")
     check.set_defaults(func=cmd_check)
 
     scan = sub.add_parser("scan", help="full anomaly report")
     scan.add_argument("--all", action="store_true", help="include archived/divergence")
-    scan.add_argument("--json", action="store_true")
+    scan.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     scan.add_argument("--fix-plan", action="store_true")
     scan.add_argument("--dev", action="store_true")
     scan.set_defaults(func=cmd_scan)
 
     refresh = sub.add_parser("refresh", help="rebuild the cache from git now")
     refresh.add_argument("--fetch", action="store_true")
-    refresh.add_argument("--json", action="store_true")
+    refresh.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     refresh.add_argument("--dev", action="store_true")
     refresh.set_defaults(func=cmd_refresh)
 
     rebuild = sub.add_parser("rebuild", help="delete and rebuild the cache")
-    rebuild.add_argument("--json", action="store_true")
+    rebuild.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     rebuild.add_argument("--dev", action="store_true")
     rebuild.set_defaults(func=cmd_rebuild)
 
     hooks = sub.add_parser("hooks", help="install/emit git-hook wrappers")
     hooks.add_argument("--install", action="store_true")
     hooks.add_argument("--emit", action="store_true")
-    hooks.add_argument("--json", action="store_true")
+    hooks.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     hooks.set_defaults(func=cmd_hooks)
     return parser
 
@@ -334,6 +341,8 @@ def main():
         sys.exit(1)
     if args.command == "check" and args.task_id is None and not args.branch:
         parser.error("check requires a task id or --branch")
+    if not hasattr(args, "json"):
+        args.json = False
     sys.exit(args.func(args) or 0)
 
 
