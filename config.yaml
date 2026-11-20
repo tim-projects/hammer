@@ -1,4 +1,5 @@
 repo.format: ruff
 repo.lint: ruff
+repo.lint_secondary: unref
 repo.test: pytest
 repo.type_check: pyright
