@@ -1,0 +1,1 @@
+Inspected unref 0.3.2 configuration and current project scan; tested a per-file [[tool.unref.overrides]] baseline in /tmp that reduces 45 existing findings to zero without global used-names or whole-tree excludes.
