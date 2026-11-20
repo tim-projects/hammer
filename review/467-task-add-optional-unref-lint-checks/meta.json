@@ -1,0 +1,53 @@
+{
+  "Id": 467,
+  "Ti": "Add optional unref lint checks alongside Ruff",
+  "Ty": "task",
+  "Cr": "261118 14:55",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "467-task-add-optional-unref-lint-checks",
+  "Pt": null,
+  "Tp": true,
+  "Rr": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795168234.559591,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "README.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/README.md.patch"
+    },
+    {
+      "file": "check.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/check.py.patch"
+    },
+    {
+      "file": "docs/TROUBLESHOOTING.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/docs_TROUBLESHOOTING.md.patch"
+    },
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tasks_ai/validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/tasks_ai_validation.py.patch"
+    },
+    {
+      "file": "tasks_ai/validator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/tasks_ai_validator.py.patch"
+    },
+    {
+      "file": "tests/test_unref_lint.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/467-task-add-optional-unref-lint-checks/patches/tests_test_unref_lint.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "8cbe74620b766b52dc24ceebbc508929e910e420",
+    "base": "fed8445da51c43e08cfb7737593edbdd258d0ca3"
+  }
+}

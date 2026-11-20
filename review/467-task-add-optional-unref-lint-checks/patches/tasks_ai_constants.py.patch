@@ -1,0 +1,12 @@
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index 40cede5c..f7be940e 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -129,6 +129,7 @@ ALLOWED_CONFIG_KEYS = {
+     "plan",
+     "tasks_dir",
+     "repo.lint",
++    "repo.lint_secondary",
+     "repo.test",
+     "repo.type_check",
+     "repo.format",

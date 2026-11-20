@@ -1,0 +1,26 @@
+diff --git a/README.md b/README.md
+index bcc8adf5..5cdb49ce 100644
+--- a/README.md
++++ b/README.md
+@@ -151,6 +151,21 @@ hammer tasks config detect           # HAMMER FIND TOOLS!
+ hammer tasks config set repo.test pytest
+ ```
+ 
++### Optional Python lint companion
++
++Ruff remains the required Python lint check. To additionally run
++[`unref`](https://unref.readthedocs.io/en/latest/) for unreferenced Python
++definitions, install it and explicitly enable the companion check:
++
++```bash
++pip install unref
++hammer tasks config set repo.lint_secondary unref
++```
++
++The companion check is disabled by default. When enabled, it runs from the
++current task worktree and blocks validation if `unref` reports findings or is
++not installed. Ruff's `--fix` support is unchanged; `unref` has no autofix.
++
+ ## 🎉 Why HAMMER RULES?
+ 
+ - **No external services** - Pure git
