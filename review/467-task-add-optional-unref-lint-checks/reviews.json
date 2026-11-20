@@ -70,5 +70,8 @@
       "ts": 1795176535.594556,
       "prev_hash": "46c1c48d09f226f5893b08d4950c4d569e86735eb03fb999cc4b1a2cd708821d"
     }
-  ]
+  ],
+  "summary": "Read all 7 patches in full. Verified opt-in repo.lint_secondary=unref behavior in active and legacy gates, separate output handling, missing-tool failure, Ruff fix preservation, docs, config key, and regression coverage; no regressions found.",
+  "summary_at": 1795176545.4263973,
+  "reviewed_at": 1795176545.4263985
 }
