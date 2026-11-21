@@ -1,0 +1,4 @@
+- [ ] validation writes TpBase alongside Tp in one transaction
+- [ ] stale TpBase triggers rerun (not skip), then rewrites both
+- [ ] dev test: advance origin/main, re-run hook, assert rerun happened
+- [ ] all existing Tp tests pass unchanged

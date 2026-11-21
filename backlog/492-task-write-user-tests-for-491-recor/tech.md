@@ -1,0 +1,1 @@
+ValidationHook (pipeline_hooks.py:163-174) sets Tp=True and skips reruns forever; 461 landed branch-sync-before-validation but the memo can still be stale against origin/main. Add TpBase = origin/main SHA at validation time, written in the same transaction as Tp (never disagreeable). Tp stays a bool so modify --tests-passed and the TESTING->REVIEW gate are unaffected.
