@@ -1,0 +1,15 @@
+diff --git a/docs/spec-worktrees.md b/docs/spec-worktrees.md
+index 80c00121..a4e619e7 100644
+--- a/docs/spec-worktrees.md
++++ b/docs/spec-worktrees.md
+@@ -80,7 +80,9 @@ extension point. Hooks are registered in `tasks_ai/cli.py` on the
+ ### Canonical pipeline
+ 
+ States (in order): `BACKLOG → READY → PROGRESSING → TESTING → REVIEW →
+-STAGING → DONE → ARCHIVED` (with `REJECTED`/`BLOCKED`/`EPIC` off-ramps).
++STAGING → PR → PROVISIONING → DONE → ARCHIVED` (with `REJECTED`/`BLOCKED`/`EPIC` off-ramps).
++`PR` judges the finalized feature for merge viability; `PROVISIONING` is the shared
++funnel into the default branch.
+ `DEFAULT_ALLOWED_TRANSITIONS` in `tasks_ai/constants.py` is the source of
+ truth for which moves are legal; `PipelineService.check_transition`
+ (`tasks_ai/pipeline.py`) rejects anything not listed there.

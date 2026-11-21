@@ -1,0 +1,49 @@
+{
+  "Id": 503,
+  "Ti": "Update pipeline documentation and help text",
+  "Ty": "task",
+  "Cr": "261121 17:54",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "503-task-update-pipeline-documentation",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795287356.722872,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "README.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/503-task-update-pipeline-documentation/patches/README.md.patch"
+    },
+    {
+      "file": "docs/spec-worktrees.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/503-task-update-pipeline-documentation/patches/docs_spec-worktrees.md.patch"
+    },
+    {
+      "file": "tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/503-task-update-pipeline-documentation/patches/tasks.py.patch"
+    },
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/503-task-update-pipeline-documentation/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tasks_ai/help_text.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/503-task-update-pipeline-documentation/patches/tasks_ai_help_text.py.patch"
+    },
+    {
+      "file": "tests/test_pipeline_documentation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/503-task-update-pipeline-documentation/patches/tests_test_pipeline_documentation.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "a2b3f625f921be5cc4a628f8ed48a20a9a6a8cfc",
+    "base": "4097b6be3c6cd28469a6389a758adf27d6db5ed1"
+  }
+}

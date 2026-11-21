@@ -1,0 +1,65 @@
+diff --git a/tests/test_pipeline_documentation.py b/tests/test_pipeline_documentation.py
+new file mode 100644
+index 00000000..84c62de1
+--- /dev/null
++++ b/tests/test_pipeline_documentation.py
+@@ -0,0 +1,59 @@
++import os
++import unittest
++
++from tasks_ai.constants import AGENT_GUIDANCE as CONSTANT_AGENT_GUIDANCE
++from tasks_ai.help_text import AGENT_GUIDANCE as HELP_AGENT_GUIDANCE
++
++PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++ASCII_PIPELINE = (
++    "BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> "
++    "PR -> PROVISIONING -> DONE -> ARCHIVED"
++)
++ARROW_PIPELINE = (
++    "BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → "
++    "PR → PROVISIONING → DONE → ARCHIVED"
++)
++STALE_ASCII_PIPELINE = "BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED"
++STALE_ARROW_PIPELINE = (
++    "BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED"
++)
++
++
++class TestPipelineDocumentation(unittest.TestCase):
++    def read(self, relative_path):
++        with open(
++            os.path.join(PROJECT_ROOT, relative_path), encoding="utf-8"
++        ) as handle:
++            return handle.read()
++
++    def test_pipeline_overviews_include_pr_and_provisioning(self):
++        sources = {
++            "README.md": self.read("README.md"),
++            "docs/spec-worktrees.md": self.read("docs/spec-worktrees.md"),
++            "tasks.py": self.read("tasks.py"),
++            "tasks_ai/help_text.py": self.read("tasks_ai/help_text.py"),
++            "tasks_ai/constants.py": self.read("tasks_ai/constants.py"),
++        }
++        for name, source in sources.items():
++            with self.subTest(source=name):
++                normalized = " ".join(source.split())
++                self.assertNotIn(STALE_ASCII_PIPELINE, normalized)
++                self.assertNotIn(STALE_ARROW_PIPELINE, normalized)
++                self.assertTrue(
++                    ASCII_PIPELINE in normalized or ARROW_PIPELINE in normalized,
++                    f"{name} does not document the complete pipeline",
++                )
++
++    def test_help_guidance_describes_new_stage_responsibilities(self):
++        for name, guidance in (
++            ("help", HELP_AGENT_GUIDANCE),
++            ("constants", CONSTANT_AGENT_GUIDANCE),
++        ):
++            with self.subTest(guidance=name):
++                self.assertIn(ASCII_PIPELINE, guidance)
++                self.assertIn("PR judges", guidance)
++                self.assertIn("PROVISIONING is the shared funnel", guidance)
++
++
++if __name__ == "__main__":
++    unittest.main()
