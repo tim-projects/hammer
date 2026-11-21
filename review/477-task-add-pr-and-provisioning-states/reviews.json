@@ -30,5 +30,8 @@
       "ts": 1795283325.7096064,
       "prev_hash": "4ebbaacd6ea580194cb93ea991fb901072c785aff5dc5ed45228a1328f92b067"
     }
-  ]
+  ],
+  "summary": "Re-reviewed the regenerated three-patch diff after STAGING promotion; no regressions found.",
+  "summary_at": 1795283326.6060317,
+  "reviewed_at": 1795283326.6060326
 }
