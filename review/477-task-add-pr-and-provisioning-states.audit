@@ -1,0 +1,10 @@
+{
+    "task_id": "477",
+    "patch_hash": "9ca477ca1e961f7c117f9bb03c81c5cb",
+    "patch_files": [
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_constants.py.patch",
+        "tests_test_pr_provisioning_states.py.patch"
+    ],
+    "status": "verified"
+}
