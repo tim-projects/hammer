@@ -8,5 +8,8 @@
   "Br": "485-task-sync-per-worktree-stage-refs-d",
   "Pt": null,
   "Rr": true,
-  "Tp": false
+  "Tp": false,
+  "St": "READY",
+  "Rc": "",
+  "Vp": false
 }
