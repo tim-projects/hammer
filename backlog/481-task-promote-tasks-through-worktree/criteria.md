@@ -1,0 +1,4 @@
+- [ ] dev walkthrough PROGRESSING->STAGING->PR touches only refs matching <id>-(PROGRESSING|TESTING|STAGING|PR) (git for-each-ref diff per move)
+- [ ] git worktree list after every move: main tree still on default branch, stage refs only in the task worktree
+- [ ] missing stage ref is created at the previous tip, not silently skipped
+- [ ] two concurrent dev promotions both succeed
