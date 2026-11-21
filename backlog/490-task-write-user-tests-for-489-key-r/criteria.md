@@ -1,0 +1,3 @@
+- [ ] repo merge <id> provisioning works and check-merged exits 0 after
+- [ ] fresh dev repo with no provisioning: first funnel merge bootstraps it off origin/<default>
+- [ ] repo sync (if kept) walks the funnel in order; deletion guard covers provisioning
