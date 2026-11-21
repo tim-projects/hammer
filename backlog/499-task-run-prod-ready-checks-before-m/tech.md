@@ -1,0 +1,1 @@
+New enter-hook on DONE: temp linked worktree at origin/<default>, merge provisioning, run check.py all there; on green perform the real provisioning->main merge + push under the task-6 lock; on red leave main untouched, task stays PROVISIONING, remove the temp worktree. Non-destructive by construction.
