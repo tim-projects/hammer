@@ -1,0 +1,1 @@
+As a Hammer user, I need all pipeline documentation and CLI help text to describe the PR and PROVISIONING stages, so guidance matches the implemented workflow.

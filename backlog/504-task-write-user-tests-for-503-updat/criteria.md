@@ -1,0 +1,5 @@
+- [ ] README pipeline diagrams and descriptions include PR and PROVISIONING in the correct order
+- [ ] docs/spec-worktrees.md pipeline description includes PR and PROVISIONING in the correct order
+- [ ] CLI help text and embedded agent guidance include PR and PROVISIONING in the correct order
+- [ ] A repository-wide search finds no stale user-facing BACKLOG-to-DONE pipeline sequence that omits the new states
+- [ ] Documentation and help-text validation passes

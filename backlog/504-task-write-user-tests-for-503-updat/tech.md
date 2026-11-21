@@ -1,0 +1,1 @@
+Update README.md, docs/spec-worktrees.md, tasks_ai/help_text.py, tasks_ai/constants.py AGENT_GUIDANCE, and any other user-facing pipeline descriptions found by repository search. Preserve the documented order BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> PR -> PROVISIONING -> DONE -> ARCHIVED and explain PR and PROVISIONING responsibilities.
