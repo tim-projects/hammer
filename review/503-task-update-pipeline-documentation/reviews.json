@@ -60,5 +60,8 @@
       "ts": 1795287409.6207175,
       "prev_hash": "3d229f67dcc0ce852c388bd604d94962f3a07101f3862e16c7c5777ef0c3ac20"
     }
-  ]
+  ],
+  "summary": "Reviewed six patches: README overview/diagram/requirements, canonical worktree specification, move command help, embedded guidance strings, and focused documentation regression coverage. No stale public pipeline sequence or unrelated runtime change found.",
+  "summary_at": 1795287410.7003484,
+  "reviewed_at": 1795287410.700349
 }
