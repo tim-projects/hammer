@@ -1,0 +1,3 @@
+- [ ] red prod-check (dev-injected failure) leaves main at its prior SHA, no temp worktree left behind, task does not advance
+- [ ] green prod-check advances main by exactly one merge commit and pushes
+- [ ] empty-repo bootstrap: first DONE creates provisioning off origin/main and proceeds
