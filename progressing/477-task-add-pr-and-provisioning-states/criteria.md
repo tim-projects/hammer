@@ -1,4 +1,4 @@
-- [ ] PR sits between STAGING and PROVISIONING; PROVISIONING between PR and DONE, folders pr/ and provisioning/
-- [ ] ./hammer tasks move <id> PR and <id> PROVISIONING accepted (dev repo); TESTING->PR and other skips rejected as FORBIDDEN_TRANSITION
-- [ ] All existing transitions unchanged (existing tests pass)
-- [ ] Ap key present in KEY_MAP
+- [x] PR sits between STAGING and PROVISIONING; PROVISIONING between PR and DONE, folders pr/ and provisioning/
+- [x] ./hammer tasks move <id> PR and <id> PROVISIONING accepted (dev repo); TESTING->PR and other skips rejected as FORBIDDEN_TRANSITION
+- [x] All existing transitions unchanged (existing tests pass)
+- [x] Ap key present in KEY_MAP
