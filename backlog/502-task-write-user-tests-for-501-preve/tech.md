@@ -1,0 +1,1 @@
+Guard blocks duplicates at gates only; the 315-class incident (two branches claiming one id) still needed manual worktree remove + branch -d because creation had no uniqueness check. After the lazy-creation change (455) verify the create path for an existing-ref check: refuse when any <id>-* ref exists, naming it. Keep the gate reject as defense in depth.

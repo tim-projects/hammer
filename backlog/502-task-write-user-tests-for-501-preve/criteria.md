@@ -1,0 +1,3 @@
+- [ ] create refuses when any <id>-* stage ref already exists, naming the ref
+- [ ] gate-time guard reject still blocks a constructed duplicate (defense in depth)
+- [ ] test replays the two-branches-one-id incident end to end
