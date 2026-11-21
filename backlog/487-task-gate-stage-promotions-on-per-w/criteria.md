@@ -1,0 +1,3 @@
+- [ ] each gate refuses with a message naming the missing per-worktree ref
+- [ ] a task whose stage refs were tampered with (constructed in dev) cannot pass the next gate
+- [ ] fast-track (already-merged) still works
