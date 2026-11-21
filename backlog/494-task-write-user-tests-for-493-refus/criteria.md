@@ -1,0 +1,3 @@
+- [ ] dirty file in worktree: every promoting move fails with the path and the fix; git log unchanged (zero commits created)
+- [ ] clean worktree promotes as before
+- [ ] help/docs no longer advertise automatic committing
