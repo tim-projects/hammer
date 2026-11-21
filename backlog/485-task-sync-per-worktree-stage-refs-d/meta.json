@@ -1,0 +1,10 @@
+{
+  "Id": 485,
+  "Ti": "Sync per-worktree stage refs down on demotion",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "485-task-sync-per-worktree-stage-refs-d",
+  "Pt": null
+}

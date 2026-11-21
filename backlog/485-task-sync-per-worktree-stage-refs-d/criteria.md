@@ -1,0 +1,3 @@
+- [ ] demote then re-promote: no lost commits, no 'already merged' gate errors
+- [ ] conflict case aborts with conflicting paths and leaves the worktree clean
+- [ ] dev test for each demotion target
