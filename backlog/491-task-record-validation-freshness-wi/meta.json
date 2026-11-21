@@ -6,5 +6,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "491-task-record-validation-freshness-wi",
-  "Pt": null
+  "Pt": null,
+  "Rr": true,
+  "Tp": false
 }
