@@ -1,0 +1,1 @@
+promote_task auto-commits any dirty worktree state before merging (git_service.py:579-594 'Auto-commit before transition'). This silently merged weeks-old WIP in the old repo. Replace with a refusal: list the offending paths and name ./hammer repo commit as the remedy. Update help/docs text that claims commits happen automatically.
