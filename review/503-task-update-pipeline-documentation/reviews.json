@@ -60,5 +60,8 @@
       "ts": 1795287495.803221,
       "prev_hash": "fc4eb064ba3218b87a400ba60518705c34cdb5b04856753310594f7479497e53"
     }
-  ]
+  ],
+  "summary": "Re-reviewed the regenerated six-patch documentation diff after STAGING promotion; no regressions found.",
+  "summary_at": 1795287496.8271425,
+  "reviewed_at": 1795287496.8271434
 }
