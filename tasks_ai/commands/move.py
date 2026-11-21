@@ -106,6 +106,16 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
 
     if not force:
+        if new_status not in allowed_transitions.get(current_state, []):
+            next_valid = cli.git.get_next_logical_state(current_state) or "PROGRESSING"
+            cli.error(
+                "FORBIDDEN_TRANSITION",
+                from_state=current_state,
+                to_state=new_status,
+                task_id=os.path.basename(filepath_str).split("-")[0],
+                next_valid_state=next_valid,
+            )
+
         try:
             cli._validate_pipeline_gate(task, new_status, filepath_str)
         except PipelineError as e:
@@ -134,24 +144,13 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
         cli, task, current_state, new_status, filepath_str, force=force
     )
 
-    if not force:
-        if new_status not in allowed_transitions.get(current_state, []):
-            next_valid = cli.git.get_next_logical_state(current_state) or "PROGRESSING"
-            cli.error(
-                "FORBIDDEN_TRANSITION",
-                from_state=current_state,
-                to_state=new_status,
-                task_id=os.path.basename(filepath_str).split("-")[0],
-                next_valid_state=next_valid,
-            )
-
-        # Archived check: Enforce worktree branch merge to main
-        if new_status == "ARCHIVED":
-            branch = task.metadata.get("Br", "")
-            if not branch:
-                _, branch = parse_filename(os.path.basename(filepath_str))
-            if not cli.git.is_merged(branch):
-                cli.error("BRANCH_NOT_MERGED", branch=branch)
+    # Archived check: Enforce worktree branch merge to main
+    if not force and new_status == "ARCHIVED":
+        branch = task.metadata.get("Br", "")
+        if not branch:
+            _, branch = parse_filename(os.path.basename(filepath_str))
+        if not cli.git.is_merged(branch):
+            cli.error("BRANCH_NOT_MERGED", branch=branch)
 
     # Perform Git Merge if applicable
     if sync and not force:
