@@ -1,0 +1,10 @@
+{
+  "Id": 486,
+  "Ti": "Write user tests for 485: Sync per-worktree stage refs down on demotion",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "486-task-write-user-tests-for-485-sync",
+  "Pt": 485
+}
