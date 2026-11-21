@@ -203,7 +203,7 @@ if __name__ == "__main__":
     group.add_argument(
         "status",
         nargs="?",
-        help="Target state. Pipeline: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED. Use comma-separated for multi-step.",
+        help="Target state. Pipeline: BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → PR → PROVISIONING → DONE → ARCHIVED. Use comma-separated for multi-step.",
     )
     group.add_argument("--to", dest="status", help="Alias for target state.")
     mv_p.add_argument(
