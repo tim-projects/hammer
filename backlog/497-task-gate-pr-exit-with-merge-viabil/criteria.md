@@ -1,0 +1,6 @@
+- [ ] entering PR with a behind branch merges current main; conflict fails the move with paths and demotes
+- [ ] conflicted PR vs provisioning refused via merge-tree with the conflicting paths, no merge commit created
+- [ ] stale validation refused, reruns green, then passes
+- [ ] patches equal 'git diff provisioning <id>-PR' content and regenerate after main moves
+- [ ] move without --approve refused naming the command; edited patch post-approval refused until re-approved
+- [ ] --force does not bypass the approval flag
