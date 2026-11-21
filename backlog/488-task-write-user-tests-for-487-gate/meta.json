@@ -1,0 +1,10 @@
+{
+  "Id": 488,
+  "Ti": "Write user tests for 487: Gate stage promotions on per-worktree ref merges",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "488-task-write-user-tests-for-487-gate",
+  "Pt": 487
+}

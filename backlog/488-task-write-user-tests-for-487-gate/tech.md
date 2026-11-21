@@ -1,0 +1,1 @@
+validate_gate (pipeline.py:67) integration gate still compares against shared testing/staging. New mapping: TESTING requires is_merged(Br,<id>-TESTING); STAGING requires is_merged(<id>-TESTING,<id>-STAGING); PR requires is_merged(<id>-STAGING,<id>-PR); PROVISIONING requires is_merged(<id>-PR,'provisioning'). Error messages name the exact missing ref and the fix.
