@@ -1,0 +1,1 @@
+Repository search found stale user-facing pipeline sequences in README.md:59/68, docs/spec-worktrees.md:82-83, tasks_ai/help_text.py AGENT_GUIDANCE, and tasks_ai/constants.py AGENT_GUIDANCE. Scope is those descriptions and their stage explanations. Runtime state lists and historical implementation prose are not pipeline-overview documentation and should not be rewritten.
