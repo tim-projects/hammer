@@ -1,0 +1,3 @@
+- [ ] dev repo runs end-to-end with no .task_counter* files and no worktrees.json
+- [ ] two creates yield correct sequential ids derived from refs alone
+- [ ] import tasks_ai still works; retired-machinery tests removed, replacement coverage kept

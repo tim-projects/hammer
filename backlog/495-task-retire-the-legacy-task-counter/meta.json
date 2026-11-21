@@ -1,0 +1,10 @@
+{
+  "Id": 495,
+  "Ti": "Retire the legacy task counter and worktree manifest",
+  "Ty": "task",
+  "Cr": "261121 08:11",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "495-task-retire-the-legacy-task-counter",
+  "Pt": null
+}
