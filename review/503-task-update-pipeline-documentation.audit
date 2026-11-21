@@ -1,0 +1,13 @@
+{
+    "task_id": "503",
+    "patch_hash": "e1713d576f30fc9d7158b5fe4489fb13",
+    "patch_files": [
+        "README.md.patch",
+        "docs_spec-worktrees.md.patch",
+        "tasks.py.patch",
+        "tasks_ai_constants.py.patch",
+        "tasks_ai_help_text.py.patch",
+        "tests_test_pipeline_documentation.py.patch"
+    ],
+    "status": "verified"
+}
