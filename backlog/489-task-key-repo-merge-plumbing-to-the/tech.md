@@ -1,0 +1,1 @@
+repo.py: pipeline() :75-77, cmd_merge pipeline->status map :283-287, ensure_pipeline_branch :426-437, check-merged-testing :256. Retarget to provisioning; bootstrap provisioning off origin/<default> when missing; add provisioning to the deletion guard alongside the default branch. Old shared testing/staging stay as undeletable history.
