@@ -1,0 +1,74 @@
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index f7be940e..e658cdcb 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -81,6 +81,8 @@ STATE_FOLDERS = {
+     "TESTING": "testing",
+     "REVIEW": "review",
+     "STAGING": "staging",
++    "PR": "pr",
++    "PROVISIONING": "provisioning",
+     "DONE": "done",
+     "ARCHIVED": "archived",
+     "REJECTED": "rejected",
+@@ -92,6 +94,8 @@ PIPELINE_STAGES = [
+     "TESTING",
+     "REVIEW",
+     "STAGING",
++    "PR",
++    "PROVISIONING",
+     "DONE",
+     "ARCHIVED",
+ ]
+@@ -101,11 +105,39 @@ DEFAULT_ALLOWED_TRANSITIONS = {
+     "PROGRESSING": ["TESTING", "BLOCKED", "REJECTED", "EPIC"],
+     "TESTING": ["REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
+     "REVIEW": ["STAGING", "TESTING", "BLOCKED", "PROGRESSING", "REJECTED"],
+-    "STAGING": ["DONE", "ARCHIVED", "REVIEW", "BLOCKED", "REJECTED", "PROGRESSING"],
+-    "DONE": ["ARCHIVED", "STAGING", "TESTING", "BLOCKED", "PROGRESSING"],
+-    "BLOCKED": ["READY", "PROGRESSING", "TESTING", "REVIEW", "STAGING", "DONE", "EPIC"],
++    "STAGING": [
++        "PR",
++        "DONE",
++        "ARCHIVED",
++        "REVIEW",
++        "BLOCKED",
++        "REJECTED",
++        "PROGRESSING",
++    ],
++    "PR": ["PROVISIONING", "STAGING", "BLOCKED", "REJECTED", "PROGRESSING"],
++    "PROVISIONING": ["DONE", "ARCHIVED", "PR", "REJECTED"],
++    "DONE": [
++        "ARCHIVED",
++        "STAGING",
++        "PR",
++        "PROVISIONING",
++        "TESTING",
++        "BLOCKED",
++        "PROGRESSING",
++    ],
++    "BLOCKED": [
++        "READY",
++        "PROGRESSING",
++        "TESTING",
++        "REVIEW",
++        "STAGING",
++        "PR",
++        "PROVISIONING",
++        "DONE",
++        "EPIC",
++    ],
+     "ARCHIVED": ["READY", "TESTING"],
+-    "REJECTED": ["PROGRESSING"],
++    "REJECTED": ["PROGRESSING", "PR", "PROVISIONING"],
+     "EPIC": ["PROGRESSING", "BLOCKED"],
+ }
+ ALLOWED_TRANSITIONS = DEFAULT_ALLOWED_TRANSITIONS
+@@ -121,6 +153,7 @@ KEY_MAP = {
+     "Rc": "RegressionCheck",
+     "Pt": "Parent",
+     "Ep": "Epic",
++    "Ap": "Approval",
+ }
+ ALLOWED_CONFIG_KEYS = {
+     "story",

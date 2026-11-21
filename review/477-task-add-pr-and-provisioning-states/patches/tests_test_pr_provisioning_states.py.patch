@@ -1,0 +1,104 @@
+diff --git a/tests/test_pr_provisioning_states.py b/tests/test_pr_provisioning_states.py
+new file mode 100644
+index 00000000..4c2d05be
+--- /dev/null
++++ b/tests/test_pr_provisioning_states.py
+@@ -0,0 +1,98 @@
++import json
++import os
++import shutil
++
++from hammer_test_base import HammerTestBase
++from tasks_ai.constants import KEY_MAP, PIPELINE_STAGES, STATE_FOLDERS
++from tasks_ai.file_manager import FM
++from tasks_ai.git_service import GitService
++
++
++class TestPRProvisioningStates(HammerTestBase):
++    def setUp(self):
++        super().setUp()
++        self.seed_counter(9000)
++        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++        shutil.copytree(
++            os.path.join(project_root, "tasks_ai"),
++            os.path.join(self.repo_path, "tasks_ai"),
++            dirs_exist_ok=True,
++        )
++
++    def create_task(self):
++        result = self.run_tasks(
++            [
++                "create",
++                "PR Provisioning State Test",
++                "--story",
++                "A sufficiently long story describing the new pipeline states.",
++                "--tech",
++                "A sufficiently long technical description of the transition changes.",
++                "--criteria",
++                "A sufficiently long acceptance criterion for the new pipeline states.",
++                "--plan",
++                "1. Create the task and verify each legal or forbidden transition.",
++            ]
++        )
++        data = json.loads(result.stdout)["data"]
++        return str(data["id"]), data["file"]
++
++    def relocate_task(self, task_file, state):
++        source = None
++        for folder in STATE_FOLDERS.values():
++            candidate = os.path.join(self.dev_tasks_dir, folder, task_file)
++            if os.path.isdir(candidate):
++                source = candidate
++                break
++        self.assertIsNotNone(source)
++        target = os.path.join(self.dev_tasks_dir, STATE_FOLDERS[state], task_file)
++        shutil.move(source, target)
++        task = FM.load(target)
++        task.metadata["St"] = state
++        FM.dump(task, target)
++
++    def test_pipeline_order_folders_and_approval_key(self):
++        git = GitService(context=None)
++        self.assertEqual(git.get_next_logical_state("STAGING"), "PR")
++        self.assertEqual(git.get_next_logical_state("PR"), "PROVISIONING")
++        self.assertEqual(git.get_next_logical_state("PROVISIONING"), "DONE")
++        self.assertLess(PIPELINE_STAGES.index("STAGING"), PIPELINE_STAGES.index("PR"))
++        self.assertLess(
++            PIPELINE_STAGES.index("PR"), PIPELINE_STAGES.index("PROVISIONING")
++        )
++        self.assertLess(
++            PIPELINE_STAGES.index("PROVISIONING"), PIPELINE_STAGES.index("DONE")
++        )
++        self.assertEqual(STATE_FOLDERS["PR"], "pr")
++        self.assertEqual(STATE_FOLDERS["PROVISIONING"], "provisioning")
++        self.assertEqual(KEY_MAP["Ap"], "Approval")
++
++    def test_legal_moves_through_pr_and_provisioning(self):
++        task_id, task_file = self.create_task()
++        self.relocate_task(task_file, "STAGING")
++
++        result = self.run_tasks(["move", task_id, "PR"])
++        self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
++        self.assertTrue(
++            os.path.isdir(os.path.join(self.dev_tasks_dir, "pr", task_file))
++        )
++
++        result = self.run_tasks(["move", task_id, "PROVISIONING"])
++        self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
++        self.assertTrue(
++            os.path.isdir(os.path.join(self.dev_tasks_dir, "provisioning", task_file))
++        )
++
++    def test_skipped_states_are_forbidden(self):
++        for current_state, target_state in (
++            ("TESTING", "PR"),
++            ("REVIEW", "PROVISIONING"),
++            ("PR", "DONE"),
++        ):
++            with self.subTest(current=current_state, target=target_state):
++                task_id, task_file = self.create_task()
++                self.relocate_task(task_file, current_state)
++                result = self.run_tasks(["move", task_id, target_state])
++                output = json.loads(result.stdout)
++                self.assertFalse(output["success"], output)
++                self.assertEqual(output["error_code"], "FORBIDDEN_TRANSITION")
