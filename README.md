@@ -56,7 +56,7 @@ The Hammer Pipeline forces code through mandatory **Stages**, ensuring complianc
 | **Check** | A validation "Guardrail"—the pipeline halts if these fail. |
 
 ### 1. Pipeline Structure
-The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> DONE -> ARCHIVED).
+The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> TESTING -> REVIEW -> STAGING -> PR -> PROVISIONING -> DONE -> ARCHIVED). `PR` judges the finalized feature for merge viability, and `PROVISIONING` is the shared funnel into the default branch.
 
 * **Automation Engine:** The mechanism that executes the Pipeline.
 * **Automation Rule:** The Automation Engine will chain all Jobs within a Stage automatically.
@@ -65,9 +65,9 @@ The Pipeline consists of sequential Stages (BACKLOG -> READY -> PROGRESSING -> T
 ## 🔨 HAMMER PIPELINE STAGES
 
 ```
-BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE → ARCHIVED
-                                       ↓                    ↓
-                                  REJECTED              REJECTED
+BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → PR → PROVISIONING → DONE → ARCHIVED
+                                                      ↓       ↓             ↓
+                                                 REJECTED REJECTED      REJECTED
 ```
 
 **HAMMER CHECKS BLOCK WEAK CODE:**
@@ -77,6 +77,8 @@ BACKLOG → READY → PROGRESSING → TESTING → REVIEW → STAGING → DONE �
 | TESTING | `hammer check all` PASSES |
 | REVIEW | Tests pass + branch pushed + diff generated |
 | STAGING | Regression check passed (Rc flag) |
+| PR | Finalized feature judged for merge viability |
+| PROVISIONING | Shared promotion funnel into the default branch |
 | DONE | Merged to main |
 | ARCHIVED | Merged to main + regression check passed |
 
