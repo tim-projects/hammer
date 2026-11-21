@@ -9,6 +9,16 @@
       "bytes": 2018,
       "ts": 1795287489.3205965,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "docs/spec-worktrees.md",
+      "patch": "docs_spec-worktrees.md.patch",
+      "md5": "44139656a438b7687fb5f51974da236a",
+      "sha256": "c7c38263850da9a118736beb4a37b65f14aa309a9c46b33acd31cbcab63f3bd6",
+      "bytes": 846,
+      "ts": 1795287490.7202728,
+      "prev_hash": "41cf501a807e44c9c652076c886eb4563112e77f5218db6e11acb9b890f3da7e"
     }
   ]
 }
