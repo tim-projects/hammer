@@ -8,5 +8,8 @@
   "Br": "493-task-refuse-promotion-when-the-work",
   "Pt": null,
   "Rr": true,
-  "Tp": false
+  "Tp": false,
+  "St": "READY",
+  "Rc": "",
+  "Vp": false
 }
