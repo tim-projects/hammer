@@ -1,0 +1,1 @@
+As an agent promoting work, I need a PR state where the finalized feature is judged for merge-viability, and a PROVISIONING state that is the single shared funnel into main, so that 'is this code ready for production' and 'merge it' are separate steps.

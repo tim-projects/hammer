@@ -1,0 +1,10 @@
+{
+  "Id": 477,
+  "Ti": "Add PR and PROVISIONING states to the pipeline",
+  "Ty": "task",
+  "Cr": "261121 08:06",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "477-task-add-pr-and-provisioning-states",
+  "Pt": null
+}
