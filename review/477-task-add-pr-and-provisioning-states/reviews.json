@@ -30,5 +30,8 @@
       "ts": 1795283051.001227,
       "prev_hash": "5253f885290a2325a3ab4f40756dbf3fd1e446a40db554297de9a1d9cb466a82"
     }
-  ]
+  ],
+  "summary": "Reviewed all three patches: ordered PR/provisioning state definitions, additive transition tables, early forbidden-transition validation, and focused CLI coverage.",
+  "summary_at": 1795283087.2311482,
+  "reviewed_at": 1795283087.2311497
 }
