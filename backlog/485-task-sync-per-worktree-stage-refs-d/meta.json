@@ -6,5 +6,7 @@
   "Bl": [],
   "Pr": 2,
   "Br": "485-task-sync-per-worktree-stage-refs-d",
-  "Pt": null
+  "Pt": null,
+  "Rr": true,
+  "Tp": false
 }
