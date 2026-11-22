@@ -9,6 +9,16 @@
       "bytes": 7407,
       "ts": 1795378814.702407,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "tests/test_critical_branches.py",
+      "patch": "tests_test_critical_branches.py.patch",
+      "md5": "77e1025c7fd0966493ca3c403b687d80",
+      "sha256": "02ef4c6a65e5d458d70cc8f6ef54cbf59ca4a879ba2609caf57627ba87ee3f02",
+      "bytes": 1760,
+      "ts": 1795378855.0773792,
+      "prev_hash": "e29b29a269203a8e2a3276b54237432b99fc19988a32e4396d1318c8530c5a82"
     }
   ]
 }
