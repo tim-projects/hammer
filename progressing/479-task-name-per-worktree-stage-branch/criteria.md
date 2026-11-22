@@ -1,3 +1,3 @@
-- [ ] tasks create produces branch <id>-PROGRESSING for new tasks; a commit on it passes pre-commit
-- [ ] guard scan clean on a repo holding all four stage refs for several tasks
-- [ ] non-conformant names still rejected (no regression); provisioning and the default branch stay in the hook allow-list
+- [x] tasks create produces branch <id>-PROGRESSING for new tasks; a commit on it passes pre-commit
+- [x] guard scan clean on a repo holding all four stage refs for several tasks
+- [x] non-conformant names still rejected (no regression); provisioning and the default branch stay in the hook allow-list
