@@ -770,7 +770,10 @@ class VerifyArtifactsHook(PipelineHook):
                 )
                 from .audit import generate_file_patches
 
-                _, branch = parse_filename(os.path.basename(filepath))
+                branch = (
+                    task.metadata.get("Br")
+                    or parse_filename(os.path.basename(filepath))[1]
+                )
 
                 # Regenerate all patches
                 new_patches = generate_file_patches(cli, str(task_id), filepath, branch)

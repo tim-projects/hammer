@@ -41,8 +41,11 @@ CACHE_DIR_NAME = "hammer-guard"
 DB_NAME = "guard.db"
 TASKS_REF_REMOTE = f"origin/{TASKS_BRANCH}"
 
-# <id>-<type>-<slug> convention (enforced by the pre-commit hook)
-BRANCH_CONVENTION_RE = re.compile(r"^(\d+)-(task|issue|docs)-[a-zA-Z0-9-]+$")
+# <id>-<type>-<slug> task branches and <id>-<STAGE> stage branches
+BRANCH_CONVENTION_RE = re.compile(
+    r"^(?:\d+-(?:task|issue|docs)-[a-zA-Z0-9-]+|\d+-(?:PROGRESSING|TESTING|STAGING|PR))$"
+)
+STAGE_BRANCH_RE = re.compile(r"^\d+-(?:PROGRESSING|TESTING|STAGING|PR)$")
 LEADING_ID_RE = re.compile(r"^(\d+)-")
 
 PROMOTED_STATES = ("TESTING", "REVIEW", "STAGING", "DONE", "ARCHIVED")
@@ -445,22 +448,30 @@ class GuardEngine:
 
         for tid in sorted(set(branch_by_id) | set(local)):
             branches = branch_by_id.get(tid, [])
-            if len(branches) > 1:
+            legacy_branches = [
+                branch for branch in branches if not STAGE_BRANCH_RE.match(branch)
+            ]
+            if len(legacy_branches) > 1:
                 add(
                     "GUARD_DUPLICATE_ID",
                     tid,
-                    f"multiple local branches claim id {tid}: {', '.join(branches)}",
+                    f"multiple local branches claim id {tid}: {', '.join(legacy_branches)}",
                 )
             remote_names = sorted(
                 n
                 for n, (_, kind) in refs.items()
                 if kind == "remote" and task_id_of(n) == tid
             )
-            if len(remote_names) > 1 and branches:
+            remote_legacy_branches = [
+                branch
+                for branch in remote_names
+                if not STAGE_BRANCH_RE.match(branch.rsplit("/", 1)[-1])
+            ]
+            if len(remote_legacy_branches) > 1 and branches:
                 add(
                     "GUARD_DUPLICATE_REMOTE_ID",
                     tid,
-                    f"multiple remote branches claim id {tid}: {', '.join(remote_names)}",
+                    f"multiple remote branches claim id {tid}: {', '.join(remote_legacy_branches)}",
                 )
             folders = local.get(tid, [])
             if len(folders) > 1:

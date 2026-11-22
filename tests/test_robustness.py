@@ -238,9 +238,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -280,9 +280,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -344,9 +344,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -426,9 +426,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -601,9 +601,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -730,10 +730,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file_id = res["data"]["id"]
-        file = res["data"]["file"]
         self.run_cmd(["move", str(file_id), "READY"])
         self.enter_progressing(str(file_id))
-        branch = file
+        branch = res["data"]["branch"]
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -886,7 +885,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
-        branch = file
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
         subprocess.run(  # noqa: PLW1510
@@ -1204,7 +1203,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
-        branch = file
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
         subprocess.run(  # noqa: PLW1510
@@ -1285,9 +1284,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -1496,10 +1495,11 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
         branch_exists = subprocess.run(  # noqa: PLW1510
-            ["git", "rev-parse", "--verify", file],
+            ["git", "rev-parse", "--verify", branch],
             cwd=self.repo_dir,
             capture_output=True,
         )
@@ -1524,9 +1524,9 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"], res)
         file = res["data"]["file"]
+        branch = res["data"]["branch"]
         self.run_cmd(["move", file, "READY"])
         self.enter_progressing(file)
-        branch = file
         subprocess.run(  # noqa: PLW1510
             ["git", "checkout", branch], cwd=self.repo_dir, capture_output=True
         )
@@ -1681,7 +1681,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"])
         file = res["data"]["file"]
-        branch = file
+        branch = res["data"]["branch"]
 
         # Move through workflow to REVIEW
         self.run_cmd(["move", file, "READY"])
@@ -1752,7 +1752,7 @@ class TestRobustness(unittest.TestCase):
         )
         self.assertTrue(res["success"])
         file = res["data"]["file"]
-        branch = file
+        branch = res["data"]["branch"]
 
         # Initial progress to REVIEW
         self.run_cmd(["move", file, "READY"])
