@@ -2,6 +2,7 @@
 Task: 481-task-promote-tasks-through-worktree
 ---
 
+
 - Progress:
   - Reworked TESTING, STAGING, and PR promotions to merge task-local `<id>-<STAGE>` refs in the task worktree.
   - Missing stage refs are created at the previous stage tip before the merge; non-dev promotions publish the stage ref.
