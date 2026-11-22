@@ -1,0 +1,17 @@
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index aa8128f8..74c02556 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -106,6 +106,12 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
+ 
+     if not force:
++        if new_status in ("DONE", "ARCHIVED") and not cli.git.get_default_branch():
++            cli.error(
++                "NO_DEFAULT_BRANCH",
++                task_id=task.metadata.get("Id", "unknown"),
++                hint="Create a default branch before promoting the task.",
++            )
+         if new_status not in allowed_transitions.get(current_state, []):
+             next_valid = cli.git.get_next_logical_state(current_state) or "PROGRESSING"
+             cli.error(

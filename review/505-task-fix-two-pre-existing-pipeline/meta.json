@@ -1,0 +1,33 @@
+{
+  "Id": 505,
+  "Ti": "Fix two pre-existing pipeline test failures exposed by task 479",
+  "Ty": "task",
+  "Cr": "261122 01:12",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "505-PROGRESSING",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795345686.431767,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/505-task-fix-two-pre-existing-pipeline/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/505-task-fix-two-pre-existing-pipeline/patches/tasks_ai_utils.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "42f704150a97730110159228b82880165962e3f2",
+    "base": "92a6a32820ec332d2294f27e06553b67ea77fbae"
+  }
+}
