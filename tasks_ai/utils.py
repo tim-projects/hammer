@@ -177,9 +177,14 @@ def select_task_candidate(candidates):
 
     selected = None
     for path, state in candidates:
-        if state not in ("ARCHIVED", "REJECTED", "BACKLOG"):
+        if state == "BACKLOG":
             selected = (path, state)
             break
+    if not selected:
+        for path, state in candidates:
+            if state not in ("ARCHIVED", "REJECTED"):
+                selected = (path, state)
+                break
     if not selected:
         for path, state in candidates:
             if state in ("READY", "BACKLOG"):
