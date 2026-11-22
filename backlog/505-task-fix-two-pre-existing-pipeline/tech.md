@@ -1,0 +1,1 @@
+Investigate tests/test_default_branch.py::TestNoDefaultBranch::test_promotion_fails_with_actionable_error and tests/test_guard.py::TestGuardGate::test_state_duplicate_is_rejected on main. Fix the transition/duplicate-selection root causes without weakening gates.

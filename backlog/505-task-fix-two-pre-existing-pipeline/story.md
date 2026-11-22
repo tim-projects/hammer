@@ -1,0 +1,1 @@
+As a maintainer I need the two known main-branch pytest failures fixed so validation failures remain actionable and task changes can pass the full suite.

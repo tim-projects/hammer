@@ -1,0 +1,4 @@
+- [ ] The no-default-branch DONE transition reports the actionable missing-default error instead of a forbidden REVIEW to DONE transition
+- [ ] A task copied into two state folders is rejected by the guard before transition validation
+- [ ] Focused regression tests pass
+- [ ] The full pytest suite passes
