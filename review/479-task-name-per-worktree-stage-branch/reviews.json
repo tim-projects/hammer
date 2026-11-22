@@ -230,5 +230,8 @@
       "ts": 1795314241.1066887,
       "prev_hash": "d53b9fa9473a1d160468772621e8cc0c537d24f9b9c5586823df9aa2218f8490"
     }
-  ]
+  ],
+  "summary": "Read all 23 patches; naming is separated into stable folders and task-local stage branches, guard and hook accept the four stage refs, and branch consumers use metadata.Br.",
+  "summary_at": 1795314270.3269649,
+  "reviewed_at": 1795314270.3269663
 }
