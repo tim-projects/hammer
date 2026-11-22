@@ -1,0 +1,10 @@
+{
+  "Id": 506,
+  "Ti": "Write user tests for 505: Fix two pre-existing pipeline test failures exposed by task 479",
+  "Ty": "task",
+  "Cr": "261122 01:12",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "506-PROGRESSING",
+  "Pt": 505
+}
