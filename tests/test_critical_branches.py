@@ -128,9 +128,13 @@ class CriticalBranchTestCase(unittest.TestCase):
     def test_promotion_pushes_each_gate_branch(self):
         from tasks_ai.git_service import GitService
 
+        git(["checkout", "main"], self.repo_dir)
+        worktree = os.path.join(self.test_dir, "task-worktree")
+        git(["worktree", "add", worktree, "449-task-critical-branches"], self.repo_dir)
+
         class Worktrees:
             def get_worktree_path(self, task_id):
-                return None
+                return worktree
 
         context = types.SimpleNamespace(
             repo_root=self.repo_dir,
@@ -145,10 +149,10 @@ class CriticalBranchTestCase(unittest.TestCase):
         )
 
         service.promote_task(task, "TESTING")
-        self.assert_remote_contains("testing", "449-task-critical-branches")
+        self.assert_remote_contains("449-TESTING", "449-task-critical-branches")
 
         service.promote_task(task, "STAGING")
-        self.assert_remote_contains("staging", "449-task-critical-branches")
+        self.assert_remote_contains("449-STAGING", "449-task-critical-branches")
 
         service.promote_task(task, "DONE")
         self.assert_remote_contains("main", "449-task-critical-branches")
@@ -189,7 +193,7 @@ class CriticalBranchTestCase(unittest.TestCase):
             metadata={"Br": "449-task-critical-branches", "Id": "449"}
         )
 
-        service.promote_task(task, "STAGING")
+        service.promote_task(task, "DONE")
         for branch in ("testing", "staging"):
             self.assertEqual(
                 git(

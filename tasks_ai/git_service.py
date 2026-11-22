@@ -383,15 +383,20 @@ class GitService:
         return False
 
     def merge_branches(
-        self, src: str, target: str, message: str | None = None, yes=False
+        self,
+        src: str,
+        target: str,
+        message: str | None = None,
+        yes=False,
+        cwd: str | None = None,
     ):
         """Robustly merge one branch into another with pull/push orchestration.
 
-        All operations run from the main repo root since pipeline branches
-        (main, staging, testing) live there. Task worktree branches are
-        backed by branches in the same object database.
+        Shared pipeline merges run from the main repo root. Task-local stage
+        merges pass their task worktree as ``cwd`` so another agent's checkout
+        is never changed.
         """
-        repo_root = self.context.main_repo_root
+        repo_root = cwd or self.context.main_repo_root
 
         # 1. Ensure src and target exist
         if not self.branch_exists(src, repo_root) or not self.branch_exists(
@@ -401,7 +406,11 @@ class GitService:
             return {"created_commit": False, "skipped": True}
 
         # 2. Checkout target
-        self.run(["checkout", target], cwd=repo_root)
+        checkout = self.run(["checkout", target], cwd=repo_root)
+        if checkout.returncode != 0:
+            from .cli_errors import PipelineBranchMissing
+
+            raise PipelineBranchMissing(target)
 
         # 3. Pull latest
         self.run(["pull", "origin", target], cwd=repo_root, check=False)
@@ -412,7 +421,9 @@ class GitService:
         msg = message or f"merge: {src} into {target}"
         self.log(f"Merging {src} -> {target}...")
         merge_res = self.run(
-            ["merge", "--no-ff", src, "-m", msg], cwd=repo_root, log_success=False
+            ["merge", "--no-ff", src, "-m", msg],
+            cwd=repo_root,
+            log_success=False,
         )
 
         if merge_res.returncode != 0:
@@ -566,20 +577,26 @@ class GitService:
     ):
         """Perform the git merges associated with a pipeline promotion.
 
-        Works with task worktrees: the task's branch (backing its worktree)
-        is merged through the pipeline branches in the main repo.
+        Task-local stages are merged in the task worktree. Terminal promotions
+        retain the shared pipeline merge behavior.
         """
-        branch = task.metadata.get("Br", "")
-        if not branch:
-            return
-
         task_id = task.metadata.get("Id", "unknown")
+        branch = task.metadata.get("Br", "")
         repo_root = self.context.main_repo_root
 
         # 0. Auto-commit task changes before transition. A lazy task has no
         # worktree until PROGRESSING, so committing from the main checkout would
         # sweep unrelated files (including the central store) into the task branch.
         wt_path = self.worktrees.get_worktree_path(str(task_id))
+        if not branch and wt_path and os.path.exists(wt_path):
+            current = self.run(
+                ["rev-parse", "--abbrev-ref", "HEAD"], cwd=wt_path, check=False
+            ).stdout.strip()
+            if current and current != "HEAD":
+                branch = current
+        if not branch:
+            branch = f"{task_id}-PROGRESSING"
+
         if wt_path and os.path.exists(wt_path):
             status_res = self.run(["status", "--porcelain"], cwd=wt_path)
             if status_res.stdout.strip():
@@ -596,13 +613,46 @@ class GitService:
                     cwd=wt_path,
                 )
 
-        # PROMOTION: Merge worktree branch through pipeline branches
-        default_branch = self.get_default_branch()
-        target_git_branch = {
-            "TESTING": "testing",
-            "STAGING": "staging",
-            "DONE": default_branch,
+        # PROMOTION: task-local stages stay inside the task worktree. Each
+        # missing stage ref starts at the previous stage tip before it is merged.
+        stage_order = {
+            "TESTING": ["TESTING"],
+            "STAGING": ["TESTING", "STAGING"],
+            "PR": ["TESTING", "STAGING", "PR"],
         }.get(target_state)
+        if stage_order:
+            from .cli_errors import PipelineBranchMissing
+
+            if not wt_path or not os.path.exists(wt_path):
+                raise PipelineBranchMissing(branch)
+            if not self.branch_exists(branch, wt_path):
+                raise PipelineBranchMissing(branch)
+
+            previous_ref = branch
+            for stage in stage_order:
+                stage_ref = f"{task_id}-{stage}"
+                if not self.branch_exists(stage_ref, wt_path):
+                    created = self.run(["branch", stage_ref, previous_ref], cwd=wt_path)
+                    if created.returncode != 0:
+                        raise PipelineBranchMissing(stage_ref)
+                if stage == target_state:
+                    self.log(
+                        f"Performing task-local promotion: {previous_ref} -> {stage_ref}"
+                    )
+                    self.merge_branches(
+                        previous_ref,
+                        stage_ref,
+                        message=f"[{task_id}] merge: {previous_ref} into {stage_ref}",
+                        yes=True,
+                        cwd=wt_path,
+                    )
+                    return
+                previous_ref = stage_ref
+
+        # Terminal promotions still use the shared pipeline branches. Their
+        # serialization and funnel plumbing are separate tasks.
+        default_branch = self.get_default_branch()
+        target_git_branch = {"DONE": default_branch}.get(target_state)
         if not target_git_branch:
             if target_state == "DONE":
                 self.log("Skipping merge: no default branch (main/master) exists.")
@@ -612,14 +662,12 @@ class GitService:
             from .cli_errors import PipelineBranchMissing
 
             raise PipelineBranchMissing("testing")
-        if target_state in ("STAGING", "DONE") and not self.ensure_pipeline_branch(
-            "staging", repo_root, "testing"
-        ):
+        if not self.ensure_pipeline_branch("staging", repo_root, "testing"):
             from .cli_errors import PipelineBranchMissing
 
             raise PipelineBranchMissing("staging")
 
-        already_merged = target_state == "DONE" and self.is_already_merged_completion(
+        already_merged = self.is_already_merged_completion(
             branch, target_git_branch, task
         )
         if already_merged:
@@ -628,11 +676,11 @@ class GitService:
                 "TASK COMPLETE. HAMMER POUND ON."
             )
         else:
-            merge_steps = [(branch, "testing")]
-            if target_state in ("STAGING", "DONE"):
-                merge_steps.append(("testing", "staging"))
-            if target_state == "DONE":
-                merge_steps.append(("staging", default_branch))
+            merge_steps = [
+                (branch, "testing"),
+                ("testing", "staging"),
+                ("staging", default_branch),
+            ]
 
             for src_branch, target_branch in merge_steps:
                 if not self.branch_exists(src_branch, repo_root):
