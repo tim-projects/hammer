@@ -20,5 +20,8 @@
       "ts": 1795345732.698215,
       "prev_hash": "9d135a0a052acd67a129ae35988b1b11e47d232a3727ae70ac57d4ad641d116c"
     }
-  ]
+  ],
+  "summary": "Read both patches; terminal promotion reports missing default branch first, and metadata-less duplicate candidates prefer the authoritative BACKLOG record so guard detects the state duplicate.",
+  "summary_at": 1795345789.8936384,
+  "reviewed_at": 1795345789.8936396
 }
