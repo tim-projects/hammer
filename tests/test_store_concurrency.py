@@ -343,8 +343,10 @@ class TestStoreConcurrency(unittest.TestCase):
         # ahead of main, and after the merge that list is empty by definition.
         cp = self.run_cmd(["checkpoint", str(task_id)])
         self.assertTrue(cp["success"], cp)
+        from tasks_ai.file_manager import FM
+
         merge = subprocess.run(
-            ["git", "merge", f"{task_file}"],
+            ["git", "merge", FM.load(task_path).metadata.get("Br")],
             cwd=self.repo_dir,
             capture_output=True,
             check=False,
