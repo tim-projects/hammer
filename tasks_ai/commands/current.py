@@ -18,6 +18,7 @@ def run(cli, filename=None):
     filepath_str = str(filepath)
     tn = os.path.basename(filepath_str)
     tt, br = parse_filename(tn)
+    br = task.metadata.get("Br") or br
     data = {
         "file": os.path.relpath(filepath_str, cli.root),
         "name": tn,

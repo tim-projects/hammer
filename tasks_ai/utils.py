@@ -55,7 +55,15 @@ def store_lock(cli):
 
 
 def derive_task_id(numeric_id, task_type: str, title: str) -> str:
-    """The single naming rule for task id, branch, worktree dir and task folder.
+    """Derive the task's worktree branch for its initial stage.
+
+    Stage refs are task-local because git branches are shared by every worktree.
+    """
+    return f"{numeric_id}-PROGRESSING"
+
+
+def derive_task_folder(numeric_id, task_type: str, title: str) -> str:
+    """Derive the stable task folder name.
 
     The slug is capped at 30 characters; create and doctor both derive from here
     so doctor never repairs a name it disagrees with.
@@ -366,6 +374,7 @@ def sync_task_content(cli, filepath, task, is_final=False) -> bool:
     filepath_str = str(filepath)
     tn = os.path.basename(filepath_str)
     _, branch = parse_filename(tn)
+    branch = task.metadata.get("Br") or branch
     updated = False
     main_root = cli.context.main_repo_root
     default_branch = cli.git.get_default_branch()
@@ -431,9 +440,7 @@ def perform_move(cli, task, current_state, new_status, filepath):
         task.metadata["St"] = new_status
         FM.dump(task, filepath_str)
         try:
-            fname = task.metadata.get("Br") or str(
-                task.metadata.get("Id", "unknown-task")
-            )
+            fname = os.path.basename(filepath_str)
             new_filepath = os.path.join(
                 cli.tasks_path, STATE_FOLDERS[new_status], fname
             )

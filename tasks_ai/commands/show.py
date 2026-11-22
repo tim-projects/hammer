@@ -10,6 +10,7 @@ def _task_record(cli, path, state):
     task = FM.load(path)
     tn = os.path.basename(path)
     tt, br = parse_filename(tn)
+    br = task.metadata.get("Br") or br
     files = {
         name: content
         for name, content in task.parts.items()
@@ -98,6 +99,7 @@ def run(cli, filename, section=None, show_all=False):
     task = FM.load(filepath_str)
     tn = os.path.basename(filepath_str)
     tt, br = parse_filename(tn)
+    br = task.metadata.get("Br") or br
     data = {
         "file": os.path.relpath(filepath_str, cli.root),
         "name": tn,

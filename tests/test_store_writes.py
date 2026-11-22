@@ -902,7 +902,11 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
         for state in ("READY", "PROGRESSING"):
             moved = self.run_cmd(["move", file_c, state])
             self.assertTrue(moved["success"], moved)
-        worktree = os.path.join(self.repo_dir, ".task-worktrees", file_c)
+        from tasks_ai.file_manager import FM
+
+        task_path = os.path.join(self.store, "progressing", file_c)
+        branch = FM.load(task_path).metadata.get("Br")
+        worktree = os.path.join(self.repo_dir, ".task-worktrees", branch)
         self.assertTrue(os.path.isdir(worktree), worktree)
         with open(os.path.join(worktree, "feature.py"), "w") as handle:
             handle.write("def feature():\n    return True\n")
@@ -913,7 +917,7 @@ class TestStoreCommitsAreScopedPerCommand(unittest.TestCase):
 
         # The branch must be merged (and pushed) before the archive proceeds
         # past the hook, so the whole archive flow runs.
-        merged = self.git("merge", file_c)
+        merged = self.git("merge", branch)
         self.assertEqual(merged.returncode, 0, merged.stderr)
         self.assertEqual(self.git("push", "origin", "main").returncode, 0)
 

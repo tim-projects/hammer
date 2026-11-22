@@ -98,7 +98,7 @@ class DevIsolationTestBase(HammerTestBase):
         )
         self.assertEqual(result.returncode, 0, f"create failed: {result.stdout}")
         payload = json.loads(result.stdout)
-        return payload["data"]["id"], payload["data"]["file"]
+        return payload["data"]["id"], payload["data"]["branch"]
 
 
 class TestDevLeavesTheInvokedRepoAlone(DevIsolationTestBase):
