@@ -1,0 +1,54 @@
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index ea4dd23e..a76515e8 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -5,7 +5,7 @@ from datetime import datetime, timezone
+ from ..constants import STATE_FOLDERS
+ from ..file_manager import FM
+ from ..models import Task
+-from ..utils import derive_task_id, resolve_content, store_is_git
++from ..utils import derive_task_folder, derive_task_id, resolve_content, store_is_git
+ 
+ 
+ def run(
+@@ -98,10 +98,11 @@ def run(
+ 
+     numeric_id = cli._get_next_id()
+     task_id = derive_task_id(numeric_id, task_type, title)
+-    task_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["BACKLOG"], task_id)
++    task_folder = derive_task_folder(numeric_id, task_type, title)
++    task_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["BACKLOG"], task_folder)
+ 
+-    if cli.find_task(task_id)[0]:
+-        cli.error("TASK_EXISTS", task_id=task_id)
++    if cli.find_task(task_folder)[0]:
++        cli.error("TASK_EXISTS", task_id=task_folder)
+ 
+     for state, folder in STATE_FOLDERS.items():
+         fp = os.path.join(cli.tasks_path, folder)
+@@ -200,12 +201,13 @@ def run(
+         pair_numeric_id = cli._get_next_id()
+         pair_title = f"Write user tests for {numeric_id}: {title}"
+         pair_task_id = derive_task_id(pair_numeric_id, "task", pair_title)
++        pair_task_folder = derive_task_folder(pair_numeric_id, "task", pair_title)
+         pair_task_dir = os.path.join(
+-            cli.tasks_path, STATE_FOLDERS["BACKLOG"], pair_task_id
++            cli.tasks_path, STATE_FOLDERS["BACKLOG"], pair_task_folder
+         )
+ 
+-        if cli.find_task(pair_task_id)[0]:
+-            cli.error("TASK_EXISTS", task_id=pair_task_id)
++        if cli.find_task(pair_task_folder)[0]:
++            cli.error("TASK_EXISTS", task_id=pair_task_folder)
+ 
+         for state, folder in STATE_FOLDERS.items():
+             fp = os.path.join(cli.tasks_path, folder)
+@@ -285,7 +287,7 @@ def run(
+                 "id": numeric_id,
+                 "task_id": task_id,
+                 "title": title,
+-                "file": task_id,
++                "file": task_folder,
+                 # A dev store lives outside the repo the CLI acts on, so a
+                 # repo-relative path would point nowhere: absolute there.
+                 "path": task_dir if cli.dev else os.path.relpath(task_dir, cli.root),

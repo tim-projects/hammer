@@ -1,0 +1,36 @@
+diff --git a/guard.py b/guard.py
+index 0f7ae6b1..a6f7ba36 100755
+--- a/guard.py
++++ b/guard.py
+@@ -125,18 +125,26 @@ def get_engine(dev=False, cwd=None):
+ 
+ 
+ def branch_for_task(engine, task_id):
+-    """Derive the task's branch from its folder name (single source on disk)."""
++    """Read the task's branch from its metadata (single source on disk)."""
+     if not engine.tasks_path:
+         return None
++    from tasks_ai.file_manager import FM
++
+     for folder in STATE_FOLDERS.values():
+         state_dir = os.path.join(engine.tasks_path, folder)
+         if not os.path.isdir(state_dir):
+             continue
+         for name in sorted(os.listdir(state_dir)):
+-            if task_id_of(name) == task_id and os.path.isdir(
+-                os.path.join(state_dir, name)
+-            ):
+-                return name
++            if task_id_of(name) != task_id:
++                continue
++            path = os.path.join(state_dir, name)
++            if not os.path.isdir(path):
++                continue
++            task = FM.load(path)
++            branch = task.metadata.get("Br")
++            if branch:
++                return branch
++            return name
+     return None
+ 
+ 

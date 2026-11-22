@@ -1,0 +1,51 @@
+diff --git a/tests/test_task_naming_user.py b/tests/test_task_naming_user.py
+index f1596f91..5e241628 100644
+--- a/tests/test_task_naming_user.py
++++ b/tests/test_task_naming_user.py
+@@ -80,36 +80,36 @@ class TestDerivedNamesMatchEverywhere(NamingTestBase):
+         self.assertEqual(result.returncode, 0, result.stdout)
+         return json.loads(result.stdout)["data"]["worktree_path"]
+ 
+-    def test_branch_folder_and_worktree_share_one_name(self):
++    def test_branch_and_worktree_use_the_task_local_stage_name(self):
+         payload = self.create_task()["data"]
+         name = payload["file"]
++        branch = payload["branch"]
+         worktree = self.mount_task(payload)
+ 
+-        # the folder hammer created in the store
++        # the folder hammer created in the store keeps the descriptive name
+         self.assertTrue(
+             os.path.isdir(os.path.join(self.dev_tasks_dir, "backlog", name))
+         )
+-        # the branch in the throwaway repo
++        # the branch in the throwaway repo is task-local
+         branches = self.git(["branch", "--list"], cwd=self.dev_repo_dir).stdout
+-        self.assertIn(name, branches)
+-        # the worktree directory, which must be that same branch name
+-        expected_wt = os.path.join(self.dev_repo_dir, ".task-worktrees", name)
++        self.assertIn(branch, branches)
++        # the worktree directory follows the branch name
++        expected_wt = os.path.join(self.dev_repo_dir, ".task-worktrees", branch)
+         self.assertTrue(os.path.isdir(expected_wt))
+         self.assertIn(
+             expected_wt,
+             self.git(["worktree", "list"], cwd=self.dev_repo_dir).stdout,
+         )
+-        self.assertEqual(payload["branch"], name)
++        self.assertEqual(branch, f"{BASE_ID}-PROGRESSING")
+         self.assertEqual(worktree, expected_wt)
+ 
+     def test_a_long_title_is_cut_the_same_way_everywhere(self):
+         payload = self.create_task()["data"]
+         name = payload["file"]
+-        # 30-char slug cap: the last words of the title are gone everywhere,
+-        # so no consumer ever sees two spellings.
++        # 30-char slug cap: the last words of the title are gone from the folder.
+         self.assertTrue(name.startswith(f"{BASE_ID}-task-"))
+         self.assertLessEqual(len(name.split("-", 2)[2]), 30)
+-        self.assertEqual(name, payload["branch"])
++        self.assertEqual(payload["branch"], f"{BASE_ID}-PROGRESSING")
+ 
+     def test_create_prints_the_planned_branch(self):
+         text_out = subprocess.run(

@@ -1,0 +1,110 @@
+diff --git a/tests/test_tasks.py b/tests/test_tasks.py
+index 61f63d4d..d425237b 100755
+--- a/tests/test_tasks.py
++++ b/tests/test_tasks.py
+@@ -670,7 +670,7 @@ class TestTasksAI(unittest.TestCase):
+         self.run_cmd(["move", file, "READY"])
+         self.enter_progressing(file)
+ 
+-        branch = file
++        branch = res["data"]["branch"]
+         worktree_path = self.get_worktree_path(task_id)
+         wt = (
+             worktree_path
+@@ -767,6 +767,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+         self.assertTrue(res["success"], res)
+         task_file = res["data"]["file"]
++        branch = res["data"]["branch"]
+         task_id = res["data"]["id"]
+ 
+         self.run_cmd(["move", task_file, "READY"])
+@@ -780,7 +781,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+ 
+         # Task branch edits the first line of README.md one way.
+-        subprocess.run(["git", "checkout", task_file], cwd=wt, capture_output=True)  # noqa: PLW1510
++        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
+         readme = os.path.join(wt, "README.md")
+         with open(readme) as f:
+             lines = f.readlines()
+@@ -864,6 +865,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+         self.assertTrue(res["success"], res)
+         task_file = res["data"]["file"]
++        branch = res["data"]["branch"]
+         task_id = res["data"]["id"]
+ 
+         # Move through READY -> PROGRESSING
+@@ -880,7 +882,7 @@ class TestTasksAI(unittest.TestCase):
+ 
+         # Create initial commit on the task branch
+         subprocess.run(
+-            ["git", "checkout", task_file],
++            ["git", "checkout", branch],
+             cwd=wt,
+             capture_output=True,
+             check=True,
+@@ -922,7 +924,7 @@ class TestTasksAI(unittest.TestCase):
+ 
+         # Ensure we are on the task branch and working tree is clean
+         subprocess.run(
+-            ["git", "checkout", task_file],
++            ["git", "checkout", branch],
+             cwd=wt,
+             capture_output=True,
+             check=True,
+@@ -961,7 +963,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+         self.assertTrue(res["success"])
+         task_file = res["data"]["file"]
+-        branch = task_file
++        branch = res["data"]["branch"]
+         task_id = res["data"]["id"]
+         worktree_path = self.get_worktree_path(task_id)
+ 
+@@ -1013,7 +1015,7 @@ class TestTasksAI(unittest.TestCase):
+         self.assertTrue(res["success"], f"Move to REVIEW failed: {res}")
+ 
+         # Verify diff files exist
+-        patches_dir = os.path.join(self.dev_tasks_dir, "review", branch, "patches")
++        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
+         self.assertTrue(
+             os.path.exists(patches_dir),
+             f"Review patches dir not found at {patches_dir}",
+@@ -1046,7 +1048,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+         self.assertTrue(res["success"])
+         task_file = res["data"]["file"]
+-        branch = task_file
++        branch = res["data"]["branch"]
+         task_id = res["data"]["id"]
+         worktree_path = self.get_worktree_path(task_id)
+ 
+@@ -1138,7 +1140,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+         self.assertTrue(res["success"])
+         task_file = res["data"]["file"]
+-        branch = task_file
++        branch = res["data"]["branch"]
+         task_id = res["data"]["id"]
+         worktree_path = self.get_worktree_path(task_id)
+ 
+@@ -1227,7 +1229,7 @@ class TestTasksAI(unittest.TestCase):
+         )
+         self.assertTrue(res["success"])
+         task_file = res["data"]["file"]
+-        branch = task_file
++        branch = res["data"]["branch"]
+         task_id = res["data"]["id"]
+         worktree_path = self.get_worktree_path(task_id)
+ 
+@@ -1266,7 +1268,7 @@ class TestTasksAI(unittest.TestCase):
+         self.run_cmd(["move", task_file, "REVIEW"])
+ 
+         # Diff should exist
+-        patches_dir = os.path.join(self.dev_tasks_dir, "review", branch, "patches")
++        patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
+         self.assertTrue(os.path.exists(patches_dir), "Initial patches dir should exist")
+         patch_files = [f for f in os.listdir(patches_dir) if f.endswith(".patch")]
+         self.assertTrue(len(patch_files) > 0, "Initial diff should exist")

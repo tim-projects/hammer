@@ -1,0 +1,31 @@
+diff --git a/tests/test_default_branch.py b/tests/test_default_branch.py
+index 2f9cbd6a..94247f66 100644
+--- a/tests/test_default_branch.py
++++ b/tests/test_default_branch.py
+@@ -138,7 +138,7 @@ class MasterRepoTestBase(unittest.TestCase):
+         task_file = data["file"]
+         task_id = str(data["id"])
+         worktree_path = data.get("worktree") or os.path.join(
+-            self.repo_dir, ".task-worktrees", task_file
++            self.repo_dir, ".task-worktrees", data["branch"]
+         )
+ 
+         self.assertTrue(
+@@ -240,7 +240,7 @@ class TestMasterNamedRepo(MasterRepoTestBase):
+             "move PROGRESSING failed",
+         )
+ 
+-        worktree_path = os.path.join(self.repo_dir, ".task-worktrees", task_file)
++        worktree_path = os.path.join(self.repo_dir, ".task-worktrees", data["branch"])
+         merged = subprocess.run(  # noqa: PLW1510
+             ["git", "merge-base", "--is-ancestor", master_tip, "HEAD"],
+             cwd=worktree_path,
+@@ -272,7 +272,7 @@ class TestNoDefaultBranch(MasterRepoTestBase):
+             "move PROGRESSING failed",
+         )
+ 
+-        worktree_path = os.path.join(self.repo_dir, ".task-worktrees", task_file)
++        worktree_path = os.path.join(self.repo_dir, ".task-worktrees", data["branch"])
+         with open(os.path.join(worktree_path, "feature.py"), "w") as f:
+             f.write("def feature():\n    return True\n")
+         git(["add", "feature.py"], worktree_path)

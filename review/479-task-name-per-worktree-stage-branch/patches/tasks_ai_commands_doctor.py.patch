@@ -1,0 +1,68 @@
+diff --git a/tasks_ai/commands/doctor.py b/tasks_ai/commands/doctor.py
+index fd967162..ce2cedbb 100644
+--- a/tasks_ai/commands/doctor.py
++++ b/tasks_ai/commands/doctor.py
+@@ -7,6 +7,7 @@ from ..guard_engine import GuardUnavailable
+ from ..pipeline_hooks import get_guard_engine
+ from ..utils import (
+     commit_task_paths,
++    derive_task_folder,
+     derive_task_id,
+     parse_filename,
+     store_is_git,
+@@ -110,11 +111,14 @@ def run(cli, fix=False):
+             task_type = task.metadata.get("Ty", task_type)
+ 
+             expected_br = derive_task_id(correct_id, task_type, title_for_branch)
++            expected_dir = derive_task_folder(correct_id, task_type, title_for_branch)
++            legacy_br = expected_dir
++            valid_branches = {expected_br, legacy_br}
+ 
+             if not (
+                 branch_from_metadata
+                 and isinstance(branch_from_metadata, str)
+-                and branch_from_metadata == expected_br
++                and branch_from_metadata in valid_branches
+             ):
+                 inconsistencies.append(
+                     ("metadata.Br", branch_from_metadata, expected_br)
+@@ -132,21 +136,27 @@ def run(cli, fix=False):
+                 )
+ 
+             # Check directory name
+-            expected_dir = expected_br
+             if item != expected_dir:
+                 inconsistencies.append(("directory name", item, expected_dir))
+ 
+             # The worktree directory must be the branch name, so no agent has to
+             # guess which spelling resolves the task's path.
+             wt_path = cli.git.worktrees.get_worktree_path(str(correct_id))
++            expected_worktree_branch = (
++                branch_from_metadata
++                if branch_from_metadata in valid_branches
++                else expected_br
++            )
+             if wt_path and not worktree_path_matches(
+-                wt_path, cli.git.worktrees.worktrees_base, expected_br
++                wt_path, cli.git.worktrees.worktrees_base, expected_worktree_branch
+             ):
+                 inconsistencies.append(
+                     (
+                         "worktree path",
+                         wt_path,
+-                        os.path.join(cli.git.worktrees.worktrees_base, expected_br),
++                        os.path.join(
++                            cli.git.worktrees.worktrees_base, expected_worktree_branch
++                        ),
+                     )
+                 )
+ 
+@@ -201,7 +211,7 @@ def run(cli, fix=False):
+                 if not (
+                     branch_from_metadata
+                     and isinstance(branch_from_metadata, str)
+-                    and branch_from_metadata == expected_br
++                    and branch_from_metadata in valid_branches
+                 ):
+                     task.metadata["Br"] = expected_br
+                     id_changed = True

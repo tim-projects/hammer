@@ -1,0 +1,12 @@
+diff --git a/tasks_ai/commands/list.py b/tasks_ai/commands/list.py
+index ac60c31d..390eef86 100644
+--- a/tasks_ai/commands/list.py
++++ b/tasks_ai/commands/list.py
+@@ -57,6 +57,7 @@ def run(cli, show_all=False):
+             summary = "CORRUPTED TASK"
+ 
+         tt, tb = parse_filename(item)
++        tb = task.metadata.get("Br") or tb
+         task_id = task.metadata.get("Id")
+         if not task_id:
+             task_id = item.split("-")[0] if "-" in item else "???"

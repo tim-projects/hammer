@@ -1,0 +1,117 @@
+{
+  "Id": 479,
+  "Ti": "Name per-worktree stage branches <id>-<STAGE>",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "479-task-name-per-worktree-stage-branch",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795314162.921048,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/guard.py.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/current.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_commands_current.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/list.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_commands_list.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/show.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_commands_show.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_dev_isolation.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_hooks_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_hooks_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_lazy_task_creation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_lazy_task_creation.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_store_concurrency.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_store_concurrency.py.patch"
+    },
+    {
+      "file": "tests/test_store_writes.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_store_writes.py.patch"
+    },
+    {
+      "file": "tests/test_task_naming.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_task_naming.py.patch"
+    },
+    {
+      "file": "tests/test_task_naming_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_task_naming_user.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/479-task-name-per-worktree-stage-branch/patches/tests_test_tasks.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "0a8fb442ed4e79aaf05f014985bfc211db675780",
+    "base": "d68adccfcf20e6b8995a967e5fb2c828d31c6582"
+  }
+}

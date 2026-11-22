@@ -1,0 +1,13 @@
+diff --git a/tests/test_dev_isolation.py b/tests/test_dev_isolation.py
+index fac515d9..916afc8a 100644
+--- a/tests/test_dev_isolation.py
++++ b/tests/test_dev_isolation.py
+@@ -98,7 +98,7 @@ class DevIsolationTestBase(HammerTestBase):
+         )
+         self.assertEqual(result.returncode, 0, f"create failed: {result.stdout}")
+         payload = json.loads(result.stdout)
+-        return payload["data"]["id"], payload["data"]["file"]
++        return payload["data"]["id"], payload["data"]["branch"]
+ 
+ 
+ class TestDevLeavesTheInvokedRepoAlone(DevIsolationTestBase):

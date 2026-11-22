@@ -1,0 +1,62 @@
+diff --git a/tests/test_audit_verify_integration.py b/tests/test_audit_verify_integration.py
+index 4c6c7f00..9c4e2df1 100644
+--- a/tests/test_audit_verify_integration.py
++++ b/tests/test_audit_verify_integration.py
+@@ -193,7 +193,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+         )
+         self.assertTrue(res["success"], res)
+         task_file = res["data"]["file"]
+-        branch = task_file  # branch name equals task filename
++        branch = res["data"]["branch"]
+ 
+         self.run_cmd(
+             [
+@@ -385,7 +385,7 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+         Rc == PASSED, so the stale set could not self-heal.
+         """
+         task_file = self.create_and_reach_review("Stale Patch Task", "work.py")
+-        branch = task_file
++        branch = self.get_meta(task_file).get("Br")
+         patches_dir = os.path.join(self.dev_tasks_dir, "review", task_file, "patches")
+ 
+         dev_repo = ensure_dev_repo(self.dev_tasks_dir)
+@@ -456,8 +456,9 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+         self.reenter_review(task_file)
+ 
+         dev_repo = ensure_dev_repo(self.dev_tasks_dir)
++        branch = self.get_meta(task_file).get("Br")
+         expected = subprocess.run(
+-            ["git", "diff", f"main..{task_file}", "--", "code.py"],
++            ["git", "diff", f"main..{branch}", "--", "code.py"],
+             cwd=dev_repo,
+             capture_output=True,
+             text=True,
+@@ -527,14 +528,26 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+         self.reenter_review(task_file)
+ 
+         merged = subprocess.run(
+-            ["git", "merge-base", "--is-ancestor", "main", task_file],
++            [
++                "git",
++                "merge-base",
++                "--is-ancestor",
++                "main",
++                self.get_meta(task_file).get("Br"),
++            ],
+             cwd=dev_repo,
+             capture_output=True,
+             check=False,
+         )
+         self.assertEqual(merged.returncode, 0, "task branch did not sync main")
+         expected = subprocess.run(
+-            ["git", "diff", f"main..{task_file}", "--", "code.py"],
++            [
++                "git",
++                "diff",
++                f"main..{self.get_meta(task_file).get('Br')}",
++                "--",
++                "code.py",
++            ],
+             cwd=dev_repo,
+             capture_output=True,
+             text=True,

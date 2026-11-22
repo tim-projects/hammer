@@ -1,0 +1,21 @@
+diff --git a/tasks_ai/cli.py b/tasks_ai/cli.py
+index 4a51637b..291afa07 100644
+--- a/tasks_ai/cli.py
++++ b/tasks_ai/cli.py
+@@ -559,6 +559,7 @@ class TasksCLI:
+         filepath_str = cast(str, filepath)
+         tn = os.path.basename(filepath_str)
+         _, branch = self._parse_filename(tn)
++        branch = task.metadata.get("Br") or branch
+         updated = False
+         default_branch = self._get_default_branch()
+         res = (
+@@ -650,7 +651,7 @@ class TasksCLI:
+         # pre-commit hook
+         with open(os.path.join(hook_dir, "pre-commit"), "w") as f:
+             f.write(
+-                f'#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n{default_branch_snippet}\n\n# Allow the default branch plus the pipeline branches\nif [[ "$target_branch" == "$default_branch" || "$target_branch" == "staging" || "$target_branch" == "testing" ]]; then\n    exit 0\nfi\n\n# Block non-conformant branch names\n# Convention: <id>-<type>-<title>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
++                f'#!/bin/bash\n\ntarget_branch=$(git rev-parse --abbrev-ref HEAD)\n{default_branch_snippet}\n\n# Allow the default branch plus the pipeline branches\nif [[ "$target_branch" == "$default_branch" || "$target_branch" == "staging" || "$target_branch" == "testing" || "$target_branch" == "provisioning" ]]; then\n    exit 0\nfi\n\n# Block non-conformant branch names\n# Convention: <id>-<type>-<title> or <id>-<STAGE>\nif [[ ! "$target_branch" =~ ^[0-9]+-(task|issue|docs)-[a-zA-Z0-9-]+$ && ! "$target_branch" =~ ^[0-9]+-(PROGRESSING|TESTING|STAGING|PR)$ ]]; then\n    echo "❌ Branch name \'$target_branch\' does not conform to convention: <id>-<type>-<title>."\n    echo "Use \'hammer tasks create\' to create a conformant feature branch."\n    exit 1\nfi'
+             )
+         os.chmod(os.path.join(hook_dir, "pre-commit"), 0o755)
+ 

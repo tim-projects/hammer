@@ -1,0 +1,51 @@
+diff --git a/tests/test_task_naming.py b/tests/test_task_naming.py
+index f623bfc3..ced63f54 100644
+--- a/tests/test_task_naming.py
++++ b/tests/test_task_naming.py
+@@ -8,31 +8,41 @@ doctor additionally checks the registered worktree path against
+ 
+ import unittest
+ 
+-from tasks_ai.utils import derive_task_id, worktree_path_matches
++from tasks_ai.utils import derive_task_folder, derive_task_id, worktree_path_matches
+ 
+ 
+ class TestDeriveTaskId(unittest.TestCase):
+-    def test_long_title_is_cut_at_the_same_place_it_always_was(self):
++    def test_branch_uses_the_task_local_progressing_stage(self):
+         self.assertEqual(
+             derive_task_id(
+                 344,
+                 "task",
+                 "Pipeline should auto-push branches instead of demanding manual push",
+             ),
++            "344-PROGRESSING",
++        )
++
++    def test_folder_keeps_the_type_and_capped_slug(self):
++        self.assertEqual(
++            derive_task_folder(
++                344,
++                "task",
++                "Pipeline should auto-push branches instead of demanding manual push",
++            ),
+             "344-task-pipeline-should-auto-push-bran",
+         )
+ 
+     def test_punctuation_and_case_collapse_to_one_dash_each(self):
+         self.assertEqual(
+-            derive_task_id(9, "task", "Fix a things: odd/symbols & spaces!!"),
++            derive_task_folder(9, "task", "Fix a things: odd/symbols & spaces!!"),
+             "9-task-fix-a-things-odd-symbols-space",
+         )
+ 
+     def test_title_shorter_than_the_cap_is_kept_whole(self):
+-        self.assertEqual(derive_task_id(1, "issue", "ab"), "1-issue-ab")
++        self.assertEqual(derive_task_folder(1, "issue", "ab"), "1-issue-ab")
+ 
+     def test_title_with_no_usable_characters_falls_back_to_task(self):
+-        self.assertEqual(derive_task_id(7, "task", "!!!"), "7-task-task")
++        self.assertEqual(derive_task_folder(7, "task", "!!!"), "7-task-task")
+ 
+ 
+ class TestWorktreePathMatches(unittest.TestCase):
