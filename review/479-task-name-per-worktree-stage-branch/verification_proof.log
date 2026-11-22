@@ -1,0 +1,1 @@
+Reviewed all 23 patches. Ruff lint/format and affected test suites pass; two unrelated main-branch failures are tracked by task 505.
