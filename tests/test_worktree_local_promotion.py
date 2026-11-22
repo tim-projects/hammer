@@ -1,0 +1,145 @@
+import os
+import shutil
+import subprocess
+import tempfile
+import types
+import unittest
+from concurrent.futures import ThreadPoolExecutor
+
+from tasks_ai.git_service import GitService
+
+
+def git(*args, cwd, check=True):
+    return subprocess.run(
+        ["git", *args], cwd=cwd, capture_output=True, text=True, check=check
+    )
+
+
+class WorktreeLocalPromotionTest(unittest.TestCase):
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="worktree_local_promotion_")
+        self.repo = os.path.join(self.root, "repo")
+        os.makedirs(self.repo)
+        git("init", "-b", "main", cwd=self.repo)
+        git("config", "user.email", "test@example.com", cwd=self.repo)
+        git("config", "user.name", "Test User", cwd=self.repo)
+        git("config", "commit.gpgsign", "false", cwd=self.repo)
+        with open(
+            os.path.join(self.repo, "README.md"), "w", encoding="utf-8"
+        ) as handle:
+            handle.write("base\n")
+        git("add", "README.md", cwd=self.repo)
+        git("commit", "-m", "base", cwd=self.repo)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def create_task(self, task_id):
+        branch = f"{task_id}-task-example"
+        git("checkout", "-b", branch, cwd=self.repo)
+        with open(
+            os.path.join(self.repo, f"{task_id}.txt"), "w", encoding="utf-8"
+        ) as handle:
+            handle.write(f"task {task_id}\n")
+        git("add", f"{task_id}.txt", cwd=self.repo)
+        git("commit", "-m", f"task {task_id}", cwd=self.repo)
+        git("checkout", "main", cwd=self.repo)
+        worktree = os.path.join(self.root, f"worktree-{task_id}")
+        git("worktree", "add", worktree, branch, cwd=self.repo)
+        return branch, worktree
+
+    def service_for(self, worktrees):
+        context = types.SimpleNamespace(
+            repo_root=self.repo,
+            main_repo_root=self.repo,
+            tasks_path=self.repo,
+            dev=True,
+        )
+        service = GitService(context)
+        service._worktree_manager = types.SimpleNamespace(
+            get_worktree_path=lambda task_id: worktrees.get(str(task_id))
+        )
+        return service
+
+    def task(self, task_id, branch):
+        return types.SimpleNamespace(metadata={"Id": task_id, "Br": branch})
+
+    def local_refs(self):
+        result = git("for-each-ref", "--format=%(refname)", "refs/heads", cwd=self.repo)
+        return set(result.stdout.splitlines())
+
+    def current_branch(self, cwd):
+        return git("rev-parse", "--abbrev-ref", "HEAD", cwd=cwd).stdout.strip()
+
+    def worktree_branches(self):
+        result = git("worktree", "list", "--porcelain", cwd=self.repo)
+        entries = {}
+        path = None
+        for line in result.stdout.splitlines():
+            if line.startswith("worktree "):
+                path = line.removeprefix("worktree ")
+            elif line.startswith("branch refs/heads/"):
+                entries[path] = line.removeprefix("branch refs/heads/")
+        return entries
+
+    def test_stage_promotions_only_add_task_local_refs(self):
+        branch, worktree = self.create_task(481)
+        service = self.service_for({"481": worktree})
+        task = self.task(481, branch)
+        before = self.local_refs()
+
+        for state, stage in (
+            ("TESTING", "TESTING"),
+            ("STAGING", "STAGING"),
+            ("PR", "PR"),
+        ):
+            service.promote_task(task, state)
+            after = self.local_refs()
+            self.assertEqual(after - before, {f"refs/heads/481-{stage}"})
+            before = after
+            self.assertEqual(self.current_branch(self.repo), "main")
+            self.assertEqual(self.current_branch(worktree), f"481-{stage}")
+            worktree_branches = self.worktree_branches()
+            self.assertEqual(worktree_branches[self.repo], "main")
+            self.assertEqual(worktree_branches[worktree], f"481-{stage}")
+
+    def test_missing_stage_ref_starts_at_previous_tip(self):
+        branch, worktree = self.create_task(481)
+        service = self.service_for({"481": worktree})
+
+        service.promote_task(self.task(481, branch), "STAGING")
+
+        source_tip = git("rev-parse", branch, cwd=self.repo).stdout.strip()
+        for stage in ("TESTING", "STAGING"):
+            stage_tip = git("rev-parse", f"481-{stage}", cwd=self.repo).stdout.strip()
+            self.assertEqual(stage_tip, source_tip)
+
+    def test_two_concurrent_promotions_both_succeed(self):
+        branch_a, worktree_a = self.create_task(481)
+        branch_b, worktree_b = self.create_task(482)
+        service_a = self.service_for({"481": worktree_a})
+        service_b = self.service_for({"482": worktree_b})
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(
+                    service_a.promote_task, self.task(481, branch_a), "TESTING"
+                ),
+                executor.submit(
+                    service_b.promote_task, self.task(482, branch_b), "TESTING"
+                ),
+            ]
+            for future in futures:
+                future.result()
+
+        self.assertEqual(self.current_branch(self.repo), "main")
+        for task_id, branch in ((481, branch_a), (482, branch_b)):
+            stage_tip = git(
+                "rev-parse", f"{task_id}-TESTING", cwd=self.repo
+            ).stdout.strip()
+            source_tip = git("rev-parse", branch, cwd=self.repo).stdout.strip()
+            self.assertEqual(stage_tip, source_tip)
+
+
+if __name__ == "__main__":
+    unittest.main()

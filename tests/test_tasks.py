@@ -793,10 +793,10 @@ class TestTasksAI(unittest.TestCase):
             ["git", "commit", "-m", "Task change"], cwd=wt, capture_output=True
         )
 
-        # The pipeline branch already carries a conflicting edit of that line.
+        # The task-local TESTING stage already carries a conflicting edit.
         self.git_checkout_main()
         subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "-b", "testing"],
+            ["git", "checkout", "-b", f"{task_id}-TESTING"],
             cwd=self.dev_repo_dir,
             capture_output=True,
         )
@@ -825,17 +825,17 @@ class TestTasksAI(unittest.TestCase):
         for section in ("WHAT:", "WHY:", "HOW:", "CONSEQUENCE:"):
             self.assertIn(section, res["hint"], f"hint missing {section}")
 
-        # No in-progress merge may survive in the repo the CLI acts on.
+        # No in-progress merge may survive in the task worktree.
         merge_head = subprocess.run(  # noqa: PLW1510
             ["git", "rev-parse", "--verify", "MERGE_HEAD"],
-            cwd=self.dev_repo_dir,
+            cwd=wt,
             capture_output=True,
             text=True,
         )
         self.assertNotEqual(0, merge_head.returncode, "merge left in progress")
         unmerged = subprocess.run(  # noqa: PLW1510
             ["git", "ls-files", "--unmerged"],
-            cwd=self.dev_repo_dir,
+            cwd=wt,
             capture_output=True,
             text=True,
         )
@@ -913,10 +913,10 @@ class TestTasksAI(unittest.TestCase):
         )
         task_sha = sha_res.stdout.strip()
 
-        # Create/force-update a 'testing' branch to point to the same commit,
-        # simulating that testing already contains this work.
+        # Create/force-update the task-local TESTING stage to point to the same
+        # commit, simulating that the stage already contains this work.
         subprocess.run(
-            ["git", "branch", "-f", "testing", task_sha],
+            ["git", "branch", "-f", f"{task_id}-TESTING", task_sha],
             cwd=self.dev_repo_dir,
             capture_output=True,
             check=True,
@@ -996,10 +996,10 @@ class TestTasksAI(unittest.TestCase):
         res = self.run_cmd(["move", task_file, "TESTING"])
         self.assertTrue(res["success"], f"Move to TESTING failed: {res}")
 
-        # The TESTING gate creates testing and merges the task branch into it.
+        # The TESTING gate creates the task-local stage and merges the task branch into it.
         self.assertEqual(
             subprocess.run(  # noqa: PLW1510
-                ["git", "merge-base", "--is-ancestor", branch, "testing"],
+                ["git", "merge-base", "--is-ancestor", branch, f"{task_id}-TESTING"],
                 cwd=self.dev_repo_dir,
                 capture_output=True,
             ).returncode,
@@ -1048,7 +1048,6 @@ class TestTasksAI(unittest.TestCase):
         )
         self.assertTrue(res["success"])
         task_file = res["data"]["file"]
-        branch = res["data"]["branch"]
         task_id = res["data"]["id"]
         worktree_path = self.get_worktree_path(task_id)
 
@@ -1074,23 +1073,6 @@ class TestTasksAI(unittest.TestCase):
         self.complete_current_criteria(task_file)
         res = self.run_cmd(["move", task_file, "TESTING"])
         self.assertTrue(res["success"])
-
-        # Setup testing branch merge
-        self.git_checkout_main()
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", "-b", "testing"],
-            cwd=self.dev_repo_dir,
-            capture_output=True,
-        )
-        subprocess.run(
-            ["git", "merge", branch],
-            cwd=self.dev_repo_dir,
-            capture_output=True,
-            check=False,
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "checkout", branch], cwd=wt, capture_output=True
-        )
 
         # Mark tests passed and move to REVIEW
         res = self.run_cmd(["modify", task_file, "--tests-passed"])
@@ -1253,10 +1235,10 @@ class TestTasksAI(unittest.TestCase):
         self.complete_current_criteria(task_file)
         self.run_cmd(["move", task_file, "TESTING"])
 
-        # The TESTING gate creates testing and merges the initial commit into it.
+        # The TESTING gate creates the task-local stage and merges the initial commit into it.
         self.assertEqual(
             subprocess.run(  # noqa: PLW1510
-                ["git", "merge-base", "--is-ancestor", branch, "testing"],
+                ["git", "merge-base", "--is-ancestor", branch, f"{task_id}-TESTING"],
                 cwd=self.dev_repo_dir,
                 capture_output=True,
             ).returncode,
@@ -1300,21 +1282,15 @@ class TestTasksAI(unittest.TestCase):
         self.complete_current_criteria(task_file)
         self.run_cmd(["move", task_file, "TESTING"])
 
-        # Update testing to include fix (fast-forward merge)
-        self.git_checkout_main()
-        subprocess.run(
-            ["git", "checkout", "testing"],
-            cwd=self.dev_repo_dir,
-            capture_output=True,
-            check=False,
+        # Re-entering TESTING updates the task-local stage with the fix.
+        self.assertEqual(
+            subprocess.run(  # noqa: PLW1510
+                ["git", "merge-base", "--is-ancestor", branch, f"{task_id}-TESTING"],
+                cwd=self.dev_repo_dir,
+                capture_output=True,
+            ).returncode,
+            0,
         )
-        subprocess.run(
-            ["git", "merge", branch],
-            cwd=self.dev_repo_dir,
-            capture_output=True,
-            check=False,
-        )
-        subprocess.run(["git", "checkout", branch], cwd=wt, capture_output=True)  # noqa: PLW1510
 
         # Move to REVIEW (new diff regenerated, Rc reset)
         self.run_cmd(["move", task_file, "REVIEW"])
