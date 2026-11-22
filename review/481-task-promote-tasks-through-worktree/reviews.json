@@ -29,6 +29,16 @@
       "bytes": 705,
       "ts": 1795378856.311599,
       "prev_hash": "c950d005159ea3df10b85eaa289c397f2974449e4720adf9d2df088b7fa8ce03"
+    },
+    {
+      "seq": 4,
+      "file": "tests/test_tasks.py",
+      "patch": "tests_test_tasks.py.patch",
+      "md5": "27804c776c24e405fb0269c0c36ba264",
+      "sha256": "a242a020d77b26c1fbf019692289e28d023f4655cb813b0a7f522d1de478bb6a",
+      "bytes": 6008,
+      "ts": 1795378857.5203376,
+      "prev_hash": "9215a4f1154cd610669f78be76a8d82a5f32778a501f1562324f6aa702db01d7"
     }
   ]
 }
