@@ -70,6 +70,8 @@ class TestPRProvisioningStates(HammerTestBase):
     def test_legal_moves_through_pr_and_provisioning(self):
         task_id, task_file = self.create_task()
         self.relocate_task(task_file, "STAGING")
+        mounted = self.run_tasks(["mount", task_id])
+        self.assertTrue(json.loads(mounted.stdout)["success"], mounted.stdout)
 
         result = self.run_tasks(["move", task_id, "PR"])
         self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
