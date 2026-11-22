@@ -124,7 +124,8 @@ class LazyTaskCreationTest(HammerTestBase):
 
         self.assertEqual(parent["id"], BASE_ID)
         self.assertEqual(child["id"], BASE_ID + 2)
-        self.assertEqual(child["branch"], child["file"])
+        self.assertEqual(child["branch"], f"{BASE_ID + 2}-PROGRESSING")
+        self.assertNotEqual(child["branch"], child["file"])
         created_names = {
             name
             for name in self.backlog_tasks()

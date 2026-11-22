@@ -175,6 +175,21 @@ class GuardTestBase(HammerTestBase):
 class TestGuardScan(GuardTestBase):
     """Read-only reporting: the triage list, not a wall."""
 
+    def test_stage_refs_for_multiple_tasks_are_clean(self):
+        for task_id in (BASE_ID, BASE_ID + 1):
+            for stage in ("PROGRESSING", "TESTING", "STAGING", "PR"):
+                self.git(["branch", f"{task_id}-{stage}"])
+
+        data = self.scan_json()
+        self.assertEqual(
+            [
+                anomaly
+                for anomaly in data["anomalies"]
+                if anomaly["task_id"] in (BASE_ID, BASE_ID + 1)
+            ],
+            [],
+        )
+
     def test_scan_reports_duplicate_id(self):
         self.git(["branch", f"{BASE_ID}-task-alpha"])
         self.git(["branch", f"{BASE_ID}-issue-beta"])
@@ -302,7 +317,7 @@ class TestGuardGate(GuardTestBase):
     def test_branchless_ready_creates_branch_when_progressing(self):
         """The PROGRESSING sync hook supplies branch state after the READY gate."""
         self.create_task(counter_value=BASE_ID - 1)
-        branch = self._find_folder(BASE_ID, "backlog")
+        branch = f"{BASE_ID}-PROGRESSING"
         research = self.run_tasks(["modify", str(BASE_ID), "--research", RESEARCH])
         self.assertEqual(research.returncode, 0, research.stdout)
         ready = self.run_tasks(["move", str(BASE_ID), "READY"])
@@ -450,7 +465,7 @@ class TestGuardCache(GuardTestBase):
 
     def test_cache_survives_in_common_dir_from_worktree(self):
         self.create_task(counter_value=BASE_ID - 1)
-        branch = self._find_folder(BASE_ID, "backlog")
+        branch = f"{BASE_ID}-PROGRESSING"
         result = self.run_tasks(["mount", str(BASE_ID)])
         self.assertEqual(result.returncode, 0, result.stdout)
         worktree_path = os.path.join(self.dev_repo_dir, ".task-worktrees", branch)
@@ -497,7 +512,7 @@ class TestGuardIntegration(GuardTestBase):
 
     def test_hooks_install_into_common_dir_from_worktree(self):
         self.create_task(counter_value=BASE_ID - 1)
-        branch = self._find_folder(BASE_ID, "backlog")
+        branch = f"{BASE_ID}-PROGRESSING"
         result = self.run_tasks(["mount", str(BASE_ID)])
         self.assertEqual(result.returncode, 0, result.stdout)
         worktree_path = os.path.join(self.dev_repo_dir, ".task-worktrees", branch)

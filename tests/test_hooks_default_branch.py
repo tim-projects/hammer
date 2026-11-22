@@ -104,6 +104,22 @@ class TestHookBehaviorOnMasterRepo(HookRepoTestCase):
         res = self.commit_file()
         self.assertEqual(res.returncode, 0, f"commit on master rejected: {res.stderr}")
 
+    def test_task_local_stage_branch_commit_allowed(self):
+        self.install_hooks()
+        git(["checkout", "-b", "42-PROGRESSING"], self.repo_dir)
+        res = self.commit_file()
+        self.assertEqual(
+            res.returncode, 0, f"stage branch commit rejected: {res.stderr}"
+        )
+
+    def test_provisioning_branch_commit_allowed(self):
+        self.install_hooks()
+        git(["checkout", "-b", "provisioning"], self.repo_dir)
+        res = self.commit_file()
+        self.assertEqual(
+            res.returncode, 0, f"provisioning commit rejected: {res.stderr}"
+        )
+
     def test_nonconformant_branch_still_blocked(self):
         self.install_hooks()
         git(["checkout", "-b", "not-a-conformant-branch"], self.repo_dir)

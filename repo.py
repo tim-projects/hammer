@@ -501,7 +501,11 @@ def resolve_branch(name):
         )
         path, _ = cli.find_task(numeric_id)
         if path:
-            return os.path.basename(path).rsplit(".", 1)[0]
+            from tasks_ai.file_manager import FM
+
+            branch = FM.load(path).metadata.get("Br")
+            if branch:
+                return branch
     if branch_exists(name):
         return name
     error(f"COULD NOT RESOLVE BRANCH: {name}!")
