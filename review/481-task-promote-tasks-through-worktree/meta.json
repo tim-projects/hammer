@@ -1,0 +1,45 @@
+{
+  "Id": 481,
+  "Ti": "Promote tasks through worktree-local stage merges",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "481-task-promote-tasks-through-worktree",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795378448.500513,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/481-task-promote-tasks-through-worktree/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tests/test_critical_branches.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/481-task-promote-tasks-through-worktree/patches/tests_test_critical_branches.py.patch"
+    },
+    {
+      "file": "tests/test_pr_provisioning_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/481-task-promote-tasks-through-worktree/patches/tests_test_pr_provisioning_states.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/481-task-promote-tasks-through-worktree/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_local_promotion.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/481-task-promote-tasks-through-worktree/patches/tests_test_worktree_local_promotion.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "8b8b53f589ccb799104fcd5369791a1f4f847871",
+    "base": "8617e9bc259b5d72aa1799b2e960e082c838b1ce"
+  }
+}
