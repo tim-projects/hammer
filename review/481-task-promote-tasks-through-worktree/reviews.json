@@ -39,6 +39,16 @@
       "bytes": 6008,
       "ts": 1795378857.5203376,
       "prev_hash": "9215a4f1154cd610669f78be76a8d82a5f32778a501f1562324f6aa702db01d7"
+    },
+    {
+      "seq": 5,
+      "file": "tests/test_worktree_local_promotion.py",
+      "patch": "tests_test_worktree_local_promotion.py.patch",
+      "md5": "833fb3ada42a1188ec3d726b8074b669",
+      "sha256": "fce158a1a8b8a4cc9a793ab4f42dc9569575330ec707e1744dc3489bad18b198",
+      "bytes": 5915,
+      "ts": 1795378858.8103423,
+      "prev_hash": "bebf79b6e300e68a03de22bd4e5810484bc4d8d5bf14964c2ce0c5107a7c0d65"
     }
   ]
 }
