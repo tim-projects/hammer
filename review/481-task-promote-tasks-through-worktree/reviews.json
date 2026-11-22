@@ -50,5 +50,8 @@
       "ts": 1795378858.8103423,
       "prev_hash": "bebf79b6e300e68a03de22bd4e5810484bc4d8d5bf14964c2ce0c5107a7c0d65"
     }
-  ]
+  ],
+  "summary": "Reviewed all five patches: task-local stage refs stay in the task worktree, missing refs use the previous tip, shared terminal behavior is unchanged, and isolation/concurrency tests cover the regression.",
+  "summary_at": 1795379079.9922614,
+  "reviewed_at": 1795379079.9922626
 }
