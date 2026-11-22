@@ -199,6 +199,16 @@
       "bytes": 1379,
       "ts": 1795314235.6319048,
       "prev_hash": "1cbf8c1dabb5cc333c8884308396c71ec1c2e2f3c0ab632fd0eecb295c6dfe0a"
+    },
+    {
+      "seq": 21,
+      "file": "tests/test_task_naming.py",
+      "patch": "tests_test_task_naming.py.patch",
+      "md5": "4b55056bc3f73a8d4be82d0eb8559b07",
+      "sha256": "f3be5a39f6578f4ac29e9a5a2bf9ed201bf257c57e5f96cfaa14636cb34fe8ad",
+      "bytes": 2017,
+      "ts": 1795314237.435571,
+      "prev_hash": "bf3cc81a758732727c773dacd69b58c01c7ce0537d55d9b9ef194605951346d7"
     }
   ]
 }
