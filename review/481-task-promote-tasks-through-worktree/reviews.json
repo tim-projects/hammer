@@ -1,0 +1,14 @@
+{
+  "reviews": [
+    {
+      "seq": 1,
+      "file": "tasks_ai/git_service.py",
+      "patch": "tasks_ai_git_service.py.patch",
+      "md5": "a7f4ed39064b7b2682074833f80cbb4f",
+      "sha256": "4e847ce3d8304dba361949e09584056da01ccf4dfbf5abe1b5382be431dbf5e6",
+      "bytes": 7407,
+      "ts": 1795378814.702407,
+      "prev_hash": null
+    }
+  ]
+}
