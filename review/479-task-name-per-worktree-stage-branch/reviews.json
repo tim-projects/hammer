@@ -59,6 +59,16 @@
       "bytes": 2891,
       "ts": 1795314212.9920788,
       "prev_hash": "4910e0faeaabf7d84ed038897bd337df38c06fac0520577210bcfeb21de9fd7d"
+    },
+    {
+      "seq": 7,
+      "file": "tasks_ai/commands/list.py",
+      "patch": "tasks_ai_commands_list.py.patch",
+      "md5": "ec11441be8e27797abe2f687ab580b92",
+      "sha256": "ee433445503bd122d9e42e0c5f5c7fb3fcebccff107b52a75b1ba808440f4c79",
+      "bytes": 472,
+      "ts": 1795314214.509365,
+      "prev_hash": "b3a9c22717f031e1d8eec31a1ec470e62fe1026dc5a2891cda88de29309ecbba"
     }
   ]
 }
