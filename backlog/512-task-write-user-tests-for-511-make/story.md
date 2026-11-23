@@ -1,0 +1,1 @@
+As a maintainer commissioning allocator work, I need the id allocator to hold its own store lock and create to call it directly, so no future caller can race the high-water and the counter shim disappears before 495 retires it.
