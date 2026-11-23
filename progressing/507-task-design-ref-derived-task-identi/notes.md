@@ -1,0 +1,3 @@
+- Progress: Design confirmed against cleanup.py, create.py, counter.py, utils.store_lock, guard_engine._live_refs, and STATE_FOLDERS. Recorded R7 resolution in plan-guard.md; created implementation task 509 and paired acceptance-test task 510; linked 509 ahead of 495 and 501.
+- Findings: cleanup.py removes worktrees and merged branches but not task records. create.py allocates parent and paired child separately today. counter.py already serializes allocation with store_lock. guard_engine scans refs/heads and refs/remotes but its SQLite cache is verification-only.
+- Mitigations: Allocator lands additively with .task_counter as a migration floor; task 495 retires the counter only after 509 and 501. Guard remains the cross-machine duplicate backstop.

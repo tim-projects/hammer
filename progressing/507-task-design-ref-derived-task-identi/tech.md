@@ -1,17 +1,44 @@
 CONFIRMED DESIGN — ref-derived task identity.
 
-Authoritative high-water sources (scanned together):
-1. Task-record folders across all STATE_FOLDERS in .tasks/ (primary). Records are permanent: cleanup.py removes worktrees and merged branches only; ARCHIVED records stay. Covers REJECTED too.
-2. Branch refs matching ^(\d+)- : local refs/heads plus remote-tracking refs/remotes/* (secondary, covers the 315-class stray branches whose record is gone and any externally pushed branch).
+## Authoritative high-water sources (scanned together)
 
-Allocation: allocate_task_id(count=1) returns [max(sources)+1 ... +count], executed inside ONE store_lock transaction that also covers the caller's record write — create must open the lock once and allocate + write both the parent and (when paired) the test-child record inside it. count>0 exists because create allocates twice today (parent + test-pair child); a pure per-call max-scan would hand out the same id twice.
+1. **Permanent task records (primary).** Scan the numeric ID prefix of every task-record folder across all `STATE_FOLDERS` in the `.tasks` store and the `Id` in each record's `meta.json`. Records are permanent: `tasks_ai/commands/cleanup.py` prunes stale worktree manifest entries, deletes merged branches, and removes merged task worktrees; it never deletes task-record folders. ARCHIVED and REJECTED records therefore remain part of the high-water.
+2. **Git branch refs (secondary).** Run `git for-each-ref refs/heads refs/remotes` and parse each branch component matching `^(\d+)-`; local `refs/heads/*` and remote-tracking `refs/remotes/*` are both included. This covers stray branches whose task record is gone and externally pushed task branches.
 
-Persistence: the task record itself (folder name + meta.json Id). No counter file, no hash files, no recovery heuristic — a fresh clone rebuilds the high-water from the store scan. Guard's SQLite refs table stays a verifier, never an allocator (plan-guard.md R7 resolved: store-derived allocation + guard rejection).
+The allocator uses `max(records, refs)` as its high-water. During the additive migration it also uses the existing `.task_counter` value as a floor. A fresh clone rebuilds the high-water from the store records and refs; no counter, hash file, or recovery heuristic is required for the final design.
 
-Never-reuse rule: records are permanent. 378/379-style automated cleanup may remove worktrees/branches; it may never delete a record. If a record is ever lost, refs (source 2) keep the id above reuse, and guard REJECTs duplicates at gates.
+## Allocation and locking
 
-Cross-machine: two machines sharing the store via push/pull can still collide — identical exposure to the counter today (not a regression). Backstop unchanged: the guard gate. Known limitation, stated.
+`allocate_task_id(count=1)` returns `[max(sources) + 1, ..., max(sources) + count]`.
 
-Migration for task 495: land the allocator first with a floor = max(sources, .task_counter value while the file exists); 495 then deletes counter.py, the cli helper call sites (_get_next_id, _verify/_recover/_write hash helpers), doctor's stale-counter block, and the four tests that seed the file (plan-guard.md F14: test_tasks.py, test_init_backup.py, test_audit_verify_integration.py, test_robustness.py). Rollback: re-enable the counter read (the allocator is additive first).
+Allocation and the caller's record write occur inside **one** `store_lock` transaction. A paired create must open the lock once, allocate the parent and test-pair child together (`count=2`), and write both records while that lock is held. A separate scan per allocation would return the same ID twice within the same transaction.
 
-Rejected alternates: (a) guard SQLite as allocator — disposable cache, adds a rebuild dependency at create time; (b) git-branch creation as the reservation (R7's option) — mints refs for lazy tasks before they have a branch (455 lazy creation), and is blind to REJECTED records whose branch was deleted; (c) counter kept as a hint — keeps the mutable file 495 exists to delete.
+The current counter implementation demonstrates the required serialization boundary: `TaskCounterProtector.get_next_id()` holds `store_lock` around its whole read-modify-write-commit operation. The new allocator keeps that lock boundary but derives the high-water from records and refs.
+
+## Lazy tasks and never-reuse rule
+
+BACKLOG and READY tasks may have no branch yet. Their permanent records are sufficient for allocation from the primary source.
+
+Records are never deleted by automated cleanup. Cleanup scope is limited to worktrees and merged branches. If a record is ever lost, surviving branch refs keep its ID above reuse; if both are lost, the guard rejects duplicate IDs at pipeline gates.
+
+## Concurrency and cross-machine behavior
+
+Intra-repository allocation is serialized by `store_lock`, covering both allocation and record writes. Two machines sharing the store through push/pull can still collide, which is the same exposure as the current mutable counter and not a regression. The guard remains the cross-machine backstop and rejects duplicates at gates.
+
+## Migration and rollback
+
+Land the allocator first, additively, with `high_water = max(records, refs, counter_value)` while `.task_counter` exists. Task 495 then deletes the counter file, `counter.py`, the CLI counter/recovery/hash helpers, doctor's stale-counter block, and the tests that seed the counter. Task 501 builds its creation-time uniqueness check on the allocator's ref scan. Only after those changes may task 495 retire the counter.
+
+Rollback is to re-enable the counter read while leaving the allocator in place; the new allocator is additive first.
+
+## Rejected alternatives
+
+- **Guard SQLite as allocator:** the cache is disposable and would add a rebuild dependency to creation.
+- **Git branch creation as reservation:** it mints refs before lazy tasks have branches and misses REJECTED records whose branch was deleted.
+- **Counter retained as a hint:** this keeps the mutable file that task 495 exists to delete.
+
+## Implementation tasks and acceptance tests
+
+- **Task 509:** implement the record-and-ref allocator, counter migration floor, and one-lock paired create.
+- **Task 510:** add user-level coverage for the allocator.
+- Acceptance tests: N concurrent create processes in `--dev` mode allocate unique IDs; a fresh clone agrees with the original store's allocation high-water; reject-then-create never reuses the rejected ID.
