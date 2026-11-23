@@ -40,5 +40,8 @@
       "ts": 1795453598.4247537,
       "prev_hash": "bb34e73752043112c407f94b9f9f63798d33e8a0881b459f4a8fae1c46fca468"
     }
-  ]
+  ],
+  "summary": "Reviewed all four patches: allocator locking is reentrant and scoped correctly; create calls the allocator directly; the counter mirror behavior is unchanged in its transitional module; regression tests pin lock use and guard read-only behavior.",
+  "summary_at": 1795453723.8305333,
+  "reviewed_at": 1795453723.8305354
 }
