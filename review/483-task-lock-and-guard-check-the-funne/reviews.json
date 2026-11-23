@@ -29,6 +29,16 @@
       "bytes": 703,
       "ts": 1795399832.3857257,
       "prev_hash": "8df2957b88c28f47ca2662532ba1c8a2505a283118468c8fa25031315d7b9a51"
+    },
+    {
+      "seq": 4,
+      "file": "tasks_ai/commands/move.py",
+      "patch": "tasks_ai_commands_move.py.patch",
+      "md5": "b9d353e1a8db8ad44b4d802fc67aa4c5",
+      "sha256": "b130c6a3f2f3761f55f79a00cad7cf4c0a52833df354785bb3b7c7b8994257ee",
+      "bytes": 1163,
+      "ts": 1795399833.7155027,
+      "prev_hash": "e71db9a5ea0c06e48d75ef1622ad3d882cf7ef4bab6e6f80f7a604959d66494b"
     }
   ]
 }
