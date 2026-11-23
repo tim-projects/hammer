@@ -9,7 +9,11 @@
   "Pt": null,
   "Rr": true,
   "Tp": false,
-  "St": "READY",
+  "St": "PROGRESSING",
   "Rc": "",
-  "Vp": false
+  "Vp": false,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": null,
+  "DoneAt": null
 }
