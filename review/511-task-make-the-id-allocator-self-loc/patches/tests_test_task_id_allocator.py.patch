@@ -1,0 +1,49 @@
+diff --git a/tests/test_task_id_allocator.py b/tests/test_task_id_allocator.py
+index 8f5a5944..c880780a 100644
+--- a/tests/test_task_id_allocator.py
++++ b/tests/test_task_id_allocator.py
+@@ -4,8 +4,11 @@ import subprocess
+ import tempfile
+ import unittest
+ from types import SimpleNamespace
++from unittest.mock import patch
+ 
++from tasks_ai.guard_engine import GuardEngine
+ from tasks_ai.task_id_allocator import allocate_task_id
++from tasks_ai.utils import store_lock
+ from tests.hammer_test_base import HammerTestBase, cleanup_path
+ 
+ STORY = "Sufficiently long story content here to pass validation"
+@@ -58,6 +61,32 @@ class TaskIdAllocatorTest(unittest.TestCase):
+         with open(os.path.join(task_dir, "meta.json"), "w") as handle:
+             json.dump({"Id": task_id}, handle)
+ 
++    def test_allocation_uses_the_store_lock_and_is_reentrant(self):
++        cli = FakeCLI(self.store, self.repo)
++        with patch("tasks_ai.task_id_allocator.store_lock", wraps=store_lock) as locked:
++            self.assertEqual(allocate_task_id(cli), [1])
++        locked.assert_called_once_with(cli)
++
++        with store_lock(cli):
++            self.assertEqual(allocate_task_id(cli), [1])
++
++    def test_guard_never_calls_the_id_allocator(self):
++        engine = GuardEngine(repo_root=self.repo, tasks_path=self.store, cwd=self.repo)
++        with (
++            patch(
++                "tasks_ai.task_id_allocator.allocate_task_id",
++                side_effect=AssertionError("guard must not allocate IDs"),
++            ) as allocator,
++            patch(
++                "tasks_ai.guard_engine.allocate_task_id",
++                side_effect=AssertionError("guard must not allocate IDs"),
++                create=True,
++            ) as imported_allocator,
++        ):
++            engine.scan()
++        allocator.assert_not_called()
++        imported_allocator.assert_not_called()
++
+     def test_records_refs_and_counter_form_one_high_water(self):
+         self.write_record("backlog", 41)
+         self.write_record("rejected", 52)

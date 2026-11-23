@@ -1,0 +1,52 @@
+diff --git a/tasks_ai/task_id_allocator.py b/tasks_ai/task_id_allocator.py
+index 25aed961..51080ec1 100644
+--- a/tasks_ai/task_id_allocator.py
++++ b/tasks_ai/task_id_allocator.py
+@@ -1,9 +1,9 @@
+-import hashlib
+ import json
+ import os
+ import re
+ 
+ from .constants import STATE_FOLDERS
++from .utils import store_lock
+ 
+ _NUMERIC_ID = re.compile(r"^(\d+)-")
+ 
+@@ -69,30 +69,10 @@ def allocate_task_id(cli, count=1):
+     """Allocate sequential task IDs from permanent records, refs, and the counter floor."""
+     if count < 1:
+         raise ValueError("count must be positive")
+-    high_water = max(
+-        _record_high_water(cli.tasks_path),
+-        _ref_high_water(cli),
+-        _counter_floor(cli.tasks_path),
+-    )
+-    return list(range(high_water + 1, high_water + count + 1))
+-
+-
+-def mirror_counter_floor(cli, value):
+-    """Keep the legacy counter current until task 495 retires it."""
+-    counter_path = os.path.join(cli.tasks_path, ".task_counter")
+-    if not os.path.exists(counter_path):
+-        return
+-    content = str(value)
+-    cli._atomic_write(counter_path, content)
+-    digest = hashlib.md5(content.encode()).hexdigest()
+-    cli._atomic_write(counter_path + ".hash", digest)
+-    if (
+-        cli.git.run(
+-            ["add", ".task_counter", ".task_counter.hash"], cwd=cli.tasks_path
+-        ).returncode
+-        == 0
+-    ):
+-        cli.git.run(
+-            ["commit", "--allow-empty", "-m", f"Bump task counter to {value}"],
+-            cwd=cli.tasks_path,
++    with store_lock(cli):
++        high_water = max(
++            _record_high_water(cli.tasks_path),
++            _ref_high_water(cli),
++            _counter_floor(cli.tasks_path),
+         )
++        return list(range(high_water + 1, high_water + count + 1))

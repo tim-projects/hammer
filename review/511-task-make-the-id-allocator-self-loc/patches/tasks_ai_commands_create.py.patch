@@ -1,0 +1,26 @@
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 8d34f105..933c0d07 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -3,10 +3,10 @@ import re
+ from datetime import datetime, timezone
+ 
+ from ..constants import STATE_FOLDERS
+-from ..counter import TaskCounterProtector
++from ..counter import mirror_counter_floor
+ from ..file_manager import FM
+ from ..models import Task
+-from ..task_id_allocator import mirror_counter_floor
++from ..task_id_allocator import allocate_task_id
+ from ..utils import (
+     derive_task_folder,
+     derive_task_id,
+@@ -132,7 +132,7 @@ def _create_locked(
+     repro,
+ ):
+     """Allocate and write the parent and paired child under one store lock."""
+-    numeric_id, pair_numeric_id = TaskCounterProtector().get_next_id(cli, 2)
++    numeric_id, pair_numeric_id = allocate_task_id(cli, 2)
+     task_id = derive_task_id(numeric_id, task_type, title)
+     task_folder = derive_task_folder(numeric_id, task_type, title)
+     task_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["BACKLOG"], task_folder)

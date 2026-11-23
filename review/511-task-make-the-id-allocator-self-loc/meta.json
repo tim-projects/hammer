@@ -1,0 +1,41 @@
+{
+  "Id": 511,
+  "Ti": "Make the id allocator self-locking and drop the counter shim",
+  "Ty": "task",
+  "Cr": "261123 13:31",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "511-PROGRESSING",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795453032.099894,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/511-task-make-the-id-allocator-self-loc/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/counter.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/511-task-make-the-id-allocator-self-loc/patches/tasks_ai_counter.py.patch"
+    },
+    {
+      "file": "tasks_ai/task_id_allocator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/511-task-make-the-id-allocator-self-loc/patches/tasks_ai_task_id_allocator.py.patch"
+    },
+    {
+      "file": "tests/test_task_id_allocator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/511-task-make-the-id-allocator-self-loc/patches/tests_test_task_id_allocator.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "173b66168af8e554f2791154d61976745be3fafe",
+    "base": "2703d8448241d523f2e29cff85a16af29ae5c5b9"
+  }
+}
