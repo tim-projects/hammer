@@ -3,7 +3,9 @@
   "Ti": "Prevent duplicate task ids at creation",
   "Ty": "task",
   "Cr": "261121 08:11",
-  "Bl": [],
+  "Bl": [
+    "509-task-implement-ref-derived-task-id"
+  ],
   "Pr": 2,
   "Br": "501-task-prevent-duplicate-task-ids-at",
   "Pt": null,
