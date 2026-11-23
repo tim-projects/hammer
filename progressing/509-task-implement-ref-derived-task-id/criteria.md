@@ -1,8 +1,8 @@
-- [ ] Allocation uses the combined high-water of permanent task records and local/remote-tracking numeric branch refs, with the existing counter value as a migration floor
-- [ ] `allocate_task_id(count=N)` returns N distinct sequential IDs and allocation plus parent/paired-child record writes occur under one `store_lock` transaction
-- [ ] Lazy BACKLOG and READY tasks with no branch allocate correctly from records alone
-- [ ] Task records are not deleted by cleanup; REJECTED and ARCHIVED records continue contributing to the high-water
-- [ ] Guard remains a verifier/backstop and is not used as the allocator
-- [ ] Acceptance test starts N concurrent create processes in `--dev` mode and all allocated task IDs are unique
-- [ ] Acceptance test proves a fresh clone agrees with the original store allocation high-water
-- [ ] Acceptance test rejects a task, creates another task, and proves the rejected task ID is never reused
+- [x] Allocation uses the combined high-water of permanent task records and local/remote-tracking numeric branch refs, with the existing counter value as a migration floor
+- [x] `allocate_task_id(count=N)` returns N distinct sequential IDs and allocation plus parent/paired-child record writes occur under one `store_lock` transaction
+- [x] Lazy BACKLOG and READY tasks with no branch allocate correctly from records alone
+- [x] Task records are not deleted by cleanup; REJECTED and ARCHIVED records continue contributing to the high-water
+- [x] Guard remains a verifier/backstop and is not used as the allocator
+- [x] Acceptance test starts N concurrent create processes in `--dev` mode and all allocated task IDs are unique
+- [x] Acceptance test proves a fresh clone agrees with the original store allocation high-water
+- [x] Acceptance test rejects a task, creates another task, and proves the rejected task ID is never reused

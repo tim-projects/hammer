@@ -2,4 +2,6 @@
 Task: 509-task-implement-ref-derived-task-id
 ---
 
-- Progress: 
+- Progress: Implemented the ref-derived allocator and paired-create lock transaction. Added focused allocator coverage and updated the dev-isolation expectation from deliberate ID collision to non-reuse. Full ./hammer check all passes.
+- Findings: Task records and numeric local/remote-tracking refs now form the allocation high-water; .task_counter remains a migration floor and is mirrored after successful writes. Guard remains verification-only. The old counter hash/recovery methods became dead and were removed without suppressing unref.
+- Mitigations: Allocation and both record writes share one store_lock. Cross-machine collisions remain guarded by the existing duplicate-ID gate. Task 495 still owns deleting the counter file/module and doctor's stale-counter block.
