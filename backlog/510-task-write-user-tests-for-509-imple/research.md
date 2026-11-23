@@ -1,0 +1,1 @@
+The project create command automatically creates a paired user-test child. Acceptance coverage for task 509 must include N-process concurrent create in --dev, fresh-clone high-water agreement, and reject-then-create never reuse.
