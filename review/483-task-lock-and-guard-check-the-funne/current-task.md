@@ -2,6 +2,7 @@
 Task: 483-task-lock-and-guard-check-the-funne
 ---
 
+
 - Progress:
   - Added a kernel-released, reentrant `merge_lock` at `<main_repo_root>/.git/hammer-merge.lock` and applied it to `GitService.merge_branches` and `repo.py merge` across checkout, pull, merge, and push.
   - Added fail-closed branch guard integration before merge; branch-only `guard check --branch` now resolves the task id and reports REJECT findings.
