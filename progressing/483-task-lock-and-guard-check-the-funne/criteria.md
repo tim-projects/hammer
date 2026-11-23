@@ -1,3 +1,3 @@
-- [ ] two concurrent dev promotions into provisioning: both exit 0, exactly two merge commits, zero index.lock errors
-- [ ] merge whose src branch fails guard check is refused
-- [ ] SIGKILL of the lock holder mid-merge: next merge still succeeds (no stale lock)
+- [x] two concurrent dev promotions into provisioning: both exit 0, exactly two merge commits, zero index.lock errors
+- [x] merge whose src branch fails guard check is refused
+- [x] SIGKILL of the lock holder mid-merge: next merge still succeeds (no stale lock)
