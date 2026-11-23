@@ -70,5 +70,8 @@
       "ts": 1795423657.1714103,
       "prev_hash": "75483969765dad868dc1906b34297d55fd93a4e72502b4ba327cbb23b37ca4bf"
     }
-  ]
+  ],
+  "summary": "Read all 7 patches. The allocator combines permanent records, numeric local/remote-tracking refs, and the counter floor; paired writes share one store lock; dead legacy recovery methods are removed; focused tests cover concurrency, clone agreement, and never reuse; no unrelated changes found.",
+  "summary_at": 1795423740.3073854,
+  "reviewed_at": 1795423740.3073862
 }
