@@ -80,5 +80,8 @@
       "ts": 1795399839.3198137,
       "prev_hash": "e6a11bb6f4798a25c50141d69c440d202d589732d3f5d147ae81d0135d6b1ef1"
     }
-  ]
+  ],
+  "summary": "Reviewed all 8 patches: merge lock spans checkout/pull/merge/push, guard rejects before merge, branch-only guard resolves task id, and concurrency/guard/SIGKILL tests cover acceptance criteria.",
+  "summary_at": 1795399844.406361,
+  "reviewed_at": 1795399844.4063623
 }
