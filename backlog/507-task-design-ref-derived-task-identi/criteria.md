@@ -1,5 +1,7 @@
-- [ ] The confirmed design states the authoritative ref namespace and how IDs are derived and reserved
-- [ ] The design covers concurrent creation without duplicate IDs
-- [ ] The design covers lazy BACKLOG/READY tasks that have no branch yet
-- [ ] The design covers persistence, remote synchronization, recovery, and migration from existing task records
-- [ ] The design identifies the implementation tasks and acceptance tests required before task 495 can proceed
+- [ ] Design names both authoritative sources with the code evidence (record permanence verified in cleanup.py; ref scan defined)
+- [ ] allocate_task_id(count=N) specified so a paired create (parent + test child) never receives duplicate ids inside one lock
+- [ ] Lazy BACKLOG/READY tasks (no branch yet) allocate correctly from records alone
+- [ ] Never-reuse rule stated (records permanent; cleanup scope limited to worktrees/branches) plus the behavior if a record is lost
+- [ ] Migration floors and rollback defined (counter value as floor until 495 removes it; additive-first ordering)
+- [ ] Concurrency: intra-repo serialized in one store_lock transaction covering allocate+write; cross-machine limitation stated with guard backstop
+- [ ] Implementation tasks identified with acceptance tests: N-process concurrent create in --dev; fresh-clone allocation agrees; reject then create never reuses the id
