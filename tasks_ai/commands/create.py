@@ -3,9 +3,17 @@ import re
 from datetime import datetime, timezone
 
 from ..constants import STATE_FOLDERS
+from ..counter import TaskCounterProtector
 from ..file_manager import FM
 from ..models import Task
-from ..utils import derive_task_folder, derive_task_id, resolve_content, store_is_git
+from ..task_id_allocator import mirror_counter_floor
+from ..utils import (
+    derive_task_folder,
+    derive_task_id,
+    resolve_content,
+    store_is_git,
+    store_lock,
+)
 
 
 def run(
@@ -96,7 +104,35 @@ def run(
         except (ValueError, TypeError):
             cli.error("PRIORITY_INVALID")
 
-    numeric_id = cli._get_next_id()
+    with store_lock(cli):
+        return _create_locked(
+            cli,
+            title,
+            task_type,
+            priority,
+            parent,
+            story,
+            tech,
+            criteria,
+            plan,
+            repro,
+        )
+
+
+def _create_locked(
+    cli,
+    title,
+    task_type,
+    priority,
+    parent,
+    story,
+    tech,
+    criteria,
+    plan,
+    repro,
+):
+    """Allocate and write the parent and paired child under one store lock."""
+    numeric_id, pair_numeric_id = TaskCounterProtector().get_next_id(cli, 2)
     task_id = derive_task_id(numeric_id, task_type, title)
     task_folder = derive_task_folder(numeric_id, task_type, title)
     task_dir = os.path.join(cli.tasks_path, STATE_FOLDERS["BACKLOG"], task_folder)
@@ -198,7 +234,6 @@ def run(
             "or when 'tasks mount' is requested."
         )
 
-        pair_numeric_id = cli._get_next_id()
         pair_title = f"Write user tests for {numeric_id}: {title}"
         pair_task_id = derive_task_id(pair_numeric_id, "task", pair_title)
         pair_task_folder = derive_task_folder(pair_numeric_id, "task", pair_title)
@@ -282,6 +317,7 @@ def run(
             f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'"
         )
 
+        mirror_counter_floor(cli, pair_numeric_id)
         cli.finish(
             {
                 "id": numeric_id,

@@ -156,13 +156,11 @@ class TestDevCannotBlockARealTask(DevIsolationTestBase):
         shutil.rmtree(self.dev_repo_dir, ignore_errors=True)
 
         task_id, _ = self.create_dev_task(counter_value=BASE_ID - 1)
-        self.assertEqual(task_id, BASE_ID)
+        self.assertGreater(task_id, BASE_ID)
 
-        # The dev promotion of the colliding task is rejected: the dev repo
-        # holds both branches for that id, exactly as the real repo would.
-        blocked = self.run_tasks(["move", str(task_id), "READY"])
-        self.assertEqual(blocked.returncode, 1, blocked.stdout)
-        self.assertIn("GUARD", json.loads(blocked.stdout)["error"])
+        # The dev task does not collide with the real branch and can progress.
+        promoted_dev = self.run_tasks(["move", str(task_id), "READY"])
+        self.assertEqual(promoted_dev.returncode, 0, promoted_dev.stdout)
 
         # ...and the real task is still promotable: guard reads the real repo.
         self._write_real_task(real_branch)
