@@ -1,0 +1,1 @@
+Task 507 confirmed the allocator design: scan permanent task records across STATE_FOLDERS plus local and remote-tracking refs with numeric branch prefixes; use the existing counter only as a migration floor; allocate and write parent plus paired child under one store_lock; keep guard verification-only.
