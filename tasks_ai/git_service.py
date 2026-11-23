@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from .constants import STATE_FOLDERS
+from .utils import merge_lock
 
 
 class GitService:
@@ -382,6 +383,37 @@ class GitService:
             return True
         return False
 
+    def guard_branch(self, branch: str, cwd: str | None = None) -> list[dict]:
+        """Fail closed when guard finds an integrity violation for a branch."""
+        from .guard_engine import GuardEngine, GuardUnavailable, task_id_of
+
+        task_id = task_id_of(branch)
+        if task_id is None:
+            return []
+        repo_root = cwd or self.context.main_repo_root
+        engine = GuardEngine(
+            repo_root=repo_root,
+            tasks_path=self.context.tasks_path,
+            dev=self.context.dev,
+            cwd=repo_root,
+        )
+        try:
+            findings = engine.verdict(task_id, branch=branch)
+        except GuardUnavailable as exc:
+            from .cli_errors import PipelineGuardRejected
+
+            raise PipelineGuardRejected(
+                branch, "GUARD_UNAVAILABLE", task_id, str(exc)
+            ) from exc
+        if findings:
+            from .cli_errors import PipelineGuardRejected
+
+            finding = findings[0]
+            raise PipelineGuardRejected(
+                branch, finding["code"], task_id, finding["detail"]
+            )
+        return findings
+
     def merge_branches(
         self,
         src: str,
@@ -396,6 +428,17 @@ class GitService:
         merges pass their task worktree as ``cwd`` so another agent's checkout
         is never changed.
         """
+        with merge_lock(self.context.main_repo_root):
+            return self._merge_branches_locked(src, target, message, yes, cwd)
+
+    def _merge_branches_locked(
+        self,
+        src: str,
+        target: str,
+        message: str | None = None,
+        yes=False,
+        cwd: str | None = None,
+    ):
         repo_root = cwd or self.context.main_repo_root
 
         # 1. Ensure src and target exist
@@ -415,9 +458,12 @@ class GitService:
         # 3. Pull latest
         self.run(["pull", "origin", target], cwd=repo_root, check=False)
 
+        # 4. Refuse a source whose task identity fails the integrity guard.
+        self.guard_branch(src, cwd=repo_root)
+
         before = self.run(["rev-parse", target], cwd=repo_root).stdout.strip()
 
-        # 4. Merge
+        # 5. Merge
         msg = message or f"merge: {src} into {target}"
         self.log(f"Merging {src} -> {target}...")
         merge_res = self.run(
@@ -441,7 +487,7 @@ class GitService:
         else:
             self.log(f"Git: Already up to date: '{src}' is in '{target}'")
 
-        # 5. Push if confirmed (never in dev: the dev repo's origin is the real repo)
+        # 6. Push if confirmed (never in dev: the dev repo's origin is the real repo)
         if yes and not self.context.dev:
             remote = self.run(["remote"], cwd=repo_root)
             if "origin" in remote.stdout.split():
