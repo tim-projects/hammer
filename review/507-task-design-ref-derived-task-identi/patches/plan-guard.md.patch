@@ -1,0 +1,22 @@
+diff --git a/plan-guard.md b/plan-guard.md
+index 8aecffe8..101ab514 100644
+--- a/plan-guard.md
++++ b/plan-guard.md
+@@ -257,7 +257,7 @@ Phase 0 exists because three load-bearing git behaviors were assumed from docume
+ | R4 | `ls-tree` path glob works: `git ls-tree -r <tasks-ref> -- '*/meta.json'` filters server-side and covers the real layout | Run against `.tasks`'s branch; check output covers `backlog/178-task-x/meta.json` style paths only; measure line count vs unscoped `-r` | Remote map (§4.4 step 2); fallback is unscoped `-r` + Python filter |
+ | R5 | Task layout is uniformly `<state>/<id>-<type>-<slug>/meta.json` on the tasks branch (spot-check 20 folders across states for exceptions: single-file `.md` tasks, missing `meta.json`) | sample the `ls-tree` output from R4 + `.tasks` listing | task_id extraction rule (§4.4 step 3) |
+ | R6 | Does the main repo have a local `tasks` branch (and/or `origin/tasks` tracking ref)? Which should guard prefer when both exist? | `git branch --list tasks`, `git branch -r` | §4.5 |
+-| R7 | Should `create` mint IDs through guard's cached map (pre-flight uniqueness + high-water sanity) instead of / in addition to `.task_counter`? | Decide: keep counter file as backend backstopped by guard (Phase 2), vs. `git branch`-atomic allocation + guard rejection (later phase) | Scope boundary of Phase 2; affects F1's fate |
++| R7 | Should `create` mint IDs through guard's cached map (pre-flight uniqueness + high-water sanity) instead of / in addition to `.task_counter`? | **Resolved (task 507):** allocate from the combined high-water of permanent task records and local/remote-tracking numeric branch refs, under one `store_lock` covering allocation and writes. Guard remains a verifier/backstop, never the allocator. The counter is an additive migration floor until task 495 retires it. | Scope boundary of Phase 2; affects F1's fate |
+ | R8 | Guard in dev mode: do dev fixtures have branches/worktrees (so G4/G8 can run), or must G4/G8 degrade to WARN when `cli.dev`? | Inspect a `--dev` fixture: does `create` call `create_task_worktree` in dev? (`commands/create.py:180` — verify path, some hooks skip on dev: `pipeline_hooks.py:149,350`) | Test design (§11); dev behavior |
+ | R9 | refname charset safety for the `%09`-separated `for-each-ref` format (refnames containing tabs/newlines) | branch names are constrained to `[a-zA-Z0-9-]` by the pre-commit regex (F8) — confirm no legacy branch violates it: `git for-each-ref refs/heads --format='%(refname:short)'` scan | Parser correctness |
+ | R10 | Full inventory of call sites that must change | grep for `.task_counter`, `worktrees.json`, `_get_next_id`, `find_task`, `install_hooks` across `tasks_ai/`, `repo.py`, root scripts, `tests/` | Phase task list (§12) |
+@@ -298,7 +298,7 @@ Phase 0 exists because three load-bearing git behaviors were assumed from docume
+ 
+ ### Phase 4 — Legacy retirement (only after Phases 1-3 bake)
+ 
+-- Decide fate of `.task_counter` (+ `.hash`/`.backup`) and `tasks_ai/counter.py` based on R7: either deleted (allocation via guard-validated path) or retained strictly as a *hint* with guard as the enforced authority. Update the four tests that seed it (F14) accordingly.
++- Apply the R7 decision from task 507: land the store-derived allocator first, using the existing counter value as a migration floor; task 495 then deletes `.task_counter` (+ `.hash`/`.backup`) and `tasks_ai/counter.py` along with its helpers and stale-counter doctor block. Update the four tests that seed it (F14) accordingly. Guard remains a verifier/backstop, never the allocator.
+ - Delete `worktrees.json` writing entirely; `worktree_manager.py` reads the DB table (keep method signatures to minimize blast radius).
+ - Delete `_recover_task_counter_from_tasks` / `_verify_counter_hash` / `_write_counter_hash` (`cli.py:1165-1184`) if the counter file is retired; `doctor.py:272` stale-counter block likewise.
+ - Remove `list.py:45-48` ID-recovery heuristic once G1/G2 make it unreachable.

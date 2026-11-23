@@ -1,0 +1,29 @@
+{
+  "Id": 507,
+  "Ti": "Design ref-derived task identity allocation",
+  "Ty": "task",
+  "Cr": "261123 02:59",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "507-PROGRESSING",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795408740.996849,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "plan-guard.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/507-task-design-ref-derived-task-identi/patches/plan-guard.md.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "9bcd29d619dfc562885a6d8ec7895ac798b600bf",
+    "base": "d8ef45fa922e94104b5cd9426bd4bca5e2b3b114"
+  }
+}
