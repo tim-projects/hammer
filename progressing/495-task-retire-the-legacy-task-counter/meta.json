@@ -4,7 +4,8 @@
   "Ty": "task",
   "Cr": "261121 08:11",
   "Bl": [
-    "507-task-design-ref-derived-task-identi"
+    "507-task-design-ref-derived-task-identi",
+    "509-task-implement-ref-derived-task-id"
   ],
   "Pr": 2,
   "Br": "495-task-retire-the-legacy-task-counter",
