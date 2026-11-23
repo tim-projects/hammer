@@ -1,0 +1,10 @@
+{
+  "Id": 511,
+  "Ti": "Make the id allocator self-locking and drop the counter shim",
+  "Ty": "task",
+  "Cr": "261123 13:31",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "511-PROGRESSING",
+  "Pt": null
+}
