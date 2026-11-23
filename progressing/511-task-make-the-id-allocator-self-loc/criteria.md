@@ -1,6 +1,6 @@
-- [ ] allocate_task_id acquires store_lock internally; nested call from create stays a single transaction (reentrancy, no deadlock)
-- [ ] calling allocate_task_id outside any lock still allocates correctly (unit test)
-- [ ] create.py calls allocate_task_id directly; TaskCounterProtector has zero callers in tasks_ai/ and repo.py
-- [ ] counter.py remains on disk and functional as the mirror target until 495; mirror floor behavior unchanged
-- [ ] a test pins that guard never writes an ID (no allocation path)
-- [ ] existing allocator suite (tests/test_task_id_allocator.py) and create tests pass; ./hammer check all -force green
+- [x] allocate_task_id acquires store_lock internally; nested call from create stays a single transaction (reentrancy, no deadlock)
+- [x] calling allocate_task_id outside any lock still allocates correctly (unit test)
+- [x] create.py calls allocate_task_id directly; TaskCounterProtector has zero callers in tasks_ai/ and repo.py
+- [x] counter.py remains on disk and functional as the mirror target until 495; mirror floor behavior unchanged
+- [x] a test pins that guard never writes an ID (no allocation path)
+- [x] existing allocator suite (tests/test_task_id_allocator.py) and create tests pass; ./hammer check all -force green
