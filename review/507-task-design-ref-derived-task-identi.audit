@@ -1,0 +1,8 @@
+{
+    "task_id": "507",
+    "patch_hash": "c39b63c0148451c0848fcab30c89a14f",
+    "patch_files": [
+        "plan-guard.md.patch"
+    ],
+    "status": "verified"
+}
