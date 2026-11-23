@@ -1,0 +1,15 @@
+{
+    "task_id": "483",
+    "patch_hash": "5c9a3c8c97ec95980d36cea947474dcb",
+    "patch_files": [
+        "guard.py.patch",
+        "repo.py.patch",
+        "tasks_ai_cli_errors.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tasks_ai_utils.py.patch",
+        "tests_test_merge_lock_guard.py.patch"
+    ],
+    "status": "verified"
+}
