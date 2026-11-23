@@ -69,6 +69,16 @@
       "bytes": 1048,
       "ts": 1795399837.8968906,
       "prev_hash": "d01f81ed1298175d47b9d39d59039658148c31dc752daa9354f87dccefece7bd"
+    },
+    {
+      "seq": 8,
+      "file": "tests/test_merge_lock_guard.py",
+      "patch": "tests_test_merge_lock_guard.py.patch",
+      "md5": "286f2ff038fb8de9248cc053b69f7083",
+      "sha256": "01f731d58e0cc58e63295c1af91e9982f89cc908d5a2e8d26bdbd616a65cb7eb",
+      "bytes": 6554,
+      "ts": 1795399839.3198137,
+      "prev_hash": "e6a11bb6f4798a25c50141d69c440d202d589732d3f5d147ae81d0135d6b1ef1"
     }
   ]
 }
