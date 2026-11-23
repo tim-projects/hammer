@@ -1,0 +1,104 @@
+diff --git a/tasks_ai/task_id_allocator.py b/tasks_ai/task_id_allocator.py
+new file mode 100644
+index 00000000..25aed961
+--- /dev/null
++++ b/tasks_ai/task_id_allocator.py
+@@ -0,0 +1,98 @@
++import hashlib
++import json
++import os
++import re
++
++from .constants import STATE_FOLDERS
++
++_NUMERIC_ID = re.compile(r"^(\d+)-")
++
++
++def _record_high_water(tasks_path):
++    high_water = 0
++    for folder in STATE_FOLDERS.values():
++        state_path = os.path.join(tasks_path, folder)
++        if not os.path.isdir(state_path):
++            continue
++        for name in os.listdir(state_path):
++            match = _NUMERIC_ID.match(name)
++            if match:
++                high_water = max(high_water, int(match.group(1)))
++            meta_path = os.path.join(state_path, name, "meta.json")
++            try:
++                with open(meta_path, encoding="utf-8") as handle:
++                    task_id = json.load(handle).get("Id")
++                if str(task_id).isdigit():
++                    high_water = max(high_water, int(task_id))
++            except (OSError, TypeError, ValueError, json.JSONDecodeError):
++                pass
++    return high_water
++
++
++def _ref_high_water(cli):
++    result = cli._run_git(
++        ["for-each-ref", "refs/heads", "refs/remotes", "--format=%(refname)"],
++        cwd=cli.context.main_repo_root,
++    )
++    if result.returncode != 0:
++        raise RuntimeError(result.stderr.strip() or "could not scan task refs")
++
++    high_water = 0
++    for refname in result.stdout.splitlines():
++        candidate = None
++        if refname.startswith("refs/heads/"):
++            candidate = refname[len("refs/heads/") :]
++        elif refname.startswith("refs/remotes/"):
++            remote_branch = refname[len("refs/remotes/") :]
++            _, separator, branch = remote_branch.partition("/")
++            candidate = branch if separator else None
++        if candidate is None:
++            continue
++        match = _NUMERIC_ID.match(candidate)
++        if match:
++            high_water = max(high_water, int(match.group(1)))
++    return high_water
++
++
++def _counter_floor(tasks_path):
++    try:
++        with open(
++            os.path.join(tasks_path, ".task_counter"), encoding="utf-8"
++        ) as handle:
++            value = int(handle.read().strip())
++        return max(value, 0)
++    except (OSError, TypeError, ValueError):
++        return 0
++
++
++def allocate_task_id(cli, count=1):
++    """Allocate sequential task IDs from permanent records, refs, and the counter floor."""
++    if count < 1:
++        raise ValueError("count must be positive")
++    high_water = max(
++        _record_high_water(cli.tasks_path),
++        _ref_high_water(cli),
++        _counter_floor(cli.tasks_path),
++    )
++    return list(range(high_water + 1, high_water + count + 1))
++
++
++def mirror_counter_floor(cli, value):
++    """Keep the legacy counter current until task 495 retires it."""
++    counter_path = os.path.join(cli.tasks_path, ".task_counter")
++    if not os.path.exists(counter_path):
++        return
++    content = str(value)
++    cli._atomic_write(counter_path, content)
++    digest = hashlib.md5(content.encode()).hexdigest()
++    cli._atomic_write(counter_path + ".hash", digest)
++    if (
++        cli.git.run(
++            ["add", ".task_counter", ".task_counter.hash"], cwd=cli.tasks_path
++        ).returncode
++        == 0
++    ):
++        cli.git.run(
++            ["commit", "--allow-empty", "-m", f"Bump task counter to {value}"],
++            cwd=cli.tasks_path,
++        )

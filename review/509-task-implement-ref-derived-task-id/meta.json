@@ -1,0 +1,53 @@
+{
+  "Id": 509,
+  "Ti": "Implement ref-derived task id allocator",
+  "Ty": "task",
+  "Cr": "261123 03:51",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "509-PROGRESSING",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795423513.796478,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tasks_ai_cli_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/counter.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tasks_ai_counter.py.patch"
+    },
+    {
+      "file": "tasks_ai/task_id_allocator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tasks_ai_task_id_allocator.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tests_test_dev_isolation.py.patch"
+    },
+    {
+      "file": "tests/test_task_id_allocator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/509-task-implement-ref-derived-task-id/patches/tests_test_task_id_allocator.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "7b0523e7f529285cd8d73a8b38932d71fd4c3ae7",
+    "base": "8ad8bcd0df0e590905ad0b8970b6b735d0cf6cc7"
+  }
+}

@@ -1,0 +1,180 @@
+diff --git a/tests/test_task_id_allocator.py b/tests/test_task_id_allocator.py
+new file mode 100644
+index 00000000..8f5a5944
+--- /dev/null
++++ b/tests/test_task_id_allocator.py
+@@ -0,0 +1,174 @@
++import json
++import os
++import subprocess
++import tempfile
++import unittest
++from types import SimpleNamespace
++
++from tasks_ai.task_id_allocator import allocate_task_id
++from tests.hammer_test_base import HammerTestBase, cleanup_path
++
++STORY = "Sufficiently long story content here to pass validation"
++TECH = "Sufficiently long technical description here to pass validation"
++CRITERIA = "Sufficiently long acceptance criteria here to pass validation"
++PLAN = "Sufficiently long planning details here to pass validation"
++
++
++class FakeCLI:
++    def __init__(self, tasks_path, repo_root):
++        self.tasks_path = tasks_path
++        self.context = SimpleNamespace(main_repo_root=repo_root)
++
++    @staticmethod
++    def _run_git(args, cwd=None):
++        return subprocess.run(
++            ["git", *args],
++            cwd=cwd,
++            capture_output=True,
++            text=True,
++            check=False,
++        )
++
++
++class TaskIdAllocatorTest(unittest.TestCase):
++    def setUp(self):
++        self.root = tempfile.mkdtemp(prefix="hammer_allocator_")
++        self.addCleanup(cleanup_path, self.root)
++        self.store = os.path.join(self.root, "store")
++        self.repo = os.path.join(self.root, "repo")
++        os.makedirs(self.store)
++        os.makedirs(self.repo)
++        subprocess.run(["git", "init", "-b", "main"], cwd=self.repo, check=True)
++        subprocess.run(
++            ["git", "config", "user.email", "test@example.com"],
++            cwd=self.repo,
++            check=True,
++        )
++        subprocess.run(
++            ["git", "config", "user.name", "Test User"], cwd=self.repo, check=True
++        )
++        with open(os.path.join(self.repo, "README.md"), "w") as handle:
++            handle.write("# test\n")
++        subprocess.run(["git", "add", "README.md"], cwd=self.repo, check=True)
++        subprocess.run(["git", "commit", "-m", "initial"], cwd=self.repo, check=True)
++
++    def write_record(self, state, task_id):
++        task_dir = os.path.join(self.store, state, f"{task_id}-task-example")
++        os.makedirs(task_dir)
++        with open(os.path.join(task_dir, "meta.json"), "w") as handle:
++            json.dump({"Id": task_id}, handle)
++
++    def test_records_refs_and_counter_form_one_high_water(self):
++        self.write_record("backlog", 41)
++        self.write_record("rejected", 52)
++        subprocess.run(["git", "branch", "73-PROGRESSING"], cwd=self.repo, check=True)
++        subprocess.run(
++            ["git", "update-ref", "refs/remotes/origin/84-PROGRESSING", "HEAD"],
++            cwd=self.repo,
++            check=True,
++        )
++        with open(os.path.join(self.store, ".task_counter"), "w") as handle:
++            handle.write("95")
++
++        cli = FakeCLI(self.store, self.repo)
++        self.assertEqual(allocate_task_id(cli), [96])
++
++    def test_lazy_record_without_a_branch_still_raises_the_high_water(self):
++        self.write_record("ready", 120)
++        cli = FakeCLI(self.store, self.repo)
++        self.assertEqual(allocate_task_id(cli, 3), [121, 122, 123])
++
++    def test_rejected_and_archived_records_are_never_forgotten(self):
++        self.write_record("rejected", 130)
++        self.write_record("archived", 140)
++        cli = FakeCLI(self.store, self.repo)
++        self.assertEqual(allocate_task_id(cli), [141])
++
++
++class ConcurrentTaskIdAllocatorTest(HammerTestBase):
++    def create_args(self, title):
++        return [
++            "create",
++            title,
++            "--story",
++            STORY,
++            "--tech",
++            TECH,
++            "--criteria",
++            CRITERIA,
++            "--plan",
++            PLAN,
++        ]
++
++    def test_concurrent_dev_creates_allocate_unique_ids(self):
++        procs = [
++            subprocess.Popen(
++                [self.script_path, "tasks", "-j", "--dev", *self.create_args(title)],
++                cwd=self.repo_path,
++                stdout=subprocess.PIPE,
++                stderr=subprocess.PIPE,
++                text=True,
++            )
++            for title in (
++                "Concurrent allocator task alpha",
++                "Concurrent allocator task beta",
++                "Concurrent allocator task gamma",
++                "Concurrent allocator task delta",
++            )
++        ]
++        returned_ids = []
++        for proc in procs:
++            stdout, stderr = proc.communicate(timeout=120)
++            self.assertEqual(proc.returncode, 0, stdout + stderr)
++            returned_ids.append(json.loads(stdout)["data"]["id"])
++
++        record_ids = []
++        for state in ("backlog", "ready", "progressing", "testing", "review"):
++            state_dir = os.path.join(self.dev_tasks_dir, state)
++            if not os.path.isdir(state_dir):
++                continue
++            for name in os.listdir(state_dir):
++                meta_path = os.path.join(state_dir, name, "meta.json")
++                if os.path.exists(meta_path):
++                    with open(meta_path) as handle:
++                        metadata = json.load(handle)
++                    if "Id" in metadata:
++                        record_ids.append(metadata["Id"])
++
++        self.assertEqual(len(set(record_ids)), len(record_ids))
++        self.assertEqual(len(set(returned_ids)), len(returned_ids))
++
++    def test_fresh_clone_agrees_with_the_original_store_high_water(self):
++        created = self.run_tasks(self.create_args("Fresh clone allocator task"))
++        self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
++
++        clone = os.path.join(self.repo_path, "fresh-tasks-clone")
++        subprocess.run(
++            ["git", "clone", "--quiet", "--no-hardlinks", self.dev_tasks_dir, clone],
++            check=True,
++            capture_output=True,
++            text=True,
++        )
++        original = FakeCLI(self.dev_tasks_dir, self.repo_path)
++        cloned = FakeCLI(clone, self.repo_path)
++        self.assertEqual(allocate_task_id(original), allocate_task_id(cloned))
++
++    def test_reject_then_create_never_reuses_the_rejected_id(self):
++        created = self.run_tasks(self.create_args("Rejected allocator identity task"))
++        self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
++        rejected_id = json.loads(created.stdout)["data"]["id"]
++        rejected = self.run_tasks(["delete", str(rejected_id)])
++        self.assertEqual(rejected.returncode, 0, rejected.stdout + rejected.stderr)
++
++        next_created = self.run_tasks(
++            self.create_args("Replacement allocator identity task")
++        )
++        self.assertEqual(
++            next_created.returncode, 0, next_created.stdout + next_created.stderr
++        )
++        next_id = json.loads(next_created.stdout)["data"]["id"]
++        self.assertGreater(next_id, rejected_id)
++
++
++if __name__ == "__main__":
++    unittest.main()
