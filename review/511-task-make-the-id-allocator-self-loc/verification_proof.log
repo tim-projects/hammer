@@ -1,0 +1,1 @@
+Focused allocator, lazy-create, and guard tests passed (44 tests); ./hammer check all passed lint, full tests, typecheck, and format; all four generated patches reviewed with no regressions.
