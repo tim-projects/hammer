@@ -10,5 +10,8 @@
       "ts": 1795408781.106445,
       "prev_hash": null
     }
-  ]
+  ],
+  "summary": "Read the complete plan-guard.md patch; R7 now records the confirmed record-and-ref allocator, store-lock boundary, guard backstop, and additive counter-floor migration without unrelated changes.",
+  "summary_at": 1795408794.325131,
+  "reviewed_at": 1795408794.325132
 }
