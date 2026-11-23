@@ -1,0 +1,39 @@
+diff --git a/tasks_ai/guard_engine.py b/tasks_ai/guard_engine.py
+index 1968679d..7c7bd823 100644
+--- a/tasks_ai/guard_engine.py
++++ b/tasks_ai/guard_engine.py
+@@ -554,7 +554,7 @@ class GuardEngine:
+     # --- verdicts ---
+     def verdict(self, task_id, from_state=None, to_state=None, branch=None):
+         """Integrity verdict for one task. Raises GuardUnavailable if unverifiable."""
+-        task_id = int(task_id)
++        task_id = int(task_id) if task_id is not None else None
+         try:
+             return self._verdict_once(task_id, from_state, to_state, branch)
+         except GuardUnavailable:
+@@ -587,9 +587,13 @@ class GuardEngine:
+         return SEVERITY_REJECT
+ 
+     def _lookup(self, conn, task_id, to_state, branch):
+-        rows = conn.execute(
+-            "SELECT code, detail FROM anomalies WHERE task_id=?", (task_id,)
+-        ).fetchall()
++        rows = (
++            conn.execute(
++                "SELECT code, detail FROM anomalies WHERE task_id=?", (task_id,)
++            ).fetchall()
++            if task_id is not None
++            else []
++        )
+         findings = [
+             {
+                 "code": row["code"],
+@@ -598,7 +602,7 @@ class GuardEngine:
+             }
+             for row in rows
+         ]
+-        if branch:
++        if branch and task_id is not None:
+             if not BRANCH_CONVENTION_RE.match(branch):
+                 findings.append(
+                     {

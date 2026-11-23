@@ -1,0 +1,40 @@
+diff --git a/tasks_ai/utils.py b/tasks_ai/utils.py
+index b5a57d3d..84e825a4 100644
+--- a/tasks_ai/utils.py
++++ b/tasks_ai/utils.py
+@@ -24,8 +24,35 @@ straight through.
+ """
+ 
+ _local = threading.local()
++_merge_local = threading.local()
+ 
+ LOCK_NAME = ".hammer-lock"
++MERGE_LOCK_NAME = "hammer-merge.lock"
++
++
++@contextmanager
++def merge_lock(repo_root):
++    """Serialize shared repository merges across threads and processes."""
++    if getattr(_merge_local, "depth", 0):
++        _merge_local.depth += 1
++        try:
++            yield
++        finally:
++            _merge_local.depth -= 1
++        return
++    path = os.path.join(repo_root, ".git", MERGE_LOCK_NAME)
++    os.makedirs(os.path.dirname(path), exist_ok=True)
++    fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o644)
++    try:
++        fcntl.flock(fd, fcntl.LOCK_EX)
++        _merge_local.depth = 1
++        try:
++            yield
++        finally:
++            _merge_local.depth = 0
++    finally:
++        fcntl.flock(fd, fcntl.LOCK_UN)
++        os.close(fd)
+ 
+ 
+ @contextmanager

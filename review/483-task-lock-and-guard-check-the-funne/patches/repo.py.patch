@@ -1,0 +1,51 @@
+diff --git a/repo.py b/repo.py
+index cd2311bb..05080eea 100755
+--- a/repo.py
++++ b/repo.py
+@@ -39,7 +39,9 @@ import sys
+ from pathlib import Path
+ 
+ sys.path.append(os.getcwd())
++from tasks_ai.cli_errors import PipelineGuardRejected
+ from tasks_ai.cli_io import NextStepArgumentParser, configure_sigpipe
++from tasks_ai.utils import merge_lock
+ 
+ try:
+     from tasks_ai.cli import TasksCLI
+@@ -340,6 +342,24 @@ def cmd_merge_task_worktree(src, target, worktree):
+ 
+ 
+ def cmd_merge(src_input, target_input):
++    """Merge branches while holding the shared repository merge lock."""
++    with merge_lock(repo_root()):
++        _cmd_merge_locked(src_input, target_input)
++
++
++def _guard_merge_source(cli, src, cwd=None):
++    if not cli:
++        return
++    try:
++        cli.git.guard_branch(src, cwd=cwd)
++    except PipelineGuardRejected as exc:
++        error(
++            f"Guard rejected merge source '{exc.branch}': {exc.detail}",
++            error_code=exc.code,
++        )
++
++
++def _cmd_merge_locked(src_input, target_input):
+     src = resolve_branch(src_input)
+     target = resolve_branch(target_input)
+ 
+@@ -377,9 +397,11 @@ def cmd_merge(src_input, target_input):
+     ensure_pipeline_branch(target)
+     task_worktree = registered_task_worktree(cli, target)
+     if task_worktree:
++        _guard_merge_source(cli, src, cwd=task_worktree)
+         cmd_merge_task_worktree(src, target, task_worktree)
+         return
+ 
++    _guard_merge_source(cli, src)
+     info(f"Merging {src.upper()} → {target.upper()}")
+     current = get_current_branch()
+     if current != src:

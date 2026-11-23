@@ -1,0 +1,33 @@
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index 74c02556..8109fd4f 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -2,7 +2,12 @@ import os
+ import shutil
+ from datetime import datetime
+ 
+-from ..cli_errors import PipelineBranchMissing, PipelineMergeConflict, PipelinePushError
++from ..cli_errors import (
++    PipelineBranchMissing,
++    PipelineGuardRejected,
++    PipelineMergeConflict,
++    PipelinePushError,
++)
+ from ..constants import STATE_FOLDERS
+ from ..file_manager import FM
+ from ..pipeline import PipelineError
+@@ -178,6 +183,14 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+         except PipelinePushError as e:
+             cli.error("PIPELINE_PUSH_FAILED", branch=e.branch, stderr=e.stderr)
+             return False
++        except PipelineGuardRejected as e:
++            cli.error(
++                e.code,
++                branch=e.branch,
++                task_id=e.task_id,
++                detail=e.detail,
++            )
++            return False
+     elif sync:
+         cli.log("Warning: --force skips the pipeline merge; no conflict check ran.")
+ 

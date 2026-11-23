@@ -1,0 +1,21 @@
+diff --git a/guard.py b/guard.py
+index a6f7ba36..a34c1347 100755
+--- a/guard.py
++++ b/guard.py
+@@ -170,12 +170,14 @@ def emit_findings(findings, as_json):
+ 
+ def cmd_check(args):
+     engine = get_engine(dev=args.dev, cwd=os.getcwd())
++    branch = args.branch or branch_for_task(engine, args.task_id)
++    task_id = args.task_id if args.task_id is not None else task_id_of(branch)
+     try:
+         findings = engine.verdict(
+-            args.task_id,
++            task_id,
+             from_state=args.from_state,
+             to_state=args.to_state,
+-            branch=args.branch or branch_for_task(engine, args.task_id),
++            branch=branch,
+         )
+     except GuardUnavailable as exc:
+         # Cannot verify -> cannot approve. Fail closed, no escape hatch.

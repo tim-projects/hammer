@@ -1,0 +1,57 @@
+{
+  "Id": 483,
+  "Ti": "Lock and guard-check the funnel merges into provisioning",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "483-task-lock-and-guard-check-the-funne",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795399778.834835,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/guard.py.patch"
+    },
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli_errors.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/tasks_ai_cli_errors.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_merge_lock_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/483-task-lock-and-guard-check-the-funne/patches/tests_test_merge_lock_guard.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "e868841a03b18dd6eb32ec96b0d696ca17cedbfb",
+    "base": "7b83d181f871dc892e93c9cd9a1eca2236447263"
+  }
+}
