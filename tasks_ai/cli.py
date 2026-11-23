@@ -1,4 +1,3 @@
-import hashlib
 import os
 import re
 import shutil
@@ -380,12 +379,6 @@ class TasksCLI:
 
     def processing_candidates(self):
         return self.task_service.processing_candidates()
-
-    def _get_next_id(self):
-        from .counter import TaskCounterProtector
-
-        protector = TaskCounterProtector(self.tasks_path, self)
-        return protector.get_next_id(self)
 
     def _migrate_live_to_done(self):
         """Migrate .tasks/live to .tasks/done if it exists."""
@@ -1383,108 +1376,6 @@ class TasksCLI:
         subprocess.run(["bash", str(Path(self.repo_script).parent / "install.sh")])  # noqa: PLW1510
 
     # --- Internals ---
-    def _calculate_file_hash(self, filepath):
-        """Calculate MD5 hash of a file"""
-        try:
-            hash_md5 = hashlib.md5()
-            with open(filepath, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
-            return hash_md5.hexdigest()
-        except Exception:  # noqa: BLE001
-            return None
-
-    def _write_counter_hash(self, counter_file, hash_file):
-        """Write hash of counter file to hash file using atomic write"""
-        try:
-            file_hash = self._calculate_file_hash(counter_file)
-            if file_hash:
-                self._atomic_write(hash_file, file_hash)
-        except Exception:  # noqa: BLE001, S110
-            pass  # Fail silently for hash writing
-
-    def _verify_counter_hash(self, counter_file, hash_file):
-        """Verify that counter file matches its hash"""
-        if not os.path.exists(hash_file):
-            return False
-        try:
-            with open(hash_file, "r") as f:
-                stored_hash = f.read().strip()
-            calculated_hash = self._calculate_file_hash(counter_file)
-            return stored_hash == calculated_hash
-        except Exception:  # noqa: BLE001
-            return False
-
-    def _recover_task_counter_from_tasks(self):
-        """Recover task counter by scanning existing task IDs"""
-        try:
-            max_id = 0
-            # Scan all state folders for existing tasks
-            for folder in STATE_FOLDERS.values():
-                state_path = os.path.join(self.tasks_path, folder)
-                if not os.path.exists(state_path):
-                    continue
-                for item in os.listdir(state_path):
-                    if item in [
-                        ".gitkeep",
-                        ".task_counter",
-                        "task_counter",
-                        ".task_counter.counter_hash",
-                        ".task_counter.counter_backup",
-                        ".task_counter.counter_backup.hash",
-                    ]:
-                        continue
-                    item_path = os.path.join(state_path, item)
-                    if not os.path.isdir(item_path):
-                        continue
-                    # Try to get ID from directory name (format: {id}-{type}-{title})
-                    if "-" in item:
-                        parts = item.split("-", 1)
-                        if parts[0].isdigit():
-                            task_id = int(parts[0])
-                            max_id = max(max_id, task_id)
-                    # Also check metadata.json for ID as fallback
-                    meta_path = os.path.join(item_path, "meta.json")
-                    if os.path.exists(meta_path):
-                        try:
-                            import json
-
-                            with open(meta_path, "r") as f:
-                                meta = json.load(f)
-                            meta_id = meta.get("Id")
-                            if meta_id and str(meta_id).isdigit():
-                                task_id = int(meta_id)
-                                max_id = max(max_id, task_id)
-                        except Exception:  # noqa: BLE001, S110
-                            pass
-            # Also check remote branches for higher IDs
-            try:
-                # Get remote branch names that might contain task IDs
-                result = self._run_git(
-                    ["ls-remote", "--heads", "origin"], cwd=self.root
-                )
-                if result.returncode == 0:
-                    for line in result.stdout.strip().split("\n"):
-                        if not line:
-                            continue
-                        parts = line.split("\t")
-                        if len(parts) >= 2:
-                            ref = parts[1]
-                            # Look for refs like refs/heads/123-task-name
-                            if ref.startswith("refs/heads/"):
-                                branch_name = ref[11:]  # Remove refs/heads/
-                                if "-" in branch_name:
-                                    branch_parts = branch_name.split("-", 1)
-                                    if branch_parts[0].isdigit():
-                                        branch_id = int(branch_parts[0])
-                                        max_id = max(max_id, branch_id)
-            except Exception:  # noqa: BLE001, S110
-                pass  # Fail silently for remote check
-
-            return max_id
-        except Exception:  # noqa: BLE001
-            return 0
-
     def _get_git_root(self):
         try:
             return (
