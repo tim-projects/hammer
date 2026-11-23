@@ -2,3 +2,6 @@
 Task: 495-task-retire-the-legacy-task-counter
 ---
 
+- Progress: Investigation paused before implementation as requested. Confirmed task 495 assumes a ref-derived allocator that does not exist in this checkout: create.py still calls TaskCounterProtector; derive_task_id() consumes an already-allocated numeric ID and returns <id>-PROGRESSING; guard's SQLite worktree table is a disposable cache, not an allocator; task 501 checks duplicate refs after ID selection but does not allocate IDs. Created BACKLOG task 507 to research and confirm the allocation design; task 508 is the automatically generated paired user-test task. No source changes made for task 495.
+- Findings: Task 495 cannot be implemented as a minimal retirement: removing the counter without a confirmed replacement allocator would break task creation and identity guarantees.
+- Mitigations: Task 495 is linked to blocker 507 and must remain unimplemented until the ref-derived identity design is explicitly confirmed.
