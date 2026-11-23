@@ -1,0 +1,5 @@
+- [ ] The confirmed design states the authoritative ref namespace and how IDs are derived and reserved
+- [ ] The design covers concurrent creation without duplicate IDs
+- [ ] The design covers lazy BACKLOG/READY tasks that have no branch yet
+- [ ] The design covers persistence, remote synchronization, recovery, and migration from existing task records
+- [ ] The design identifies the implementation tasks and acceptance tests required before task 495 can proceed

@@ -1,0 +1,1 @@
+As a maintainer, I need a confirmed design for allocating task IDs from Git refs so task 495 can retire the mutable counter without losing identity guarantees.
