@@ -22,3 +22,14 @@ class PipelinePushError(Exception):
         self.branch = branch
         self.stderr = stderr
         super().__init__(f"Failed to push pipeline branch '{branch}'.")
+
+
+class PipelineGuardRejected(Exception):
+    """Raised when the guard rejects a merge source branch."""
+
+    def __init__(self, branch, code, task_id, detail):
+        self.branch = branch
+        self.code = code
+        self.task_id = task_id
+        self.detail = detail
+        super().__init__(f"Guard rejected merge source '{branch}': {detail}")
