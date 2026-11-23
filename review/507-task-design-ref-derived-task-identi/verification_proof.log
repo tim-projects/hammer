@@ -1,0 +1,1 @@
+Verified cleanup.py removes worktrees and merged branches but not records; create.py/counter.py establish the current allocation and lock behavior; guard_engine._live_refs scans local and remote-tracking refs; tasks 509 and 510 cover concurrent, fresh-clone, and reject-then-create acceptance tests. Full hammer check all passed and the sole review patch was read.
