@@ -50,5 +50,8 @@
       "ts": 1795517939.620391,
       "prev_hash": "38131188669eca6bacde9c08eda8c5ca748a4380318b1f866fc7315de5a93ed8"
     }
-  ]
+  ],
+  "summary": "Read all 5 patches: provisioning funnel plumbing, branch bootstrap, task-aware merge checks, deletion guards, and focused regression coverage.",
+  "summary_at": 1795518013.5193222,
+  "reviewed_at": 1795518013.519323
 }
