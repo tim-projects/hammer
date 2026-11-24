@@ -57,10 +57,6 @@ class TestTasksAI(unittest.TestCase):
             d = os.path.join(self.dev_tasks_dir, folder)
             os.makedirs(d, exist_ok=True)
             open(os.path.join(d, ".gitkeep"), "w").close()
-        counter_file = os.path.join(self.dev_tasks_dir, ".task_counter")
-        if not os.path.exists(counter_file):
-            with open(counter_file, "w") as f:
-                f.write("0")
         config_data = {
             "repo": {
                 "lint": "ruff",
@@ -78,20 +74,10 @@ class TestTasksAI(unittest.TestCase):
         os.environ.pop("HAMMER_DEV_TASKS_DIR", None)
 
     def get_worktree_path(self, task_numeric_id):
-        """Get or create the task worktree path, then read the manifest."""
-        manifest_path = os.path.join(self.dev_tasks_dir, "worktrees.json")
-        if os.path.exists(manifest_path):
-            with open(manifest_path) as f:
-                manifest = json.load(f)
-            entry = manifest.get("worktrees", {}).get(str(task_numeric_id))
-            if entry:
-                return entry.get("path")
+        """Get or create the task worktree path from the mount response."""
         mounted = self.run_cmd(["mount", str(task_numeric_id)])
         self.assertTrue(mounted["success"], f"mount failed: {mounted}")
-        with open(manifest_path) as f:
-            manifest = json.load(f)
-        entry = manifest.get("worktrees", {}).get(str(task_numeric_id))
-        return entry.get("path") if entry else None
+        return mounted["data"]["worktree_path"]
 
     @property
     def dev_repo_dir(self):

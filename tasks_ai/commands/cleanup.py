@@ -28,7 +28,7 @@ def run(cli, dry_run=False, yes=False):
     cleaned = []
     archived = []
 
-    # 1. Prune stale worktree entries from the manifest
+    # 1. Prune stale entries from Git's worktree registry
     pruned = cli.git.worktrees.prune_worktrees()
     for task_id in pruned:
         if dry_run:

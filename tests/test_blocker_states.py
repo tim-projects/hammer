@@ -28,9 +28,7 @@ class BlockerStateTestBase(HammerTestBase):
             )
 
     def create_task(self, counter_value, title):
-        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
-        with open(counter, "w") as handle:
-            handle.write(str(counter_value))
+        self.seed_task_id_floor(counter_value)
         result = self.run_tasks(
             [
                 "create",

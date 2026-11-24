@@ -8,7 +8,6 @@ import types
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 
-from tasks_ai.cli_errors import PipelineGuardRejected
 from tasks_ai.git_service import GitService
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -78,6 +77,8 @@ class MergeLockGuardTest(unittest.TestCase):
         )
 
     def test_guard_rejection_prevents_merge(self):
+        from tasks_ai.cli_errors import PipelineGuardRejected
+
         source = self.create_branch("800-task-good", "good.txt")
         self.create_branch("800-issue-duplicate", "duplicate.txt")
         before = git("rev-parse", "provisioning", cwd=self.repo).stdout.strip()

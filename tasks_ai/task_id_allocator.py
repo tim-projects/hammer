@@ -54,25 +54,13 @@ def _ref_high_water(cli):
     return high_water
 
 
-def _counter_floor(tasks_path):
-    try:
-        with open(
-            os.path.join(tasks_path, ".task_counter"), encoding="utf-8"
-        ) as handle:
-            value = int(handle.read().strip())
-        return max(value, 0)
-    except (OSError, TypeError, ValueError):
-        return 0
-
-
 def allocate_task_id(cli, count=1):
-    """Allocate sequential task IDs from permanent records, refs, and the counter floor."""
+    """Allocate sequential task IDs from permanent records and Git refs."""
     if count < 1:
         raise ValueError("count must be positive")
     with store_lock(cli):
         high_water = max(
             _record_high_water(cli.tasks_path),
             _ref_high_water(cli),
-            _counter_floor(cli.tasks_path),
         )
         return list(range(high_water + 1, high_water + count + 1))

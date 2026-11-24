@@ -18,7 +18,6 @@ Invariants (see plan-guard.md):
   GUARD_STATE_DUPLICATE      one task id in two state folders            REJECT
   GUARD_WORKTREE_ORPHAN      worktree without its branch / duplicated    REJECT
   GUARD_WORKTREE_PATH_DRIFT  worktree not at <worktrees_base>/<branch>   REJECT
-  GUARD_WORKTREE_MISSING_WORKTREE manifest path is not a git worktree    REJECT
   GUARD_WORKTREE_UNREGISTERED directory under .task-worktrees/ unowned   REJECT
   GUARD_WORKTREE_LOCAL_STORE registered worktree contains .tasks         REJECT
   GUARD_REMOTE_DIVERGENCE    local task lost its branch                  REJECT
@@ -26,7 +25,6 @@ Invariants (see plan-guard.md):
 """
 
 import hashlib
-import json
 import os
 import re
 import sqlite3
@@ -34,7 +32,8 @@ import subprocess
 from datetime import datetime, timezone
 
 from .constants import STATE_FOLDERS, TASKS_BRANCH
-from .utils import audit_worktree_manifest, duplicate_metadata_consistent
+from .file_manager import FM
+from .utils import audit_worktrees, duplicate_metadata_consistent
 
 SCHEMA_VERSION = "1"
 CACHE_DIR_NAME = "hammer-guard"
@@ -525,23 +524,29 @@ class GuardEngine:
                         f"worktree of task {tid} checks out missing branch '{branch}'",
                     )
 
-        # Hammer owns worktree paths: every registered path must be
-        # <worktrees_base>/<branch> and a real git worktree, and no directory
-        # under .task-worktrees/ may sit outside the manifest.
+        # Hammer owns worktree paths: every Git worktree must be
+        # <worktrees_base>/<branch>, and no directory under .task-worktrees/
+        # may sit outside Git's registry.
         worktrees_base = self._worktrees_base()
-        manifest_path = (
-            os.path.join(self.tasks_path, "worktrees.json") if self.tasks_path else ""
-        )
-        if worktrees_base and manifest_path and os.path.exists(manifest_path):
-            try:
-                with open(manifest_path, encoding="utf-8") as f:
-                    manifest = json.load(f)
-            except (json.JSONDecodeError, OSError):
-                manifest = {}
-            for code, tid, detail in audit_worktree_manifest(
-                manifest.get("worktrees", {}),
-                worktrees_base,
-                [w.get("path", "") for w in worktrees],
+        if worktrees_base:
+            expected_branches = {}
+            for tid, folders in local.items():
+                for folder, name in folders:
+                    try:
+                        task = FM.load(os.path.join(self.tasks_path, folder, name))
+                    except Exception:  # noqa: BLE001, S112
+                        continue
+                    branch = task.metadata.get("Br")
+                    if isinstance(branch, str) and branch:
+                        expected_branches[str(tid)] = branch
+                        break
+            managed_worktrees = [
+                worktree
+                for worktree in worktrees
+                if task_id_of(worktree.get("branch")) in local
+            ]
+            for code, tid, detail in audit_worktrees(
+                managed_worktrees, worktrees_base, expected_branches
             ):
                 add(code, tid, detail)
 

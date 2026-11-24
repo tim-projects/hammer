@@ -47,15 +47,8 @@ class UnlinkTestBase(HammerTestBase):
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
         self.script_path = os.path.join(self.repo_path, "hammer")
 
-    def seed_counter(self, value):
-        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
-        if os.path.exists(counter):
-            os.remove(counter)
-        with open(counter, "w") as handle:
-            handle.write(str(value))
-
     def create_task(self, counter_value, title):
-        self.seed_counter(counter_value)
+        self.seed_task_id_floor(counter_value)
         result = self.run_tasks(
             [
                 "create",

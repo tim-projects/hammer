@@ -1,64 +1,60 @@
-"""Hammer owns worktree paths: the manifest, git and .task-worktrees/ must agree.
+"""Hammer owns worktree paths: Git and .task-worktrees/ must agree.
 
-The rule lives in one place (tasks_ai.utils.audit_worktree_manifest) and is used
-by the guard's anomaly computation and by `tasks doctor`, so both report the same
-drift and `doctor --fix` can repair the safe part of it.
+Git's worktree registry is authoritative. The shared audit in
+tasks_ai.utils.audit_worktrees is used by both the guard and WorktreeManager.
 """
 
-import json
 import os
 import shutil
 import tempfile
 import unittest
 
-from tasks_ai.utils import audit_worktree_manifest
+from tasks_ai.utils import audit_worktrees
 
-BRANCH = "350-issue-hammer-must-own-worktree-paths"
+BRANCH = "350-PROGRESSING"
 
 
-class TestAuditWorktreeManifest(unittest.TestCase):
+class TestAuditWorktrees(unittest.TestCase):
     BASE = "/repo/.task-worktrees"
     GOOD = "/repo/.task-worktrees/" + BRANCH
 
     def test_registered_and_live_worktree_is_clean(self):
         self.assertEqual(
-            audit_worktree_manifest(
-                {"350": {"branch": BRANCH, "path": self.GOOD}},
+            audit_worktrees([{"branch": BRANCH, "path": self.GOOD}], self.BASE),
+            [],
+        )
+
+    def test_recorded_legacy_task_branch_is_authoritative(self):
+        legacy_branch = "350-task-example"
+        legacy_path = os.path.join(self.BASE, legacy_branch)
+        self.assertEqual(
+            audit_worktrees(
+                [{"branch": legacy_branch, "path": legacy_path}],
                 self.BASE,
-                [self.GOOD, "/repo"],
+                {"350": legacy_branch},
             ),
             [],
         )
 
     def test_path_that_is_not_the_branch_name_is_drift(self):
         drifted = self.GOOD + "x"
-        findings = audit_worktree_manifest(
-            {"350": {"branch": BRANCH, "path": drifted}}, self.BASE, [drifted, "/repo"]
-        )
+        findings = audit_worktrees([{"branch": BRANCH, "path": drifted}], self.BASE)
         self.assertEqual([f[0] for f in findings], ["GUARD_WORKTREE_PATH_DRIFT"])
         self.assertIn("expected", findings[0][2])
 
     def test_path_outside_the_base_is_drift(self):
-        findings = audit_worktree_manifest(
-            {"350": {"branch": BRANCH, "path": "/elsewhere/350"}},
-            self.BASE,
-            ["/elsewhere/350", "/repo"],
+        findings = audit_worktrees(
+            [{"branch": BRANCH, "path": "/elsewhere/350"}], self.BASE
         )
         self.assertEqual([f[0] for f in findings], ["GUARD_WORKTREE_PATH_DRIFT"])
 
-    def test_registered_path_with_no_git_worktree(self):
-        findings = audit_worktree_manifest(
-            {"350": {"branch": BRANCH, "path": self.GOOD}}, self.BASE, ["/repo"]
-        )
-        self.assertEqual([f[0] for f in findings], ["GUARD_WORKTREE_MISSING_WORKTREE"])
-
-    def test_manifest_entry_without_a_path(self):
-        findings = audit_worktree_manifest(
-            {"350": {"branch": BRANCH}}, self.BASE, [self.GOOD, "/repo"]
-        )
-        self.assertEqual(
-            [(f[0], f[1]) for f in findings], [("GUARD_WORKTREE_PATH_DRIFT", "350")]
-        )
+    def test_local_task_store_is_reported(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base, ignore_errors=True)
+        worktree = os.path.join(base, BRANCH)
+        os.makedirs(os.path.join(worktree, ".tasks"))
+        findings = audit_worktrees([{"branch": BRANCH, "path": worktree}], base)
+        self.assertIn("GUARD_WORKTREE_LOCAL_STORE", [f[0] for f in findings])
 
     def test_unregistered_directory_under_the_base(self):
         base = tempfile.mkdtemp()
@@ -67,11 +63,7 @@ class TestAuditWorktreeManifest(unittest.TestCase):
         os.makedirs(os.path.join(worktrees_base, BRANCH))
         os.makedirs(os.path.join(worktrees_base, "999-task-does-not-exist"))
         good = os.path.join(worktrees_base, BRANCH)
-        findings = audit_worktree_manifest(
-            {"350": {"branch": BRANCH, "path": good}},
-            worktrees_base,
-            [good, base],
-        )
+        findings = audit_worktrees([{"branch": BRANCH, "path": good}], worktrees_base)
         self.assertEqual(len(findings), 1)
         code, task_id, detail = findings[0]
         self.assertEqual(code, "GUARD_WORKTREE_UNREGISTERED")
@@ -80,7 +72,7 @@ class TestAuditWorktreeManifest(unittest.TestCase):
 
 
 class TestRemoveUnregisteredDir(unittest.TestCase):
-    """The doctor repair: only paths nobody owns, never a real worktree."""
+    """The doctor repair: only paths Git does not own, never a real worktree."""
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -95,13 +87,10 @@ class TestRemoveUnregisteredDir(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _manager(self, manifest_worktrees):
+    def _manager(self):
         from tasks_ai.worktree_manager import WorktreeManager
 
         base_dir, registered_dir = self.tmp, self.registered
-
-        with open(os.path.join(self.tasks_path, "worktrees.json"), "w") as f:
-            json.dump({"worktrees": manifest_worktrees}, f)
 
         class Git:
             def run(self, args, cwd=None, **kwargs):
@@ -126,23 +115,23 @@ class TestRemoveUnregisteredDir(unittest.TestCase):
         return mgr
 
     def test_removes_unregistered_directory(self):
-        mgr = self._manager({"350": {"branch": BRANCH, "path": self.registered}})
+        mgr = self._manager()
         self.assertTrue(mgr.remove_unregistered_dir(self.stray))
         self.assertFalse(os.path.exists(self.stray))
         self.assertTrue(os.path.exists(self.registered))
 
     def test_refuses_registered_directory(self):
-        mgr = self._manager({"350": {"branch": BRANCH, "path": self.registered}})
+        mgr = self._manager()
         self.assertFalse(mgr.remove_unregistered_dir(self.registered))
 
     def test_refuses_path_outside_the_base(self):
-        mgr = self._manager({})
+        mgr = self._manager()
         outside = os.path.join(self.tmp, "somewhere-else")
         os.makedirs(outside)
         self.assertFalse(mgr.remove_unregistered_dir(outside))
 
     def test_audit_and_repair_agree_on_the_same_repo(self):
-        mgr = self._manager({"350": {"branch": BRANCH, "path": self.registered}})
+        mgr = self._manager()
         findings = mgr.audit_worktrees()
         self.assertEqual([f[0] for f in findings], ["GUARD_WORKTREE_UNREGISTERED"])
         mgr.remove_unregistered_dir(findings[0][2].split(": ", 1)[-1])

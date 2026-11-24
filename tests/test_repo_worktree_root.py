@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import sys
@@ -25,20 +24,6 @@ class TestRepoLinkedWorktreeRoot(unittest.TestCase):
         os.makedirs(os.path.dirname(self.worktree), exist_ok=True)
         self.git("worktree", "add", "-b", "123-task-example", self.worktree)
         os.makedirs(os.path.join(self.main, ".tasks"), exist_ok=True)
-        with open(
-            os.path.join(self.main, ".tasks", "worktrees.json"), "w", encoding="utf-8"
-        ) as handle:
-            json.dump(
-                {
-                    "worktrees": {
-                        "123": {
-                            "branch": "123-task-example",
-                            "path": self.worktree,
-                        }
-                    }
-                },
-                handle,
-            )
 
     def tearDown(self):
         self.tmp.cleanup()
