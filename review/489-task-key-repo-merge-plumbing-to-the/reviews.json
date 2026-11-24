@@ -9,6 +9,16 @@
       "bytes": 8353,
       "ts": 1795517935.5336168,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "tasks_ai/cli.py",
+      "patch": "tasks_ai_cli.py.patch",
+      "md5": "8a1c022aff2d9fb8260da58603b9c200",
+      "sha256": "a750bdb1ae6e4361732f2c9cd7ca336fe5363e304e5657b165b0a20e5b0523f8",
+      "bytes": 2547,
+      "ts": 1795517936.7220213,
+      "prev_hash": "68f9282bf9b92b3ad1ae12632bc1549c493d04f449c1bbe4597e136f75d6842c"
     }
   ]
 }
