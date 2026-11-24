@@ -1,0 +1,18 @@
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index f7843083..948e9139 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -34,12 +34,9 @@ CURRENT_TASK_FILENAME = "current-task.md"
+ TASKS_GITIGNORE_TEMPLATE = """# Runtime lock
+ /.hammer-lock
+ 
+-# Local validation, logs, and legacy counter caches
++# Local validation and logs
+ /.last_validation_hash
+ /log/
+-/.task_counter.backup
+-/.task_counter.backup.hash
+-/task_counter
+ 
+ # Python environments and caches
+ /.venv/

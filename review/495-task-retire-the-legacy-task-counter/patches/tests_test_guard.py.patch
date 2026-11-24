@@ -1,0 +1,24 @@
+diff --git a/tests/test_guard.py b/tests/test_guard.py
+index f125540e..0c6471dd 100755
+--- a/tests/test_guard.py
++++ b/tests/test_guard.py
+@@ -114,17 +114,10 @@ class GuardTestBase(HammerTestBase):
+             check=False,
+         )
+ 
+-    def seed_counter(self, value):
+-        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
+-        if os.path.exists(counter):
+-            os.remove(counter)
+-        with open(counter, "w") as handle:
+-            handle.write(str(value))
+-
+     def create_task(self, counter_value=None, title=TITLE):
+-        """Create a task with a predictable Id (counter -> counter + 1)."""
++        """Create a task with a predictable Id (ref floor -> floor + 1)."""
+         if counter_value is not None:
+-            self.seed_counter(counter_value)
++            self.seed_task_id_floor(counter_value)
+         result = self.run_tasks(
+             [
+                 "create",

@@ -1,0 +1,80 @@
+diff --git a/tasks_ai/commands/doctor.py b/tasks_ai/commands/doctor.py
+index ce2cedbb..591449fd 100644
+--- a/tasks_ai/commands/doctor.py
++++ b/tasks_ai/commands/doctor.py
+@@ -10,7 +10,6 @@ from ..utils import (
+     derive_task_folder,
+     derive_task_id,
+     parse_filename,
+-    store_is_git,
+     worktree_path_matches,
+ )
+ 
+@@ -37,7 +36,6 @@ def run(cli, fix=False):
+         fix_id = int(fix)
+ 
+     # Check each state folder for inconsistencies
+-    max_task_id = 0
+     guard_tasks = []
+     for state, folder in STATE_FOLDERS.items():
+         state_path = os.path.join(cli.tasks_path, folder)
+@@ -77,8 +75,6 @@ def run(cli, fix=False):
+             if correct_id is None:
+                 continue
+ 
+-            # Track max task ID for stale counter check
+-            max_task_id = max(max_task_id, correct_id)
+             guard_tasks.append((correct_id, branch_from_metadata))
+ 
+             # If fix_id is provided, only process that task
+@@ -255,25 +251,6 @@ def run(cli, fix=False):
+                         }
+                     )
+ 
+-    # Check for stale task counter
+-    counter_path = os.path.join(cli.tasks_path, ".task_counter")
+-    if os.path.exists(counter_path):
+-        try:
+-            with open(counter_path, "r") as f:
+-                counter_val = int(f.read().strip())
+-            if counter_val < max_task_id:
+-                bugs.append(
+-                    {
+-                        "id": "stale-task-counter",
+-                        "title": "Task counter is stale",
+-                        "repro": "Run 'hammer tasks doctor' to detect stale counter",
+-                        "expected": f"Counter should be >= {max_task_id + 1}",
+-                        "actual": f"Counter is {counter_val}",
+-                    }
+-                )
+-        except Exception:  # noqa: BLE001, S110
+-            pass
+-
+     # Guard anomalies are structural: the correct winner is ambiguous, so
+     # doctor reports them but never repairs them.
+     try:
+@@ -334,24 +311,6 @@ def run(cli, fix=False):
+             else:
+                 cli.log(f"- {b['title']} ({b['id']})")
+         if fix:
+-            # Fix stale counter if present
+-            if any(b["id"] == "stale-task-counter" for b in bugs):
+-                try:
+-                    with open(counter_path, "w") as f:
+-                        f.write(str(max_task_id + 1))
+-                    if store_is_git(cli):
+-                        cli._run_git(["add", ".task_counter"], cwd=cli.tasks_path)
+-                        cli._run_git(
+-                            [
+-                                "commit",
+-                                "--allow-empty",
+-                                "-m",
+-                                "Doctor: fixed stale task counter",
+-                            ],
+-                            cwd=cli.tasks_path,
+-                        )
+-                except Exception as e:  # noqa: BLE001
+-                    cli.log(f"Warning: Could not fix stale counter: {e}")
+             cli.log("Issues have been fixed.")
+     else:
+         cli.log("No issues found.")

@@ -1,0 +1,92 @@
+diff --git a/tests/test_worktree_system.py b/tests/test_worktree_system.py
+index 6d25a48e..2cb83c1d 100644
+--- a/tests/test_worktree_system.py
++++ b/tests/test_worktree_system.py
+@@ -101,13 +101,13 @@ class TestWorktreeSystem(unittest.TestCase):
+                 "--story",
+                 "As a developer I want a dedicated worktree per task so work stays isolated.",
+                 "--tech",
+-                "Verifies WorktreeManager create/list/remove, manifest persistence and mount.",
++                "Verifies WorktreeManager create/list/remove and Git worktree persistence.",
+                 "--criteria",
+-                "Worktree exists for the task and manifest entry is persisted.",
++                "Worktree exists for the task and is registered in Git.",
+                 "--plan",
+-                "1. Create task. 2. Verify worktree and manifest. 3. Move through states.",
++                "1. Create task. 2. Verify the Git worktree. 3. Move through states.",
+                 "--repro",
+-                "Run tasks create then inspect .task-worktrees and .tasks/worktrees.json.",
++                "Run tasks create then inspect .task-worktrees and git worktree list.",
+             ]
+         )
+         self.assertTrue(res["success"], f"create failed: {res}")
+@@ -139,12 +139,24 @@ class TestWorktreeSystem(unittest.TestCase):
+                 with open(criteria, "w") as f:
+                     f.write(content.replace("- [ ]", "- [x]"))
+ 
+-    def manifest(self):
+-        with open(os.path.join(self.repo_dir, ".tasks", "worktrees.json")) as f:
+-            return json.load(f)["worktrees"]
+-
+-    def test_mount_creates_worktree_with_manifest_entry(self):
+-        """Mounting a task creates a worktree and records it in the manifest."""
++    def git_worktrees(self):
++        listing = git(["worktree", "list", "--porcelain"], self.repo_dir).stdout
++        worktrees = {}
++        for block in listing.split("\n\n"):
++            fields = dict(
++                line.split(" ", 1) for line in block.splitlines() if " " in line
++            )
++            branch = fields.get("branch", "").removeprefix("refs/heads/")
++            task_id = branch.split("-", 1)[0]
++            if task_id.isdigit():
++                worktrees[task_id] = {
++                    "branch": branch,
++                    "path": fields["worktree"],
++                }
++        return worktrees
++
++    def test_mount_creates_git_worktree(self):
++        """Mounting a task creates a worktree and records it in Git."""
+         data = self.create_task()
+         task_id = str(data["id"])
+         worktree_path = self.mount_task(data)
+@@ -152,9 +164,9 @@ class TestWorktreeSystem(unittest.TestCase):
+             os.path.isdir(worktree_path), f"worktree dir missing: {worktree_path}"
+         )
+ 
+-        entry = self.manifest().get(task_id)
++        entry = self.git_worktrees().get(task_id)
+         self.assertIsNotNone(
+-            entry, f"manifest has no entry for {task_id}: {self.manifest()}"
++            entry, f"Git has no worktree for {task_id}: {self.git_worktrees()}"
+         )
+         self.assertEqual(entry["path"], worktree_path)
+         self.assertEqual(entry["branch"], data["branch"])
+@@ -215,7 +227,7 @@ class TestWorktreeSystem(unittest.TestCase):
+         self.assertTrue(os.path.isdir(worktree_path))
+ 
+     def test_worktree_removed_on_archived(self):
+-        """Archiving a task removes its worktree, git registration and manifest entry."""
++        """Archiving a task removes its worktree, git registration and git worktree."""
+         data = self.create_task()
+         task_id = str(data["id"])
+         task_file = data["file"]
+@@ -275,7 +287,7 @@ class TestWorktreeSystem(unittest.TestCase):
+         res = self.run_cmd(["move", task_file, "ARCHIVED", "-y"], cwd=worktree_path)
+         self.assertTrue(res["success"], f"move ARCHIVED failed: {res}")
+ 
+-        # Worktree, its git registration, merged branch and manifest entry are all gone
++        # Worktree, its git registration, merged branch and git worktree are all gone
+         self.assertFalse(
+             os.path.exists(worktree_path), f"worktree still on disk: {worktree_path}"
+         )
+@@ -285,7 +297,7 @@ class TestWorktreeSystem(unittest.TestCase):
+             git(["rev-parse", "--verify", data["branch"]], self.repo_dir).returncode,
+             "merged task branch still exists",
+         )
+-        self.assertNotIn(task_id, self.manifest())
++        self.assertNotIn(task_id, self.git_worktrees())
+ 
+ 
+ if __name__ == "__main__":

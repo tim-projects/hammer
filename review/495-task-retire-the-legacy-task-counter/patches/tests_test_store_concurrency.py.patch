@@ -1,0 +1,129 @@
+diff --git a/tests/test_store_concurrency.py b/tests/test_store_concurrency.py
+index 94565fed..78809c51 100644
+--- a/tests/test_store_concurrency.py
++++ b/tests/test_store_concurrency.py
+@@ -4,9 +4,9 @@ The store is one git repo written by every worktree and every agent session.
+ Four defects let parallel agents corrupt it, each locked down here:
+ 
+ 1. Id allocation: two racing 'tasks create' calls must not allocate the same
+-   id. The counter transaction takes a store-wide lock, so a concurrent writer
++   id. The allocator transaction takes a store-wide lock, so a concurrent writer
+    is excluded while it is held (asserted by holding the lock in the test).
+-2. Manifest: two concurrent mounts must both survive in worktrees.json.
++2. Worktrees: two concurrent mounts must both survive in Git's registry.
+ 3. Gate fast-track: a branch with zero commits beyond main must NOT bypass
+    pipeline gates; a branch that did work and was merged still does.
+ 4. Undo: commits are scoped by exact folder path, so sibling ids (1 vs 11)
+@@ -121,23 +121,12 @@ class TestStoreConcurrency(unittest.TestCase):
+         self.assertTrue(moved["success"], moved)
+         return task_id, task_file
+ 
+-    def seed_counter(self, value):
+-        counter = os.path.join(self.store, ".task_counter")
+-        if os.path.exists(counter):
+-            os.remove(counter)
+-        with open(counter, "w") as handle:
+-            handle.write(str(value))
++    def seed_task_id_floor(self, value):
+         subprocess.run(
+-            ["git", "add", ".task_counter"],
+-            cwd=self.store,
+-            capture_output=True,
+-            check=False,
+-        )
+-        subprocess.run(
+-            ["git", "commit", "-m", "seed counter"],
+-            cwd=self.store,
++            ["git", "update-ref", f"refs/heads/{value}-task-seed", "HEAD"],
++            cwd=self.repo_dir,
++            check=True,
+             capture_output=True,
+-            check=False,
+         )
+ 
+     def snapshot_folder(self, task_file, state):
+@@ -167,8 +156,21 @@ class TestStoreConcurrency(unittest.TestCase):
+         return release
+ 
+     def worktree_path(self, task_id):
+-        with open(os.path.join(self.store, "worktrees.json")) as handle:
+-            return json.load(handle)["worktrees"][str(task_id)]["path"]
++        listing = subprocess.run(
++            ["git", "worktree", "list", "--porcelain"],
++            cwd=self.repo_dir,
++            capture_output=True,
++            text=True,
++            check=False,
++        ).stdout
++        for block in listing.split("\n\n"):
++            fields = dict(
++                line.split(" ", 1) for line in block.splitlines() if " " in line
++            )
++            branch = fields.get("branch", "").removeprefix("refs/heads/")
++            if branch.startswith(f"{task_id}-"):
++                return fields["worktree"]
++        return None
+ 
+     # --- defect 1: id allocation ---
+ 
+@@ -247,18 +249,11 @@ class TestStoreConcurrency(unittest.TestCase):
+             self.assertTrue(payload["success"], payload)
+             ids.append(int(payload["data"]["id"]))
+         self.assertNotEqual(ids[0], ids[1], "racing creates must not share an id")
+-        with open(os.path.join(self.store, ".task_counter")) as handle:
+-            counter = int(handle.read().strip())
+-        # Each create also allocates its paired test task's id, so the counter
+-        # lands past the ids returned to the callers; it must not overshoot more
+-        # than one companion per create.
+-        self.assertGreaterEqual(counter, max(ids))
+-        self.assertLessEqual(counter, max(ids) + len(ids))
+-
+-    def test_concurrent_mounts_keep_both_manifest_entries(self):
+-        """Two mounts at once must both survive in worktrees.json."""
+-        _, file_a = self.make_task("Alpha task for manifest race")
+-        _, file_b = self.make_task("Beta task for manifest race")
++
++    def test_concurrent_mounts_keep_both_git_worktrees(self):
++        """Two mounts at once must both survive in Git's worktree registry."""
++        _, file_a = self.make_task("Alpha task for worktree race")
++        _, file_b = self.make_task("Beta task for worktree race")
+         ids = [file_a.split("-", 1)[0], file_b.split("-", 1)[0]]
+         procs = [
+             subprocess.Popen(
+@@ -273,14 +268,18 @@ class TestStoreConcurrency(unittest.TestCase):
+         for proc in procs:
+             out, _ = proc.communicate(timeout=60)
+             self.assertTrue(json.loads(out)["success"], out)
+-        with open(os.path.join(self.store, "worktrees.json")) as handle:
+-            manifest = json.load(handle)
+-        present = {str(k) for k in manifest.get("worktrees", {})}
++        listing = subprocess.run(
++            ["git", "worktree", "list", "--porcelain"],
++            cwd=self.repo_dir,
++            capture_output=True,
++            text=True,
++            check=False,
++        ).stdout
+         for task_id in ids:
+             self.assertIn(
+-                str(task_id),
+-                present,
+-                f"task {task_id} lost its manifest entry to a racing mount",
++                f"refs/heads/{task_id}-PROGRESSING",
++                listing,
++                f"task {task_id} lost its worktree to a racing mount",
+             )
+ 
+     # --- defect 3: gate fast-track ---
+@@ -379,9 +378,9 @@ class TestStoreConcurrency(unittest.TestCase):
+ 
+     def test_undo_restores_only_the_target_task(self):
+         """Undo of task 11 must never touch sibling task 1's record."""
+-        self.seed_counter(0)
++        self.seed_task_id_floor(0)
+         id_one, file_one = self.make_task("One task for undo scoping")
+-        self.seed_counter(10)
++        self.seed_task_id_floor(10)
+         id_eleven, file_eleven = self.make_task("Eleven task for undo scoping")
+         self.assertEqual(
+             (id_one, id_eleven),

@@ -1,0 +1,38 @@
+diff --git a/tasks_ai/commands/create.py b/tasks_ai/commands/create.py
+index 933c0d07..721a3cf2 100644
+--- a/tasks_ai/commands/create.py
++++ b/tasks_ai/commands/create.py
+@@ -3,7 +3,6 @@ import re
+ from datetime import datetime, timezone
+ 
+ from ..constants import STATE_FOLDERS
+-from ..counter import mirror_counter_floor
+ from ..file_manager import FM
+ from ..models import Task
+ from ..task_id_allocator import allocate_task_id
+@@ -145,7 +144,7 @@ def _create_locked(
+         if not os.path.exists(fp):
+             continue
+         for item in os.listdir(fp):
+-            if item in (".gitkeep", ".task_counter", "task_counter"):
++            if item == ".gitkeep":
+                 continue
+             path = os.path.join(fp, item)
+             try:
+@@ -249,7 +248,7 @@ def _create_locked(
+             if not os.path.exists(fp):
+                 continue
+             for item in os.listdir(fp):
+-                if item in (".gitkeep", ".task_counter", "task_counter"):
++                if item == ".gitkeep":
+                     continue
+                 path = os.path.join(fp, item)
+                 try:
+@@ -317,7 +316,6 @@ def _create_locked(
+             f"💡 HINT: Populate the task in full and then do 'hammer tasks move {numeric_id} READY'"
+         )
+ 
+-        mirror_counter_floor(cli, pair_numeric_id)
+         cli.finish(
+             {
+                 "id": numeric_id,

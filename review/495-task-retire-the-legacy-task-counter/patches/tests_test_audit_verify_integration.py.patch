@@ -1,0 +1,34 @@
+diff --git a/tests/test_audit_verify_integration.py b/tests/test_audit_verify_integration.py
+index 9c4e2df1..bb969a05 100644
+--- a/tests/test_audit_verify_integration.py
++++ b/tests/test_audit_verify_integration.py
+@@ -85,14 +85,10 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+         # Manually initialize dev tasks dir (init in dev mode tries to clone 'tasks' branch which doesn't exist)
+         from tasks_ai.constants import STATE_FOLDERS
+ 
+-        counter_file = os.path.join(self.dev_tasks_dir, ".task_counter")
+         os.makedirs(self.dev_tasks_dir, exist_ok=True)
+         for folder in STATE_FOLDERS.values():
+             os.makedirs(os.path.join(self.dev_tasks_dir, folder), exist_ok=True)
+             open(os.path.join(self.dev_tasks_dir, folder, ".gitkeep"), "w").close()
+-        if not os.path.exists(counter_file):
+-            with open(counter_file, "w") as f:
+-                f.write("0")
+         # Write config so validation passes
+         config_data = {
+             "repo": {
+@@ -273,11 +269,10 @@ class ReviewGateIntegrationTest(unittest.TestCase):
+             return json.load(f)
+ 
+     def get_worktree(self, task_file):
+-        manifest_path = os.path.join(self.dev_tasks_dir, "worktrees.json")
+-        with open(manifest_path) as f:
+-            manifest = json.load(f)
+         task_id = task_file.split("-", 1)[0]
+-        return manifest["worktrees"][task_id]["path"]
++        mounted = self.run_cmd(["mount", task_id])
++        self.assertTrue(mounted["success"], mounted)
++        return mounted["data"]["worktree_path"]
+ 
+     def reenter_review(self, task_file):
+         self.complete_current_criteria(task_file)

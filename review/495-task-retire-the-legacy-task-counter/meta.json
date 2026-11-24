@@ -1,0 +1,184 @@
+{
+  "Id": 495,
+  "Ti": "Retire the legacy task counter and worktree manifest",
+  "Ty": "task",
+  "Cr": "261121 08:11",
+  "Bl": [
+    "507-task-design-ref-derived-task-identi",
+    "509-task-implement-ref-derived-task-id"
+  ],
+  "Pr": 2,
+  "Br": "495-task-retire-the-legacy-task-counter",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795488462.337967,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "AGENTS.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/AGENTS.md.patch"
+    },
+    {
+      "file": "docs/spec-worktrees.md",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/docs_spec-worktrees.md.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/cleanup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_commands_cleanup.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/create.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_commands_create.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/doctor.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_commands_doctor.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/list.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_commands_list.py.patch"
+    },
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tasks_ai/counter.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_counter.py.patch"
+    },
+    {
+      "file": "tasks_ai/guard_engine.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_guard_engine.py.patch"
+    },
+    {
+      "file": "tasks_ai/task_id_allocator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_task_id_allocator.py.patch"
+    },
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tasks_ai/worktree_manager.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tasks_ai_worktree_manager.py.patch"
+    },
+    {
+      "file": "tests/hammer_test_base.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_hammer_test_base.py.patch"
+    },
+    {
+      "file": "tests/test_all_transitions.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_all_transitions.py.patch"
+    },
+    {
+      "file": "tests/test_audit_verify_integration.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_audit_verify_integration.py.patch"
+    },
+    {
+      "file": "tests/test_backlog_to_rejected.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_backlog_to_rejected.py.patch"
+    },
+    {
+      "file": "tests/test_blocker_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_blocker_states.py.patch"
+    },
+    {
+      "file": "tests/test_central_store.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_central_store.py.patch"
+    },
+    {
+      "file": "tests/test_dev_isolation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_dev_isolation.py.patch"
+    },
+    {
+      "file": "tests/test_dev_store_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_dev_store_guard.py.patch"
+    },
+    {
+      "file": "tests/test_dev_write_audit.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_dev_write_audit.py.patch"
+    },
+    {
+      "file": "tests/test_doctor_guard_anomalies.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_doctor_guard_anomalies.py.patch"
+    },
+    {
+      "file": "tests/test_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_guard.py.patch"
+    },
+    {
+      "file": "tests/test_init_backup.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_init_backup.py.patch"
+    },
+    {
+      "file": "tests/test_lazy_task_creation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_lazy_task_creation.py.patch"
+    },
+    {
+      "file": "tests/test_merge_lock_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_merge_lock_guard.py.patch"
+    },
+    {
+      "file": "tests/test_pr_provisioning_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_pr_provisioning_states.py.patch"
+    },
+    {
+      "file": "tests/test_reject_validation.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_reject_validation.py.patch"
+    },
+    {
+      "file": "tests/test_repo_worktree_root.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_repo_worktree_root.py.patch"
+    },
+    {
+      "file": "tests/test_robustness.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_robustness.py.patch"
+    },
+    {
+      "file": "tests/test_store_concurrency.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_store_concurrency.py.patch"
+    },
+    {
+      "file": "tests/test_task_id_allocator.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_task_id_allocator.py.patch"
+    },
+    {
+      "file": "tests/test_task_naming_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_task_naming_user.py.patch"
+    },
+    {
+      "file": "tests/test_tasks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_tasks.py.patch"
+    },
+    {
+      "file": "tests/test_unlink.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_unlink.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_ownership_user.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_worktree_ownership_user.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_path_ownership.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_worktree_path_ownership.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_system.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/495-task-retire-the-legacy-task-counter/patches/tests_test_worktree_system.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "8f6b8f7ea485e72661e72f40195786897b8e123c",
+    "base": "e7655b9fca8cf26e610ef6733d5a859b91bb5294"
+  }
+}

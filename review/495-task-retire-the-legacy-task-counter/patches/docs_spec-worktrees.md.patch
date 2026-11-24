@@ -1,0 +1,127 @@
+diff --git a/docs/spec-worktrees.md b/docs/spec-worktrees.md
+index a4e619e7..b2425061 100644
+--- a/docs/spec-worktrees.md
++++ b/docs/spec-worktrees.md
+@@ -74,8 +74,8 @@ extension point. Hooks are registered in `tasks_ai/cli.py` on the
+   holds every task worktree: `.task-worktrees/<branch>`.
+ * The **`.tasks/`** directory is itself a checkout of the dedicated `tasks` git
+   branch (see `TASKS_BRANCH` in `tasks_ai/constants.py`). It is managed
+-  separately from task worktrees and contains `.tasks/config.yaml`,
+-  `.tasks/worktrees.json`, and the per-task state folders.
++  separately from task worktrees and contains `.tasks/config.yaml` and the
++  per-task state folders.
+ 
+ ### Canonical pipeline
+ 
+@@ -169,8 +169,8 @@ context the CLI ever switches the main working tree to.
+ | enter `REVIEW`/`STAGING`/`DONE`/`ARCHIVED` | `WorktreeCheckHook`: if a remote exists and the branch is not pushed, raise `BRANCH_NOT_PUSHED`. | `WorktreeCheckHook` |
+ | exit `TESTING` | `WorktreeSyncOnExitTestingHook`: if the worktree is ahead of the default branch, merge the default branch into the worktree. | `WorktreeSyncOnExitTestingHook` |
+ | `→ ARCHIVED` | `ArchivedCommitHook`: after confirming the branch is merged into `main`
+-(`is_merged`), run `git worktree remove <path> --force`, drop the manifest
+-entry, and push `.tasks` to the `tasks` remote. | `ArchivedCommitHook` |
++(`is_merged`), run `git worktree remove <path> --force` and push `.tasks` to the
++`tasks` remote. | `ArchivedCommitHook` |
+ | `mount <id>` | Create (or re-create) the worktree for a task and print the path. | `tasks_ai/commands/mount.py` |
+ | reconcile / cleanup | Prune worktrees whose branch no longer exists; optionally remove. | `WorktreeManager.prune_worktrees`; `commands/cleanup.py` |
+ 
+@@ -180,19 +180,9 @@ entry, and push `.tasks` to the `tasks` remote. | `ArchivedCommitHook` |
+   (`WorktreeManager.worktrees_base`). This path is **gitignored** (see §8).
+ * A worktree path is `<base>/<branch>`, e.g.
+   `/home/vscode/git/tasks-ai/.task-worktrees/87-task-implement-worktree-based-task`.
+-* The worktree is registered in `.tasks/worktrees.json`:
+-
+-```json
+-{
+-  "worktrees": {
+-    "87": {
+-      "branch": "87-task-implement-worktree-based-task",
+-      "path": "/home/vscode/git/tasks-ai/.task-worktrees/87-task-implement-worktree-based-task",
+-      "task_file": "87-task-implement-worktree-based-task"
+-    }
+-  }
+-}
+-```
++* Git's own worktree registry is authoritative. `git worktree list --porcelain`
++  reports the path and checked-out branch for every task worktree, so Hammer
++  keeps no duplicate JSON registry.
+ 
+ Because `.task-worktrees/` is inside the main repo, every task worktree is a
+ full working tree backed by the shared object database — no commit duplication,
+@@ -200,9 +190,9 @@ no per-task clones.
+ 
+ ### 3.3 Detecting "are we inside a worktree"
+ 
+-`WorktreeManager.detect_task_in_cwd(cwd)` walks `worktrees.json`, normalises each
+-registered path, and returns the task id whose worktree is the longest prefix of
+-`cwd`. `is_in_task_worktree()` wraps that. This is what lets `MainBranchProtectionHook`
++`WorktreeManager.detect_task_in_cwd(cwd)` reads Git's worktree registry,
++normalises each path, and returns the task id whose worktree is the longest
++prefix of `cwd`. `is_in_task_worktree()` wraps that. This is what lets `MainBranchProtectionHook`
+ distinguish "developer on `main` outside any worktree" from "developer inside a task
+ worktree".
+ 
+@@ -239,7 +229,7 @@ The CLI may be driven from the main repo or from inside the worktree;
+ | Switching tasks | `git checkout <branch>` | `cd <worktree>` (or `tasks mount <id>`) |
+ | Branch creation | `git checkout -b <branch>` inside `BranchSyncHook` | `git worktree add <path> <branch>` via `WorktreeManager` |
+ | Branch restoration from remote | `BranchCheckHook`: `checkout -b <branch> origin/<branch>` | `WorktreeSyncHook`: `create_task_worktree` (which itself falls back to `add -b`) |
+-| Missing-branch detection | `BranchExistsHook`: `rev-parse --verify <branch>` | `WorktreeExistsHook`: `WorktreeManager.has_worktree` (path + manifest) |
++| Missing-branch detection | `BranchExistsHook`: `rev-parse --verify <branch>` | `WorktreeExistsHook`: `WorktreeManager.has_worktree` (Git registry + path) |
+ | Missing-worktree auto-recovery | n/a (only auto-demotes branches) | `WorktreeExistsHook` auto-demotes to `PROGRESSING` with `WORKTREE_MISSING_AUTO_DEMOTED` |
+ | Exit-TESTING divergence capture | `BranchSyncOnExitTestingHook`: `rev-list main..branch` then merge | `WorktreeSyncOnExitTestingHook`: same merge, run from the worktree path |
+ | Push verification | `BranchCheckHook`: `ls-remote` empty → `BRANCH_NOT_PUSHED` | `WorktreeCheckHook`: same check, run from `main_repo_root` |
+@@ -270,18 +260,15 @@ else goes through `GitService` (which lazy-loads it as `cli.git.worktrees`).
+ | Method | Returns | Semantics |
+ |---|---|---|
+ | `worktrees_base` (property) | `str` | `<main_repo>/.task-worktrees` |
+-| `manifest_path` (property) | `str` | `<tasks_path>/worktrees.json` |
+-| `_load_manifest()` | `dict` | `{"worktrees": {}}`; degrades to empty on missing/corrupt JSON |
+-| `_save_manifest(manifest)` | `None` | atomic via `.tmp` + `os.replace` |
+-| `get_worktree_path(task_id)` | `str\|None` | manifest path, else `None` |
+-| `get_worktree_branch(task_id)` | `str\|None` | manifest branch, else `None` |
+-| `has_worktree(task_id)` | `bool` | manifest entry present **and** path exists on disk |
++| `get_worktree_path(task_id)` | `str\|None` | path from Git's worktree registry, else `None` |
++| `get_worktree_branch(task_id)` | `str\|None` | original task branch derived from the registered path, else `None` |
++| `has_worktree(task_id)` | `bool` | Git registry entry present **and** path exists on disk |
+ | `detect_task_in_cwd(cwd=None)` | `str\|None` | task id whose worktree path is the longest prefix of `cwd` |
+ | `is_in_task_worktree(cwd=None)` | `bool` | `detect_task_in_cwd(...) is not None` |
+-| `create_task_worktree(task_id, branch=None)` | `str\|None` | `git worktree add <path> <branch>`; if the branch does not exist, falls back to `git worktree add -b <branch> <path>` (the normal case for a new task); records manifest entry; returns `None` on failure. Idempotent for an existing worktree. |
+-| `list_worktrees()` | `list[dict]` | `git worktree list --porcelain` parsed into `{path, branch, detached}` (worktrees only under `worktrees_base`). |
+-| `remove_task_worktree(task_id, force=False)` | `bool` | `git worktree remove <path>` (adds `--force` when `force`); erases the manifest entry; returns whether a worktree was removed. Safe to call on a missing task. |
+-| `prune_worktrees()` | `list[str]` | Remove manifest entries for worktrees whose path no longer exists on disk. |
++| `create_task_worktree(task_id, branch=None)` | `str\|None` | `git worktree add <path> <branch>`; if the branch does not exist, falls back to `git worktree add -b <branch> <path>` (the normal case for a new task); returns `None` on failure. Idempotent for an existing worktree. |
++| `list_worktrees()` | `list[dict]` | `git worktree list --porcelain` parsed into task worktree records. |
++| `remove_task_worktree(task_id, force=False)` | `bool` | `git worktree remove <path>` (adds `--force` when `force`); returns whether a worktree was removed. Safe to call on a missing task. |
++| `prune_worktrees()` | `list[str]` | Run `git worktree prune` and report stale task worktrees. |
+ 
+ ### 5.3 The `create_task_worktree` two-step
+ 
+@@ -403,8 +390,7 @@ Invariants enforced:
+ 2. The task branch **must** be merged into `main` before the worktree is
+    removed — otherwise `BRANCH_NOT_MERGED` and the archive is aborted, so no code
+    is ever lost by detaching a worktree.
+-3. Only after both checks does `git worktree remove --force` run, and the
+-   manifest entry is deleted (`remove_task_worktree`).
++3. Only after both checks does `git worktree remove --force` run.
+ 
+ ### 6.4 Path resolution fix (`tasks_ai/validation.py`)
+ 
+@@ -496,7 +482,7 @@ when `TASKS_TESTING=1` or the path starts with `/tmp`. This means:
+ ## 9. Testing strategy
+ 
+ * `tests/test_worktree_system.py` — 4 tests, non-dev, repo under `/var/tmp`.
+-  Covers: worktree creation + manifest persistence (criteria 1, 2); task ops
++  Covers: worktree creation + Git registry persistence (criteria 1, 2); task ops
+   resolving from inside a worktree (criterion 4 — a verified regression test
+   that fails without the `validation.py` fix); `tasks mount` round-trip
+   (criterion 3); and full lifecycle through `ARCHIVED` with worktree removal
+@@ -525,8 +511,8 @@ when `TASKS_TESTING=1` or the path starts with `/tmp`. This means:
+ 2. **Pre-existing lint (task 243)** and **pre-existing `test_robustness.py`
+    failures (task 245)** — see §3 and §8.3.
+ 3. **Worktree base is gitignored, not the individual entries.** Deleting a
+-   worktree via `git worktree remove` outside the tool leaves a stale manifest
+-   entry until `prune_worktrees`/`reconcile` run.
++   worktree via `git worktree remove` outside the tool leaves Git's worktree
++   administration stale until `prune_worktrees`/`reconcile` run.
+ 4. **`WorktreeManager.prune_worktrees` does not auto-run on every transition**;
+    it is invoked by `commands/cleanup.py`. Operators should run
+    `tasks cleanup` (or `reconcile`) periodically to reclaim stale paths.

@@ -1,0 +1,13 @@
+diff --git a/tests/test_all_transitions.py b/tests/test_all_transitions.py
+index 9b6e1cd3..d07bc770 100644
+--- a/tests/test_all_transitions.py
++++ b/tests/test_all_transitions.py
+@@ -22,7 +22,7 @@ class TestAllTransitions(HammerTestBase):
+     def test_transitions(self):
+         # Above every real task id, so the fixture cannot collide with a real
+         # branch and trip the guard's duplicate-id check.
+-        self.seed_counter(9000)
++        self.seed_task_id_floor(9000)
+         res = self.run_tasks(
+             [
+                 "create",

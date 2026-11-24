@@ -1,0 +1,15 @@
+diff --git a/tests/test_doctor_guard_anomalies.py b/tests/test_doctor_guard_anomalies.py
+index d426300f..839936e2 100644
+--- a/tests/test_doctor_guard_anomalies.py
++++ b/tests/test_doctor_guard_anomalies.py
+@@ -36,9 +36,7 @@ class DoctorGuardAnomalyTestBase(HammerTestBase):
+         )
+ 
+     def create_task(self):
+-        counter_path = os.path.join(self.dev_tasks_dir, ".task_counter")
+-        with open(counter_path, "w") as handle:
+-            handle.write(str(BASE_ID - 1))
++        self.seed_task_id_floor(BASE_ID - 1)
+         result = self.run_tasks(
+             [
+                 "create",

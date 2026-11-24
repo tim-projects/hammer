@@ -1,0 +1,99 @@
+diff --git a/tests/test_dev_isolation.py b/tests/test_dev_isolation.py
+index 4c438677..7d1637f7 100644
+--- a/tests/test_dev_isolation.py
++++ b/tests/test_dev_isolation.py
+@@ -8,7 +8,6 @@ dev create cannot block a real task.
+ """
+ 
+ import glob
+-import hashlib
+ import json
+ import os
+ import shutil
+@@ -62,26 +61,9 @@ class DevIsolationTestBase(HammerTestBase):
+             self.git(["worktree", "list", "--porcelain"]).stdout,
+         )
+ 
+-    def reseal_counter_hash(self, value):
+-        """Keep the counter hash consistent with the seeded counter.
+-
+-        Without this the counter protector takes its recovery path, which
+-        raises the id past any existing branch -- the opposite of the
+-        colliding id this suite needs.
+-        """
+-        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
+-        with open(counter, "w") as handle:
+-            handle.write(str(value))
+-        digest = hashlib.md5(str(value).encode()).hexdigest()
+-        with open(
+-            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
+-        ) as handle:
+-            handle.write(digest)
+-
+     def create_dev_task(self, counter_value=None, title=TITLE):
+         if counter_value is not None:
+-            self.seed_counter(counter_value)
+-            self.reseal_counter_hash(counter_value)
++            self.seed_task_id_floor(counter_value)
+         result = self.run_tasks(
+             [
+                 "create",
+@@ -154,6 +136,7 @@ class TestDevCannotBlockARealTask(DevIsolationTestBase):
+         self.git(["branch", real_branch])
+         # Re-seed the dev repo so it mirrors the branch just created.
+         shutil.rmtree(self.dev_repo_dir, ignore_errors=True)
++        self.git(["branch", real_branch], cwd=self.dev_repo_dir)
+ 
+         task_id, _ = self.create_dev_task(counter_value=BASE_ID - 1)
+         self.assertGreater(task_id, BASE_ID)
+@@ -289,12 +272,14 @@ class TestDevInitOnAFreshStore(DevIsolationTestBase):
+         self.assertFalse(os.path.exists(store), f"{store} must start as a fresh path")
+         return store
+ 
+-    def seed_store_counter(self, store, value):
+-        counter = os.path.join(store, ".task_counter")
+-        with open(counter, "w") as handle:
+-            handle.write(str(value))
+-        with open(os.path.join(store, ".task_counter.hash"), "w") as handle:
+-            handle.write(hashlib.md5(str(value).encode()).hexdigest())
++    def seed_store_task_id_floor(self, store, value):
++        repo = ensure_dev_repo(store)
++        subprocess.run(
++            ["git", "update-ref", f"refs/heads/{value}-task-seed", "HEAD"],
++            cwd=repo,
++            check=True,
++            capture_output=True,
++        )
+ 
+     def test_fresh_path_initializes_into_a_git_repo(self):
+         store = self.fresh_store("fresh-init")
+@@ -319,15 +304,15 @@ class TestDevInitOnAFreshStore(DevIsolationTestBase):
+ 
+     def test_store_records_without_a_git_repo_are_refused_not_clobbered(self):
+         store = os.path.join(self.test_root, "record-store")
+-        os.makedirs(store)
+-        counter = os.path.join(store, ".task_counter")
+-        with open(counter, "w") as handle:
+-            handle.write("7")
++        record = os.path.join(store, "backlog", "7-task-real")
++        os.makedirs(record)
++        with open(os.path.join(record, "meta.json"), "w") as handle:
++            json.dump({"Id": 7}, handle)
+ 
+         refused = self.run_against_store(["init"], store)
+         self.assertEqual(refused.returncode, 1, refused.stdout)
+         self.assertTrue(
+-            os.path.exists(counter),
++            os.path.exists(record),
+             "a refused init destroyed the task records it found",
+         )
+ 
+@@ -338,7 +323,7 @@ class TestDevInitOnAFreshStore(DevIsolationTestBase):
+     def test_create_and_checkpoint_commit_against_a_fresh_store(self):
+         store = self.fresh_store("fresh-cycle")
+         self.assertEqual(self.run_against_store(["init"], store).returncode, 0)
+-        self.seed_store_counter(store, BASE_ID - 1)
++        self.seed_store_task_id_floor(store, BASE_ID - 1)
+ 
+         created = self.run_against_store(
+             [

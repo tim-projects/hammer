@@ -1,0 +1,49 @@
+diff --git a/tests/hammer_test_base.py b/tests/hammer_test_base.py
+index b9490465..d6179e99 100644
+--- a/tests/hammer_test_base.py
++++ b/tests/hammer_test_base.py
+@@ -146,6 +146,18 @@ class HammerTestBase(unittest.TestCase):
+         tasks_clone_path = os.path.join(self.repo_path, ".tasks")
+         if os.path.exists(tasks_clone_path):
+             shutil.rmtree(tasks_clone_path)
++        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++        for rel in ("hammer", "tasks.py"):
++            shutil.copy2(
++                os.path.join(project_root, rel), os.path.join(self.repo_path, rel)
++            )
++        for rel in ("tasks_ai", "data"):
++            source = os.path.join(project_root, rel)
++            target = os.path.join(self.repo_path, rel)
++            shutil.rmtree(target, ignore_errors=True)
++            shutil.copytree(
++                source, target, ignore=shutil.ignore_patterns("__pycache__")
++            )
+         self.script_path = os.path.join(self.repo_path, "hammer")
+         if os.path.exists(self.dev_tasks_dir):
+             shutil.rmtree(self.dev_tasks_dir)
+@@ -196,16 +208,12 @@ class HammerTestBase(unittest.TestCase):
+             check=False,
+         )
+ 
+-    def seed_counter(self, value):
+-        """Force the next task id, so fixtures never collide with real branches.
+-
+-        The fixture clones this repo and therefore inherits its branches. A task
+-        created at a real id would be a genuine duplicate-in-branches violation
+-        and the guard correctly rejects it; tests that do not pin an id must
+-        stay above the highest real task id (see tests/test_guard.py BASE_ID).
+-        """
+-        counter = os.path.join(self.dev_tasks_dir, ".task_counter")
+-        if os.path.exists(counter):
+-            os.remove(counter)
+-        with open(counter, "w") as handle:
+-            handle.write(str(value))
++    def seed_task_id_floor(self, value):
++        """Set the ref-derived allocation floor so fixtures never collide."""
++        repo = ensure_dev_repo(self.dev_tasks_dir)
++        subprocess.run(
++            ["git", "update-ref", f"refs/heads/{value}-task-seed", "HEAD"],
++            cwd=repo,
++            check=True,
++            capture_output=True,
++        )

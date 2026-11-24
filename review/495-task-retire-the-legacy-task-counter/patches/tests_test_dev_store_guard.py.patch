@@ -1,0 +1,16 @@
+diff --git a/tests/test_dev_store_guard.py b/tests/test_dev_store_guard.py
+index 1d9ad479..2b48a2b4 100644
+--- a/tests/test_dev_store_guard.py
++++ b/tests/test_dev_store_guard.py
+@@ -45,9 +45,9 @@ PRODUCTION_STORE = os.path.join(MAIN_ROOT, ".tasks")
+ 
+ 
+ def store_fingerprint(store):
+-    """Cheap identity of a store: counter, config and the task folders."""
++    """Cheap identity of a store: config and the task folders."""
+     fingerprint = {}
+-    for name in (".task_counter", "config.yaml"):
++    for name in ("config.yaml",):
+         path = os.path.join(store, name)
+         if os.path.exists(path):
+             with open(path) as handle:

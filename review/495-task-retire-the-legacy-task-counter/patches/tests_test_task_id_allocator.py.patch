@@ -1,0 +1,80 @@
+diff --git a/tests/test_task_id_allocator.py b/tests/test_task_id_allocator.py
+index c880780a..78f0183f 100644
+--- a/tests/test_task_id_allocator.py
++++ b/tests/test_task_id_allocator.py
+@@ -4,7 +4,7 @@ import subprocess
+ import tempfile
+ import unittest
+ from types import SimpleNamespace
+-from unittest.mock import patch
++from unittest.mock import Mock, patch
+ 
+ from tasks_ai.guard_engine import GuardEngine
+ from tasks_ai.task_id_allocator import allocate_task_id
+@@ -63,7 +63,8 @@ class TaskIdAllocatorTest(unittest.TestCase):
+ 
+     def test_allocation_uses_the_store_lock_and_is_reentrant(self):
+         cli = FakeCLI(self.store, self.repo)
+-        with patch("tasks_ai.task_id_allocator.store_lock", wraps=store_lock) as locked:
++        locked = Mock(wraps=store_lock)
++        with patch.dict(allocate_task_id.__globals__, {"store_lock": locked}):
+             self.assertEqual(allocate_task_id(cli), [1])
+         locked.assert_called_once_with(cli)
+ 
+@@ -87,7 +88,7 @@ class TaskIdAllocatorTest(unittest.TestCase):
+         allocator.assert_not_called()
+         imported_allocator.assert_not_called()
+ 
+-    def test_records_refs_and_counter_form_one_high_water(self):
++    def test_records_and_refs_form_one_high_water(self):
+         self.write_record("backlog", 41)
+         self.write_record("rejected", 52)
+         subprocess.run(["git", "branch", "73-PROGRESSING"], cwd=self.repo, check=True)
+@@ -96,11 +97,9 @@ class TaskIdAllocatorTest(unittest.TestCase):
+             cwd=self.repo,
+             check=True,
+         )
+-        with open(os.path.join(self.store, ".task_counter"), "w") as handle:
+-            handle.write("95")
+ 
+         cli = FakeCLI(self.store, self.repo)
+-        self.assertEqual(allocate_task_id(cli), [96])
++        self.assertEqual(allocate_task_id(cli), [85])
+ 
+     def test_lazy_record_without_a_branch_still_raises_the_high_water(self):
+         self.write_record("ready", 120)
+@@ -167,6 +166,34 @@ class ConcurrentTaskIdAllocatorTest(HammerTestBase):
+         self.assertEqual(len(set(record_ids)), len(record_ids))
+         self.assertEqual(len(set(returned_ids)), len(returned_ids))
+ 
++    def test_two_creates_use_sequential_ref_derived_ids_without_legacy_files(self):
++        self.seed_task_id_floor(9200)
++
++        first = self.run_tasks(self.create_args("First ref derived allocator task"))
++        second = self.run_tasks(self.create_args("Second ref derived allocator task"))
++        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
++        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
++
++        first_id = json.loads(first.stdout)["data"]["id"]
++        second_id = json.loads(second.stdout)["data"]["id"]
++        self.assertEqual(first_id, 9201)
++        self.assertEqual(second_id, 9203)
++
++        mounted = self.run_tasks(["mount", str(first_id)])
++        self.assertEqual(mounted.returncode, 0, mounted.stdout + mounted.stderr)
++        self.assertFalse(
++            os.path.exists(os.path.join(self.dev_tasks_dir, ".task_counter"))
++        )
++        self.assertFalse(
++            any(
++                name.startswith(".task_counter")
++                for name in os.listdir(self.dev_tasks_dir)
++            )
++        )
++        self.assertFalse(
++            os.path.exists(os.path.join(self.dev_tasks_dir, "worktrees.json"))
++        )
++
+     def test_fresh_clone_agrees_with_the_original_store_high_water(self):
+         created = self.run_tasks(self.create_args("Fresh clone allocator task"))
+         self.assertEqual(created.returncode, 0, created.stdout + created.stderr)

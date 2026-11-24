@@ -1,0 +1,64 @@
+diff --git a/tests/test_lazy_task_creation.py b/tests/test_lazy_task_creation.py
+index 588b794c..a4d6b92a 100644
+--- a/tests/test_lazy_task_creation.py
++++ b/tests/test_lazy_task_creation.py
+@@ -1,6 +1,5 @@
+ """User tests for task 455: task creation is worktree-free."""
+ 
+-import hashlib
+ import json
+ import os
+ import subprocess
+@@ -36,17 +35,8 @@ class LazyTaskCreationTest(HammerTestBase):
+             check=False,
+         )
+ 
+-    def seed_counter(self, value):
+-        with open(os.path.join(self.dev_tasks_dir, ".task_counter"), "w") as handle:
+-            handle.write(str(value))
+-        digest = hashlib.md5(str(value).encode()).hexdigest()
+-        with open(
+-            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
+-        ) as handle:
+-            handle.write(digest)
+-
+     def create_task(self, counter=BASE_ID, priority=None, parent=None):
+-        self.seed_counter(counter - 1)
++        self.seed_task_id_floor(counter - 1)
+         args = [
+             "create",
+             TITLE,
+@@ -75,13 +65,6 @@ class LazyTaskCreationTest(HammerTestBase):
+             if os.path.isdir(os.path.join(backlog, name)) and name[0].isdigit()
+         ]
+ 
+-    def manifest_entries(self):
+-        manifest = os.path.join(self.dev_tasks_dir, "worktrees.json")
+-        if not os.path.exists(manifest):
+-            return {}
+-        with open(manifest) as handle:
+-            return json.load(handle).get("worktrees", {})
+-
+     def test_create_and_paired_task_have_no_git_state(self):
+         result = self.create_task()
+         payload = json.loads(result.stdout)["data"]
+@@ -100,8 +83,9 @@ class LazyTaskCreationTest(HammerTestBase):
+         self.assertFalse(
+             os.path.exists(os.path.join(self.dev_repo_dir, ".task-worktrees", pair))
+         )
+-        self.assertNotIn(str(payload["id"]), self.manifest_entries())
+-        self.assertNotIn(str(payload["id"] + 1), self.manifest_entries())
++        self.assertFalse(
++            os.path.exists(os.path.join(self.dev_tasks_dir, "worktrees.json"))
++        )
+         self.assertIsNone(payload["worktree"])
+ 
+     def test_create_output_reports_a_planned_branch_only(self):
+@@ -156,4 +140,6 @@ class LazyTaskCreationTest(HammerTestBase):
+         worktrees = self.git(["worktree", "list"]).stdout
+         self.assertNotIn(payload["branch"], branches)
+         self.assertNotIn(payload["branch"], worktrees)
+-        self.assertNotIn(str(payload["id"]), self.manifest_entries())
++        self.assertFalse(
++            os.path.exists(os.path.join(self.dev_tasks_dir, "worktrees.json"))
++        )

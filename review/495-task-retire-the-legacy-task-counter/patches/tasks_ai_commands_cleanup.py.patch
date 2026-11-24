@@ -1,0 +1,13 @@
+diff --git a/tasks_ai/commands/cleanup.py b/tasks_ai/commands/cleanup.py
+index ab74d937..2b17b3e2 100644
+--- a/tasks_ai/commands/cleanup.py
++++ b/tasks_ai/commands/cleanup.py
+@@ -28,7 +28,7 @@ def run(cli, dry_run=False, yes=False):
+     cleaned = []
+     archived = []
+ 
+-    # 1. Prune stale worktree entries from the manifest
++    # 1. Prune stale entries from Git's worktree registry
+     pruned = cli.git.worktrees.prune_worktrees()
+     for task_id in pruned:
+         if dry_run:
