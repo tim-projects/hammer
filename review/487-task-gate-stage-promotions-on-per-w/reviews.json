@@ -39,6 +39,16 @@
       "bytes": 1350,
       "ts": 1795508787.6080015,
       "prev_hash": "65a3e3870f7c0690ac0bf373984a1def9f9e76ab2072df669041334bc7fd1170"
+    },
+    {
+      "seq": 5,
+      "file": "tests/test_stage_ref_gates.py",
+      "patch": "tests_test_stage_ref_gates.py.patch",
+      "md5": "02facc2654386bd9fe3cb1673e6daf1d",
+      "sha256": "26bebaba4807bdbc6eb53c17def669513b4be6e9859ae892d41e7500bab54fd9",
+      "bytes": 6005,
+      "ts": 1795508788.6158974,
+      "prev_hash": "a4907123108066fa940532deb2045504b8c82880b116c087a2b664d7bd663a95"
     }
   ]
 }
