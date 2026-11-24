@@ -1,0 +1,12 @@
+{
+    "task_id": "485",
+    "patch_hash": "e0b4d1177ebf26ba50af3a1359461717",
+    "patch_files": [
+        "data_errors.json.patch",
+        "tasks_ai_cli_errors.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tests_test_worktree_local_promotion.py.patch"
+    ],
+    "status": "verified"
+}
