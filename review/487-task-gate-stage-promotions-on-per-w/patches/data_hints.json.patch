@@ -1,0 +1,12 @@
+diff --git a/data/hints.json b/data/hints.json
+index bae21a35..a6823574 100644
+--- a/data/hints.json
++++ b/data/hints.json
+@@ -20,6 +20,7 @@
+   "PUSH_FAIL": "WHAT: Push fail: {stderr}.\nWHY: Git push blocked.\nHOW: Check network and git status.\nCONSEQUENCE: Work trapped. FIX PUSH.",
+   "UNKNOWN_SECTION": "WHAT: Unknown section '{section}'.\nWHY: SECTION DISOBEDIENCE. HAMMER do not know '{section}'.\nHOW: Use: story, tech, criteria, plan, repro, notes, progress.\nCONSEQUENCE: Output remain EMPTY. FIX SECTION.",
+   "BRANCH_NOT_MERGED": "WHAT: Task branch '{branch}' not merged to main.\nWHY: Integration rule broken.\nHOW: Run './hammer tasks move {task_id} DONE' (must be in STAGING).\nCONSEQUENCE: Integration halted. FIX SYNC.",
++  "STAGE_REF_NOT_MERGED": "WHAT: Stage ref '{missing_ref}' is missing or does not contain '{source_ref}'.\nWHY: Each promotion must preserve the previous stage in the task-local stage ref.\nHOW: {fix}\nCONSEQUENCE: Promotion halted. REPAIR THE STAGE REF.",
+   "HASH_MISSING": "WHAT: Audit integrity check failed.\nWHY: The audit chain is broken or incomplete (missing hash).\nHOW: 1. Confirm criteria at: /home/vscode/git/tasks-ai/.tasks/progressing/{task_id}/criteria.md.\n     2. Run \"./hammer tasks audit {task_id}\" to generate the audit record.\n     3. Run \"./hammer tasks verify {task_id} --proof \"<summary>\"\" to bind the proof and hash the integrity of criteria, proof, and audit.\nCONSEQUENCE: Promotion halted. SATISFY AUDIT.",
+   "INTEGRITY_MISMATCH": "WHAT: Integrity mismatch. Criteria, proof, or audit change.\nWHY: Cryptographic lock broken.\nHOW: Run './hammer tasks audit {task_id}' && './hammer tasks verify {task_id} --proof \"...\"'.\nCONSEQUENCE: Integrity fail. LOCK CHAIN.",
+   "BRANCH_CHECKOUT_FAIL": "WHAT: Failed checkout branch '{branch}'.\nWHY: Git checkout failure.\nHOW: Check branch name and git status.\nCONSEQUENCE: Sync halted. FIX BRANCH.",

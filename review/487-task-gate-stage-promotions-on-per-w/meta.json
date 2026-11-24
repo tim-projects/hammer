@@ -1,0 +1,45 @@
+{
+  "Id": 487,
+  "Ti": "Gate stage promotions on per-worktree ref merges",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "487-task-gate-stage-promotions-on-per-w",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795508726.80108,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/487-task-gate-stage-promotions-on-per-w/patches/data_errors.json.patch"
+    },
+    {
+      "file": "data/hints.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/487-task-gate-stage-promotions-on-per-w/patches/data_hints.json.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/487-task-gate-stage-promotions-on-per-w/patches/tasks_ai_pipeline.py.patch"
+    },
+    {
+      "file": "tests/test_pr_provisioning_states.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/487-task-gate-stage-promotions-on-per-w/patches/tests_test_pr_provisioning_states.py.patch"
+    },
+    {
+      "file": "tests/test_stage_ref_gates.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/487-task-gate-stage-promotions-on-per-w/patches/tests_test_stage_ref_gates.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "9134e5fe03a1aca62e186da86ff2c917ee12eb4b",
+    "base": "603a511f46b3782bbcb0cb1b0f5729acfc78220a"
+  }
+}

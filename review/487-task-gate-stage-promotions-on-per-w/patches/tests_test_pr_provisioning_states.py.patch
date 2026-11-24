@@ -1,0 +1,36 @@
+diff --git a/tests/test_pr_provisioning_states.py b/tests/test_pr_provisioning_states.py
+index a3e31a86..146497f8 100644
+--- a/tests/test_pr_provisioning_states.py
++++ b/tests/test_pr_provisioning_states.py
+@@ -1,8 +1,9 @@
+ import json
+ import os
+ import shutil
++import subprocess
+ 
+-from hammer_test_base import HammerTestBase
++from hammer_test_base import HammerTestBase, ensure_dev_repo
+ from tasks_ai.constants import KEY_MAP, PIPELINE_STAGES, STATE_FOLDERS
+ from tasks_ai.file_manager import FM
+ from tasks_ai.git_service import GitService
+@@ -73,6 +74,20 @@ class TestPRProvisioningStates(HammerTestBase):
+         mounted = self.run_tasks(["mount", task_id])
+         self.assertTrue(json.loads(mounted.stdout)["success"], mounted.stdout)
+ 
++        dev_repo = ensure_dev_repo(self.dev_tasks_dir)
++        subprocess.run(
++            ["git", "branch", f"{task_id}-TESTING", "main"],
++            cwd=dev_repo,
++            capture_output=True,
++            check=True,
++        )
++        subprocess.run(
++            ["git", "branch", f"{task_id}-STAGING", f"{task_id}-TESTING"],
++            cwd=dev_repo,
++            capture_output=True,
++            check=True,
++        )
++
+         result = self.run_tasks(["move", task_id, "PR"])
+         self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
+         self.assertTrue(
