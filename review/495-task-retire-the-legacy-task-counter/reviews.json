@@ -219,6 +219,16 @@
       "bytes": 1099,
       "ts": 1795488551.5985594,
       "prev_hash": "fd391c57c024e7ebced95b5e8bda15fb5c36dd8183eadf76241f7a176c66d97f"
+    },
+    {
+      "seq": 23,
+      "file": "tests/test_doctor_guard_anomalies.py",
+      "patch": "tests_test_doctor_guard_anomalies.py.patch",
+      "md5": "f4f54fecde263d79cd8c484b9a7ba488",
+      "sha256": "8fa5a03fb3f074c68c184a02e2ba9d41947b5cf4c21a5e49fe686a5293beeb80",
+      "bytes": 605,
+      "ts": 1795488553.4245884,
+      "prev_hash": "55caad93a249330532ba75e3616c1854b48c820bcc7a1534b7c20485c0717dd3"
     }
   ]
 }
