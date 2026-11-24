@@ -1,8 +1,9 @@
 import json
 import os
 import shutil
+import subprocess
 
-from hammer_test_base import HammerTestBase
+from hammer_test_base import HammerTestBase, ensure_dev_repo
 from tasks_ai.constants import KEY_MAP, PIPELINE_STAGES, STATE_FOLDERS
 from tasks_ai.file_manager import FM
 from tasks_ai.git_service import GitService
@@ -72,6 +73,20 @@ class TestPRProvisioningStates(HammerTestBase):
         self.relocate_task(task_file, "STAGING")
         mounted = self.run_tasks(["mount", task_id])
         self.assertTrue(json.loads(mounted.stdout)["success"], mounted.stdout)
+
+        dev_repo = ensure_dev_repo(self.dev_tasks_dir)
+        subprocess.run(
+            ["git", "branch", f"{task_id}-TESTING", "main"],
+            cwd=dev_repo,
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "branch", f"{task_id}-STAGING", f"{task_id}-TESTING"],
+            cwd=dev_repo,
+            capture_output=True,
+            check=True,
+        )
 
         result = self.run_tasks(["move", task_id, "PR"])
         self.assertTrue(json.loads(result.stdout)["success"], result.stdout)

@@ -20,6 +20,7 @@
   "PUSH_FAIL": "Push fail: {stderr}",
   "UNKNOWN_SECTION": "Unknown section '{section}'.",
   "BRANCH_NOT_MERGED": "Task branch '{branch}' not merged to main.",
+  "STAGE_REF_NOT_MERGED": "Stage ref '{missing_ref}' is missing or does not contain '{source_ref}'.",
   "HASH_MISSING": "Audit integrity hash missing.",
   "INTEGRITY_MISMATCH": "Integrity mismatch: Criteria, proof, or audit has changed.",
   "BRANCH_CHECKOUT_FAIL": "Failed to checkout branch '{branch}'.",
