@@ -390,5 +390,8 @@
       "ts": 1795488582.5160358,
       "prev_hash": "f793f2568e61c31f815fcd3ec6044e5e5078b34b10a84229ae8d8e08c34388a3"
     }
-  ]
+  ],
+  "summary": "Read all 39 patches: counter machinery is removed, Git refs and task records are the identity sources, Git's worktree registry replaces worktrees.json, legacy records remain compatible, and tests/docs cover the retirement.",
+  "summary_at": 1795488608.6142993,
+  "reviewed_at": 1795488608.614301
 }
