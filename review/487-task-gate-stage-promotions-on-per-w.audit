@@ -1,0 +1,12 @@
+{
+    "task_id": "487",
+    "patch_hash": "ea2c5399344117313374b8ac315a9e29",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tests_test_pr_provisioning_states.py.patch",
+        "tests_test_stage_ref_gates.py.patch"
+    ],
+    "status": "verified"
+}
