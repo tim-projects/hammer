@@ -36,9 +36,7 @@ class DoctorGuardAnomalyTestBase(HammerTestBase):
         )
 
     def create_task(self):
-        counter_path = os.path.join(self.dev_tasks_dir, ".task_counter")
-        with open(counter_path, "w") as handle:
-            handle.write(str(BASE_ID - 1))
+        self.seed_task_id_floor(BASE_ID - 1)
         result = self.run_tasks(
             [
                 "create",

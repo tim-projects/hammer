@@ -1,8 +1,10 @@
-import json
 import os
+import re
 import shutil
 
-from tasks_ai.utils import audit_worktree_manifest, store_lock
+from tasks_ai.utils import audit_worktrees, store_lock
+
+_TASK_ID = re.compile(r"^(\d+)-")
 
 
 class WorktreeManager:
@@ -11,8 +13,6 @@ class WorktreeManager:
     branch-based workflow. Each task may have a dedicated worktree
     so development happens in an independent working directory.
     """
-
-    MANIFEST_NAME = "worktrees.json"
 
     def __init__(self, context, git_service, logger=None):
         self.context = context
@@ -27,64 +27,90 @@ class WorktreeManager:
     def worktrees_base(self) -> str:
         return os.path.join(self.context.main_repo_root, ".task-worktrees")
 
-    @property
-    def manifest_path(self) -> str:
-        return os.path.join(self.context.tasks_path, self.MANIFEST_NAME)
+    def _worktree_entries(self) -> list[dict]:
+        result = self.git.run(
+            ["worktree", "list", "--porcelain"], cwd=self.context.main_repo_root
+        )
+        if result.returncode != 0:
+            return []
+        entries = []
+        current = {}
+        for line in result.stdout.splitlines():
+            if not line.strip():
+                if current:
+                    entries.append(current)
+                    current = {}
+                continue
+            key, _, value = line.partition(" ")
+            if key == "worktree":
+                current = {"path": value}
+            elif key == "branch":
+                current["branch"] = value.removeprefix("refs/heads/")
+        if current:
+            entries.append(current)
+        return entries
 
-    def _load_manifest(self) -> dict:
-        if not os.path.exists(self.manifest_path):
-            return {"worktrees": {}}
-        try:
-            with open(self.manifest_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if not isinstance(data, dict):
-                return {"worktrees": {}}
-            data.setdefault("worktrees", {})
-            return data
-        except (json.JSONDecodeError, OSError):
-            return {"worktrees": {}}
+    @staticmethod
+    def _task_id(entry: dict) -> str | None:
+        match = _TASK_ID.match(entry.get("branch", ""))
+        return match.group(1) if match else None
 
-    def _save_manifest(self, manifest: dict):
-        os.makedirs(os.path.dirname(self.manifest_path), exist_ok=True)
-        tmp_path = self.manifest_path + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(manifest, f, indent=2)
-        os.replace(tmp_path, self.manifest_path)
+    def _task_worktrees(self) -> list[dict]:
+        entries = []
+        for entry in self._worktree_entries():
+            task_id = self._task_id(entry)
+            if task_id is None:
+                continue
+            path = entry.get("path")
+            base = os.path.abspath(self.worktrees_base)
+            managed_path = bool(
+                path and os.path.abspath(path).startswith(base + os.sep)
+            )
+            entries.append(
+                {
+                    "task_id": task_id,
+                    # Stage transitions switch the checked-out branch in place;
+                    # a managed worktree directory keeps the original task branch.
+                    "branch": (
+                        os.path.basename(path) if managed_path else entry.get("branch")
+                    ),
+                    "path": path,
+                    "exists": os.path.exists(path or ""),
+                }
+            )
+        return entries
 
     def get_worktree_path(self, task_id) -> str | None:
-        manifest = self._load_manifest()
-        entry = manifest.get("worktrees", {}).get(str(task_id))
-        if entry:
-            return entry.get("path")
+        task_id = str(task_id)
+        for entry in self._task_worktrees():
+            if entry["task_id"] == task_id:
+                return entry["path"]
         return None
 
     def get_worktree_branch(self, task_id) -> str | None:
-        manifest = self._load_manifest()
-        entry = manifest.get("worktrees", {}).get(str(task_id))
-        if entry:
-            return entry.get("branch")
+        task_id = str(task_id)
+        for entry in self._task_worktrees():
+            if entry["task_id"] == task_id:
+                return entry["branch"]
         return None
 
     def has_worktree(self, task_id) -> bool:
         path = self.get_worktree_path(task_id)
-        if not path:
-            return False
-        return os.path.exists(path)
+        return bool(path and os.path.exists(path))
 
     def detect_task_in_cwd(self, cwd=None) -> str | None:
         abs_cwd = os.path.abspath(cwd or os.getcwd())
-        manifest = self._load_manifest()
         best_match = None
         best_len = 0
-        for task_id, entry in manifest.get("worktrees", {}).items():
-            wt_path = entry.get("path")
-            if not wt_path:
+        for entry in self._task_worktrees():
+            path = entry.get("path")
+            if not path:
                 continue
-            norm = os.path.normpath(wt_path)
+            norm = os.path.normpath(path)
             if (abs_cwd == norm or abs_cwd.startswith(norm + os.sep)) and len(
                 norm
             ) > best_len:
-                best_match = task_id
+                best_match = entry["task_id"]
                 best_len = len(norm)
         return best_match
 
@@ -116,9 +142,8 @@ class WorktreeManager:
                     store_path=os.path.join(self.worktrees_base, branch, ".tasks"),
                 )
             return None
-        # Check-and-register must be one transaction: two agents mounting at
-        # once both pass has_worktree and then rewrite the manifest from a
-        # stale copy, dropping each other's entry.
+        # Check-and-create must be one transaction: two agents mounting at once
+        # must not create the same branch concurrently.
         with store_lock(self.context):
             if self.has_worktree(task_id):
                 return self.get_worktree_path(task_id)
@@ -142,39 +167,19 @@ class WorktreeManager:
                         f"Failed to create worktree for task {task_id}: {result.stderr}"
                     )
                 return None
-            manifest = self._load_manifest()
-            manifest["worktrees"][str(task_id)] = {
-                "branch": branch,
-                "path": worktree_path,
-                "task_file": branch,
-            }
-            self._save_manifest(manifest)
         self.log(f"Git: Created worktree for task {task_id} at '{worktree_path}'")
         return worktree_path
 
     def live_worktree_paths(self) -> list[str]:
         """Paths git reports as worktrees (the main checkout included)."""
-        result = self.git.run(
-            ["worktree", "list", "--porcelain"], cwd=self.context.main_repo_root
-        )
-        if result.returncode != 0:
-            return []
-        paths = []
-        for line in result.stdout.splitlines():
-            if line.startswith("worktree "):
-                paths.append(line[len("worktree ") :].strip())
-        return paths
+        return [entry["path"] for entry in self._worktree_entries()]
 
     def audit_worktrees(self) -> list[tuple[str, str | None, str]]:
-        """Findings for every worktree path the manifest does not own."""
-        return audit_worktree_manifest(
-            self._load_manifest().get("worktrees", {}),
-            self.worktrees_base,
-            self.live_worktree_paths(),
-        )
+        """Findings for every worktree path that disagrees with Git."""
+        return audit_worktrees(self._worktree_entries(), self.worktrees_base)
 
     def remove_unregistered_dir(self, path: str) -> bool:
-        """Delete a directory under .task-worktrees/ no manifest entry owns.
+        """Delete a directory under .task-worktrees/ Git does not own.
 
         Refuses anything that is a real git worktree or outside the base: this is
         a repair, not a cleanup of other agents' working directories.
@@ -183,37 +188,24 @@ class WorktreeManager:
         target = os.path.abspath(path)
         if not target.startswith(base + os.sep) or not os.path.isdir(target):
             return False
-        manifest = self._load_manifest().get("worktrees", {})
-        registered = {os.path.abspath(e.get("path", "")) for e in manifest.values()}
-        if target in registered or target in {
-            os.path.abspath(p) for p in self.live_worktree_paths()
-        }:
+        if target in {os.path.abspath(p) for p in self.live_worktree_paths()}:
             return False
         shutil.rmtree(target)
         return True
 
     def list_worktrees(self) -> list[dict]:
-        manifest = self._load_manifest()
-        worktrees = []
-        for task_id, entry in manifest.get("worktrees", {}).items():
-            path = entry.get("path")
-            exists = bool(path and os.path.exists(path))
-            worktrees.append(
-                {
-                    "task_id": task_id,
-                    "branch": entry.get("branch"),
-                    "path": path,
-                    "exists": exists,
-                }
-            )
-        return worktrees
+        return self._task_worktrees()
 
     def remove_task_worktree(self, task_id, force: bool = False) -> bool:
-        # Same transaction shape as create: prune can rewrite the manifest while
-        # another agent is mid-mount, losing a freshly written entry.
         with store_lock(self.context):
-            manifest = self._load_manifest()
-            entry = manifest.get("worktrees", {}).get(str(task_id))
+            entry = next(
+                (
+                    item
+                    for item in self._task_worktrees()
+                    if item["task_id"] == str(task_id)
+                ),
+                None,
+            )
             if not entry:
                 return False
             path = entry.get("path")
@@ -246,23 +238,16 @@ class WorktreeManager:
                     self.git.run(
                         ["branch", "-D", branch], cwd=self.context.main_repo_root
                     )
-            del manifest["worktrees"][str(task_id)]
-            self._save_manifest(manifest)
         self.log(f"Git: Removed worktree for task {task_id}")
         return True
 
     def prune_worktrees(self) -> list[str]:
         with store_lock(self.context):
+            stale = [
+                entry["task_id"]
+                for entry in self._task_worktrees()
+                if not entry["exists"]
+            ]
             self.git.run(["worktree", "prune"], cwd=self.context.main_repo_root)
-            manifest = self._load_manifest()
-            stale = []
-            for task_id, entry in list(manifest.get("worktrees", {}).items()):
-                path = entry.get("path")
-                if path and not os.path.exists(path):
-                    stale.append(task_id)
-            for task_id in stale:
-                del manifest["worktrees"][str(task_id)]
-            if stale:
-                self._save_manifest(manifest)
         self.log(f"Pruned {len(stale)} stale worktree entries")
         return stale

@@ -117,7 +117,7 @@ class TestRejectWithoutProgressFiles(HammerTestBase):
         os.symlink(os.path.join(os.getcwd(), "hammer"), fixture_hammer)
 
     def test_progressing_task_can_be_rejected_without_progress_files(self):
-        self.seed_counter(9100)
+        self.seed_task_id_floor(9100)
         created = self.run_tasks(
             [
                 "create",

@@ -13,7 +13,7 @@ from tasks_ai.file_manager import FM
 
 The store is one git repo written by every worktree and every agent session.
 Git protects only its own index, so two read-modify-write transactions racing
-each other (id allocation, manifest rewrite, undo) lose data with no error.
+each other (id allocation, worktree creation, undo) lose data with no error.
 flock is per-open-file and is released by the kernel when a holder dies, so a
 crashed agent never leaves a stale lock behind.
 
@@ -99,31 +99,27 @@ def derive_task_folder(numeric_id, task_type: str, title: str) -> str:
     return f"{numeric_id}-{task_type}-{slug[:30]}".strip("-")
 
 
-def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
-    """Where the worktree manifest, git and the directory tree disagree.
+def audit_worktrees(worktrees, worktrees_base, expected_branches=None):
+    """Where Git's worktree registry and the directory tree disagree.
 
-    Hammer owns these paths: a task's worktree lives at exactly
-    <worktrees_base>/<branch> and is registered in the manifest. Any other
-    arrangement is drift a consumer would have to guess about, which is how
-    stray directories and phantom paths get created.
+    Hammer owns task worktree paths: each task worktree lives at exactly
+    <worktrees_base>/<branch>. Git's registry is authoritative; directories
+    under the base that Git does not own are drift.
     """
     findings = []
-    live = {os.path.abspath(p) for p in live_paths}
-    registered = set()
-    for task_id, entry in sorted(manifest_worktrees.items()):
+    expected_branches = expected_branches or {}
+    live = set()
+    for entry in worktrees:
         path = entry.get("path") or ""
         branch = entry.get("branch") or ""
         if not path:
-            findings.append(
-                (
-                    "GUARD_WORKTREE_PATH_DRIFT",
-                    task_id,
-                    f"manifest entry for task {task_id} has no worktree path",
-                )
-            )
             continue
         abs_path = os.path.abspath(path)
-        registered.add(abs_path)
+        live.add(abs_path)
+        match = re.match(r"^(\d+)-", branch)
+        if not match:
+            continue
+        task_id = match.group(1)
         local_store = os.path.join(abs_path, ".tasks")
         if os.path.isdir(local_store):
             findings.append(
@@ -133,7 +129,8 @@ def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
                     f"worktree for task {task_id} contains a local store: {local_store}",
                 )
             )
-        expected = os.path.join(worktrees_base, branch)
+        expected_branch = expected_branches.get(task_id) or f"{task_id}-PROGRESSING"
+        expected = os.path.join(worktrees_base, expected_branch)
         if abs_path != expected:
             findings.append(
                 (
@@ -142,19 +139,11 @@ def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
                     f"worktree for task {task_id} is at '{abs_path}', expected '{expected}'",
                 )
             )
-        elif abs_path not in live:
-            findings.append(
-                (
-                    "GUARD_WORKTREE_MISSING_WORKTREE",
-                    task_id,
-                    f"manifest path '{abs_path}' is not a git worktree",
-                )
-            )
     base = os.path.abspath(worktrees_base)
     if os.path.isdir(base):
         for name in sorted(os.listdir(base)):
             abs_path = os.path.join(base, name)
-            if abs_path in registered:
+            if abs_path in live:
                 continue
             if os.path.isdir(abs_path) and os.path.exists(
                 os.path.join(abs_path, ".git")
@@ -164,7 +153,7 @@ def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
                 (
                     "GUARD_WORKTREE_UNREGISTERED",
                     None,
-                    f"directory under {base} is not in the manifest: {abs_path}",
+                    f"directory under {base} is not a git worktree: {abs_path}",
                 )
             )
     return findings
@@ -173,8 +162,8 @@ def audit_worktree_manifest(manifest_worktrees, worktrees_base, live_paths):
 def worktree_path_matches(wt_path: str, worktrees_base: str, branch: str) -> bool:
     """A task's worktree lives at exactly <worktrees_base>/<branch>.
 
-    Anything else means the manifest, the branch and the directory on disk
-    disagree, so no consumer can resolve the task by name.
+    Anything else means the registered path, the task branch and the directory
+    on disk disagree, so no consumer can resolve the task by name.
     """
     return os.path.abspath(wt_path) == os.path.join(worktrees_base, branch)
 

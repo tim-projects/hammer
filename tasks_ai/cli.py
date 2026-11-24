@@ -52,6 +52,17 @@ from .utils import commit_task_paths, store_is_git, store_lock
 from .validation import Validation
 
 
+def _rmtree_ignore_missing(path):
+    """Remove a tree while tolerating Git maintenance deleting files concurrently."""
+
+    def handle_missing(_function, _path, exc_info):
+        if isinstance(exc_info[1], FileNotFoundError):
+            return
+        raise exc_info[1]
+
+    shutil.rmtree(path, onexc=handle_missing)
+
+
 class TasksCLI:
     def __init__(self, as_json=False, command=None, quiet=False, dev=False, yes=False):
         self.as_json = as_json
@@ -741,6 +752,35 @@ class TasksCLI:
                 hint=(commit.stderr or "").strip() or "git commit failed",
             )
 
+    def _remove_legacy_identity_files(self):
+        """Delete superseded counter and worktree sidecars from the task store."""
+        removed = []
+        for name in os.listdir(self.tasks_path):
+            if not (
+                name.startswith(".task_counter")
+                or name == "task_counter"
+                or name == "worktrees.json"
+            ):
+                continue
+            path = os.path.join(self.tasks_path, name)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+            removed.append(name)
+        if not removed:
+            return
+        for name in removed:
+            tracked = self._run_git(
+                ["ls-files", "--", name], cwd=self.tasks_path
+            ).stdout.strip()
+            if tracked:
+                self._run_git(["add", "-u", "--", name], cwd=self.tasks_path)
+        self._run_git(
+            ["commit", "--allow-empty", "-m", "Remove legacy task identity files"],
+            cwd=self.tasks_path,
+        )
+
     def init(self, force=False):
         if not force and os.path.isdir(os.path.join(self.tasks_path, ".git")):
             self._commit_tasks_store_gitignore()
@@ -760,7 +800,7 @@ class TasksCLI:
                 else:
                     backup_path = self._backup_tasks_directory(self.tasks_path)
                     self.log(f"Resetting dev tasks at {self.tasks_path}")
-                    shutil.rmtree(self.tasks_path)
+                    _rmtree_ignore_missing(self.tasks_path)
 
             from .constants import TASKS_BRANCH
             from .context import clone_local
@@ -789,20 +829,13 @@ class TasksCLI:
                 # Cloning sets origin to the invoked repo; a dev store must carry
                 # no remote at all, so no dev command can push anywhere.
                 self._run_git(["remote", "remove", "origin"], cwd=self.tasks_path)
+            self._remove_legacy_identity_files()
             self._commit_tasks_store_gitignore()
 
             for folder in STATE_FOLDERS.values():
                 p = os.path.join(self.tasks_path, folder)
                 os.makedirs(p, exist_ok=True)
                 Path(os.path.join(p, ".gitkeep")).touch()
-            counter_file = os.path.join(self.tasks_path, ".task_counter")
-            if not os.path.exists(counter_file):
-                with open(counter_file, "w") as f:
-                    f.write("0")
-                self._run_git(["add", "."], cwd=self.tasks_path)
-                self._run_git(
-                    ["commit", "-m", "Init task counter"], cwd=self.tasks_path
-                )
             self._ensure_tasks_backup_gitignored()
             self.log(f"Dev tasks initialized at {self.tasks_path}")
             self.finish()
@@ -881,6 +914,7 @@ class TasksCLI:
                     clone_result.stderr or clone_result.stdout or "unknown error"
                 ).strip(),
             )
+        self._remove_legacy_identity_files()
         self._commit_tasks_store_gitignore()
 
         for folder in STATE_FOLDERS.values():
@@ -894,13 +928,6 @@ class TasksCLI:
 
         if self._run_git(["status", "--porcelain"], cwd=self.tasks_path).stdout:
             self._run_git(["commit", "-m", "Init tasks folders"], cwd=self.tasks_path)
-
-        counter_file = os.path.join(self.tasks_path, ".task_counter")
-        if not os.path.exists(counter_file):
-            with open(counter_file, "w") as f:
-                f.write("0")
-            self._run_git(["add", ".task_counter"], cwd=self.tasks_path)
-            self._run_git(["commit", "-m", "Init task counter"], cwd=self.tasks_path)
 
         config_file = os.path.join(self.tasks_path, "config.yaml")
         if not os.path.exists(config_file):
@@ -1393,9 +1420,6 @@ class TasksCLI:
         """Check if .tasks directory contains actual task data beyond infrastructure."""
         if not os.path.exists(path):
             return False
-        # .task_counter presence indicates tasks have been created
-        if os.path.exists(os.path.join(path, ".task_counter")):
-            return True
         # Check each state folder for task directories (anything beyond .gitkeep)
         for state_folder in STATE_FOLDERS.values():
             folder_path = os.path.join(path, state_folder)

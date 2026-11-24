@@ -45,9 +45,9 @@ PRODUCTION_STORE = os.path.join(MAIN_ROOT, ".tasks")
 
 
 def store_fingerprint(store):
-    """Cheap identity of a store: counter, config and the task folders."""
+    """Cheap identity of a store: config and the task folders."""
     fingerprint = {}
-    for name in (".task_counter", "config.yaml"):
+    for name in ("config.yaml",):
         path = os.path.join(store, name)
         if os.path.exists(path):
             with open(path) as handle:
