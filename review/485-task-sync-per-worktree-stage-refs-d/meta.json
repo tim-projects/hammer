@@ -1,0 +1,45 @@
+{
+  "Id": 485,
+  "Ti": "Sync per-worktree stage refs down on demotion",
+  "Ty": "task",
+  "Cr": "261121 08:10",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "485-task-sync-per-worktree-stage-refs-d",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795497037.990508,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "data/errors.json",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/485-task-sync-per-worktree-stage-refs-d/patches/data_errors.json.patch"
+    },
+    {
+      "file": "tasks_ai/cli_errors.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/485-task-sync-per-worktree-stage-refs-d/patches/tasks_ai_cli_errors.py.patch"
+    },
+    {
+      "file": "tasks_ai/commands/move.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/485-task-sync-per-worktree-stage-refs-d/patches/tasks_ai_commands_move.py.patch"
+    },
+    {
+      "file": "tasks_ai/git_service.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/485-task-sync-per-worktree-stage-refs-d/patches/tasks_ai_git_service.py.patch"
+    },
+    {
+      "file": "tests/test_worktree_local_promotion.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/485-task-sync-per-worktree-stage-refs-d/patches/tests_test_worktree_local_promotion.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "1dd2482798c5005f4c67a9c989d0134d7302ac67",
+    "base": "b38bc91a70789e4f36f259e92d19c0ca994e4c6b"
+  }
+}

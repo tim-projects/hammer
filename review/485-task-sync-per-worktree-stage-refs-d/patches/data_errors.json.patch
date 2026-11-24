@@ -1,0 +1,13 @@
+diff --git a/data/errors.json b/data/errors.json
+index 88c9af06..4a241307 100644
+--- a/data/errors.json
++++ b/data/errors.json
+@@ -23,7 +23,7 @@
+   "HASH_MISSING": "Audit integrity hash missing.",
+   "INTEGRITY_MISMATCH": "Integrity mismatch: Criteria, proof, or audit has changed.",
+   "BRANCH_CHECKOUT_FAIL": "Failed to checkout branch '{branch}'.",
+-  "MERGE_CONFLICT": "[{task_id}] Merge conflict while syncing '{branch}' with '{default}'.",
++  "MERGE_CONFLICT": "[{task_id}] Merge conflict while syncing '{branch}' with '{default}'. Conflicting paths: {paths}.",
+   "PIPELINE_BRANCH_MISSING": "Required pipeline branch '{branch}' is missing and could not be recreated.",
+   "PIPELINE_PUSH_FAILED": "Failed to push pipeline branch '{branch}': {stderr}",
+   "MAIN_BRANCH_PROTECTION": "Forbidden operation on '{default_branch}' branch.",
