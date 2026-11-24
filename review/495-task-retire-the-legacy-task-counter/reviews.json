@@ -229,6 +229,16 @@
       "bytes": 605,
       "ts": 1795488553.4245884,
       "prev_hash": "55caad93a249330532ba75e3616c1854b48c820bcc7a1534b7c20485c0717dd3"
+    },
+    {
+      "seq": 24,
+      "file": "tests/test_guard.py",
+      "patch": "tests_test_guard.py.patch",
+      "md5": "e6c8e4bf8fc6a82635b1a5523339a7cb",
+      "sha256": "abff48260c7b90925e01ed131c55156202fdd088187e51e269c92f872a54d14f",
+      "bytes": 923,
+      "ts": 1795488555.622199,
+      "prev_hash": "57a7766b343a89d755dcae9811f5a227798bfa2863593de7e1a2fdeab5c3b173"
     }
   ]
 }
