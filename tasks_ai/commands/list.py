@@ -59,8 +59,6 @@ def run(cli, show_all=False):
         tt, tb = parse_filename(item)
         tb = task.metadata.get("Br") or tb
         task_id = task.metadata.get("Id")
-        if not task_id:
-            task_id = item.split("-")[0] if "-" in item else "???"
 
         all_data.setdefault(state, []).append(
             {

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from tasks_ai.git_service import GitService
-from tasks_ai.utils import audit_worktree_manifest, commit_task_paths, store_is_git
+from tasks_ai.utils import audit_worktrees, commit_task_paths, store_is_git
 from tasks_ai.worktree_manager import WorktreeManager
 from tests.hammer_test_base import cleanup_path
 
@@ -106,10 +106,9 @@ class TestCentralStore(unittest.TestCase):
         with open(marker, "w") as handle:
             handle.write("keep")
 
-        findings = audit_worktree_manifest(
-            {"1": {"branch": branch, "path": worktree}},
+        findings = audit_worktrees(
+            [{"branch": branch, "path": worktree}],
             os.path.join(self.repo, ".task-worktrees"),
-            [worktree],
         )
 
         self.assertIn(

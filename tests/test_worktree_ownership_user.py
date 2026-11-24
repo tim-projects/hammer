@@ -7,7 +7,6 @@ a worktree registered at a drifted path never blocks a correctly named one, and
 `tasks current` answers where the worktree is.
 """
 
-import hashlib
 import json
 import os
 import subprocess
@@ -44,18 +43,9 @@ class OwnershipTestBase(HammerTestBase):
             check=False,
         )
 
-    def seed_counter(self, value):
-        with open(os.path.join(self.dev_tasks_dir, ".task_counter"), "w") as handle:
-            handle.write(str(value))
-        digest = hashlib.md5(str(value).encode()).hexdigest()
-        with open(
-            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
-        ) as handle:
-            handle.write(digest)
-
     def create_task(self, counter=BASE_ID, seed=True):
         if seed:
-            self.seed_counter(counter - 1)
+            self.seed_task_id_floor(counter - 1)
         result = self.run_tasks(
             [
                 "create",
@@ -97,20 +87,6 @@ class OwnershipTestBase(HammerTestBase):
             args, cwd=self.repo_path, capture_output=True, text=True, check=False
         )
 
-    def manifest(self):
-        with open(os.path.join(self.dev_tasks_dir, "worktrees.json")) as handle:
-            return json.load(handle)["worktrees"]
-
-    def remove_worktree(self, path):
-        subprocess.run(
-            ["git", "worktree", "remove", "--force", path],
-            cwd=self.dev_repo_dir,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        self.assertFalse(os.path.exists(path))
-
 
 class TestGuardSeesUnownedDirectories(OwnershipTestBase):
     def test_stray_directory_under_the_base_is_reported(self):
@@ -131,54 +107,6 @@ class TestGuardSeesUnownedDirectories(OwnershipTestBase):
         self.assertIn("GUARD_WORKTREE_UNREGISTERED", report.stdout + report.stderr)
         self.assertTrue(os.path.exists(stray), "doctor must not delete ambiguous work")
         self.assertTrue(os.path.exists(real), "the registered worktree was damaged")
-
-
-class TestDoctorReportsMissingWorktrees(OwnershipTestBase):
-    def test_targeted_fix_reports_but_does_not_remove_stale_manifest_entry(self):
-        payload = self.create_task()
-        worktree = self.mount_task(payload)
-        self.remove_worktree(worktree)
-
-        report = self.doctor()
-        self.assertIn("GUARD_WORKTREE_MISSING_WORKTREE", report.stdout + report.stderr)
-
-        result = self.doctor(fix=True, task_id=payload["id"])
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn(str(payload["id"]), self.manifest())
-        branch = self.git(
-            ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
-        )
-        self.assertEqual(0, branch.returncode)
-
-    def test_targeted_fix_preserves_an_unmerged_branch(self):
-        payload = self.create_task()
-        worktree = self.mount_task(payload)
-        with open(os.path.join(worktree, "feature.py"), "w") as handle:
-            handle.write("value = 1\n")
-        self.git(["add", "feature.py"], cwd=worktree)
-        self.git(["commit", "-m", "Add feature"], cwd=worktree)
-        self.remove_worktree(worktree)
-
-        result = self.doctor(fix=True, task_id=payload["id"])
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn(str(payload["id"]), self.manifest())
-        branch = self.git(
-            ["rev-parse", "--verify", payload["branch"]], cwd=self.dev_repo_dir
-        )
-        self.assertEqual(0, branch.returncode)
-
-    def test_targeted_fix_does_not_repair_another_task(self):
-        first = self.create_task(counter=9200)
-        self.seed_counter(9202)
-        second = self.create_task(counter=9203, seed=False)
-        self.remove_worktree(self.mount_task(first))
-        self.remove_worktree(self.mount_task(second))
-
-        result = self.doctor(fix=True, task_id=first["id"])
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        manifest = self.manifest()
-        self.assertIn(str(first["id"]), manifest)
-        self.assertIn(str(second["id"]), manifest)
 
 
 class TestDriftedPathDoesNotBlockTheHealthyTask(OwnershipTestBase):

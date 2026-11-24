@@ -209,8 +209,18 @@ class TestDevWriteAudit(unittest.TestCase):
         self.assertTrue(moved["success"], moved)
         moved = self.payload(self.run_dev(["move", file_a, "PROGRESSING"]))
         self.assertTrue(moved["success"], moved)
-        with open(os.path.join(self.store, "worktrees.json")) as handle:
-            paths = [entry["path"] for entry in json.load(handle)["worktrees"].values()]
+        listing = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=self.dev_repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+        paths = [
+            line.removeprefix("worktree ")
+            for line in listing.splitlines()
+            if line.startswith("worktree ")
+        ]
         self.assertTrue(paths, "the task must have a worktree")
         for path in paths:
             self.assertTrue(

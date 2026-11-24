@@ -71,7 +71,7 @@ Each task operates in a dedicated git worktree for isolation. Worktrees are crea
 - **Persistent through pipeline**: The worktree persists through DONE; automated archival removes it when the task moves to ARCHIVED
 - **Demotion support**: Tasks can be demoted from DONE back to earlier states (worktree remains active)
 - **Worktree location**: `.task-worktrees/<branch>` relative to the main repo root
-- **Worktree manifest**: `.tasks/worktrees.json` tracks all active task worktrees
+- **Worktree registry**: Git's `git worktree list --porcelain` tracks all active task worktrees
 
 ## ⚠️ Operational Rules
 
