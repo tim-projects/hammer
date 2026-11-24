@@ -1,0 +1,12 @@
+{
+    "task_id": "489",
+    "patch_hash": "f5b0eae5c93524ecc5070e1039a59db8",
+    "patch_files": [
+        "repo.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tests_test_critical_branches.py.patch",
+        "tests_test_hooks_default_branch.py.patch",
+        "tests_test_repo_provisioning.py.patch"
+    ],
+    "status": "verified"
+}
