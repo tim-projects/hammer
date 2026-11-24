@@ -763,7 +763,7 @@ class GitService:
         current_state: str | None = None,
         force: bool = False,
     ):
-        """Sync higher branches back into task worktree branch during demotion."""
+        """Sync task-local stage refs down into the task branch during demotion."""
         branch = task.metadata.get("Br", "")
         if not branch:
             return
@@ -772,16 +772,8 @@ class GitService:
         repo_root = self.context.main_repo_root
 
         self.log(
-            f"Demoting task {task_id}. Syncing higher branches back to worktree branch {branch}..."
+            f"Demoting task {task_id}. Syncing task-local stage refs down to {branch}..."
         )
-
-        default_branch = self.get_default_branch()
-        higher = [default_branch] if default_branch else []
-        branches_to_sync = []
-        if target_state == "PROGRESSING":
-            branches_to_sync = higher + ["staging", "testing"]
-        elif target_state in ["TESTING", "REVIEW"]:
-            branches_to_sync = higher + ["staging"]
 
         if not self.branch_exists(branch, repo_root):
             if target_state == "REJECTED" or force:
@@ -789,26 +781,55 @@ class GitService:
                     f"Branch {branch} does not exist locally. Skipping demotion sync for {target_state} transition."
                 )
                 return
-            else:
-                raise RuntimeError(f"Branch {branch} does not exist locally.")
+            raise RuntimeError(f"Branch {branch} does not exist locally.")
 
-        # Sync into the worktree (if it exists) or the branch directly
-        wt_path = self.worktrees.get_worktree_path(str(task_id))
-        if wt_path and os.path.exists(wt_path):
-            self.run(["checkout", branch], cwd=wt_path)
-            for b in branches_to_sync:
-                if self.branch_exists(b, repo_root):
-                    self.log(f"Git: Syncing {b} -> {branch} (demotion)")
-                    self.run(
-                        ["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
-                        cwd=wt_path,
-                    )
+        testing_ref = f"{task_id}-TESTING"
+        staging_ref = f"{task_id}-STAGING"
+        pr_ref = f"{task_id}-PR"
+        if target_state in ("PROGRESSING", "PR"):
+            sync_chain = [
+                ("origin/main", pr_ref),
+                (pr_ref, staging_ref),
+                (staging_ref, testing_ref),
+                (testing_ref, branch),
+            ]
+        elif target_state in ("STAGING", "REVIEW"):
+            sync_chain = [
+                (staging_ref, testing_ref),
+                (testing_ref, branch),
+            ]
+        elif target_state == "TESTING":
+            sync_chain = [(testing_ref, branch)]
         else:
-            self.run(["checkout", branch], cwd=repo_root)
-            for b in branches_to_sync:
-                if self.branch_exists(b, repo_root):
-                    self.log(f"Git: Syncing {b} -> {branch} (demotion)")
-                    self.run(
-                        ["merge", b, "-m", f"Sync: {b} -> {branch} (demotion)"],
-                        cwd=repo_root,
-                    )
+            sync_chain = []
+
+        wt_path = self.worktrees.get_worktree_path(str(task_id))
+        cwd = wt_path if wt_path and os.path.exists(wt_path) else repo_root
+        for source, target in sync_chain:
+            if not self.branch_exists(source, cwd) or not self.branch_exists(
+                target, cwd
+            ):
+                continue
+            checkout = self.run(["checkout", target], cwd=cwd)
+            if checkout.returncode != 0:
+                from .cli_errors import PipelineBranchMissing
+
+                raise PipelineBranchMissing(target)
+            conflicts = self.conflicting_files(cwd, source)
+            self.log(f"Git: Syncing {source} -> {target} (demotion)")
+            merge = self.run(
+                ["merge", source, "-m", f"Sync: {source} -> {target} (demotion)"],
+                cwd=cwd,
+                log_success=False,
+            )
+            if merge.returncode != 0:
+                self.run(["merge", "--abort"], cwd=cwd, check=False)
+                from .cli_errors import PipelineMergeConflict
+
+                raise PipelineMergeConflict(source, target, conflicts)
+
+        checkout = self.run(["checkout", branch], cwd=cwd)
+        if checkout.returncode != 0:
+            from .cli_errors import PipelineBranchMissing
+
+            raise PipelineBranchMissing(branch)

@@ -170,7 +170,11 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
         except PipelineMergeConflict as e:
             task_id = str(task.metadata.get("Id", "unknown"))
             cli.error(
-                "MERGE_CONFLICT", branch=e.branch, default=e.default, task_id=task_id
+                "MERGE_CONFLICT",
+                branch=e.branch,
+                default=e.default,
+                task_id=task_id,
+                paths=", ".join(e.paths) if e.paths else "unknown",
             )
             return False
         except PipelineBranchMissing as e:

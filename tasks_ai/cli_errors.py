@@ -1,9 +1,10 @@
 class PipelineMergeConflict(Exception):
     """Raised when a git merge conflict occurs during a pipeline transition."""
 
-    def __init__(self, branch, default):
+    def __init__(self, branch, default, paths=None):
         self.branch = branch
         self.default = default
+        self.paths = paths or []
         super().__init__(f"Merge conflict {branch} -> {default}.")
 
 
