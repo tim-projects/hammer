@@ -1,0 +1,1 @@
+Focused suites: 34 passed. ./hammer check all: lint, test, typecheck, and format passed. Verified numeric repo merge enters PROVISIONING, check-merged succeeds, fresh provisioning bootstraps from origin/main, sync reaches main, and deletion guards protect provisioning.
