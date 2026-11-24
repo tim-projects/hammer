@@ -119,6 +119,16 @@
       "bytes": 4990,
       "ts": 1795488533.2173274,
       "prev_hash": "d2d65b27562b59200f91107e5c5a5b5215d71d49c3ed43678f34b06efefd030b"
+    },
+    {
+      "seq": 13,
+      "file": "tasks_ai/worktree_manager.py",
+      "patch": "tasks_ai_worktree_manager.py.patch",
+      "md5": "ca20be8af3028bbee7fc427b040b7301",
+      "sha256": "aef636668288ca71313678b1f48b09214358fd79eb63bbf4cd2adfefa5f57f12",
+      "bytes": 11532,
+      "ts": 1795488534.797618,
+      "prev_hash": "97ae29795c0490a18429ec9a3c7acf664649e599ab553b98ef1d2a64ab7eaafa"
     }
   ]
 }
