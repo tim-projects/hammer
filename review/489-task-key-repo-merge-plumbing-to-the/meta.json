@@ -1,0 +1,45 @@
+{
+  "Id": 489,
+  "Ti": "Key repo merge plumbing to the provisioning funnel",
+  "Ty": "task",
+  "Cr": "261121 08:11",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "489-task-key-repo-merge-plumbing-to-the",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795517531.035826,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "repo.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/489-task-key-repo-merge-plumbing-to-the/patches/repo.py.patch"
+    },
+    {
+      "file": "tasks_ai/cli.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/489-task-key-repo-merge-plumbing-to-the/patches/tasks_ai_cli.py.patch"
+    },
+    {
+      "file": "tests/test_critical_branches.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/489-task-key-repo-merge-plumbing-to-the/patches/tests_test_critical_branches.py.patch"
+    },
+    {
+      "file": "tests/test_hooks_default_branch.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/489-task-key-repo-merge-plumbing-to-the/patches/tests_test_hooks_default_branch.py.patch"
+    },
+    {
+      "file": "tests/test_repo_provisioning.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/489-task-key-repo-merge-plumbing-to-the/patches/tests_test_repo_provisioning.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "04b4f33b9d13acbb166c9d3e0b643cb8e699b2eb",
+    "base": "3fef9ff2c903e43b4c87a08ed07c1e98b03244c7"
+  }
+}

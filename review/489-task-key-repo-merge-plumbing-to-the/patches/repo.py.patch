@@ -1,0 +1,203 @@
+diff --git a/repo.py b/repo.py
+index 05080eea..7762bc50 100755
+--- a/repo.py
++++ b/repo.py
+@@ -7,12 +7,12 @@ Commands:
+   merge <src> <dest>        Merge <src> into <dest> (exit 0 = merged)
+   promote <branch>          DEPRECATED: promote a branch (use 'tasks move')
+   demote <task-id> <state>  Demote a task to an earlier state (exit 0 = demoted)
+-  sync                      Sync testing -> staging -> default branch (exit 0 = synced)
++  sync                      Sync provisioning -> default branch (exit 0 = synced)
+   commit <message>          Validate, commit, and optionally push (exit 0 = committed)
+   git <args>                Forward <args> to git
+   status                    Show git status (read-only)
+-  check-merged <branch>     Exit 0 if <branch> reached the default branch (read-only)
+-  check-merged-testing <b>  Exit 0 if <branch> reached testing (read-only)
++  check-merged <branch>     Exit 0 if <branch> reached provisioning (read-only)
++  check-merged-testing <b>  Exit 0 if <branch> reached provisioning (read-only)
+   branch list               List local branches (read-only)
+   branch create <name>      Create and switch to <name>
+   branch delete <name>      Delete <name>
+@@ -77,8 +77,8 @@ def get_default_branch():
+ 
+ 
+ def pipeline():
+-    """Pipeline stages in promotion order, ending at the default branch."""
+-    return ["testing", "staging", get_default_branch()]
++    """Shared funnel stages in promotion order, ending at the default branch."""
++    return ["provisioning", get_default_branch()]
+ 
+ 
+ def get_primary_remote():
+@@ -258,22 +258,10 @@ def check_remote_exists():
+     return True
+ 
+ 
+-def check_merged_to_main(branch):
+-    if not branch_exists(branch):
+-        error(f"Branch {branch} does not exist.")
++def check_merged_to_provisioning(branch):
++    branch = resolve_branch(branch)
+     result = run(
+-        ["git", "merge-base", "--is-ancestor", branch, get_default_branch()],
+-        check=False,
+-        capture=True,
+-    )
+-    return result.returncode == 0
+-
+-
+-def check_merged_to_testing(branch):
+-    if not branch_exists(branch):
+-        error(f"Branch {branch} does not exist.")
+-    result = run(
+-        ["git", "merge-base", "--is-ancestor", branch, "testing"],
++        ["git", "merge-base", "--is-ancestor", branch, "provisioning"],
+         check=False,
+         capture=True,
+     )
+@@ -361,7 +349,9 @@ def _guard_merge_source(cli, src, cwd=None):
+ 
+ def _cmd_merge_locked(src_input, target_input):
+     src = resolve_branch(src_input)
+-    target = resolve_branch(target_input)
++    target = (
++        target_input if target_input in pipeline() else resolve_branch(target_input)
++    )
+ 
+     # Identify if src is a task branch
+     task_id = src.split("-")[0] if src.split("-")[0].isdigit() else None
+@@ -370,23 +360,34 @@ def _cmd_merge_locked(src_input, target_input):
+         if TasksCLI
+         else None
+     )
++    pending_status = None
+ 
+     if task_id and cli:
+         path, _ = cli.find_task(task_id)
+         if path:
++            from tasks_ai.file_manager import FM
++
++            task_id = str(FM.load(path).metadata.get("Id") or task_id)
+             # Map git branch target to pipeline status
+             pipeline_to_status = {
+-                "testing": "TESTING",
+-                "staging": "STAGING",
++                "provisioning": "PROVISIONING",
+                 get_default_branch(): "DONE",
+             }
+             new_status = pipeline_to_status.get(target)
+             if new_status:
++                if target != "provisioning":
++                    info(
++                        f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'..."
++                    )
++                    cli.move(task_id, new_status, yes=FLAGS["yes"])
++                    return
++                stage_ref = f"{task_id}-PR"
++                if branch_exists(stage_ref):
++                    src = stage_ref
++                pending_status = new_status
+                 info(
+-                    f"Task branch detected: {src}. Routing merge through 'tasks move {task_id} {new_status}'..."
++                    f"Task branch detected: {src}. Merging into the provisioning funnel before moving to {new_status}..."
+                 )
+-                cli.move(task_id, new_status, yes=FLAGS["yes"])
+-                return
+ 
+     if target not in pipeline():  # noqa: SIM102
+         if not FLAGS["yes"]:
+@@ -424,6 +425,8 @@ def _cmd_merge_locked(src_input, target_input):
+     else:
+         warn("No remote - skipping push")
+     log(f"✅ Successfully merged {src.upper()} → {target.upper()}")
++    if pending_status and cli:
++        cli.move(task_id, pending_status, yes=FLAGS["yes"])
+ 
+ 
+ def cmd_commit(message):
+@@ -535,7 +538,7 @@ def resolve_branch(name):
+ 
+ def critical_branches():
+     """Names that automation must never delete."""
+-    return {get_default_branch(), "testing", "staging"}
++    return {get_default_branch(), "provisioning", "testing", "staging"}
+ 
+ 
+ def delete_branch(name):
+@@ -543,7 +546,7 @@ def delete_branch(name):
+     if name in critical_branches():
+         error(
+             f"Cannot delete critical pipeline branch: {name}",
+-            hint="Use the pipeline instead of deleting testing, staging, or the default branch.",
++            hint="Use the pipeline instead of deleting pipeline or default branches.",
+         )
+     run(["git", "branch", "-d", name])
+ 
+@@ -556,6 +559,10 @@ def ensure_pipeline_branch(name):
+         error(f"Branch {name} not in pipeline.")
+     idx = stages.index(name)
+     base = stages[idx + 1] if idx + 1 < len(stages) else get_default_branch()
++    if name == "provisioning":
++        remote_default = f"{PRIMARY_REMOTE}/{base}"
++        if branch_exists(remote_default):
++            base = remote_default
+     if not branch_exists(base):
+         base = get_current_branch()
+     run(["git", "checkout", "-b", name, base], quiet=True)
+@@ -612,7 +619,7 @@ def build_parser():
+     )
+     merge.add_argument("src", help="Source branch, task id, or 'current'.")
+     merge.add_argument(
+-        "dest", help="Target branch or pipeline stage (testing, staging, default)."
++        "dest", help="Target branch or pipeline stage (provisioning, default)."
+     )
+ 
+     promote = sub.add_parser(
+@@ -631,7 +638,7 @@ def build_parser():
+     sub.add_parser(
+         "sync",
+         parents=[global_flags()],
+-        help="Sync testing -> staging -> default branch (exit 0 = synced).",
++        help="Sync provisioning -> default branch (exit 0 = synced).",
+     )
+ 
+     commit = sub.add_parser(
+@@ -653,14 +660,14 @@ def build_parser():
+     check_merged = sub.add_parser(
+         "check-merged",
+         parents=[global_flags()],
+-        help="Exit 0 if <branch> is merged to the default branch (read-only).",
++        help="Exit 0 if <branch> is merged to provisioning (read-only).",
+     )
+     check_merged.add_argument("branch", help="Branch name, task id, or 'current'.")
+ 
+     check_merged_testing = sub.add_parser(
+         "check-merged-testing",
+         parents=[global_flags()],
+-        help="Exit 0 if <branch> is merged to testing (read-only).",
++        help="Exit 0 if <branch> is merged to provisioning (read-only).",
+     )
+     check_merged_testing.add_argument(
+         "branch", help="Branch name, task id, or 'current'."
+@@ -711,18 +718,15 @@ def main():
+     elif args.command == "demote":
+         cmd_demote(args.task_id, args.state)
+     elif args.command == "sync":
+-        cmd_merge("testing", "staging")
+-        cmd_merge("staging", get_default_branch())
++        cmd_merge("provisioning", get_default_branch())
+     elif args.command == "commit":
+         cmd_commit(" ".join(args.message))
+     elif args.command == "git":
+         run(["git"] + args.git_args)
+     elif args.command == "status":
+         run(["git", "status"])
+-    elif args.command == "check-merged":
+-        sys.exit(0 if check_merged_to_main(args.branch) else 1)
+-    elif args.command == "check-merged-testing":
+-        sys.exit(0 if check_merged_to_testing(args.branch) else 1)
++    elif args.command in ("check-merged", "check-merged-testing"):
++        sys.exit(0 if check_merged_to_provisioning(args.branch) else 1)
+     elif args.command == "branch":
+         if args.action == "list":
+             run(["git", "branch"])
