@@ -249,6 +249,16 @@
       "bytes": 549,
       "ts": 1795488557.3105555,
       "prev_hash": "02317f662ee850f63a9999e4ced727373e78e94cabf6117b564063207c3d5f92"
+    },
+    {
+      "seq": 26,
+      "file": "tests/test_lazy_task_creation.py",
+      "patch": "tests_test_lazy_task_creation.py.patch",
+      "md5": "0e58eae1ed9c164604f9da2a38d4301c",
+      "sha256": "daa61d47a2a79ade69c1acc0cbf3e7672d7ac617446ad2e1148804eff8c91635",
+      "bytes": 2596,
+      "ts": 1795488559.1160972,
+      "prev_hash": "36ca55f5280c32393f30fd94debb444b53271a0aa25e37b4e970f370bc26286b"
     }
   ]
 }
