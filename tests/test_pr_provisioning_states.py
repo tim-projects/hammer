@@ -11,7 +11,7 @@ from tasks_ai.git_service import GitService
 class TestPRProvisioningStates(HammerTestBase):
     def setUp(self):
         super().setUp()
-        self.seed_counter(9000)
+        self.seed_task_id_floor(9000)
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         shutil.copytree(
             os.path.join(project_root, "tasks_ai"),

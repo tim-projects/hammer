@@ -1847,73 +1847,6 @@ class TestRobustness(unittest.TestCase):
         res = self.run_cmd(["move", file, "STAGING"])
         self.assertTrue(res["success"])
 
-    def test_doctor_stale_counter_detection_and_fix(self):
-        """45. Verify doctor detects stale task counter and fixes with --fix."""
-        self.run_cmd(["init"])
-        # Create two tasks to generate IDs 1 and 2
-        res1 = self.run_cmd(
-            [
-                "create",
-                "Stale Counter Task One",
-                "--story",
-                "First task for stale counter test with enough detail.",
-                "--tech",
-                "Testing counter logic and doctor fix behavior.",
-                "--criteria",
-                "Task created successfully with proper validation.",
-                "--plan",
-                "Implement the task fully with tests and documentation.",
-            ]
-        )
-        self.assertTrue(res1["success"])
-        res2 = self.run_cmd(
-            [
-                "create",
-                "Stale Counter Task Two",
-                "--story",
-                "Second task for stale counter test with enough detail.",
-                "--tech",
-                "Testing counter logic and doctor fix behavior.",
-                "--criteria",
-                "Task created successfully with proper validation.",
-                "--plan",
-                "Implement the task fully with tests and documentation.",
-            ]
-        )
-        self.assertTrue(res2["success"])
-
-        # Simulate stale counter by manually setting .task_counter to 0
-        tasks_dir = os.path.join(self.repo_dir, ".tasks")
-        counter_path = os.path.join(tasks_dir, ".task_counter")
-        with open(counter_path, "w") as f:
-            f.write("0")
-        subprocess.run(  # noqa: PLW1510
-            ["git", "add", ".task_counter"], cwd=tasks_dir, capture_output=True
-        )
-        subprocess.run(  # noqa: PLW1510
-            ["git", "commit", "-m", "Simulate stale counter"],
-            cwd=tasks_dir,
-            capture_output=True,
-        )
-
-        # Doctor without fix should detect the issue
-        res = self.run_cmd(["doctor"])
-        self.assertTrue(res["success"])
-        self.assertIn(
-            "stale-task-counter",
-            [bug["id"] for bug in res["data"]["bugs"]],
-        )
-
-        # Doctor with --fix should update counter to max_id + 1
-        res_fix = self.run_cmd(["doctor", "--fix"])
-        self.assertTrue(res_fix["success"])
-
-        # Verify counter value
-        with open(counter_path, "r") as f:
-            new_val = int(f.read().strip())
-        # Each create generates 2 tasks (main + pair), so 2 creates = 4 tasks with IDs 1-4
-        self.assertEqual(new_val, 5)
-
     def test_doctor_state_mismatch_detection_and_fix(self):
         """46. Verify doctor detects state folder mismatch and fixes with --fix."""
         self.run_cmd(["init"])
@@ -1956,7 +1889,7 @@ class TestRobustness(unittest.TestCase):
             capture_output=True,
         )
 
-        # Doctor should detect state mismatch (and also stale counter if counter < expected)
+        # Doctor should detect state mismatch
         res = self.run_cmd(["doctor"])
         self.assertTrue(res["success"])
         self.assertGreaterEqual(len(res["data"]["bugs"]), 1)

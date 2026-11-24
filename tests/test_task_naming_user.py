@@ -7,7 +7,6 @@ reports where the worktree is, and that `tasks doctor` flags a worktree that is
 registered at a path which is not <worktrees_base>/<branch>.
 """
 
-import hashlib
 import json
 import os
 import subprocess
@@ -43,17 +42,8 @@ class NamingTestBase(HammerTestBase):
             check=False,
         )
 
-    def seed_counter(self, value):
-        with open(os.path.join(self.dev_tasks_dir, ".task_counter"), "w") as handle:
-            handle.write(str(value))
-        digest = hashlib.md5(str(value).encode()).hexdigest()
-        with open(
-            os.path.join(self.dev_tasks_dir, ".task_counter.hash"), "w"
-        ) as handle:
-            handle.write(digest)
-
     def create_task(self, title=LONG_TITLE, counter=BASE_ID):
-        self.seed_counter(counter - 1)
+        self.seed_task_id_floor(counter - 1)
         result = self.run_tasks(
             [
                 "create",
@@ -189,13 +179,7 @@ class TestDoctorFlagsWorktreePathDrift(NamingTestBase):
         # Move the registered worktree to a path that is not the branch name,
         # the exact drift that used to go unnoticed.
         drifted = os.path.join(self.dev_repo_dir, ".task-worktrees", name + "-drifted")
-        os.rename(worktree, drifted)
-        manifest = os.path.join(self.dev_tasks_dir, "worktrees.json")
-        with open(manifest) as handle:
-            data = json.load(handle)
-        data["worktrees"][str(task_id)]["path"] = drifted
-        with open(manifest, "w") as handle:
-            json.dump(data, handle)
+        self.git(["worktree", "move", worktree, drifted], cwd=self.dev_repo_dir)
 
         result = self.run_tasks(["doctor"])
         self.assertEqual(result.returncode, 0, result.stdout)
