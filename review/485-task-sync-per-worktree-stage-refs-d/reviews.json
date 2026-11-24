@@ -50,5 +50,8 @@
       "ts": 1795497097.1351862,
       "prev_hash": "dc79051e5672e4bb8af2b88359d91be84ea360adb69dd690b5f118636b1bbc47"
     }
-  ]
+  ],
+  "summary": "Reviewed all five patches: demotion uses task-local stage chains, conflict paths are surfaced, merges abort cleanly, and dev tests cover every target.",
+  "summary_at": 1795497118.0094616,
+  "reviewed_at": 1795497118.0094633
 }
