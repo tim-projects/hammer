@@ -50,5 +50,8 @@
       "ts": 1795508788.6158974,
       "prev_hash": "a4907123108066fa940532deb2045504b8c82880b116c087a2b664d7bd663a95"
     }
-  ]
+  ],
+  "summary": "Reviewed all five patches: stage-ref gate mapping, actionable errors, tampered-ref rejection, fast-track, and fixture updates.",
+  "summary_at": 1795508815.2115355,
+  "reviewed_at": 1795508815.2115362
 }
