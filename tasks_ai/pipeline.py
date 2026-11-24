@@ -32,6 +32,8 @@ class PipelineService:
         if target_state in ["STAGING", "DONE"]:
             gates.append("regression_check")
             gates.append("audit_integrity")
+        if target_state in ["REVIEW", "PR", "PROVISIONING", "DONE"]:
+            gates.append("stage_ref_merge")
         if target_state == "DONE":
             gates.append("mandatory_verification")
         return gates
@@ -100,7 +102,49 @@ class PipelineService:
 
         enabled_gates = self.get_enabled_gates(target_state)
 
-        # 1. Checkboxes gate: All stages moving forward require checkboxes to be checked
+        # 1. Stage-ref gate: each task must carry the previous pipeline stage
+        # in its own stage ref before the next promotion can proceed.
+        if "stage_ref_merge" in enabled_gates:
+            current_state = os.path.basename(os.path.dirname(task_path)).upper()
+            source_ref, target_ref = {
+                "TESTING": (branch, f"{task_id}-TESTING"),
+                "STAGING": (f"{task_id}-TESTING", f"{task_id}-STAGING"),
+                "PR": (f"{task_id}-STAGING", f"{task_id}-PR"),
+                "PROVISIONING": (f"{task_id}-PR", "provisioning"),
+            }.get(current_state, ("", ""))
+            if source_ref:
+                merged = self.git.is_merged(source_ref, target_ref)
+                if not merged and current_state in ("TESTING", "STAGING", "PR"):
+                    # A demotion syncs the stage ref into the task branch. On
+                    # re-promotion, either ancestry direction proves the stage
+                    # was preserved; unrelated/tampered refs satisfy neither.
+                    merged = self.git.is_merged(target_ref, source_ref)
+                if not merged:
+                    missing_ref = (
+                        source_ref
+                        if not self.git.branch_exists(source_ref)
+                        else target_ref
+                    )
+                    if missing_ref == source_ref:
+                        fix = (
+                            f"Restore '{source_ref}' from its previous stage, merge it "
+                            f"into '{target_ref}', then retry the promotion."
+                        )
+                    else:
+                        fix = (
+                            f"Restore '{target_ref}' from '{source_ref}' and retry the "
+                            "promotion."
+                        )
+                    raise PipelineError(
+                        "STAGE_REF_NOT_MERGED",
+                        task_id=task_id,
+                        source_ref=source_ref,
+                        target_ref=target_ref,
+                        missing_ref=missing_ref,
+                        fix=fix,
+                    )
+
+        # 2. Checkboxes gate: All stages moving forward require checkboxes to be checked
         if "checkboxes" in enabled_gates:  # noqa: SIM102
             if self.has_unfinished_checkboxes(task_path):
                 raise PipelineError("UNFINISHED_CHECKBOXES", task_id=task_id)
@@ -140,24 +184,6 @@ class PipelineService:
                     "REGRESSION_CHECK_NOT_PASSED",
                     task_id=task_id,
                     hint=f"Run 'tasks modify {task_id} --reviewed' after reading the patches.",
-                )
-
-        # 4. Integration gate: STAGING/DONE require worktree branch to be merged into appropriate pipeline branch
-        if "main_sync" in enabled_gates and branch:
-            # Target branch for integration check
-            integration_target = (
-                "staging" if target_state == "STAGING" else default_branch
-            )
-
-            # Check if worktree branch is merged into target
-            if integration_target and not self.git.is_merged(
-                branch, integration_target
-            ):
-                raise PipelineError(
-                    "BRANCH_NOT_MERGED",
-                    task_id=task_id,
-                    branch=branch,
-                    target=integration_target,
                 )
 
         # 5. Terminal promotions land on the default branch: without main or

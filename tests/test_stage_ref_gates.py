@@ -1,0 +1,144 @@
+import os
+import shutil
+import subprocess
+import tempfile
+import types
+import unittest
+from unittest.mock import Mock
+
+from tasks_ai.git_service import GitService
+from tasks_ai.messages import MessageRegistry
+from tasks_ai.models import Task
+from tasks_ai.pipeline import PipelineError, PipelineService
+
+
+def git(*args, cwd, check=True):
+    return subprocess.run(
+        ["git", *args], cwd=cwd, capture_output=True, text=True, check=check
+    )
+
+
+class StageRefGateTest(unittest.TestCase):
+    def task(self, task_id=487, branch="487-task-example"):
+        return Task(
+            metadata={"Id": task_id, "Br": branch},
+            parts={"criteria": "- [x] complete", "commits": "abc123 work"},
+        )
+
+    def test_each_promotion_checks_its_previous_stage_ref(self):
+        git_client = Mock()
+        git_client.get_default_branch.return_value = "main"
+        git_client.is_merged.return_value = False
+        git_client.branch_exists.return_value = True
+        pipeline = PipelineService(git_client)
+
+        cases = (
+            ("TESTING", "REVIEW", "487-task-example", "487-TESTING"),
+            ("STAGING", "PR", "487-TESTING", "487-STAGING"),
+            ("PR", "PROVISIONING", "487-STAGING", "487-PR"),
+            ("PROVISIONING", "DONE", "487-PR", "provisioning"),
+        )
+        for current_state, target_state, source_ref, target_ref in cases:
+            with self.subTest(target_state=target_state):
+                git_client.is_merged.reset_mock()
+                with self.assertRaises(PipelineError) as raised:
+                    pipeline.validate_gate(
+                        types.SimpleNamespace(dev=True),
+                        self.task(),
+                        target_state,
+                        f"/tasks/{current_state.lower()}/487-task",
+                    )
+
+                error = raised.exception
+                self.assertEqual(error.code, "STAGE_REF_NOT_MERGED")
+                self.assertEqual(error.kwargs["source_ref"], source_ref)
+                self.assertEqual(error.kwargs["target_ref"], target_ref)
+                git_client.is_merged.assert_any_call(source_ref, target_ref)
+
+    def test_error_names_the_missing_ref_and_fix(self):
+        registry = MessageRegistry()
+        message = registry.get_error(
+            "STAGE_REF_NOT_MERGED",
+            missing_ref="487-STAGING",
+            source_ref="487-TESTING",
+        )
+        hint = registry.get_hint(
+            "STAGE_REF_NOT_MERGED",
+            missing_ref="487-STAGING",
+            source_ref="487-TESTING",
+            fix="Restore '487-STAGING', merge '487-TESTING' into it, then retry.",
+        )
+        self.assertIn("487-STAGING", message)
+        self.assertIn("487-STAGING", hint)
+        self.assertIn("487-TESTING", hint)
+
+    def test_tampered_stage_ref_cannot_pass_the_next_gate_in_dev(self):
+        root = tempfile.mkdtemp(prefix="stage_ref_gate_")
+        self.addCleanup(shutil.rmtree, root, True)
+        repo = os.path.join(root, "repo")
+        os.makedirs(repo)
+        git("init", "-b", "main", cwd=repo)
+        git("config", "user.email", "test@example.com", cwd=repo)
+        git("config", "user.name", "Test User", cwd=repo)
+        git("config", "commit.gpgsign", "false", cwd=repo)
+        with open(os.path.join(repo, "README.md"), "w", encoding="utf-8") as handle:
+            handle.write("base\n")
+        git("add", "README.md", cwd=repo)
+        git("commit", "-m", "base", cwd=repo)
+        base = git("rev-parse", "HEAD", cwd=repo).stdout.strip()
+
+        branch = "487-task-example"
+        git("checkout", "-b", branch, cwd=repo)
+        with open(os.path.join(repo, "work.txt"), "w", encoding="utf-8") as handle:
+            handle.write("work\n")
+        git("add", "work.txt", cwd=repo)
+        git("commit", "-m", "work", cwd=repo)
+        task_tip = git("rev-parse", "HEAD", cwd=repo).stdout.strip()
+        git("branch", "487-TESTING", task_tip, cwd=repo)
+        git("branch", "487-STAGING", base, cwd=repo)
+        git("checkout", "--detach", base, cwd=repo)
+        with open(os.path.join(repo, "tamper.txt"), "w", encoding="utf-8") as handle:
+            handle.write("tampered\n")
+        git("add", "tamper.txt", cwd=repo)
+        git("commit", "-m", "tamper", cwd=repo)
+        tampered_tip = git("rev-parse", "HEAD", cwd=repo).stdout.strip()
+        git("branch", "-f", "487-STAGING", tampered_tip, cwd=repo)
+        git("checkout", branch, cwd=repo)
+
+        context = types.SimpleNamespace(
+            repo_root=repo,
+            main_repo_root=repo,
+            tasks_path=repo,
+            dev=True,
+        )
+        pipeline = PipelineService(GitService(context))
+        with self.assertRaises(PipelineError) as raised:
+            pipeline.validate_gate(
+                types.SimpleNamespace(dev=True),
+                self.task(branch=branch),
+                "PR",
+                "/tasks/staging/487-task",
+            )
+
+        self.assertEqual(raised.exception.code, "STAGE_REF_NOT_MERGED")
+        self.assertEqual(raised.exception.kwargs["target_ref"], "487-STAGING")
+
+    def test_fast_track_still_bypasses_stage_ref_gate(self):
+        git_client = Mock()
+        git_client.get_default_branch.return_value = "main"
+        git_client.is_merged.return_value = True
+        pipeline = PipelineService(git_client)
+
+        self.assertTrue(
+            pipeline.validate_gate(
+                types.SimpleNamespace(dev=True),
+                self.task(),
+                "REVIEW",
+                "unused",
+            )
+        )
+        git_client.is_merged.assert_called_once_with("487-task-example", "main")
+
+
+if __name__ == "__main__":
+    unittest.main()
