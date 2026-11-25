@@ -1,0 +1,5 @@
+- [ ] `merge_lock` invoked with a linked worktree root succeeds: no `FileExistsError`, and the lock file is created at `<main>/.git/hammer-merge.lock`
+- [ ] lock is shared across roots: a second acquirer holding either the main root or a worktree root blocks until the first releases (same inode)
+- [ ] existing behavior unchanged: merges from the main repo root still take the same lock path; the whole `tests/test_merge_lock_guard.py` suite passes
+- [ ] regression test lives in `tests/test_merge_lock_guard.py`: real `git worktree add`, asserting lock-file location in the main common git dir
+- [ ] `./hammer check all` passes lint, test, typecheck, format

@@ -1,0 +1,10 @@
+{
+  "Id": 513,
+  "Ti": "Resolve the shared merge lock in the common git dir",
+  "Ty": "task",
+  "Cr": "261125 06:26",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "513-PROGRESSING",
+  "Pt": null
+}
