@@ -3,7 +3,9 @@
   "Ti": "Gate PR exit with merge-viability checks and approval",
   "Ty": "task",
   "Cr": "261121 08:11",
-  "Bl": [],
+  "Bl": [
+    "491-task-record-validation-freshness-wi"
+  ],
   "Pr": 1,
   "Br": "497-task-gate-pr-exit-with-merge-viabil",
   "Pt": null,
