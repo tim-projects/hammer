@@ -1,0 +1,136 @@
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_SCRIPT = PROJECT_ROOT / "repo.py"
+
+
+def git(*args, cwd, check=True):
+    result = subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if check and result.returncode:
+        raise AssertionError(f"git {' '.join(args)} failed: {result.stderr}")
+    return result
+
+
+class TestRepoProvisioningFunnel(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.remote = os.path.join(self.tmp.name, "remote.git")
+        self.seed = os.path.join(self.tmp.name, "seed")
+        self.repo = os.path.join(self.tmp.name, "repo")
+        os.makedirs(self.seed)
+        git("init", "-b", "main", cwd=self.seed)
+        git("config", "user.email", "test@example.com", cwd=self.seed)
+        git("config", "user.name", "Test User", cwd=self.seed)
+        with open(os.path.join(self.seed, "README.md"), "w", encoding="utf-8") as f:
+            f.write("base\n")
+        git("add", "README.md", cwd=self.seed)
+        git("commit", "-m", "base", cwd=self.seed)
+        git("init", "--bare", self.remote, cwd=self.seed)
+        git("remote", "add", "origin", self.remote, cwd=self.seed)
+        git("push", "-u", "origin", "main", cwd=self.seed)
+        git("clone", self.remote, self.repo, cwd=self.tmp.name)
+        with open(os.path.join(self.repo, ".gitignore"), "w", encoding="utf-8") as f:
+            f.write(".tasks/\n.task-worktrees/\n")
+        git("add", ".gitignore", cwd=self.repo)
+        git("commit", "-m", "ignore local stores", cwd=self.repo)
+        git("config", "user.email", "test@example.com", cwd=self.repo)
+        git("config", "user.name", "Test User", cwd=self.repo)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_repo(self, *args):
+        return subprocess.run(
+            [sys.executable, str(REPO_SCRIPT), *args],
+            cwd=self.repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_numeric_task_merge_enters_the_provisioning_funnel(self):
+        task_dir = os.path.join(self.repo, ".tasks", "pr", "42-task-example")
+        os.makedirs(task_dir)
+        with open(os.path.join(task_dir, "meta.json"), "w", encoding="utf-8") as f:
+            f.write(
+                '{"Id": 42, "Ti": "Example", "Ty": "task", "St": "PR", '
+                '"Br": "42-task-example", "Bl": [], "Pr": 1}'
+            )
+
+        task_worktree = os.path.join(self.repo, ".task-worktrees", "42-task-example")
+        git("branch", "42-task-example", cwd=self.repo)
+        git("worktree", "add", task_worktree, "42-task-example", cwd=self.repo)
+        with open(
+            os.path.join(task_worktree, "feature.txt"), "w", encoding="utf-8"
+        ) as f:
+            f.write("feature\n")
+        git("add", "feature.txt", cwd=task_worktree)
+        git("commit", "-m", "feature", cwd=task_worktree)
+        git("branch", "42-STAGING", cwd=task_worktree)
+        git("branch", "42-PR", cwd=task_worktree)
+
+        merge = self.run_repo("merge", "42", "provisioning", "-y")
+        self.assertEqual(merge.returncode, 0, merge.stdout + merge.stderr)
+        self.assertEqual(
+            git(
+                "merge-base", "--is-ancestor", "42-PR", "provisioning", cwd=self.repo
+            ).returncode,
+            0,
+            "the task PR stage was not merged into provisioning",
+        )
+        checked = self.run_repo("check-merged", "42")
+        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+        self.assertTrue(
+            os.path.isdir(
+                os.path.join(self.repo, ".tasks", "provisioning", "42-task-example")
+            ),
+            "the task did not enter PROVISIONING",
+        )
+
+    def test_merge_bootstraps_provisioning_and_syncs_to_default(self):
+        git("checkout", "-b", "42-task-example", cwd=self.repo)
+        with open(os.path.join(self.repo, "feature.txt"), "w", encoding="utf-8") as f:
+            f.write("feature\n")
+        git("add", "feature.txt", cwd=self.repo)
+        git("commit", "-m", "feature", cwd=self.repo)
+
+        merge = self.run_repo("merge", "42-task-example", "provisioning", "-y")
+        self.assertEqual(merge.returncode, 0, merge.stdout + merge.stderr)
+        self.assertEqual(
+            git(
+                "merge-base",
+                "--is-ancestor",
+                "origin/main",
+                "provisioning",
+                cwd=self.repo,
+            ).returncode,
+            0,
+            "provisioning was not bootstrapped from origin/main",
+        )
+        checked = self.run_repo("check-merged", "42-task-example")
+        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+
+        synced = self.run_repo("sync", "-y")
+        self.assertEqual(synced.returncode, 0, synced.stdout + synced.stderr)
+        self.assertEqual(
+            git(
+                "merge-base", "--is-ancestor", "42-task-example", "main", cwd=self.repo
+            ).returncode,
+            0,
+            "repo sync did not advance provisioning into main",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
