@@ -8,5 +8,8 @@
   "Br": "513-PROGRESSING",
   "Pt": null,
   "Rr": true,
-  "Tp": false
+  "Tp": false,
+  "St": "READY",
+  "Rc": "",
+  "Vp": false
 }
