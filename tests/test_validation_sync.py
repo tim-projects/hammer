@@ -39,6 +39,7 @@ class FakeCLI:
         )
         self.validations = []
         self.next_step_calls = []
+        self.writes = []
 
     def console(self, *args):
         pass
@@ -57,7 +58,7 @@ class FakeCLI:
         self.validations.append((tool_name, cwd))
 
     def _atomic_write(self, path, task):
-        pass
+        self.writes.append(dict(task.metadata))
 
 
 class ValidationFreshnessTest(unittest.TestCase):
@@ -75,6 +76,8 @@ class ValidationFreshnessTest(unittest.TestCase):
         git(["add", "."], self.main)
         git(["commit", "-m", "base"], self.main)
         git(["branch", self.branch], self.main)
+        base = git(["rev-parse", "main"], self.main).stdout.strip()
+        git(["update-ref", "refs/remotes/origin/main", base], self.main)
         self.worktree = os.path.join(self.root, "worktree")
         git(["worktree", "add", self.worktree, self.branch], self.main)
 
@@ -194,6 +197,38 @@ class ValidationFreshnessTest(unittest.TestCase):
         validation_cwd = self.cli.validations[0][1]
         self.assertEqual(self.worktree, validation_cwd)
         self.assertTrue(os.path.exists(os.path.join(validation_cwd, "from-main.txt")))
+
+    def test_validation_records_base_with_passed_memo(self):
+        self.validate()
+
+        base = git(["rev-parse", "origin/main"], self.main).stdout.strip()
+        self.assertTrue(self.cli.writes[-1]["Tp"])
+        self.assertEqual(base, self.cli.writes[-1]["TpBase"])
+
+    def test_stale_base_triggers_rerun_and_rewrites_both_values(self):
+        self.validate()
+        base = git(["rev-parse", "origin/main"], self.main).stdout.strip()
+        self.task.metadata["Tp"] = True
+        self.task.metadata["TpBase"] = "stale-base"
+
+        self.validate()
+
+        self.assertEqual(2, len(self.cli.validations))
+        self.assertTrue(self.cli.writes[-1]["Tp"])
+        self.assertEqual(base, self.cli.writes[-1]["TpBase"])
+
+    def test_advanced_origin_main_triggers_rerun(self):
+        self.validate()
+        old_base = self.task.metadata["TpBase"]
+        self.advance_main("from-main.txt", "new main code\n")
+        new_base = git(["rev-parse", "main"], self.main).stdout.strip()
+        git(["update-ref", "refs/remotes/origin/main", new_base], self.main)
+        self.assertNotEqual(old_base, new_base)
+
+        self.validate()
+
+        self.assertEqual(2, len(self.cli.validations))
+        self.assertEqual(new_base, self.task.metadata["TpBase"])
 
 
 if __name__ == "__main__":
