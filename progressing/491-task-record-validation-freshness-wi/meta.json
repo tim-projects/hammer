@@ -4,7 +4,6 @@
   "Ty": "task",
   "Cr": "261121 08:11",
   "Bl": [
-    "493-task-refuse-promotion-when-the-work",
     "497-task-gate-pr-exit-with-merge-viabil",
     "499-task-run-prod-ready-checks-before-m"
   ],
