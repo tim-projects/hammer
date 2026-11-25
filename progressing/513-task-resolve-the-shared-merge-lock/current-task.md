@@ -2,12 +2,6 @@
 Task: 513-task-resolve-the-shared-merge-lock
 ---
 
-- Progress: - Progress: ---
-Task: 513-task-resolve-the-shared-merge-lock
----
-- Findings: 
-- Mitigations: 
-Task: 513-task-resolve-the-shared-merge-lock
----
-- Findings: 
-- Mitigations: 
+- Progress: Added common-git-dir resolution to `tasks_ai/utils.py`; linked worktrees and the main checkout now use the same `hammer-merge.lock`. Added a real linked-worktree cross-root serialization regression in `tests/test_merge_lock_guard.py`.
+- Findings: Main-root resolution returns `.git`; linked-worktree resolution returns the absolute main common git directory. Both normalize to `/home/vscode/git/tasks-ai/.git`. `tests/test_repo_provisioning.py` is not yet on main because task 489 remains in PR.
+- Mitigations: No caller changes were needed because `repo.py` and `git_service.py` already call the shared helper. Validation: merge-lock suite 5 passed; Ruff passed; `./hammer check all` passed lint, test, typecheck, and format.
