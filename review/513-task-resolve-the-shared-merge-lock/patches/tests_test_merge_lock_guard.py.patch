@@ -1,0 +1,65 @@
+diff --git a/tests/test_merge_lock_guard.py b/tests/test_merge_lock_guard.py
+index 55878a12..7025a982 100644
+--- a/tests/test_merge_lock_guard.py
++++ b/tests/test_merge_lock_guard.py
+@@ -4,11 +4,13 @@ import signal
+ import subprocess
+ import sys
+ import tempfile
++import threading
+ import types
+ import unittest
+ from concurrent.futures import ThreadPoolExecutor
+ 
+ from tasks_ai.git_service import GitService
++from tasks_ai.utils import merge_lock
+ 
+ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ 
+@@ -132,6 +134,46 @@ class MergeLockGuardTest(unittest.TestCase):
+         after = git("rev-parse", "staging", cwd=self.repo).stdout.strip()
+         self.assertEqual(before, after)
+ 
++    def test_linked_worktree_uses_shared_main_lock(self):
++        worktree = os.path.join(self.root, "linked-worktree")
++        git(
++            "worktree",
++            "add",
++            "-b",
++            "711-task-linked-worktree",
++            worktree,
++            cwd=self.repo,
++        )
++        self.assertTrue(os.path.isfile(os.path.join(worktree, ".git")))
++
++        holder_ready = threading.Event()
++        release_holder = threading.Event()
++        waiter_acquired = threading.Event()
++
++        def hold_main_lock():
++            with merge_lock(self.repo):
++                holder_ready.set()
++                release_holder.wait(timeout=10)
++
++        def acquire_from_worktree():
++            with merge_lock(worktree):
++                waiter_acquired.set()
++
++        with ThreadPoolExecutor(max_workers=2) as executor:
++            holder = executor.submit(hold_main_lock)
++            try:
++                self.assertTrue(holder_ready.wait(timeout=5))
++                waiter = executor.submit(acquire_from_worktree)
++                self.assertFalse(waiter_acquired.wait(timeout=0.2))
++            finally:
++                release_holder.set()
++            self.assertTrue(waiter_acquired.wait(timeout=5))
++            holder.result()
++            waiter.result()
++
++        lock_path = os.path.join(self.repo, ".git", "hammer-merge.lock")
++        self.assertTrue(os.path.isfile(lock_path))
++
+     def test_sigkill_releases_merge_lock(self):
+         source = self.create_branch("702-task-kill", "kill.txt")
+         script = (

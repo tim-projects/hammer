@@ -1,0 +1,33 @@
+{
+  "Id": 513,
+  "Ti": "Resolve the shared merge lock in the common git dir",
+  "Ty": "task",
+  "Cr": "261125 06:26",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "513-PROGRESSING",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795593172.706434,
+  "DoneAt": null,
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/utils.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/513-task-resolve-the-shared-merge-lock/patches/tasks_ai_utils.py.patch"
+    },
+    {
+      "file": "tests/test_merge_lock_guard.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/513-task-resolve-the-shared-merge-lock/patches/tests_test_merge_lock_guard.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "c80b9616d4a7e6d9f5f5ade44b9228e9a394489c",
+    "base": "3fef9ff2c903e43b4c87a08ed07c1e98b03244c7"
+  }
+}
