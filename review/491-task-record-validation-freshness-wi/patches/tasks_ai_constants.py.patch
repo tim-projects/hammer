@@ -1,0 +1,12 @@
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index 948e9139..78540195 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -147,6 +147,7 @@ KEY_MAP = {
+     "Pr": "Priority",
+     "Ar": "ArchivedAt",
+     "Tp": "TestsPassed",
++    "TpBase": "TestsPassedBase",
+     "Rc": "RegressionCheck",
+     "Pt": "Parent",
+     "Ep": "Epic",

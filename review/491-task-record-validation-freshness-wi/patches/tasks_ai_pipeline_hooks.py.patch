@@ -1,0 +1,65 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index 2166b353..69f44028 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -32,6 +32,26 @@ def _task_branch(task, filepath):
+     return branch
+ 
+ 
++def _validation_base(cli) -> str:
++    """Return the default-branch commit used as the validation freshness base."""
++    default_branch = cli.git.get_default_branch()
++    if not default_branch:
++        return ""
++
++    if not getattr(cli, "dev", False):
++        remote_sha = cli.git.fetch_default_branch(default_branch)
++        if remote_sha:
++            return remote_sha
++
++    remote_ref = f"origin/{default_branch}"
++    result = cli.git.run(["rev-parse", remote_ref], cwd=cli.context.main_repo_root)
++    if result.returncode == 0:
++        return result.stdout.strip()
++
++    result = cli.git.run(["rev-parse", default_branch], cwd=cli.context.main_repo_root)
++    return result.stdout.strip() if result.returncode == 0 else ""
++
++
+ class GuardGateHook(PipelineHook):
+     """Blocks a transition whose task violates a guard invariant.
+ 
+@@ -159,19 +179,27 @@ class ValidationHook(PipelineHook):
+         synchronized = WorktreeSyncHook().synchronize_before_validation(
+             cli, task_id, branch, worktree_path
+         )
+-        if synchronized:
+-            task.metadata["Tp"] = False
+-            cli._atomic_write(filepath, task)
+-
+-        # Skip expensive rerun if validation already passed
+-        if task.metadata.get("Tp"):
++        validation_base = _validation_base(cli)
++
++        # Skip expensive rerun only when it passed against the current base.
++        if (
++            task.metadata.get("Tp")
++            and validation_base
++            and task.metadata.get("TpBase") == validation_base
++        ):
+             cli.log("DEBUG: Validation already passed; skipping rerun.")
+             return
+ 
++        if synchronized or task.metadata.get("Tp"):
++            task.metadata["Tp"] = False
++            task.metadata["TpBase"] = ""
++            cli._atomic_write(filepath, task)
++
+         cli.run_tool("all", cwd=worktree_path)
+ 
+         # If we reach here, all checks passed
+         task.metadata["Tp"] = True
++        task.metadata["TpBase"] = validation_base
+         cli._atomic_write(filepath, task)
+ 
+ 

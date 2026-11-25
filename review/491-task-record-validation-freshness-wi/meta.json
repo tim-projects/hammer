@@ -1,0 +1,38 @@
+{
+  "Id": 491,
+  "Ti": "Record validation freshness with TpBase",
+  "Ty": "task",
+  "Cr": "261121 08:11",
+  "Bl": [],
+  "Pr": 2,
+  "Br": "491-task-record-validation-freshness-wi",
+  "Pt": null,
+  "Rr": true,
+  "Tp": true,
+  "St": "REVIEW",
+  "Rc": "",
+  "Vp": true,
+  "Reviewed": false,
+  "AuditPassed": false,
+  "PatchGenTime": 1795618182.372922,
+  "DoneAt": null,
+  "TpBase": "a0ae7b51130a87a2f65afd2fc5df066381acb0cd",
+  "PatchFiles": [
+    {
+      "file": "tasks_ai/constants.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/491-task-record-validation-freshness-wi/patches/tasks_ai_constants.py.patch"
+    },
+    {
+      "file": "tasks_ai/pipeline_hooks.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/491-task-record-validation-freshness-wi/patches/tasks_ai_pipeline_hooks.py.patch"
+    },
+    {
+      "file": "tests/test_validation_sync.py",
+      "patch_path": "/home/vscode/git/tasks-ai/.tasks/review/491-task-record-validation-freshness-wi/patches/tests_test_validation_sync.py.patch"
+    }
+  ],
+  "PatchSnapshot": {
+    "head": "cc57960b1b9899918e84745d434827b3b98739b0",
+    "base": "a0ae7b51130a87a2f65afd2fc5df066381acb0cd"
+  }
+}
