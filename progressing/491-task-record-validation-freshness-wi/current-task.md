@@ -2,3 +2,6 @@
 Task: 491-task-record-validation-freshness-wi
 ---
 
+- Progress: Traced Tp writers/readers and validation/worktree synchronization. Root cause is the unconditional Tp skip with no recorded base.
+- Findings: TpBase must be persisted in the same metadata write as Tp. Existing modify --tests-passed and the boolean Tp review gate remain unchanged.
+- Mitigations: Compare against the fetched origin/default SHA, with local default fallback for remote-less repositories; add focused regression tests.
