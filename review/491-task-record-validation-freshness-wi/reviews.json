@@ -30,5 +30,8 @@
       "ts": 1795618236.9034705,
       "prev_hash": "ca927058c1162db1d5cbd4fa0ec381a7e2730bae36e57fe8812f7dde4fb9b8da"
     }
-  ]
+  ],
+  "summary": "Reviewed all three patches: validation now records the origin default SHA beside Tp, stale bases force checks to rerun, and focused tests cover recording and reruns.",
+  "summary_at": 1795618277.9465797,
+  "reviewed_at": 1795618277.9465806
 }
