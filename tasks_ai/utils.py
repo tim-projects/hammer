@@ -2,6 +2,7 @@ import fcntl
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import threading
 from contextlib import contextmanager
@@ -30,6 +31,29 @@ LOCK_NAME = ".hammer-lock"
 MERGE_LOCK_NAME = "hammer-merge.lock"
 
 
+def _merge_lock_dir(repo_root):
+    """Return the repository's common git directory for the shared merge lock."""
+    try:
+        common_dir = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--git-common-dir"],
+                cwd=repo_root,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except (subprocess.CalledProcessError, OSError):
+        common_dir = ""
+    if not common_dir:
+        fallback = os.path.join(repo_root, ".git")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
+    if not os.path.isabs(common_dir):
+        common_dir = os.path.join(os.path.abspath(repo_root), common_dir)
+    return os.path.normpath(common_dir)
+
+
 @contextmanager
 def merge_lock(repo_root):
     """Serialize shared repository merges across threads and processes."""
@@ -40,8 +64,7 @@ def merge_lock(repo_root):
         finally:
             _merge_local.depth -= 1
         return
-    path = os.path.join(repo_root, ".git", MERGE_LOCK_NAME)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    path = os.path.join(_merge_lock_dir(repo_root), MERGE_LOCK_NAME)
     fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o644)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
