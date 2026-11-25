@@ -1,0 +1,10 @@
+{
+  "Id": 514,
+  "Ti": "Write user tests for 513: Resolve the shared merge lock in the common git dir",
+  "Ty": "task",
+  "Cr": "261125 06:26",
+  "Bl": [],
+  "Pr": 1,
+  "Br": "514-PROGRESSING",
+  "Pt": 513
+}
