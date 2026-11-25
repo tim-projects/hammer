@@ -2,6 +2,6 @@
 Task: 491-task-record-validation-freshness-wi
 ---
 
-- Progress: Traced Tp writers/readers and validation/worktree synchronization. Root cause is the unconditional Tp skip with no recorded base.
-- Findings: TpBase must be persisted in the same metadata write as Tp. Existing modify --tests-passed and the boolean Tp review gate remain unchanged.
-- Mitigations: Compare against the fetched origin/default SHA, with local default fallback for remote-less repositories; add focused regression tests.
+- Progress: Implemented TpBase freshness recording in ValidationHook and added focused regression tests.
+- Findings: The memo now records origin/<default> SHA (local default fallback when no remote ref exists). A missing or stale TpBase invalidates Tp and reruns checks; the green write persists Tp=True and TpBase together.
+- Mitigations: Focused tests passed (16 tests plus 3 subtests); ./hammer check all passed lint, tests, typecheck, and format.
