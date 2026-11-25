@@ -1,0 +1,9 @@
+{
+    "task_id": "513",
+    "patch_hash": "da2c72cc0f6e1cc0ffea72e60438e84b",
+    "patch_files": [
+        "tasks_ai_utils.py.patch",
+        "tests_test_merge_lock_guard.py.patch"
+    ],
+    "status": "verified"
+}
