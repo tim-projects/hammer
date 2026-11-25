@@ -307,7 +307,7 @@ class TestRepoWrapperPipeline(unittest.TestCase):
         try:
             repo = self._load_repo_module()
             self.assertEqual(repo.get_default_branch(), "master")
-            self.assertEqual(repo.pipeline(), ["testing", "staging", "master"])
+            self.assertEqual(repo.pipeline(), ["provisioning", "master"])
         finally:
             os.chdir(old_cwd)
 
@@ -318,7 +318,7 @@ class TestRepoWrapperPipeline(unittest.TestCase):
         try:
             repo = self._load_repo_module()
             self.assertEqual(repo.get_default_branch(), "main")
-            self.assertEqual(repo.pipeline(), ["testing", "staging", "main"])
+            self.assertEqual(repo.pipeline(), ["provisioning", "main"])
         finally:
             os.chdir(old_cwd)
 
