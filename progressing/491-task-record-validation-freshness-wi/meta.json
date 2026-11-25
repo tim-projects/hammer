@@ -5,7 +5,8 @@
   "Cr": "261121 08:11",
   "Bl": [
     "493-task-refuse-promotion-when-the-work",
-    "497-task-gate-pr-exit-with-merge-viabil"
+    "497-task-gate-pr-exit-with-merge-viabil",
+    "499-task-run-prod-ready-checks-before-m"
   ],
   "Pr": 2,
   "Br": "491-task-record-validation-freshness-wi",
