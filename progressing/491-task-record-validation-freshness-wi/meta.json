@@ -3,9 +3,7 @@
   "Ti": "Record validation freshness with TpBase",
   "Ty": "task",
   "Cr": "261121 08:11",
-  "Bl": [
-    "499-task-run-prod-ready-checks-before-m"
-  ],
+  "Bl": [],
   "Pr": 2,
   "Br": "491-task-record-validation-freshness-wi",
   "Pt": null,
