@@ -1,0 +1,1 @@
+Merge-lock suite: 5 passed. Live main and task-489 worktree roots resolve to the same common git dir. Ruff passed. ./hammer check all passed lint, test, typecheck, and format.
