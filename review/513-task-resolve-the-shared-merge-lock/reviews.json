@@ -20,5 +20,8 @@
       "ts": 1795593199.0275495,
       "prev_hash": "181ee731b704a9d74d82580cb16edb6247ed3f91a2fb87483c41a3adf0e9b68a"
     }
-  ]
+  ],
+  "summary": "Read both patches: common-git-dir lock resolution with legacy fallback, plus real linked-worktree cross-root serialization coverage.",
+  "summary_at": 1795593205.4172406,
+  "reviewed_at": 1795593205.4172418
 }
