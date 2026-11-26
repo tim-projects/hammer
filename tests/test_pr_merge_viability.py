@@ -125,6 +125,38 @@ class PRMergeViabilityTest(unittest.TestCase):
             ).returncode,
         )
 
+    def test_pr_merges_provisioning_in_its_checked_out_worktree(self):
+        git("branch", "feature-pr", cwd=self.repo)
+        git("checkout", "feature-pr", cwd=self.repo)
+        self.write("feature.txt", "feature\n")
+        git("add", "feature.txt", cwd=self.repo)
+        git("commit", "-m", "feature", cwd=self.repo)
+        git("checkout", "main", cwd=self.repo)
+        git("branch", "provisioning", cwd=self.repo)
+        owner = os.path.join(self.root, "provisioning-owner")
+        git("worktree", "add", owner, "provisioning", cwd=self.repo)
+
+        result = self.git.merge_pr_into_provisioning("feature-pr")
+
+        self.assertTrue(result["created_commit"])
+        self.assertEqual(
+            0,
+            git(
+                "merge-base",
+                "--is-ancestor",
+                "feature-pr",
+                "provisioning",
+                cwd=self.repo,
+            ).returncode,
+        )
+        self.assertEqual(
+            "provisioning",
+            git("branch", "--show-current", cwd=owner).stdout.strip(),
+        )
+        self.assertEqual(
+            "main", git("branch", "--show-current", cwd=self.repo).stdout.strip()
+        )
+
     def test_merge_tree_reports_conflict_paths_without_creating_a_commit(self):
         git("branch", "pr", cwd=self.repo)
         git("checkout", "pr", cwd=self.repo)
