@@ -3,8 +3,11 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
+from unittest.mock import patch
 
+from tasks_ai.cli_errors import PipelinePushError
 from tasks_ai.commands.move import move_logic
 from tasks_ai.file_manager import FM
 from tasks_ai.git_service import GitService
@@ -213,6 +216,120 @@ class ProdReadyCheckTest(unittest.TestCase):
         self.assertFalse(
             any("hammer-prod-check-" in path for path in self.temp_worktrees())
         )
+
+    def test_concurrent_merge_completes_while_production_check_runs(self):
+        self.add_provisioning_change()
+        git("branch", "testing", "main", cwd=self.repo)
+        completed = []
+
+        def merge_during_check():
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    self.git.merge_branches, "provisioning", "testing"
+                )
+                completed.append(future.result(timeout=5))
+
+        cli = FakeCLI(self.git, during_validation=merge_during_check)
+
+        ProdReadyCheckHook().execute(
+            cli, self.task, "PROVISIONING", "DONE", "/tmp/task"
+        )
+
+        self.assertEqual(1, len(completed))
+        self.assertTrue(completed[0]["created_commit"])
+        self.assertEqual(
+            "1",
+            git(
+                "rev-list",
+                "--count",
+                "--merges",
+                "testing",
+                cwd=self.repo,
+            ).stdout.strip(),
+        )
+
+    def test_rejected_push_rolls_back_and_retry_merges_cleanly(self):
+        self.add_provisioning_change()
+        hook = os.path.join(self.remote, "hooks", "pre-receive")
+        with open(hook, "w", encoding="utf-8") as f:
+            f.write(
+                "#!/bin/sh\n"
+                'marker="$(dirname "$0")/../reject-first-push"\n'
+                'if [ ! -e "$marker" ]; then touch "$marker"; exit 1; fi\n'
+                "exit 0\n"
+            )
+        os.chmod(hook, 0o755)
+
+        remote_head = git("rev-parse", "origin/main", cwd=self.repo).stdout.strip()
+        source = git("rev-parse", "provisioning", cwd=self.repo).stdout.strip()
+
+        with self.assertRaises(PipelinePushError):
+            self.git.merge_branches(
+                "provisioning",
+                "main",
+                message="[499] merge: provisioning into main",
+                yes=True,
+                pull=False,
+                expected_source=source,
+                expected_target=remote_head,
+            )
+
+        self.assertEqual(
+            remote_head, git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        )
+        self.assertEqual(
+            remote_head,
+            git("rev-parse", "origin/main", cwd=self.repo).stdout.strip(),
+        )
+
+        result = self.git.merge_branches(
+            "provisioning",
+            "main",
+            message="[499] merge: provisioning into main",
+            yes=True,
+            pull=False,
+            expected_source=source,
+            expected_target=remote_head,
+        )
+
+        self.assertTrue(result["created_commit"])
+        self.assertEqual(
+            git("rev-parse", "main", cwd=self.repo).stdout.strip(),
+            git("rev-parse", "origin/main", cwd=self.repo).stdout.strip(),
+        )
+
+    def test_rejected_push_uses_pre_merge_sha_when_fetch_fails(self):
+        self.add_provisioning_change()
+        before = git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        source = git("rev-parse", "provisioning", cwd=self.repo).stdout.strip()
+        original_run = self.git.run
+
+        def run(args, **kwargs):
+            if args[:2] == ["push", "origin"]:
+                return subprocess.CompletedProcess(
+                    args=["git", *args], returncode=1, stdout="", stderr="rejected"
+                )
+            if args[:2] == ["fetch", "origin"]:
+                return subprocess.CompletedProcess(
+                    args=["git", *args], returncode=1, stdout="", stderr="unavailable"
+                )
+            return original_run(args, **kwargs)
+
+        with (
+            patch.object(self.git, "run", side_effect=run),
+            self.assertRaises(PipelinePushError),
+        ):
+            self.git.merge_branches(
+                "provisioning",
+                "main",
+                message="[499] merge: provisioning into main",
+                yes=True,
+                pull=False,
+                expected_source=source,
+                expected_target=before,
+            )
+
+        self.assertEqual(before, git("rev-parse", "main", cwd=self.repo).stdout.strip())
 
     def test_missing_provisioning_is_bootstrapped_from_origin_main(self):
         base = git("rev-parse", "origin/main", cwd=self.repo).stdout.strip()
