@@ -224,6 +224,7 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
 
     with store_lock(cli):
         original_state = FM.load(filepath_str).metadata.get("St")
+        source_task = None
         try:
             # Both records declare the destination state while the move is in
             # flight, so readers can reject the stale source copy deterministically.
@@ -275,11 +276,13 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
                     shutil.rmtree(filepath_str)
                 else:
                     os.remove(filepath_str)
-        except Exception:
-            # Cleanup staging on failure
+        except BaseException:
+            # Cleanup staging on failure, including a hook's expected exit.
             if os.path.exists(staged_task_path):
                 shutil.rmtree(staged_task_path)
             if os.path.exists(filepath_str):
+                if source_task is None:
+                    source_task = FM.load(filepath_str)
                 if original_state is None:
                     source_task.metadata.pop("St", None)
                 else:

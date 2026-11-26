@@ -107,6 +107,10 @@
     "message": "Provide enough detail for: {too_short}.",
     "hint": "WHAT: TOO SHORT: {too_short}.\nWHY: INSUFFICIENT DETAIL. HAMMER demand substance.\nHOW: Provide more detail.\nCONSEQUENCE: Task rejected. FIX CONTENT."
   },
+  "PROD_CHECK_FAILED": {
+    "message": "Fix the production check failure for task {task_id}: {detail}.",
+    "hint": "WHAT: The production check could not validate the provisioning merge.\nWHY: {detail}\nHOW: Fix the reported merge or validation failure, then retry the DONE promotion.\nCONSEQUENCE: Main and the task remain unchanged."
+  },
   "VALIDATION_FAILED": {
     "message": "Fix the failed {tool} validation check, then run ./hammer check all.",
     "hint": "WHAT: Validation failed for {tool}: {msg}.\nWHY: The code-quality gate is not satisfied.\nHOW: Fix the validation failure shown above, then run './hammer check all' and retry the transition.\nCONSEQUENCE: Task remains in its current state."
