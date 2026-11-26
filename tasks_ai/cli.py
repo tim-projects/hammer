@@ -35,6 +35,7 @@ from .pipeline_hooks import (
     MainBranchProtectionHook,
     PostMoveCommitHook,
     ProgressUpdateHook,
+    PRPatchRefreshHook,
     ResearchGateHook,
     ReviewDiffHook,
     SaveProgressHook,
@@ -98,6 +99,7 @@ class TasksCLI:
         )
         self.hook_registry.register_exit_hook("TESTING", TestingToReviewGateHook())
         self.hook_registry.register_exit_hook("STAGING", CleanWorkspaceHook())
+        self.hook_registry.register_enter_hook("PR", PRPatchRefreshHook())
 
         # Register ENTER hooks (Post-move actions)
         self.hook_registry.register_enter_hook("BACKLOG", CleanupReviewArtifactsHook())

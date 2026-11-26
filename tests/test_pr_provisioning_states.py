@@ -94,6 +94,9 @@ class TestPRProvisioningStates(HammerTestBase):
             os.path.isdir(os.path.join(self.dev_tasks_dir, "pr", task_file))
         )
 
+        approved = self.run_tasks(["modify", task_id, "--approve"])
+        self.assertTrue(json.loads(approved.stdout)["success"], approved.stdout)
+
         result = self.run_tasks(["move", task_id, "PROVISIONING"])
         self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
         self.assertTrue(

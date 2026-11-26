@@ -26,11 +26,18 @@ def _patch_base_ref(cli, branch):
     return root[0] if root else "HEAD"
 
 
-def get_changed_files(cli, task_path, branch):
+def get_changed_files(cli, task_path, branch, base_ref=None, exact_diff=False):
     """Get list of files changed in the task branch compared to main."""
-    base_ref = _patch_base_ref(cli, branch)
+    base_ref = base_ref or _patch_base_ref(cli, branch)
+    if exact_diff:
+        res = cli.git.run(
+            ["diff", "--name-only", f"{base_ref}..{branch}"],
+            cwd=cli.context.main_repo_root,
+        )
+        return [f for f in res.stdout.splitlines() if f]
+    diff_range = f"{base_ref}...{branch}"
     res = cli.git.run(
-        ["diff", "--name-only", f"{base_ref}...{branch}"],
+        ["diff", "--name-only", diff_range],
         cwd=cli.context.main_repo_root,
     )
     return [f for f in res.stdout.splitlines() if f]
@@ -89,9 +96,23 @@ def patches_are_fresh(cli, branch, patches_dir, patch_files, snapshot=None) -> b
     return True
 
 
-def generate_file_patches(cli, task_id, task_path, branch, patches_dir=None):
+def generate_file_patches(
+    cli,
+    task_id,
+    task_path,
+    branch,
+    patches_dir=None,
+    base_ref=None,
+    exact_diff=False,
+):
     """Generate individual patches for each changed file."""
-    changed_files = get_changed_files(cli, task_path, branch)
+    changed_files = get_changed_files(cli, task_path, branch, base_ref, exact_diff)
+    if base_ref and exact_diff:
+        res = cli.git.run(
+            ["diff", "--name-only", f"{base_ref}..{branch}"],
+            cwd=cli.context.main_repo_root,
+        )
+        changed_files = [f for f in res.stdout.splitlines() if f]
     task_folder_name = os.path.basename(task_path)
     if patches_dir is None:
         patches_dir = os.path.join(
@@ -106,7 +127,7 @@ def generate_file_patches(cli, task_id, task_path, branch, patches_dir=None):
     # If no changes found in main repo, check tasks sub-repo (dev mode)
     diff_cwd = cli.root
     diff_base = None
-    if not changed_files and store_is_git(cli):
+    if not changed_files and not base_ref and store_is_git(cli):
         tasks_git_dir = os.path.join(cli.tasks_path, ".git")
         cli.log(
             f"DEBUG: No changes in main repo. Checking tasks sub-repo at {cli.tasks_path}"
@@ -211,9 +232,9 @@ def generate_file_patches(cli, task_id, task_path, branch, patches_dir=None):
                 ["diff", f"{diff_base}..HEAD", "--", file_path], cwd=diff_cwd
             )
         else:
-            base_ref = _patch_base_ref(cli, branch)
+            comparison_base = base_ref or _patch_base_ref(cli, branch)
             res = cli.git.run(
-                ["diff", f"{base_ref}..{branch}", "--", file_path],
+                ["diff", f"{comparison_base}..{branch}", "--", file_path],
                 cwd=cli.context.main_repo_root,
             )
         with open(patch_path, "w") as f:
@@ -221,7 +242,7 @@ def generate_file_patches(cli, task_id, task_path, branch, patches_dir=None):
         generated_patches.append({"file": file_path, "patch_path": patch_path})
     cli.log(f"DEBUG_GEN: returning {len(generated_patches)} patches")
     # Ultimate fallback
-    if not generated_patches:
+    if not generated_patches and not base_ref:
         # find any files for this task
         for root, dirs, files in os.walk(cli.tasks_path):
             for fname in files:

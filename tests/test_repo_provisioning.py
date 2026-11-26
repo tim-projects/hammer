@@ -1,3 +1,4 @@
+import hashlib
 import os
 import subprocess
 import sys
@@ -79,6 +80,27 @@ class TestRepoProvisioningFunnel(unittest.TestCase):
         git("commit", "-m", "feature", cwd=task_worktree)
         git("branch", "42-STAGING", cwd=task_worktree)
         git("branch", "42-PR", cwd=task_worktree)
+        git("branch", "provisioning", "main", cwd=self.repo)
+        patch = git(
+            "diff", "provisioning..42-PR", "--", "feature.txt", cwd=self.repo
+        ).stdout.encode()
+        patch_hash = hashlib.md5(patch).hexdigest()
+        patches_dir = os.path.join(self.repo, ".tasks", "review", "42", "patches")
+        os.makedirs(patches_dir)
+        with open(os.path.join(patches_dir, "feature.txt.patch"), "wb") as f:
+            f.write(patch)
+        with open(os.path.join(task_dir, "meta.json"), "w", encoding="utf-8") as f:
+            f.write(
+                '{"Id": 42, "Ti": "Example", "Ty": "task", "St": "PR", '
+                '"Br": "42-task-example", "Bl": [], "Pr": 1, "Tp": true, '
+                '"TpBase": "'
+                + git("rev-parse", "origin/main", cwd=self.repo).stdout.strip()
+                + '", "Ap": "APPROVED", "ApMd5": {"feature.txt.patch": "'
+                + patch_hash
+                + '"}, "ApBase": "'
+                + git("rev-parse", "42-PR", cwd=self.repo).stdout.strip()
+                + '"}'
+            )
 
         merge = self.run_repo("merge", "42", "provisioning", "-y")
         self.assertEqual(merge.returncode, 0, merge.stdout + merge.stderr)

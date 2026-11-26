@@ -152,6 +152,9 @@ KEY_MAP = {
     "Pt": "Parent",
     "Ep": "Epic",
     "Ap": "Approval",
+    "ApMd5": "ApprovalPatchHashes",
+    "ApAt": "ApprovedAt",
+    "ApBase": "ApprovedBase",
 }
 ALLOWED_CONFIG_KEYS = {
     "story",
