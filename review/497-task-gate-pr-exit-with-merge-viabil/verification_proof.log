@@ -1,1 +1,1 @@
-Reviewed all 18 current patches; full ./hammer check all passed with 110 tests and 1 skipped, plus focused suite 26 tests and 11 subtests.
+Reviewed all 18 generated patches; full validation passed with 110 tests and 1 skipped; focused PR merge and ownership tests passed.
