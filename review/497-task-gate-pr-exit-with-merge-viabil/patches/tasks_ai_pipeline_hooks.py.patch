@@ -1,0 +1,56 @@
+diff --git a/tasks_ai/pipeline_hooks.py b/tasks_ai/pipeline_hooks.py
+index 69f44028..d92d31b1 100644
+--- a/tasks_ai/pipeline_hooks.py
++++ b/tasks_ai/pipeline_hooks.py
+@@ -131,6 +131,10 @@ class TaskRepairHook(PipelineHook):
+             task.metadata["AuditPassed"] = False
+             task.metadata["PatchGenTime"] = None
+             task.metadata["DoneAt"] = None
++            task.metadata["Ap"] = ""
++            task.metadata["ApMd5"] = {}
++            task.metadata["ApAt"] = None
++            task.metadata["ApBase"] = ""
+ 
+             # Save the repaired metadata
+             cli._atomic_write(filepath, task)
+@@ -336,6 +340,18 @@ class WorktreeCheckHook(PipelineHook):
+                     _push_task_branch(cli, task_id, branch)
+ 
+ 
++class PRPatchRefreshHook(PipelineHook):
++    """Create the PR patch set that the human approval command signs."""
++
++    def execute(self, cli, task, current_state, new_status, filepath):
++        if not (current_state == "STAGING" and new_status == "PR"):
++            return
++
++        from .approval import refresh_pr_patches
++
++        refresh_pr_patches(cli, task, filepath)
++
++
+ class ReviewDiffHook(PipelineHook):
+     """Ensures file-level diff patches are generated when entering REVIEW."""
+ 
+@@ -355,6 +371,10 @@ class ReviewDiffHook(PipelineHook):
+             cli.log(f" for task {task_id}")
+             task.metadata["Reviewed"] = False
+             task.metadata["Rc"] = ""
++            task.metadata["Ap"] = ""
++            task.metadata["ApMd5"] = {}
++            task.metadata["ApAt"] = None
++            task.metadata["ApBase"] = ""
+             task.metadata["PatchGenTime"] = datetime.now().timestamp()  # noqa: DTZ005
+             reviews_path = os.path.join(filepath, "reviews.json")
+             if os.path.exists(reviews_path):
+@@ -745,6 +765,10 @@ class CleanupReviewArtifactsHook(PipelineHook):
+             # 4. Clear Regression Check (Rc) and Verification Passed (Vp) flags
+             task.metadata["Rc"] = ""
+             task.metadata["Vp"] = False
++            task.metadata["Ap"] = ""
++            task.metadata["ApMd5"] = {}
++            task.metadata["ApAt"] = None
++            task.metadata["ApBase"] = ""
+ 
+             # Update the task file
+             cli._atomic_write(filepath, task)

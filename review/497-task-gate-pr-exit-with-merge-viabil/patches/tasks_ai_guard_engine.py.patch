@@ -1,0 +1,19 @@
+diff --git a/tasks_ai/guard_engine.py b/tasks_ai/guard_engine.py
+index 48a483f7..c2ed0600 100644
+--- a/tasks_ai/guard_engine.py
++++ b/tasks_ai/guard_engine.py
+@@ -297,9 +297,11 @@ class GuardEngine:
+             if not os.path.isdir(state_dir):
+                 continue
+             for name in os.listdir(state_dir):
+-                if name.startswith(".") or not os.path.isdir(
+-                    os.path.join(state_dir, name)
+-                ):
++                task_dir = os.path.join(state_dir, name)
++                if name.startswith(".") or not os.path.isdir(task_dir):
++                    continue
++                # Review patch folders are artifacts, not task records.
++                if not os.path.isfile(os.path.join(task_dir, "meta.json")):
+                     continue
+                 tid = task_id_of(name)
+                 if tid is not None:

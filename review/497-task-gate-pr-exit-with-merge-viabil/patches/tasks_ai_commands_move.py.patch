@@ -1,0 +1,30 @@
+diff --git a/tasks_ai/commands/move.py b/tasks_ai/commands/move.py
+index 50c4ea98..13af5b20 100644
+--- a/tasks_ai/commands/move.py
++++ b/tasks_ai/commands/move.py
+@@ -110,6 +110,25 @@ def move_logic(cli, filename, new_status, force=False, yes=False, sync=True):
+     task_type, _ = parse_filename(os.path.basename(filepath_str))
+     allowed_transitions = cli.pipeline.get_allowed_transitions(task_type)
+ 
++    if force and current_state == "PR" and new_status == "PROVISIONING":
++        try:
++            cli.pipeline.validate_pr_approval(cli, task, filepath_str)
++        except PipelineError as exc:
++            cli.next_step(exc.code, **exc.kwargs)
++            raise
++
++    if current_state == "PR" and new_status == "PROVISIONING":
++        try:
++            cli.pipeline.validate_pr_exit(cli, task, filepath_str)
++        except PipelineError as exc:
++            cli.next_step(exc.code, **exc.kwargs)
++            raise
++
++    if current_state == "PR" and new_status == "PROVISIONING":
++        pr_ref = f"{task.metadata.get('Id')}-PR"
++        if not cli.git.provision_merge_is_current(pr_ref):
++            cli.git.merge_pr_into_provisioning(pr_ref)
++
+     if not force:
+         if new_status in ("DONE", "ARCHIVED") and not cli.git.get_default_branch():
+             cli.error(

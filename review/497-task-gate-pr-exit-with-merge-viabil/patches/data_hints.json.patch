@@ -1,0 +1,15 @@
+diff --git a/data/hints.json b/data/hints.json
+index a6823574..2a90a2e5 100644
+--- a/data/hints.json
++++ b/data/hints.json
+@@ -21,6 +21,10 @@
+   "UNKNOWN_SECTION": "WHAT: Unknown section '{section}'.\nWHY: SECTION DISOBEDIENCE. HAMMER do not know '{section}'.\nHOW: Use: story, tech, criteria, plan, repro, notes, progress.\nCONSEQUENCE: Output remain EMPTY. FIX SECTION.",
+   "BRANCH_NOT_MERGED": "WHAT: Task branch '{branch}' not merged to main.\nWHY: Integration rule broken.\nHOW: Run './hammer tasks move {task_id} DONE' (must be in STAGING).\nCONSEQUENCE: Integration halted. FIX SYNC.",
+   "STAGE_REF_NOT_MERGED": "WHAT: Stage ref '{missing_ref}' is missing or does not contain '{source_ref}'.\nWHY: Each promotion must preserve the previous stage in the task-local stage ref.\nHOW: {fix}\nCONSEQUENCE: Promotion halted. REPAIR THE STAGE REF.",
++  "PR_APPROVAL_REQUIRED": "WHAT: PR {task_id} has no current explicit approval.\nWHY: A human must approve the exact patch contents before they enter provisioning.\nHOW: Run '{command}' after reviewing the PR patches. --force cannot bypass this gate.\nCONSEQUENCE: PR exit halted.",
++  "PR_MERGE_CONFLICT": "WHAT: PR {task_id} conflicts with provisioning.\nWHY: The merge-tree preflight found conflicting paths: {paths}.\nHOW: Resolve the conflicts in the PR worktree, re-enter PR, and approve the refreshed patches.\nCONSEQUENCE: No provisioning merge commit was created.",
++  "PR_NOT_FRESH": "WHAT: PR {task_id} is stale against the current default branch.\nWHY: The PR stage must contain origin/main at {base}.\nHOW: Demote to STAGING and re-enter PR so the freshness merge runs.\nCONSEQUENCE: PR exit halted.",
++  "MERGE_TREE_UNAVAILABLE": "WHAT: The PR merge-viability check could not run.\nWHY: Git merge-tree --write-tree requires Git 2.47.3 or newer.\nHOW: Upgrade Git, then retry the PR exit.\nCONSEQUENCE: PR exit halted.",
+   "HASH_MISSING": "WHAT: Audit integrity check failed.\nWHY: The audit chain is broken or incomplete (missing hash).\nHOW: 1. Confirm criteria at: /home/vscode/git/tasks-ai/.tasks/progressing/{task_id}/criteria.md.\n     2. Run \"./hammer tasks audit {task_id}\" to generate the audit record.\n     3. Run \"./hammer tasks verify {task_id} --proof \"<summary>\"\" to bind the proof and hash the integrity of criteria, proof, and audit.\nCONSEQUENCE: Promotion halted. SATISFY AUDIT.",
+   "INTEGRITY_MISMATCH": "WHAT: Integrity mismatch. Criteria, proof, or audit change.\nWHY: Cryptographic lock broken.\nHOW: Run './hammer tasks audit {task_id}' && './hammer tasks verify {task_id} --proof \"...\"'.\nCONSEQUENCE: Integrity fail. LOCK CHAIN.",
+   "BRANCH_CHECKOUT_FAIL": "WHAT: Failed checkout branch '{branch}'.\nWHY: Git checkout failure.\nHOW: Check branch name and git status.\nCONSEQUENCE: Sync halted. FIX BRANCH.",

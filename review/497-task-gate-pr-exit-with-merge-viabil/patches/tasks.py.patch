@@ -1,0 +1,25 @@
+diff --git a/tasks.py b/tasks.py
+index 37076f32..19b7c687 100755
+--- a/tasks.py
++++ b/tasks.py
+@@ -194,6 +194,12 @@ if __name__ == "__main__":
+         default=None,
+         help="Mark regression check as passed (enables STAGING from REVIEW).",
+     )
++    mod_p.add_argument(
++        "--approve",
++        action="store_true",
++        default=None,
++        help="Approve the current PR patch set for promotion to PROVISIONING.",
++    )
+     mod_p.add_argument("-p", "--priority", type=int, help="Update priority.")
+     mv_p = subparsers.add_parser("move", help="Move task.")
+     mv_p.add_argument(
+@@ -350,6 +356,7 @@ if __name__ == "__main__":
+             priority=args.priority,
+             regression_check=args.regression_check,
+             reviewed=args.reviewed,
++            approve=args.approve,
+         )
+     elif args.command == "move":
+         cli.move(

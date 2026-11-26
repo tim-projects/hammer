@@ -1,0 +1,14 @@
+diff --git a/tasks_ai/constants.py b/tasks_ai/constants.py
+index 78540195..a4d9b588 100644
+--- a/tasks_ai/constants.py
++++ b/tasks_ai/constants.py
+@@ -152,6 +152,9 @@ KEY_MAP = {
+     "Pt": "Parent",
+     "Ep": "Epic",
+     "Ap": "Approval",
++    "ApMd5": "ApprovalPatchHashes",
++    "ApAt": "ApprovedAt",
++    "ApBase": "ApprovedBase",
+ }
+ ALLOWED_CONFIG_KEYS = {
+     "story",

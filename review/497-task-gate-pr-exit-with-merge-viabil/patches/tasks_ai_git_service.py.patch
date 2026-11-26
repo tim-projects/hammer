@@ -1,0 +1,117 @@
+diff --git a/tasks_ai/git_service.py b/tasks_ai/git_service.py
+index d6d9b2fd..dc48fe2b 100644
+--- a/tasks_ai/git_service.py
++++ b/tasks_ai/git_service.py
+@@ -1,6 +1,7 @@
+ import os
+ import subprocess
+ 
++from .cli_errors import PipelineBranchMissing, PipelineMergeConflict
+ from .constants import STATE_FOLDERS
+ from .utils import merge_lock
+ 
+@@ -373,6 +374,10 @@ class GitService:
+                 default_branch = self.get_default_branch()
+                 if default_branch and self.branch_exists(default_branch, cwd):
+                     base = default_branch
++        elif name == "provisioning":
++            default_branch = self.get_default_branch()
++            if default_branch and self.branch_exists(default_branch, cwd):
++                base = default_branch
+ 
+         if base is None:
+             return False
+@@ -590,6 +595,82 @@ class GitService:
+                     paths.append(path)
+         return paths
+ 
++    def prepare_pr_freshness(
++        self, worktree_path: str, pr_ref: str, staging_ref: str
++    ) -> str:
++        """Merge the current default branch into a task's PR stage ref."""
++        default_branch = self.get_default_branch()
++        if not default_branch:
++            raise PipelineBranchMissing(default_branch)
++        source = f"origin/{default_branch}"
++        if not self.branch_exists(source, self.context.main_repo_root):
++            source = default_branch
++        conflicts = self.merge_tree_conflicts(pr_ref, source)
++        if conflicts:
++            checkout = self.run(["checkout", staging_ref], cwd=worktree_path)
++            if checkout.returncode != 0:
++                raise PipelineBranchMissing(staging_ref)
++            raise PipelineMergeConflict(pr_ref, source, conflicts)
++        merge = self.run(
++            ["merge", source, "-m", f"merge: {source} into {pr_ref}"],
++            cwd=worktree_path,
++            log_success=False,
++        )
++        if merge.returncode != 0:
++            self.run(["merge", "--abort"], cwd=worktree_path, check=False)
++            raise PipelineMergeConflict(pr_ref, source, conflicts or [])
++        return source
++
++    def merge_tree_conflicts(
++        self, branch1: str, branch2: str, cwd: str | None = None
++    ) -> list[str] | None:
++        """Return conflict paths for an in-core merge, or None if unsupported."""
++        res = self.run(
++            ["merge-tree", "--write-tree", "--name-only", branch1, branch2],
++            cwd=cwd or self.context.main_repo_root,
++            check=False,
++        )
++        if res.returncode == 0:
++            return []
++        if res.returncode < 0:
++            return None
++        paths = []
++        for line in res.stdout.splitlines()[1:]:
++            if not line.strip():
++                break
++            if line not in paths:
++                paths.append(line)
++        return paths
++
++    def merge_pr_into_provisioning(self, pr_ref: str):
++        """Merge a validated PR stage ref into the shared provisioning funnel."""
++        default_branch = self.get_default_branch()
++        if not self.ensure_pipeline_branch(
++            "provisioning", fallback_base=default_branch
++        ):
++            raise PipelineBranchMissing("provisioning")
++        conflicts = self.merge_tree_conflicts(pr_ref, "provisioning")
++        if conflicts:
++            raise PipelineMergeConflict(pr_ref, "provisioning", conflicts)
++        return self.merge_branches(
++            pr_ref,
++            "provisioning",
++            message=f"merge: {pr_ref} into provisioning",
++            yes=not self.context.dev,
++            cwd=self.context.main_repo_root,
++        )
++
++    def provision_merge_is_current(self, pr_ref: str) -> bool:
++        """True when provisioning already contains the PR stage ref."""
++        if not self.branch_exists(pr_ref, self.context.main_repo_root):
++            return False
++        result = self.run(
++            ["merge-base", "--is-ancestor", pr_ref, "provisioning"],
++            cwd=self.context.main_repo_root,
++            check=False,
++        )
++        return result.returncode == 0
++
+     def sync_worktree(
+         self,
+         worktree_path: str,
+@@ -692,6 +773,10 @@ class GitService:
+                         yes=True,
+                         cwd=wt_path,
+                     )
++                    if target_state == "PR":
++                        self.prepare_pr_freshness(
++                            wt_path, stage_ref, f"{task_id}-STAGING"
++                        )
+                     return
+                 previous_ref = stage_ref
+ 

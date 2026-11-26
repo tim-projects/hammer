@@ -1,0 +1,14 @@
+diff --git a/tests/test_pr_provisioning_states.py b/tests/test_pr_provisioning_states.py
+index 146497f8..3b222d5e 100644
+--- a/tests/test_pr_provisioning_states.py
++++ b/tests/test_pr_provisioning_states.py
+@@ -94,6 +94,9 @@ class TestPRProvisioningStates(HammerTestBase):
+             os.path.isdir(os.path.join(self.dev_tasks_dir, "pr", task_file))
+         )
+ 
++        approved = self.run_tasks(["modify", task_id, "--approve"])
++        self.assertTrue(json.loads(approved.stdout)["success"], approved.stdout)
++
+         result = self.run_tasks(["move", task_id, "PROVISIONING"])
+         self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
+         self.assertTrue(

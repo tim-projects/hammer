@@ -1,0 +1,127 @@
+diff --git a/tasks_ai/approval.py b/tasks_ai/approval.py
+new file mode 100644
+index 00000000..aed22b7f
+--- /dev/null
++++ b/tasks_ai/approval.py
+@@ -0,0 +1,121 @@
++import hashlib
++import os
++import time
++
++from .file_manager import FM
++
++
++def approval_patch_dir(cli, task_path):
++    """Return the numeric task's review patch directory."""
++    task = FM.load(task_path)
++    task_id = str(task.metadata.get("Id", os.path.basename(task_path)))
++    return os.path.join(cli.tasks_path, "review", task_id, "patches")
++
++
++def patch_hashes(patches_dir):
++    """Return the current content hash for every patch in a patch set."""
++    if not os.path.isdir(patches_dir):
++        return {}
++    hashes = {}
++    for name in sorted(os.listdir(patches_dir)):
++        if not name.endswith(".patch"):
++            continue
++        with open(os.path.join(patches_dir, name), "rb") as handle:
++            hashes[name] = hashlib.md5(handle.read()).hexdigest()
++    return hashes
++
++
++def refresh_pr_patches(cli, task, task_path):
++    """Regenerate the human-review patch set against the provisioning funnel."""
++    from .audit import generate_file_patches
++
++    cli.git.ensure_pipeline_branch("provisioning")
++    task_id = str(task.metadata.get("Id", ""))
++    pr_ref = f"{task_id}-PR"
++    patches_dir = approval_patch_dir(cli, task_path)
++    patches = generate_file_patches(
++        cli,
++        task_id,
++        task_path,
++        pr_ref,
++        patches_dir=patches_dir,
++        base_ref="provisioning",
++        exact_diff=True,
++    )
++    task.metadata["PatchFiles"] = [
++        {
++            "file": patch["file"],
++            "patch_path": os.path.join(
++                patches_dir, os.path.basename(patch["patch_path"])
++            ),
++        }
++        for patch in patches
++    ]
++    FM.dump(task, task_path)
++    return patches_dir
++
++
++def approve_pr(cli, task, task_path):
++    """Record explicit approval of the current PR patch contents."""
++    state = os.path.basename(os.path.dirname(task_path)).upper()
++    if state != "PR":
++        cli.next_step(
++            "PR_STATE_REQUIRED",
++            task_id=task.metadata.get("Id"),
++            hint="Move the task to PR before approving its patches.",
++        )
++
++    patches_dir = refresh_pr_patches(cli, task, task_path)
++    hashes = patch_hashes(patches_dir)
++    if not hashes:
++        approve_empty_pr(cli, task, task_path)
++        return
++    task_id = str(task.metadata.get("Id", ""))
++    pr_ref = f"{task_id}-PR"
++    task.metadata["Ap"] = "APPROVED"
++    task.metadata["ApMd5"] = hashes
++    task.metadata["ApAt"] = time.time()
++    task.metadata["ApBase"] = cli.git.run(
++        ["rev-parse", pr_ref], cwd=cli.context.main_repo_root
++    ).stdout.strip()
++    FM.dump(task, task_path)
++
++
++def approval_is_current(cli, task, patches_dir):
++    """True when approval exists and still matches every approved patch."""
++    if task.metadata.get("Ap") != "APPROVED":
++        return False
++    approved = task.metadata.get("ApMd5") or {}
++    current = patch_hashes(patches_dir)
++    if approved != current:
++        return False
++    task_id = str(task.metadata.get("Id", ""))
++    pr_ref = f"{task_id}-PR"
++    current_base = cli.git.run(
++        ["rev-parse", pr_ref], cwd=cli.context.main_repo_root
++    ).stdout.strip()
++    return task.metadata.get("ApBase") == current_base
++
++
++def approval_hashes_match(task, patches_dir):
++    """True when the recorded per-patch hashes still match disk."""
++    if task.metadata.get("Ap") != "APPROVED":
++        return False
++    approved = task.metadata.get("ApMd5") or {}
++    current = patch_hashes(patches_dir)
++    if not approved and not current:
++        return True
++    return approved == current
++
++
++def approve_empty_pr(cli, task, task_path):
++    """Approve a PR with no file-level differences."""
++    task_id = str(task.metadata.get("Id", ""))
++    pr_ref = f"{task_id}-PR"
++    task.metadata["Ap"] = "APPROVED"
++    task.metadata["ApMd5"] = {}
++    task.metadata["ApAt"] = time.time()
++    task.metadata["ApBase"] = cli.git.run(
++        ["rev-parse", pr_ref], cwd=cli.context.main_repo_root
++    ).stdout.strip()
++    FM.dump(task, task_path)
