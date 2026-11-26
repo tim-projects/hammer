@@ -109,11 +109,12 @@ class Validation:
         tool_name: str | None = None,
         fix: bool = False,
         cwd: str | None = None,
+        script_path: str | None = None,
     ):
         """Run configured tools (lint, test, typecheck, format)."""
         # Resolve project root independently of CWD using the same logic as repo_script
         install_dir = Path(__file__).resolve().parent.parent
-        check_py = install_dir / "check.py"
+        check_py = Path(script_path) if script_path else install_dir / "check.py"
 
         if not check_py.exists():
             self.cli.error("CHECK_TOOL_MISSING")

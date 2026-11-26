@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 from datetime import datetime
 
 from .cli_errors import PipelineMergeConflict
@@ -7,7 +8,7 @@ from .constants import CURRENT_TASK_FILENAME, STATE_FOLDERS, load_config
 from .guard_engine import GuardEngine, GuardUnavailable
 from .hooks import PipelineHook
 from .models import Task
-from .utils import commit_task_paths, parse_filename
+from .utils import commit_task_paths, merge_lock, parse_filename
 
 
 def get_guard_engine(cli) -> GuardEngine:
@@ -338,6 +339,117 @@ class WorktreeCheckHook(PipelineHook):
             if has_origin:  # noqa: SIM102
                 if not _remote_has_branch(cli, branch):
                     _push_task_branch(cli, task_id, branch)
+
+
+class ProdReadyCheckHook(PipelineHook):
+    """Validate the accumulated provisioning merge before advancing main."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if current_state != "PROVISIONING" or new_status != "DONE":
+            return
+
+        task_id = str(task.metadata.get("Id", "unknown"))
+        default_branch = cli.git.get_default_branch()
+        if not default_branch:
+            cli.next_step("NO_DEFAULT_BRANCH", task_id=task_id)
+            return
+
+        repo_root = cli.context.main_repo_root
+        base_ref = f"origin/{default_branch}"
+        temp_root = tempfile.mkdtemp(prefix="hammer-prod-check-")
+        worktree_path = os.path.join(temp_root, "worktree")
+        cleaned = False
+
+        def cleanup():
+            nonlocal cleaned
+            if cleaned:
+                return
+            cleaned = True
+            cli.git.run(
+                ["worktree", "remove", "--force", worktree_path],
+                cwd=repo_root,
+                check=False,
+            )
+            cli.git.run(["worktree", "prune"], cwd=repo_root, check=False)
+            shutil.rmtree(temp_root, ignore_errors=True)
+
+        try:
+            with merge_lock(repo_root):
+                base = cli.git.fetch_default_branch(default_branch)
+                if not base or not cli.git.branch_exists(base_ref, repo_root):
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail=f"Missing {base_ref}",
+                    )
+                    return
+
+                if not cli.git.ensure_pipeline_branch(
+                    "provisioning", repo_root, fallback_base=base_ref
+                ):
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail="Could not create provisioning",
+                    )
+                    return
+
+                add = cli.git.run(
+                    ["worktree", "add", "--detach", worktree_path, base_ref],
+                    cwd=repo_root,
+                    check=False,
+                )
+                if add.returncode != 0:
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail=add.stderr.strip() or "Could not create check worktree",
+                    )
+                    return
+
+                merge = cli.git.run(
+                    [
+                        "merge",
+                        "--no-ff",
+                        "provisioning",
+                        "-m",
+                        "production check: merge provisioning",
+                    ],
+                    cwd=worktree_path,
+                    check=False,
+                )
+                if merge.returncode != 0:
+                    cli.git.run(["merge", "--abort"], cwd=worktree_path, check=False)
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail=merge.stderr.strip() or "Provisioning merge failed",
+                    )
+                    return
+
+                result = cli.run_tool(
+                    "all",
+                    cwd=worktree_path,
+                    script_path=os.path.join(worktree_path, "check.py"),
+                )
+                if result is not None and getattr(result, "returncode", 0) != 0:
+                    cli.next_step(
+                        "VALIDATION_FAILED",
+                        task_id=task_id,
+                        tool="production",
+                        msg="Production checks failed on the provisioning merge.",
+                    )
+                    return
+
+                cleanup()
+                cli.git.merge_branches(
+                    "provisioning",
+                    default_branch,
+                    message=f"[{task_id}] merge: provisioning into {default_branch}",
+                    yes=not cli.dev,
+                )
+        finally:
+            cleanup()
 
 
 class PRPatchRefreshHook(PipelineHook):

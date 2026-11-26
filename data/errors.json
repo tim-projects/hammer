@@ -77,5 +77,6 @@
   "CHECK_TOOL_MISSING": "check.py not found in project root.",
   "EXISTING_TASKS_DATA": "Found existing .tasks directory with data. Use --force to reset.",
   "PROGRESS_FILE_MISSING": "No progress tracking file found (checked {progress_path} and {current_path}).",
+  "PROD_CHECK_FAILED": "Production check failed for task {task_id}: {detail}.",
   "INTERNAL_ERROR": "{detail}"
 }
