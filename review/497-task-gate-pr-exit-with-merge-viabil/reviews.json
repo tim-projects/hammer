@@ -180,5 +180,8 @@
       "ts": 1795680950.1212866,
       "prev_hash": "b68ccfa863265697f3853040f7c24563015e7e76b2182b6249abab4387417c93"
     }
-  ]
+  ],
+  "summary": "Reviewed all 18 patches: PR freshness merge, in-core merge-tree conflict detection, validation base enforcement, provisioning-relative patch generation, per-patch MD5 approval, force refusal, error guidance, and focused regression coverage.",
+  "summary_at": 1795680972.2066336,
+  "reviewed_at": 1795680972.2066348
 }
