@@ -2,4 +2,6 @@
 Task: 497-task-gate-pr-exit-with-merge-viabil
 ---
 
-- Progress: 
+- Progress: Implemented PR-entry freshness merge, merge-tree conflict detection, validation freshness, provisioning-relative patch refresh, and explicit per-patch MD5 approval. Work is in progress in the task worktree; targeted regression tests still expose one approval/path mismatch that must be fixed before review.
+- Findings: PR exit must validate before provisioning receives a merge. The existing numeric repo-merge test still fails because the preflight approval lookup does not match the test fixture's patch directory. The approval implementation was also over-iterated while reconciling review/<task-folder>/patches with review/<task-id>/patches; this needs consolidation. The main checkout remains clean.
+- Mitigations: Keep all changes isolated in .task-worktrees/497-task-gate-pr-exit-with-merge-viabil. Next: make the PR patch directory a single shared helper, reproduce the failing fixture, then add focused tests for freshness, merge-tree conflicts, stale validation, patch refresh, approval invalidation, and --force refusal. Run the affected pytest set and ./hammer check all before review.
