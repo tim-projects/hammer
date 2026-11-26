@@ -77,5 +77,6 @@
   "CHECK_TOOL_MISSING": "WHAT: The validation tool is missing.\nWHY: Checks cannot run without check.py.\nHOW: Restore check.py in the project root.\nCONSEQUENCE: Validation stopped.",
   "EXISTING_TASKS_DATA": "WHAT: Existing task data was found.\nWHY: Reinitializing without --force could destroy records.\nHOW: Retry with --force to back up and reset.\nCONSEQUENCE: Nothing changed.",
   "PROGRESS_FILE_MISSING": "WHAT: No progress tracking file was found.\nWHY: The pipeline requires progress notes.\nHOW: Create {progress_path} or {current_path}, then retry.\nCONSEQUENCE: Transition stopped.",
+  "PROD_CHECK_FAILED": "WHAT: The production check failed for task {task_id}: {detail}.\nWHY: Main may only advance through a validated provisioning merge.\nHOW: Fix the reported failure, then retry the DONE promotion.\nCONSEQUENCE: Main and the task remain unchanged.",
   "INTERNAL_ERROR": "WHAT: An internal operation failed.\nWHY: Hammer could not complete the command.\nHOW: Inspect the error details and retry.\nCONSEQUENCE: Operation stopped."
 }

@@ -34,6 +34,7 @@ from .pipeline_hooks import (
     GuardRecordHook,
     MainBranchProtectionHook,
     PostMoveCommitHook,
+    ProdReadyCheckHook,
     ProgressUpdateHook,
     PRPatchRefreshHook,
     ResearchGateHook,
@@ -120,6 +121,7 @@ class TasksCLI:
         self.hook_registry.register_enter_hook("STAGING", WorktreeCheckHook())
         self.hook_registry.register_enter_hook("STAGING", CleanWorkspaceHook())
         self.hook_registry.register_enter_hook("DONE", WorktreeCheckHook())
+        self.hook_registry.register_enter_hook("DONE", ProdReadyCheckHook())
         self.hook_registry.register_enter_hook("ARCHIVED", WorktreeCheckHook())
         self.hook_registry.register_enter_hook("ARCHIVED", ArchivedCommitHook())
 
@@ -381,8 +383,13 @@ class TasksCLI:
     def _validate_path(self, path):
         return self.validation.validate_path(path)
 
-    def run_tool(self, tool_name=None, fix=False, cwd=None):
-        return self.validation.run_tool(tool_name=tool_name, fix=fix, cwd=cwd)
+    def run_tool(self, tool_name=None, fix=False, cwd=None, script_path=None):
+        return self.validation.run_tool(
+            tool_name=tool_name,
+            fix=fix,
+            cwd=cwd,
+            script_path=script_path,
+        )
 
     def find_task(self, filename):
         return self.task_service.find_task(filename)

@@ -376,7 +376,9 @@ class GitService:
                     base = default_branch
         elif name == "provisioning":
             default_branch = self.get_default_branch()
-            if default_branch and self.branch_exists(default_branch, cwd):
+            if default_branch and self.branch_exists(f"origin/{default_branch}", cwd):
+                base = f"origin/{default_branch}"
+            elif default_branch and self.branch_exists(default_branch, cwd):
                 base = default_branch
 
         if base is None:
@@ -800,6 +802,12 @@ class GitService:
                         )
                     return
                 previous_ref = stage_ref
+
+        # PROVISIONING is already the accumulated merge funnel. Its DONE
+        # transition is owned by ProdReadyCheckHook, which validates that
+        # merge before main is allowed to advance.
+        if target_state == "DONE" and current_state == "PROVISIONING":
+            return
 
         # Terminal promotions still use the shared pipeline branches. Their
         # serialization and funnel plumbing are separate tasks.
