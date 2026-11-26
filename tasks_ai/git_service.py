@@ -428,6 +428,9 @@ class GitService:
         message: str | None = None,
         yes=False,
         cwd: str | None = None,
+        pull: bool = True,
+        expected_source: str | None = None,
+        expected_target: str | None = None,
     ):
         """Robustly merge one branch into another with pull/push orchestration.
 
@@ -436,7 +439,16 @@ class GitService:
         is never changed.
         """
         with merge_lock(self.context.main_repo_root):
-            return self._merge_branches_locked(src, target, message, yes, cwd)
+            return self._merge_branches_locked(
+                src,
+                target,
+                message,
+                yes,
+                cwd,
+                pull,
+                expected_source,
+                expected_target,
+            )
 
     def _merge_branches_locked(
         self,
@@ -445,6 +457,9 @@ class GitService:
         message: str | None = None,
         yes=False,
         cwd: str | None = None,
+        pull: bool = True,
+        expected_source: str | None = None,
+        expected_target: str | None = None,
     ):
         repo_root = cwd or self.context.main_repo_root
 
@@ -462,8 +477,27 @@ class GitService:
 
             raise PipelineBranchMissing(target)
 
-        # 3. Pull latest
-        self.run(["pull", "origin", target], cwd=repo_root, check=False)
+        # 3. Pull latest unless the caller validated an exact target commit.
+        if pull:
+            self.run(["pull", "origin", target], cwd=repo_root, check=False)
+
+        if expected_target:
+            actual_target = self.run(
+                ["rev-parse", target], cwd=repo_root, check=False
+            ).stdout.strip()
+            if actual_target != expected_target:
+                from .cli_errors import PipelineMergeConflict
+
+                raise PipelineMergeConflict(src, target)
+
+        if expected_source:
+            actual_source = self.run(
+                ["rev-parse", src], cwd=repo_root, check=False
+            ).stdout.strip()
+            if actual_source != expected_source:
+                from .cli_errors import PipelineMergeConflict
+
+                raise PipelineMergeConflict(src, target)
 
         # 4. Refuse a source whose task identity fails the integrity guard.
         self.guard_branch(src, cwd=repo_root)
