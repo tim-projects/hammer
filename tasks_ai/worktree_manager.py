@@ -117,6 +117,27 @@ class WorktreeManager:
     def is_in_task_worktree(self, cwd=None) -> bool:
         return self.detect_task_in_cwd(cwd) is not None
 
+    def _conflicting_task_refs(self, task_id, branch):
+        """Return refs that already claim this task ID."""
+        result = self.git.run(
+            ["for-each-ref", "refs/heads", "refs/remotes", "--format=%(refname)"],
+            cwd=self.context.main_repo_root,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "could not scan task refs")
+
+        prefix = f"{task_id}-"
+        stage_names = {"PROGRESSING", "TESTING", "STAGING", "PR"}
+        conflicts = []
+        for refname in result.stdout.splitlines():
+            short = refname.rsplit("/", 1)[-1]
+            if not short.startswith(prefix) or short == branch:
+                continue
+            if short[len(prefix) :] in stage_names:
+                continue
+            conflicts.append(short)
+        return sorted(set(conflicts))
+
     def create_task_worktree(
         self, task_id, branch=None, base_ref: str | None = None
     ) -> str | None:
@@ -147,6 +168,20 @@ class WorktreeManager:
         with store_lock(self.context):
             if self.has_worktree(task_id):
                 return self.get_worktree_path(task_id)
+            try:
+                conflicts = self._conflicting_task_refs(task_id, branch)
+            except RuntimeError as exc:
+                if self.logger:
+                    self.logger.error("TASK_ID_REF_CHECK_FAILED", detail=str(exc))
+                return None
+            if conflicts:
+                if self.logger:
+                    self.logger.error(
+                        "TASK_ID_REF_EXISTS",
+                        task_id=task_id,
+                        ref=", ".join(conflicts),
+                    )
+                return None
             os.makedirs(self.worktrees_base, exist_ok=True)
             worktree_path = os.path.join(self.worktrees_base, branch)
             result = self.git.run(
