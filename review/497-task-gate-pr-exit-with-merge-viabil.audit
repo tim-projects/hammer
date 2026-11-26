@@ -1,0 +1,25 @@
+{
+    "task_id": "497",
+    "patch_hash": "102d3641f4bfd26b7ccd93ba8903bb5a",
+    "patch_files": [
+        "data_errors.json.patch",
+        "data_hints.json.patch",
+        "data_next_steps.json.patch",
+        "repo.py.patch",
+        "tasks.py.patch",
+        "tasks_ai_approval.py.patch",
+        "tasks_ai_audit.py.patch",
+        "tasks_ai_cli.py.patch",
+        "tasks_ai_commands_modify.py.patch",
+        "tasks_ai_commands_move.py.patch",
+        "tasks_ai_constants.py.patch",
+        "tasks_ai_git_service.py.patch",
+        "tasks_ai_guard_engine.py.patch",
+        "tasks_ai_pipeline.py.patch",
+        "tasks_ai_pipeline_hooks.py.patch",
+        "tests_test_pr_merge_viability.py.patch",
+        "tests_test_pr_provisioning_states.py.patch",
+        "tests_test_repo_provisioning.py.patch"
+    ],
+    "status": "verified"
+}
