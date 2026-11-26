@@ -101,8 +101,28 @@
     "head": "3d81b8402697585094f51e6b53a682f1cdcf0f31",
     "base": "ddb822c45559b37168b8ce061e3e0e1677138276"
   },
-  "Ap": "",
-  "ApMd5": {},
-  "ApAt": null,
-  "ApBase": ""
+  "Ap": "APPROVED",
+  "ApMd5": {
+    "data_errors.json.patch": "dd670588ba2193dfaa51a6a046343f57",
+    "data_hints.json.patch": "81599791cce544a1401553e49716ffbd",
+    "data_next_steps.json.patch": "306e874edd7c500751da933dad2450a4",
+    "repo.py.patch": "4f84dbb57aeef9a3f31038ffefb01d11",
+    "tasks.py.patch": "4288a1c683142d122954882712093bb1",
+    "tasks_ai_approval.py.patch": "b0ffcc9e0a11581398aac35e8f5dcb82",
+    "tasks_ai_audit.py.patch": "917c5623aa7b344497fd49cabb66738e",
+    "tasks_ai_cli.py.patch": "0fddd5f35fb00d9d37570024c8e0212a",
+    "tasks_ai_commands_modify.py.patch": "926b75f44b87698b760914f7c1b158c7",
+    "tasks_ai_commands_move.py.patch": "b8897d968961a429b49ec5e5b8f358fe",
+    "tasks_ai_constants.py.patch": "d33905a879629b95322366c648097767",
+    "tasks_ai_git_service.py.patch": "fab1fb5b6b5d98717ff438ab976586df",
+    "tasks_ai_guard_engine.py.patch": "7d4173a00eed4d451b9be0b409510c37",
+    "tasks_ai_pipeline.py.patch": "4d5e77ecc010fbd281391ec4fd149794",
+    "tasks_ai_pipeline_hooks.py.patch": "fc79619e853c4376dd3ab77a5cc695b3",
+    "tests_test_pr_merge_viability.py.patch": "c7bb4a3cbd067cd205a7f21a655491f4",
+    "tests_test_pr_provisioning_states.py.patch": "bb84330fa8fc0ee2f7dc896803354612",
+    "tests_test_repo_provisioning.py.patch": "e2067d18d3cca3761977ff573043338b",
+    "tests_test_validation_sync.py.patch": "ce645881c783eaeb7de7c19103bd6251"
+  },
+  "ApAt": 1795685278.8422737,
+  "ApBase": "5b15201a39736286f880dcbdf9f4809af9b21614"
 }
