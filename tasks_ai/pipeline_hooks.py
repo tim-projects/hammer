@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from datetime import datetime
 
-from .cli_errors import PipelineMergeConflict
+from .cli_errors import PipelineMergeConflict, PipelinePushError
 from .constants import CURRENT_TASK_FILENAME, STATE_FOLDERS, load_config
 from .guard_engine import GuardEngine, GuardUnavailable
 from .hooks import PipelineHook
@@ -393,9 +393,12 @@ class ProdReadyCheckHook(PipelineHook):
                         detail="Could not create provisioning",
                     )
                     return
+                provisioning_sha = cli.git.run(
+                    ["rev-parse", "provisioning"], cwd=repo_root, check=False
+                ).stdout.strip()
 
                 add = cli.git.run(
-                    ["worktree", "add", "--detach", worktree_path, base_ref],
+                    ["worktree", "add", "--detach", worktree_path, base],
                     cwd=repo_root,
                     check=False,
                 )
@@ -441,13 +444,43 @@ class ProdReadyCheckHook(PipelineHook):
                     )
                     return
 
+                current_remote = cli.git.fetch_default_branch(default_branch)
+                current_local = cli.git.run(
+                    ["rev-parse", default_branch], cwd=repo_root, check=False
+                ).stdout.strip()
+                current_provisioning = cli.git.run(
+                    ["rev-parse", "provisioning"], cwd=repo_root, check=False
+                ).stdout.strip()
+                if (
+                    current_remote != base
+                    or current_local != base
+                    or current_provisioning != provisioning_sha
+                ):
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail="The validated base or provisioning branch changed",
+                    )
+                    return
+
                 cleanup()
-                cli.git.merge_branches(
-                    "provisioning",
-                    default_branch,
-                    message=f"[{task_id}] merge: provisioning into {default_branch}",
-                    yes=not cli.dev,
-                )
+                try:
+                    cli.git.merge_branches(
+                        "provisioning",
+                        default_branch,
+                        message=f"[{task_id}] merge: provisioning into {default_branch}",
+                        yes=not cli.dev,
+                        pull=False,
+                        expected_source=provisioning_sha,
+                        expected_target=base,
+                    )
+                except (PipelineMergeConflict, PipelinePushError) as exc:
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail=str(exc),
+                    )
+                    return
         finally:
             cleanup()
 
