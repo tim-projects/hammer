@@ -536,6 +536,21 @@ class GitService:
                 if push.returncode != 0:
                     from .cli_errors import PipelinePushError
 
+                    remote_head = ""
+                    fetch = self.run(
+                        ["fetch", "origin", target], cwd=repo_root, check=False
+                    )
+                    if fetch.returncode == 0:
+                        fetched = self.run(
+                            ["rev-parse", "FETCH_HEAD"], cwd=repo_root, check=False
+                        )
+                        if fetched.returncode == 0:
+                            remote_head = fetched.stdout.strip()
+                    self.run(
+                        ["reset", "--hard", remote_head or before],
+                        cwd=repo_root,
+                        check=False,
+                    )
                     raise PipelinePushError(target, push.stderr)
 
         return {"created_commit": created_commit, "skipped": False}
