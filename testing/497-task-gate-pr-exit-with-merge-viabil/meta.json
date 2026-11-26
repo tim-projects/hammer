@@ -10,12 +10,13 @@
   "Br": "497-task-gate-pr-exit-with-merge-viabil",
   "Pt": null,
   "Rr": true,
-  "Tp": false,
-  "St": "PROGRESSING",
+  "Tp": true,
+  "St": "TESTING",
   "Rc": "",
-  "Vp": false,
+  "Vp": true,
   "Reviewed": false,
   "AuditPassed": false,
   "PatchGenTime": null,
-  "DoneAt": null
+  "DoneAt": null,
+  "TpBase": "ddb822c45559b37168b8ce061e3e0e1677138276"
 }
