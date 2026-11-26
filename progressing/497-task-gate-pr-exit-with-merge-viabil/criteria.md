@@ -4,3 +4,4 @@
 - [x] patches equal 'git diff provisioning <id>-PR' content and regenerate after main moves
 - [x] move without --approve refused naming the command; edited patch post-approval refused until re-approved
 - [x] --force does not bypass the approval flag
+- [x] PR merges provisioning in the worktree that already owns the provisioning branch
