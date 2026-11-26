@@ -49,6 +49,7 @@ def run(
     priority=None,
     regression_check=None,
     reviewed=None,
+    approve=None,
 ):
     """Execution logic for 'tasks modify'."""
     filepath, _ = cli.find_task(filename)
@@ -189,6 +190,18 @@ def run(
                 f"3. './hammer tasks modify {task_id} --regression-check' to pass the gate."
             )
         updated = True
+    if approve is not None:
+        if not approve:
+            task.metadata["Ap"] = ""
+            task.metadata["ApMd5"] = {}
+            task.metadata["ApAt"] = None
+            task.metadata["ApBase"] = ""
+            updated = True
+        else:
+            from ..approval import approve_pr
+
+            approve_pr(cli, task, filepath)
+            updated = True
     if priority is not None:
         task.metadata["Pr"] = priority
         updated = True
