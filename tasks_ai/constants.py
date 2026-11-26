@@ -147,10 +147,14 @@ KEY_MAP = {
     "Pr": "Priority",
     "Ar": "ArchivedAt",
     "Tp": "TestsPassed",
+    "TpBase": "TestsPassedBase",
     "Rc": "RegressionCheck",
     "Pt": "Parent",
     "Ep": "Epic",
     "Ap": "Approval",
+    "ApMd5": "ApprovalPatchHashes",
+    "ApAt": "ApprovedAt",
+    "ApBase": "ApprovedBase",
 }
 ALLOWED_CONFIG_KEYS = {
     "story",

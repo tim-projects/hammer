@@ -75,6 +75,8 @@ class PipelineService:
         branch = task.metadata.get("Br", "")
         default_branch = self.git.get_default_branch()
 
+        current_state = os.path.basename(os.path.dirname(task_path)).upper()
+
         # 0. Fast-track check: If worktree branch is already merged, bypass gates
         # Apply to REVIEW, STAGING, and DONE transitions.
         # is_merged alone cannot tell a branch that did work and got merged from
@@ -225,6 +227,93 @@ class PipelineService:
             self.check_audit_integrity(cli, task_id, task_path)
 
         return True
+
+    def validate_pr_approval(self, cli, task, task_path):
+        """Require explicit approval of the current PR patch contents."""
+        from .approval import approval_is_current, approval_patch_dir
+
+        task_id = str(task.metadata.get("Id", "unknown"))
+        patches_dir = approval_patch_dir(cli, task_path)
+        if not approval_is_current(cli, task, patches_dir):
+            raise PipelineError(
+                "PR_APPROVAL_REQUIRED",
+                task_id=task_id,
+                command=f"./hammer tasks modify {task_id} --approve",
+            )
+
+    def validate_pr_exit(self, cli, task, task_path, run_validation=True):
+        """Run every PR exit gate before provisioning receives a merge."""
+        from .approval import approval_is_current, approval_patch_dir
+
+        task_id = str(task.metadata.get("Id", "unknown"))
+        pr_ref = f"{task_id}-PR"
+        default_branch = self.git.get_default_branch()
+        if not default_branch:
+            raise PipelineError("NO_DEFAULT_BRANCH", task_id=task_id)
+        if not self.git.ensure_pipeline_branch("provisioning"):
+            raise PipelineError(
+                "PIPELINE_BRANCH_MISSING", task_id=task_id, branch="provisioning"
+            )
+
+        base = self.git.fetch_default_branch(default_branch)
+        if not base:
+            base = self.git.run(
+                ["rev-parse", f"origin/{default_branch}"],
+                cwd=self.git.context.main_repo_root,
+            ).stdout.strip()
+        if not base or not self.git.is_ancestor(base, pr_ref):
+            raise PipelineError(
+                "PR_NOT_FRESH",
+                task_id=task_id,
+                pr_ref=pr_ref,
+                base=base,
+                hint="Demote to STAGING and re-enter PR to merge the current default branch.",
+            )
+
+        conflicts = self.git.merge_tree_conflicts(pr_ref, "provisioning")
+        if conflicts is None:
+            raise PipelineError(
+                "MERGE_TREE_UNAVAILABLE",
+                task_id=task_id,
+                hint="Git 2.47.3 or newer is required for PR merge-viability checks.",
+            )
+        if conflicts:
+            raise PipelineError(
+                "PR_MERGE_CONFLICT",
+                task_id=task_id,
+                paths=", ".join(conflicts),
+            )
+
+        if run_validation and (
+            not task.metadata.get("Tp") or task.metadata.get("TpBase") != base
+        ):
+            worktree_path = self.git.worktrees.get_worktree_path(task_id)
+            if not worktree_path:
+                raise PipelineError("WORKTREE_NOT_FOUND", task_id=task_id)
+            cli.run_tool("all", cwd=worktree_path)
+            task.metadata["Tp"] = True
+            task.metadata["TpBase"] = base
+            cli._atomic_write(task_path, task)
+
+        from .approval import (
+            approval_hashes_match,
+            refresh_pr_patches,
+        )
+
+        patches_dir = approval_patch_dir(cli, task_path)
+        if not approval_is_current(cli, task, patches_dir):
+            raise PipelineError(
+                "PR_APPROVAL_REQUIRED",
+                task_id=task_id,
+                command=f"./hammer tasks modify {task_id} --approve",
+            )
+        refresh_pr_patches(cli, task, task_path)
+        if not approval_hashes_match(task, patches_dir):
+            raise PipelineError(
+                "PR_APPROVAL_REQUIRED",
+                task_id=task_id,
+                command=f"./hammer tasks modify {task_id} --approve",
+            )
 
     def has_unfinished_checkboxes(self, task_path: str) -> bool:
         """Scan criteria.md for any - [ ] markers."""

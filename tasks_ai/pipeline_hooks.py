@@ -32,6 +32,26 @@ def _task_branch(task, filepath):
     return branch
 
 
+def _validation_base(cli) -> str:
+    """Return the default-branch commit used as the validation freshness base."""
+    default_branch = cli.git.get_default_branch()
+    if not default_branch:
+        return ""
+
+    if not getattr(cli, "dev", False):
+        remote_sha = cli.git.fetch_default_branch(default_branch)
+        if remote_sha:
+            return remote_sha
+
+    remote_ref = f"origin/{default_branch}"
+    result = cli.git.run(["rev-parse", remote_ref], cwd=cli.context.main_repo_root)
+    if result.returncode == 0:
+        return result.stdout.strip()
+
+    result = cli.git.run(["rev-parse", default_branch], cwd=cli.context.main_repo_root)
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
 class GuardGateHook(PipelineHook):
     """Blocks a transition whose task violates a guard invariant.
 
@@ -111,6 +131,10 @@ class TaskRepairHook(PipelineHook):
             task.metadata["AuditPassed"] = False
             task.metadata["PatchGenTime"] = None
             task.metadata["DoneAt"] = None
+            task.metadata["Ap"] = ""
+            task.metadata["ApMd5"] = {}
+            task.metadata["ApAt"] = None
+            task.metadata["ApBase"] = ""
 
             # Save the repaired metadata
             cli._atomic_write(filepath, task)
@@ -159,19 +183,27 @@ class ValidationHook(PipelineHook):
         synchronized = WorktreeSyncHook().synchronize_before_validation(
             cli, task_id, branch, worktree_path
         )
-        if synchronized:
-            task.metadata["Tp"] = False
-            cli._atomic_write(filepath, task)
+        validation_base = _validation_base(cli)
 
-        # Skip expensive rerun if validation already passed
-        if task.metadata.get("Tp"):
+        # Skip expensive rerun only when it passed against the current base.
+        if (
+            task.metadata.get("Tp")
+            and validation_base
+            and task.metadata.get("TpBase") == validation_base
+        ):
             cli.log("DEBUG: Validation already passed; skipping rerun.")
             return
+
+        if synchronized or task.metadata.get("Tp"):
+            task.metadata["Tp"] = False
+            task.metadata["TpBase"] = ""
+            cli._atomic_write(filepath, task)
 
         cli.run_tool("all", cwd=worktree_path)
 
         # If we reach here, all checks passed
         task.metadata["Tp"] = True
+        task.metadata["TpBase"] = validation_base
         cli._atomic_write(filepath, task)
 
 
@@ -308,6 +340,18 @@ class WorktreeCheckHook(PipelineHook):
                     _push_task_branch(cli, task_id, branch)
 
 
+class PRPatchRefreshHook(PipelineHook):
+    """Create the PR patch set that the human approval command signs."""
+
+    def execute(self, cli, task, current_state, new_status, filepath):
+        if not (current_state == "STAGING" and new_status == "PR"):
+            return
+
+        from .approval import refresh_pr_patches
+
+        refresh_pr_patches(cli, task, filepath)
+
+
 class ReviewDiffHook(PipelineHook):
     """Ensures file-level diff patches are generated when entering REVIEW."""
 
@@ -327,6 +371,10 @@ class ReviewDiffHook(PipelineHook):
             cli.log(f" for task {task_id}")
             task.metadata["Reviewed"] = False
             task.metadata["Rc"] = ""
+            task.metadata["Ap"] = ""
+            task.metadata["ApMd5"] = {}
+            task.metadata["ApAt"] = None
+            task.metadata["ApBase"] = ""
             task.metadata["PatchGenTime"] = datetime.now().timestamp()  # noqa: DTZ005
             reviews_path = os.path.join(filepath, "reviews.json")
             if os.path.exists(reviews_path):
@@ -717,6 +765,10 @@ class CleanupReviewArtifactsHook(PipelineHook):
             # 4. Clear Regression Check (Rc) and Verification Passed (Vp) flags
             task.metadata["Rc"] = ""
             task.metadata["Vp"] = False
+            task.metadata["Ap"] = ""
+            task.metadata["ApMd5"] = {}
+            task.metadata["ApAt"] = None
+            task.metadata["ApBase"] = ""
 
             # Update the task file
             cli._atomic_write(filepath, task)

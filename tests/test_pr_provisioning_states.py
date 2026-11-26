@@ -94,6 +94,16 @@ class TestPRProvisioningStates(HammerTestBase):
             os.path.isdir(os.path.join(self.dev_tasks_dir, "pr", task_file))
         )
 
+        forced = self.run_tasks(["move", task_id, "PROVISIONING", "--force"])
+        forced_output = json.loads(forced.stdout)
+        self.assertFalse(forced_output["success"], forced_output)
+        self.assertEqual("next_step", forced_output["status"])
+        self.assertIn("Review and approve", forced_output["next_step"])
+        self.assertIn("modify 9001 --approve", forced_output["hint"])
+
+        approved = self.run_tasks(["modify", task_id, "--approve"])
+        self.assertTrue(json.loads(approved.stdout)["success"], approved.stdout)
+
         result = self.run_tasks(["move", task_id, "PROVISIONING"])
         self.assertTrue(json.loads(result.stdout)["success"], result.stdout)
         self.assertTrue(
