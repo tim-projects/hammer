@@ -367,7 +367,8 @@ def _cmd_merge_locked(src_input, target_input):
         if path:
             from tasks_ai.file_manager import FM
 
-            task_id = str(FM.load(path).metadata.get("Id") or task_id)
+            task = FM.load(path)
+            task_id = str(task.metadata.get("Id") or task_id)
             # Map git branch target to pipeline status
             pipeline_to_status = {
                 "provisioning": "PROVISIONING",
@@ -388,6 +389,16 @@ def _cmd_merge_locked(src_input, target_input):
                 info(
                     f"Task branch detected: {src}. Merging into the provisioning funnel before moving to {new_status}..."
                 )
+                if task.metadata.get("Ap") != "APPROVED":
+                    error(
+                        f"PR {task_id} requires explicit approval.",
+                        hint=f"Run './hammer tasks modify {task_id} --approve'.",
+                        error_code="PR_APPROVAL_REQUIRED",
+                    )
+                # Route through the task pipeline so validation happens once,
+                # immediately before the provisioning merge.
+                cli.move(task_id, pending_status, yes=FLAGS["yes"])
+                return
 
     if target not in pipeline():  # noqa: SIM102
         if not FLAGS["yes"]:
