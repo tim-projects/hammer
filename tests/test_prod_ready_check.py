@@ -26,11 +26,12 @@ def git(*args, cwd, check=True):
 
 
 class FakeCLI:
-    def __init__(self, git_service, fail_checks=False):
+    def __init__(self, git_service, fail_checks=False, during_validation=None):
         self.dev = False
         self.git = git_service
         self.context = git_service.context
         self.fail_checks = fail_checks
+        self.during_validation = during_validation
         self.validations = []
         self.next_steps = []
 
@@ -44,6 +45,8 @@ class FakeCLI:
                 os.path.exists(script_path) if script_path else False,
             )
         )
+        if self.during_validation:
+            self.during_validation()
         return subprocess.CompletedProcess(
             args=["check.py", tool_name or "all"],
             returncode=1 if self.fail_checks else 0,
@@ -130,6 +133,39 @@ class ProdReadyCheckTest(unittest.TestCase):
         self.assertEqual(1, len(cli.validations))
         self.assertTrue(cli.validations[0][2])
         self.assertTrue(cli.validations[0][4])
+        self.assertFalse(
+            any("hammer-prod-check-" in path for path in self.temp_worktrees())
+        )
+
+    def test_remote_main_change_during_check_fails_closed(self):
+        self.add_provisioning_change()
+        before = git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        other = os.path.join(self.root, "other")
+
+        def advance_remote():
+            git("clone", self.remote, other, cwd=self.root)
+            git("config", "user.email", "other@example.com", cwd=other)
+            git("config", "user.name", "Other User", cwd=other)
+            with open(
+                os.path.join(other, "concurrent.txt"), "w", encoding="utf-8"
+            ) as f:
+                f.write("concurrent\n")
+            git("add", "concurrent.txt", cwd=other)
+            git("commit", "-m", "concurrent main", cwd=other)
+            git("push", "origin", "main", cwd=other)
+
+        cli = FakeCLI(self.git, during_validation=advance_remote)
+
+        with self.assertRaises(RuntimeError):
+            ProdReadyCheckHook().execute(
+                cli, self.task, "PROVISIONING", "DONE", "/tmp/task"
+            )
+
+        self.assertEqual(before, git("rev-parse", "main", cwd=self.repo).stdout.strip())
+        self.assertNotEqual(
+            before,
+            git("rev-parse", "origin/main", cwd=self.repo).stdout.strip(),
+        )
         self.assertFalse(
             any("hammer-prod-check-" in path for path in self.temp_worktrees())
         )
