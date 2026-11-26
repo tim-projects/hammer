@@ -7,7 +7,11 @@ import tempfile
 import unittest
 from types import SimpleNamespace
 
-from tasks_ai.approval import approval_is_current, approval_patch_dir
+from tasks_ai.approval import (
+    approval_is_current,
+    approval_patch_dir,
+    refresh_pr_patches,
+)
 from tasks_ai.git_service import GitService
 from tasks_ai.pipeline import PipelineError, PipelineService
 
@@ -41,8 +45,12 @@ class FakeCLI:
             main_repo_root=git_service.context.main_repo_root,
         )
         self.tasks_path = tasks_path
+        self.root = git_service.context.main_repo_root
         self.validations = []
         self.writes = []
+
+    def log(self, message):
+        pass
 
     def run_tool(self, tool_name=None, fix=False, cwd=None):
         self.validations.append((tool_name, cwd))
@@ -96,6 +104,27 @@ class PRMergeViabilityTest(unittest.TestCase):
             json.dump(metadata, handle)
         return path, metadata
 
+    def test_pr_entry_freshness_merges_current_default_branch(self):
+        git("branch", "9001-STAGING", cwd=self.repo)
+        git("branch", "9001-PR", cwd=self.repo)
+        git("checkout", "9001-PR", cwd=self.repo)
+        self.write("fresh.txt", "fresh\n")
+        git("add", "fresh.txt", cwd=self.repo)
+        git("commit", "-m", "main moved forward", cwd=self.repo)
+        main_sha = git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        git("update-ref", "refs/remotes/origin/main", main_sha, cwd=self.repo)
+        git("checkout", "9001-PR", cwd=self.repo)
+        git("reset", "--hard", "9001-STAGING", cwd=self.repo)
+
+        self.git.prepare_pr_freshness(self.repo, "9001-PR", "9001-STAGING")
+
+        self.assertEqual(
+            0,
+            git(
+                "merge-base", "--is-ancestor", "origin/main", "9001-PR", cwd=self.repo
+            ).returncode,
+        )
+
     def test_merge_tree_reports_conflict_paths_without_creating_a_commit(self):
         git("branch", "pr", cwd=self.repo)
         git("checkout", "pr", cwd=self.repo)
@@ -143,6 +172,26 @@ class PRMergeViabilityTest(unittest.TestCase):
             git("rev-parse", "origin/main", cwd=self.repo).stdout.strip(),
             metadata["TpBase"],
         )
+
+    def test_pr_patches_match_provisioning_relative_diff(self):
+        git("branch", "9001-PR", cwd=self.repo)
+        git("branch", "provisioning", cwd=self.repo)
+        git("checkout", "9001-PR", cwd=self.repo)
+        self.write("change.txt", "changed\n")
+        git("add", "change.txt", cwd=self.repo)
+        git("commit", "-m", "task change", cwd=self.repo)
+        git("checkout", "main", cwd=self.repo)
+        git("checkout", "provisioning", cwd=self.repo)
+        task_path, metadata = self.make_task()
+        task = SimpleNamespace(metadata=metadata, parts={})
+
+        patches_dir = refresh_pr_patches(self.cli, task, task_path)
+
+        expected = git(
+            "diff", "provisioning..9001-PR", "--", "change.txt", cwd=self.repo
+        ).stdout
+        with open(os.path.join(patches_dir, "change.txt.patch"), encoding="utf-8") as f:
+            self.assertEqual(expected, f.read())
 
     def test_edited_patch_invalidates_approval(self):
         task_path, metadata = self.make_task()
