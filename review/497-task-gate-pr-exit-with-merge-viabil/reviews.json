@@ -180,5 +180,8 @@
       "ts": 1795685126.202721,
       "prev_hash": "e1fa441adf58de87d210f22043c1ddd2ede5de0d220f34fe6c74f042dc3775bf"
     }
-  ]
+  ],
+  "summary": "Reviewed all 18 generated patches end to end: PR freshness and conflict gates, validation freshness, provisioning-relative patch generation, explicit MD5-bound approval, force refusal, and provisioning merge ownership recovery.",
+  "summary_at": 1795685152.113488,
+  "reviewed_at": 1795685152.1134892
 }
