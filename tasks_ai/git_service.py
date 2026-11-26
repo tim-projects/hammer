@@ -642,6 +642,24 @@ class GitService:
                 paths.append(line)
         return paths
 
+    def worktree_path_for_branch(self, branch: str) -> str | None:
+        """Return the worktree that currently checks out ``branch``."""
+        result = self.run(
+            ["worktree", "list", "--porcelain"],
+            cwd=self.context.main_repo_root,
+            check=False,
+        )
+        if result.returncode != 0:
+            return None
+        path = None
+        expected = f"branch refs/heads/{branch}"
+        for line in result.stdout.splitlines():
+            if line.startswith("worktree "):
+                path = line.removeprefix("worktree ")
+            elif line == expected and path and os.path.isdir(path):
+                return path
+        return None
+
     def merge_pr_into_provisioning(self, pr_ref: str):
         """Merge a validated PR stage ref into the shared provisioning funnel."""
         default_branch = self.get_default_branch()
@@ -652,12 +670,15 @@ class GitService:
         conflicts = self.merge_tree_conflicts(pr_ref, "provisioning")
         if conflicts:
             raise PipelineMergeConflict(pr_ref, "provisioning", conflicts)
+        target_cwd = (
+            self.worktree_path_for_branch("provisioning") or self.context.main_repo_root
+        )
         return self.merge_branches(
             pr_ref,
             "provisioning",
             message=f"merge: {pr_ref} into provisioning",
             yes=not self.context.dev,
-            cwd=self.context.main_repo_root,
+            cwd=target_cwd,
         )
 
     def provision_merge_is_current(self, pr_ref: str) -> bool:
