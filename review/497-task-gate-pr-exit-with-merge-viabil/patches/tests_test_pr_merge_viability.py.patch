@@ -1,9 +1,9 @@
 diff --git a/tests/test_pr_merge_viability.py b/tests/test_pr_merge_viability.py
 new file mode 100644
-index 00000000..3c221df3
+index 00000000..983bb0bb
 --- /dev/null
 +++ b/tests/test_pr_merge_viability.py
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,252 @@
 +import hashlib
 +import json
 +import os
@@ -129,6 +129,38 @@ index 00000000..3c221df3
 +            git(
 +                "merge-base", "--is-ancestor", "origin/main", "9001-PR", cwd=self.repo
 +            ).returncode,
++        )
++
++    def test_pr_merges_provisioning_in_its_checked_out_worktree(self):
++        git("branch", "feature-pr", cwd=self.repo)
++        git("checkout", "feature-pr", cwd=self.repo)
++        self.write("feature.txt", "feature\n")
++        git("add", "feature.txt", cwd=self.repo)
++        git("commit", "-m", "feature", cwd=self.repo)
++        git("checkout", "main", cwd=self.repo)
++        git("branch", "provisioning", cwd=self.repo)
++        owner = os.path.join(self.root, "provisioning-owner")
++        git("worktree", "add", owner, "provisioning", cwd=self.repo)
++
++        result = self.git.merge_pr_into_provisioning("feature-pr")
++
++        self.assertTrue(result["created_commit"])
++        self.assertEqual(
++            0,
++            git(
++                "merge-base",
++                "--is-ancestor",
++                "feature-pr",
++                "provisioning",
++                cwd=self.repo,
++            ).returncode,
++        )
++        self.assertEqual(
++            "provisioning",
++            git("branch", "--show-current", cwd=owner).stdout.strip(),
++        )
++        self.assertEqual(
++            "main", git("branch", "--show-current", cwd=self.repo).stdout.strip()
 +        )
 +
 +    def test_merge_tree_reports_conflict_paths_without_creating_a_commit(self):
