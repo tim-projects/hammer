@@ -10,6 +10,8 @@
   "PRIORITY_INVALID": "Priority must be number between 1 and 9.",
   "TASK_EXISTS": "Task {task_id} exist.",
   "TASK_ID_EXISTS": "Task with Id {numeric_id} already exist (in {state}).",
+  "TASK_ID_REF_EXISTS": "Task ID {task_id} is already claimed by ref '{ref}'.",
+  "TASK_ID_REF_CHECK_FAILED": "Could not verify whether task ID {task_id} is unique: {detail}.",
   "INVALID_CONFIG_KEY": "Invalid config key '{key}'.",
   "AUTO_PROMOTE_FAIL": "Auto-promotion fail: {error}",
   "FORBIDDEN_TRANSITION": "Forbidden transition: {from_state} -> {to_state}",
