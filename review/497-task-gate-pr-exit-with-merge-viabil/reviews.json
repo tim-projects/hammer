@@ -9,6 +9,16 @@
       "bytes": 959,
       "ts": 1795680926.12283,
       "prev_hash": null
+    },
+    {
+      "seq": 2,
+      "file": "data/hints.json",
+      "patch": "data_hints.json.patch",
+      "md5": "81599791cce544a1401553e49716ffbd",
+      "sha256": "9b98ac313b0c6d8dbf7fc0209c2047cfce84046f416bea6b143f78d102a1c2d8",
+      "bytes": 2811,
+      "ts": 1795680927.4880679,
+      "prev_hash": "a8cfbb30b0a07f551cbab15d394da3fdc11b12aded1b1d4fc1baca54c7bf0d5f"
     }
   ]
 }
