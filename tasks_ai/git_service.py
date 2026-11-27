@@ -546,8 +546,17 @@ class GitService:
                         )
                         if fetched.returncode == 0:
                             remote_head = fetched.stdout.strip()
+                    reset_to = before
+                    if remote_head:
+                        ancestor = self.run(
+                            ["merge-base", "--is-ancestor", before, remote_head],
+                            cwd=repo_root,
+                            check=False,
+                        )
+                        if ancestor.returncode == 0:
+                            reset_to = remote_head
                     self.run(
-                        ["reset", "--hard", remote_head or before],
+                        ["reset", "--hard", reset_to],
                         cwd=repo_root,
                         check=False,
                     )

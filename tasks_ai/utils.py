@@ -46,9 +46,7 @@ def _merge_lock_dir(repo_root):
     except (subprocess.CalledProcessError, OSError):
         common_dir = ""
     if not common_dir:
-        fallback = os.path.join(repo_root, ".git")
-        os.makedirs(fallback, exist_ok=True)
-        return fallback
+        return os.path.abspath(repo_root)
     if not os.path.isabs(common_dir):
         common_dir = os.path.join(os.path.abspath(repo_root), common_dir)
     return os.path.normpath(common_dir)
