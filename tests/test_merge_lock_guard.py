@@ -8,6 +8,7 @@ import threading
 import types
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import patch
 
 from tasks_ai.git_service import GitService
 from tasks_ai.utils import merge_lock
@@ -173,6 +174,27 @@ class MergeLockGuardTest(unittest.TestCase):
 
         lock_path = os.path.join(self.repo, ".git", "hammer-merge.lock")
         self.assertTrue(os.path.isfile(lock_path))
+
+    def test_merge_lock_fallback_accepts_file_git_without_git(self):
+        worktree = os.path.join(self.root, "linked-worktree-no-git")
+        git(
+            "worktree",
+            "add",
+            "-b",
+            "712-task-no-git",
+            worktree,
+            cwd=self.repo,
+        )
+        self.assertTrue(os.path.isfile(os.path.join(worktree, ".git")))
+
+        with (
+            patch(
+                "tasks_ai.utils.subprocess.check_output",
+                side_effect=OSError("git unavailable"),
+            ),
+            merge_lock(worktree),
+        ):
+            pass
 
     def test_sigkill_releases_merge_lock(self):
         source = self.create_branch("702-task-kill", "kill.txt")

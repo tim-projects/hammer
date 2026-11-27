@@ -7,12 +7,12 @@ from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from tasks_ai.cli_errors import PipelinePushError
+from tasks_ai.cli_errors import PipelineMergeConflict, PipelinePushError
 from tasks_ai.commands.move import move_logic
 from tasks_ai.file_manager import FM
 from tasks_ai.git_service import GitService
 from tasks_ai.hooks import HookRegistry, PipelineHook
-from tasks_ai.pipeline_hooks import ProdReadyCheckHook
+from tasks_ai.pipeline_hooks import PROD_CHECK_MARKER, ProdReadyCheckHook
 
 
 def git(*args, cwd, check=True):
@@ -33,6 +33,7 @@ class FakeCLI:
         self.dev = False
         self.git = git_service
         self.context = git_service.context
+        self.tasks_path = git_service.context.tasks_path
         self.fail_checks = fail_checks
         self.during_validation = during_validation
         self.validations = []
@@ -298,6 +299,57 @@ class ProdReadyCheckTest(unittest.TestCase):
             git("rev-parse", "origin/main", cwd=self.repo).stdout.strip(),
         )
 
+    def test_rejected_push_preserves_unpushed_local_commits(self):
+        self.add_provisioning_change()
+        git("checkout", "main", cwd=self.repo)
+        with open(os.path.join(self.repo, "local.txt"), "w", encoding="utf-8") as f:
+            f.write("local work\n")
+        git("add", "local.txt", cwd=self.repo)
+        git("commit", "-m", "unpushed local work", cwd=self.repo)
+        local_head = git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        remote_head = git("rev-parse", "origin/main", cwd=self.repo).stdout.strip()
+        source = git("rev-parse", "provisioning", cwd=self.repo).stdout.strip()
+        original_run = self.git.run
+
+        def run(args, **kwargs):
+            if args[:2] == ["push", "origin"]:
+                return subprocess.CompletedProcess(
+                    args=["git", *args], returncode=1, stdout="", stderr="rejected"
+                )
+            return original_run(args, **kwargs)
+
+        with (
+            patch.object(self.git, "run", side_effect=run),
+            self.assertRaises(PipelinePushError),
+        ):
+            self.git.merge_branches(
+                "provisioning",
+                "main",
+                message="[499] merge: provisioning into main",
+                yes=True,
+                pull=False,
+                expected_source=source,
+                expected_target=local_head,
+            )
+
+        self.assertEqual(
+            local_head, git("rev-parse", "main", cwd=self.repo).stdout.strip()
+        )
+        self.assertTrue(
+            os.path.exists(os.path.join(self.repo, "local.txt")),
+            "unpushed local work was discarded by push rollback",
+        )
+        with self.assertRaises(PipelineMergeConflict):
+            self.git.merge_branches(
+                "provisioning",
+                "main",
+                message="[499] merge: provisioning into main",
+                yes=True,
+                pull=False,
+                expected_source=source,
+                expected_target=remote_head,
+            )
+
     def test_rejected_push_uses_pre_merge_sha_when_fetch_fails(self):
         self.add_provisioning_change()
         before = git("rev-parse", "main", cwd=self.repo).stdout.strip()
@@ -330,6 +382,51 @@ class ProdReadyCheckTest(unittest.TestCase):
             )
 
         self.assertEqual(before, git("rev-parse", "main", cwd=self.repo).stdout.strip())
+
+    def test_already_merged_provisioning_skips_check_and_runs_merge_path(self):
+        self.add_provisioning_change()
+        git("merge", "--no-ff", "provisioning", "-m", "already merged", cwd=self.repo)
+        git("push", "origin", "main", cwd=self.repo)
+        cli = FakeCLI(self.git)
+
+        ProdReadyCheckHook().execute(
+            cli, self.task, "PROVISIONING", "DONE", "/tmp/task"
+        )
+
+        self.assertEqual([], cli.validations)
+        self.assertEqual(
+            git("rev-parse", "main", cwd=self.repo).stdout.strip(),
+            git("rev-parse", "origin/main", cwd=self.repo).stdout.strip(),
+        )
+
+    def test_second_concurrent_done_check_fails_fast_and_cleans_marker(self):
+        self.add_provisioning_change()
+        marker_dir = os.path.join(self.git.context.tasks_path, ".ops")
+        os.makedirs(marker_dir, exist_ok=True)
+        marker_path = os.path.join(marker_dir, PROD_CHECK_MARKER)
+        with open(marker_path, "w", encoding="utf-8") as f:
+            f.write("running\n")
+        cli = FakeCLI(self.git)
+
+        with self.assertRaises(RuntimeError) as caught:
+            ProdReadyCheckHook().execute(
+                cli, self.task, "PROVISIONING", "DONE", "/tmp/task"
+            )
+
+        self.assertEqual("PROD_CHECK_IN_FLIGHT", caught.exception.args[0])
+        self.assertEqual([], cli.validations)
+        self.assertTrue(os.path.exists(marker_path))
+
+        os.remove(marker_path)
+        with self.assertRaises(RuntimeError):
+            ProdReadyCheckHook().execute(
+                FakeCLI(self.git, fail_checks=True),
+                self.task,
+                "PROVISIONING",
+                "DONE",
+                "/tmp/task",
+            )
+        self.assertFalse(os.path.exists(marker_path))
 
     def test_missing_provisioning_is_bootstrapped_from_origin_main(self):
         base = git("rev-parse", "origin/main", cwd=self.repo).stdout.strip()
