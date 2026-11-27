@@ -10,6 +10,8 @@ from .hooks import PipelineHook
 from .models import Task
 from .utils import commit_task_paths, merge_lock, parse_filename
 
+PROD_CHECK_MARKER = ".prod-ready-check.inflight"
+
 
 def get_guard_engine(cli) -> GuardEngine:
     """One engine per CLI process; cache lives in the common git dir."""
@@ -373,6 +375,9 @@ class ProdReadyCheckHook(PipelineHook):
             cli.git.run(["worktree", "prune"], cwd=repo_root, check=False)
             shutil.rmtree(temp_root, ignore_errors=True)
 
+        marker_dir = os.path.join(cli.tasks_path, ".ops")
+        marker_path = os.path.join(marker_dir, PROD_CHECK_MARKER)
+        owns_marker = False
         try:
             base = cli.git.fetch_default_branch(default_branch)
             if not base or not cli.git.branch_exists(base_ref, repo_root):
@@ -396,52 +401,65 @@ class ProdReadyCheckHook(PipelineHook):
                 ["rev-parse", "provisioning"], cwd=repo_root, check=False
             ).stdout.strip()
 
-            add = cli.git.run(
-                ["worktree", "add", "--detach", worktree_path, base],
-                cwd=repo_root,
-                check=False,
-            )
-            if add.returncode != 0:
-                cli.next_step(
-                    "PROD_CHECK_FAILED",
-                    task_id=task_id,
-                    detail=add.stderr.strip() or "Could not create check worktree",
-                )
-                return
+            if not cli.git.is_ancestor("provisioning", base_ref, repo_root):
+                os.makedirs(marker_dir, exist_ok=True)
+                try:
+                    fd = os.open(marker_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                except FileExistsError:
+                    cli.next_step(
+                        "PROD_CHECK_IN_FLIGHT",
+                        task_id=task_id,
+                    )
+                    return
+                os.close(fd)
+                owns_marker = True
 
-            merge = cli.git.run(
-                [
-                    "merge",
-                    "--no-ff",
-                    "provisioning",
-                    "-m",
-                    "production check: merge provisioning",
-                ],
-                cwd=worktree_path,
-                check=False,
-            )
-            if merge.returncode != 0:
-                cli.git.run(["merge", "--abort"], cwd=worktree_path, check=False)
-                cli.next_step(
-                    "PROD_CHECK_FAILED",
-                    task_id=task_id,
-                    detail=merge.stderr.strip() or "Provisioning merge failed",
+                add = cli.git.run(
+                    ["worktree", "add", "--detach", worktree_path, base],
+                    cwd=repo_root,
+                    check=False,
                 )
-                return
+                if add.returncode != 0:
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail=add.stderr.strip() or "Could not create check worktree",
+                    )
+                    return
 
-            result = cli.run_tool(
-                "all",
-                cwd=worktree_path,
-                script_path=os.path.join(worktree_path, "check.py"),
-            )
-            if result is not None and getattr(result, "returncode", 0) != 0:
-                cli.next_step(
-                    "VALIDATION_FAILED",
-                    task_id=task_id,
-                    tool="production",
-                    msg="Production checks failed on the provisioning merge.",
+                merge = cli.git.run(
+                    [
+                        "merge",
+                        "--no-ff",
+                        "provisioning",
+                        "-m",
+                        "production check: merge provisioning",
+                    ],
+                    cwd=worktree_path,
+                    check=False,
                 )
-                return
+                if merge.returncode != 0:
+                    cli.git.run(["merge", "--abort"], cwd=worktree_path, check=False)
+                    cli.next_step(
+                        "PROD_CHECK_FAILED",
+                        task_id=task_id,
+                        detail=merge.stderr.strip() or "Provisioning merge failed",
+                    )
+                    return
+
+                result = cli.run_tool(
+                    "all",
+                    cwd=worktree_path,
+                    script_path=os.path.join(worktree_path, "check.py"),
+                )
+                if result is not None and getattr(result, "returncode", 0) != 0:
+                    cli.next_step(
+                        "VALIDATION_FAILED",
+                        task_id=task_id,
+                        tool="production",
+                        msg="Production checks failed on the provisioning merge.",
+                    )
+                    return
 
             cleanup()
             with merge_lock(repo_root):
@@ -482,6 +500,11 @@ class ProdReadyCheckHook(PipelineHook):
                     )
                     return
         finally:
+            if owns_marker:
+                try:
+                    os.remove(marker_path)
+                except FileNotFoundError:
+                    pass
             cleanup()
 
 

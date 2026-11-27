@@ -107,6 +107,10 @@
     "message": "Provide enough detail for: {too_short}.",
     "hint": "WHAT: TOO SHORT: {too_short}.\nWHY: INSUFFICIENT DETAIL. HAMMER demand substance.\nHOW: Provide more detail.\nCONSEQUENCE: Task rejected. FIX CONTENT."
   },
+  "PROD_CHECK_IN_FLIGHT": {
+    "message": "Wait for the production check already running for task {task_id}, then retry the DONE promotion.",
+    "hint": "WHAT: Another production check is already in flight.\nWHY: The shared provisioning merge can be validated by only one check at a time.\nHOW: Wait for the running check to finish, then retry the DONE promotion.\nCONSEQUENCE: This task remains in PROVISIONING."
+  },
   "PROD_CHECK_FAILED": {
     "message": "Fix the production check failure for task {task_id}: {detail}.",
     "hint": "WHAT: The production check could not validate the provisioning merge.\nWHY: {detail}\nHOW: Fix the reported merge or validation failure, then retry the DONE promotion.\nCONSEQUENCE: Main and the task remain unchanged."
